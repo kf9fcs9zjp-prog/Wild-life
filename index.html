@@ -1272,6 +1272,7 @@ var ITEMS = {
   hideBeast: { name: '맹수 가죽', icon: '🐺' },
   hideGiant: { name: '거대 가죽', icon: '🦕' },
   fang: { name: '맹수 송곳니', icon: '🦴' },
+  trikeClaw: { name: '트리케라톱스 발톱', icon: '🦴' },
   // ── 9단계 사막·툰드라·숲 자원 ──
   cactusFruit: { name: '선인장 열매', icon: '🌵', food: 9, hp: 2 },
   frostHerb: { name: '서리 약초', icon: '🌿', food: 5, hp: 26 },
@@ -1318,6 +1319,8 @@ var WEAPONS = {
   bow: { name: '나무 활', icon: '🏹', kind: 'bow', atk: 9, arrow: 30, desc: '화살 30 · 시위 당겨 쏘기' },
   ironBow: { name: '철제 활', icon: '🏹', kind: 'bow', atk: 9, arrow: 45, desc: '철제 활촉 · 화살 45' },
   bambooSpear: { name: '대나무 창', icon: '🎍', kind: 'spear', atk: 32, desc: '가볍고 빠른 대나무 창 · 공격 32' },
+  trikeKnife: { name: '트리케 발톱 단검', icon: '🔪', kind: 'knife', atk: 40, desc: '트리케라톱스 발톱을 날로 세운 단검 · 공격 40' },
+  trikeSpear: { name: '트리케 발톱 창', icon: '🗡️', kind: 'spear', atk: 46, desc: '트리케라톱스 발톱을 엮은 창 · 공격 46' },
   tyrantSpear: { name: '폭군 뼈창', icon: '🦴', kind: 'spear', atk: 58, desc: '티라노 송곳니를 박은 최상급 창 · 공격 58' }
 };
 
@@ -1334,10 +1337,10 @@ var WEAPONS = {
 var ITEM_ORDER = [
   'wood', 'stick', 'stone', 'fiber', 'reed', 'wheat', 'cloth', 'berry',
   'meat', 'fineMeat', 'bulkMeat', 'cookedMeat', 'cookedFine', 'cookedBulk', 'cookedBerry', 'bread',
-  'herb', 'mushroom', 'iron', 'hideThin', 'hideTough', 'hideThick', 'hideBeast', 'hideGiant', 'fang',
+  'herb', 'mushroom', 'iron', 'hideThin', 'hideTough', 'hideThick', 'hideBeast', 'hideGiant', 'fang', 'trikeClaw',
   'cactusFruit', 'frostHerb', 'ice', 'bamboo', 'lavender', 'dye', 'banana', 'pineapple',
   'mammothFur', 'spinoSail', 'tyrantLeather', 'tyrantFang', 'pteroEgg', 'feather',
-  'stoneKnife', 'axe', 'spear', 'boneKnife', 'boneSpear', 'bow', 'ironBow', 'bambooSpear', 'tyrantSpear',
+  'stoneKnife', 'axe', 'spear', 'boneKnife', 'boneSpear', 'bow', 'ironBow', 'bambooSpear', 'tyrantSpear', 'trikeKnife', 'trikeSpear',
   'hideVest', 'thickArmor', 'beastCoat', 'fineDress', 'dyedDress', 'sailCloak', 'furCoat', 'tyrantArmor',
   'leatherBoots', 'raptorBoots', 'furBoots', 'leatherPack', 'raptorPack'
 ];
@@ -1364,6 +1367,9 @@ var RECIPES = [
   { id: 'cloth', tab: 'bench', out: 'cloth', qty: 1, name: '옷감', icon: '🧶', desc: '섬유와 갈대를 엮어 짠 천 · 재료', cost: { fiber: 3, reed: 2 } },
   { id: 'boneKnife', tab: 'bench', out: 'boneKnife', qty: 1, name: '맹수 뼈칼', icon: '⚔️', desc: '돌칼 + 송곳니 → 공격 34', cost: { stoneKnife: 1, fang: 2, fiber: 2 }, unlock: 'fang' },
   { id: 'boneSpear', tab: 'bench', out: 'boneSpear', qty: 1, name: '맹수 뼈창', icon: '🗡️', desc: '돌창 + 송곳니 → 공격 40', cost: { spear: 1, fang: 3, fiber: 2 }, unlock: 'fang' },
+  /* ── 트리케라톱스 발톱 활용처 — 사냥으로 얻은 발톱으로 만드는 날붙이 2종 ── */
+  { id: 'trikeKnife', tab: 'bench', out: 'trikeKnife', qty: 1, name: '트리케 발톱 단검', icon: '🔪', desc: '돌칼 + 트리케 발톱 x2 → 공격 40', cost: { stoneKnife: 1, trikeClaw: 2, hideThick: 1, fiber: 2 }, unlock: 'trikeClaw' },
+  { id: 'trikeSpear', tab: 'bench', out: 'trikeSpear', qty: 1, name: '트리케 발톱 창', icon: '🗡️', desc: '돌창 + 트리케 발톱 x2 + 두꺼운 가죽 x2 → 공격 46', cost: { spear: 1, trikeClaw: 2, hideThick: 2, fiber: 2 }, unlock: 'trikeClaw' },
   { id: 'ironBow', tab: 'bench', out: 'ironBow', qty: 1, name: '철제 활', icon: '🏹', desc: '나무 활 + 철 → 화살 45', cost: { bow: 1, iron: 3, hideTough: 1, fiber: 2 }, unlock: 'iron' },
   { id: 'hideVest', tab: 'bench', out: 'hideVest', qty: 1, name: '얇은 가죽 옷', icon: '🦺', desc: '방어력 +3', cost: { hideThin: 4, fiber: 2 }, unlock: 'hideThin' },
   { id: 'thickArmor', tab: 'bench', out: 'thickArmor', qty: 1, name: '두꺼운 가죽 갑옷', icon: '🥼', desc: '얇은 가죽 옷 + 두꺼운 가죽 x3 → 방어 +7', cost: { hideVest: 1, hideThick: 3, fiber: 3 }, unlock: 'hideThick' },
@@ -1441,7 +1447,7 @@ function syncTools() {
   return S.tools;
 }
 function bestWeaponId() {
-  var order = ['tyrantSpear', 'boneSpear', 'bambooSpear', 'boneKnife', 'spear', 'stoneKnife', 'axe', 'ironBow', 'bow'];
+  var order = ['tyrantSpear', 'trikeSpear', 'boneSpear', 'bambooSpear', 'trikeKnife', 'boneKnife', 'spear', 'stoneKnife', 'axe', 'ironBow', 'bow'];
   for (var i = 0; i < order.length; i++) if ((S.inv[order[i]] || 0) > 0) return order[i];
   return '';
 }
@@ -3804,10 +3810,10 @@ function refreshTool() {
   if (!player.axe) return;
   var w = equippedWeapon();          // 가방에서 장착한 무기 하나만 손에 든다
   player.axe.visible = w === 'axe';
-  player.spear.visible = w === 'spear';
+  player.spear.visible = w === 'spear' || w === 'trikeSpear';
   if (player.boneSpear) player.boneSpear.visible = w === 'boneSpear';
   if (player.knife) player.knife.visible = w === 'stoneKnife';
-  if (player.boneKnife) player.boneKnife.visible = w === 'boneKnife';
+  if (player.boneKnife) player.boneKnife.visible = w === 'boneKnife' || w === 'trikeKnife';
   if (player.bow) player.bow.visible = w === 'bow';
   if (player.ironBow) player.ironBow.visible = w === 'ironBow';
   updateOutfit();
@@ -4788,9 +4794,9 @@ var DINO_STAT = {
    hostile: 플레이어를 먼저 공격하는 육식
    attackable: 플레이어가 먼저 사냥할 수 있는 대상 (펫 프테라노돈은 제외) */
 var DINO_META = {
-  trike: { tame: 34, drop: 3, reach: 3.7, cull: 46, drops: [['meat', 2], ['hideThick', 2]], name: '트리케라톱스', attackable: false },
-  para: { tame: 34, drop: 2, reach: 3.7, cull: 46, drops: [['meat', 2], ['hideThin', 2]], name: '파라사우롤로푸스', attackable: false },
-  raptor: { tame: 0, drop: 2, reach: 3.7, cull: 58, drops: [['meat', 2], ['hideTough', 1]], name: '벨로시랩터', hostile: true, attackable: true },
+  trike: { tame: 34, drop: 3, reach: 3.7, cull: 46, drops: [['meat', 2], ['hideThick', 2], ['trikeClaw', 1]], name: '트리케라톱스', label: '트리케라톱스', attackable: true, tameFirst: true },
+  para: { tame: 34, drop: 2, reach: 3.7, cull: 46, drops: [['meat', 2], ['hideThin', 2]], name: '파라사우롤로푸스', label: '파라사우롤로푸스', attackable: false, tameFirst: true },
+  raptor: { tame: 0, drop: 2, reach: 3.7, cull: 58, drops: [['meat', 2], ['hideTough', 1]], name: '벨로시랩터', label: '랩터', hostile: true, attackable: true },
   allo: { tame: 0, drop: 4, reach: 5.2, cull: 64, drops: [['fineMeat', 3], ['hideBeast', 2], ['fang', 1]], name: '알로사우루스', hostile: true, attackable: true },
   brachio: { tame: 12, drop: 5, reach: 6.6, cull: 150, drops: [['bulkMeat', 4], ['hideGiant', 3]], name: '브라키오사우루스', attackable: true },
   compy: { tame: 0, drop: 1, reach: 3.7, cull: 46, drops: [['meat', 1], ['hideThin', 1]], name: '콤프소그나투스', attackable: true },
@@ -4802,7 +4808,7 @@ var DINO_META = {
   anky: { tame: 22, drop: 3, reach: 4.0, cull: 70, drops: [['meat', 3], ['hideThick', 3]], name: '안킬로사우루스', attackable: true },
   ptero: { tame: 0, drop: 1, reach: 3.0, cull: 80, drops: [['meat', 1], ['feather', 2]], name: '프테라노돈', attackable: false, fly: true },
   stego: { tame: 20, drop: 4, reach: 4.4, cull: 92, drops: [['meat', 2], ['hideThick', 3]], name: '스테고사우루스', attackable: true },
-  pachy: { tame: 26, drop: 2, reach: 3.4, cull: 52, drops: [['meat', 2], ['hideThin', 2]], name: '파키케팔로사우루스', attackable: false }
+  pachy: { tame: 26, drop: 2, reach: 3.4, cull: 52, drops: [['meat', 2], ['hideThin', 2]], name: '파키케팔로사우루스', label: '파키', attackable: false, tameFirst: true }
 };
 
 /* 테이밍 먹이 — 종별 지정이 없으면 열매 */
@@ -4865,7 +4871,7 @@ function spawnDino(kind, x, z, opt) {
   }
   built.group.position.set(x, terrainH(x, z), z);
   scene.add(built.group);
-  if (d.tamed) addNameTag(d);
+  if (d.tamed) addNameTag(d); else addSpeciesTag(d);
   dinos.push(d);
   return d;
 }
@@ -4889,6 +4895,51 @@ function addNameTag(d) {
   sp.position.y = d.parts.height + hs * 0.42;
   d.group.add(sp);
   d.tag = sp;
+}
+
+/* =====================================================
+   🦖 야생 공룡 이름표 — 가까이(24m 이내) 있으면 머리 위에
+   종 이름(랩터 · 트리케라톱스 …)을 반투명하게 띄운다.
+   · 텍스처는 종별로 1장만 만들어 공유한다(15종 → 15장).
+   · 스탯/배회/애니메이션은 건드리지 않고 Sprite 표시만 담당.
+   ===================================================== */
+var WILD_TAG_TEX = {};
+var WILD_TAG_R = 24;          // 이름표 표시 거리(m)
+function wildTagTexture(name) {
+  var t = WILD_TAG_TEX[name];
+  if (t) return t;
+  var cv = document.createElement('canvas');
+  cv.width = 384; cv.height = 96;
+  var ctx = cv.getContext('2d');
+  var font = 'bold 34px -apple-system, "Apple SD Gothic Neo", sans-serif';
+  ctx.font = font;
+  var tw = Math.ceil(ctx.measureText(name).width);
+  var w = Math.min(368, Math.max(96, tw + 40)), h = 62, x = (384 - w) / 2, y = 15;
+  ctx.fillStyle = 'rgba(16,26,22,.52)';
+  roundRect(ctx, x, y, w, h, 24); ctx.fill();
+  ctx.strokeStyle = 'rgba(232,246,226,.34)';
+  ctx.lineWidth = 2; ctx.stroke();
+  ctx.font = font;
+  ctx.fillStyle = 'rgba(246,255,240,.94)';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(name, 192, 47);
+  t = new THREE.CanvasTexture(cv);
+  WILD_TAG_TEX[name] = t;
+  return t;
+}
+function addSpeciesTag(d) {
+  var meta = DINO_META[d.kind] || {};
+  var nm = meta.label || meta.name;
+  if (!nm) return null;
+  var mat = new THREE.SpriteMaterial({ map: wildTagTexture(nm), transparent: true, depthWrite: false, opacity: 0 });
+  var sp = new THREE.Sprite(mat);
+  var hs = clamp((d.parts.height || 1) * 0.58, 2.6, 3.8);
+  sp.scale.set(hs, hs * 0.25, 1);
+  sp.position.y = (d.parts.height || 1) + 0.9;
+  sp.visible = false;
+  d.group.add(sp);
+  d.speciesTag = sp;
+  return sp;
 }
 function roundRect(ctx, x, y, w, h, r) {
   ctx.beginPath();
@@ -8871,6 +8922,15 @@ function computeContext() {
   if (_nest && (!_nest.egg || _nest.egg.done) && (S.inv.pteroEgg || 0) > 0) {
     return { type: 'putEgg', nst: _nest, label: '🥚 알 넣기' };
   }
+  // 온순한 테이밍 대상(트리케라톱스·파라·파키)은 가까이서 먹이를 들고 있으면
+  // '먹이 주기'가 먼저 — 발톱을 얻으려고 사냥할 때는 먹이를 비우거나 활로 멀리서 맞힌다
+  var _hT = nearestHerb(3.5);
+  if (_hT && !_hT.tamed && !(_hT.provoked > 0) && (DINO_META[_hT.kind] || {}).tameFirst) {
+    var _tf = tameFoodOf(_hT);
+    if ((S.inv[_tf] || 0) > 0) {
+      return { type: 'tame', d: _hT, label: (ITEMS[_tf] ? ITEMS[_tf].name : _tf) + ' 주기' };
+    }
+  }
   var r = nearestHostile(3.9);
   if (r) return { type: 'attack', d: r, label: r.kind === 'compy' ? '사냥' : '공격' };
   var n = nearestNode(3.1);
@@ -9008,8 +9068,9 @@ function gatherNode(n) {
     sfx('pick');
     spawnBurst(n.x, y + 0.6, n.z, 0xd9a437, 6, 0.6);
   } else if (n.kind === 'nest') {
-    // 🥚 희귀 드랍 — 보통은 빈 둥지(깃털·나뭇가지)
-    if (Math.random() < 0.19) {
+    // 🥚 아주 희귀한 드랍 — 보통은 빈 둥지(깃털·나뭇가지)
+    //    둥지 50곳 중 1곳 꼴(2%)로 낮춰 익룡 알 희귀도를 크게 올렸다
+    if (Math.random() < 0.02) {
       addItem('pteroEgg', 1);
       got.push('🥚 익룡 알 +1');
       toast('🥚 익룡 알을 얻었어요! 부화 둥지에서 품어 보세요', 'good');
@@ -10093,6 +10154,8 @@ function nearestFireMusic() { return nearestFire(9); }
    ・ 대형 육식공룡(티라노·스피노) 출몰 위치
    ========================================================= */
 var MAP = { open: false, base: null, size: 560, half: 176, ctx: null };
+/* 🦖 군락 표시용 — spawnPack() 이 채운다 (지도 라벨) */
+var PACKS = [];
 var mapCanvas = $id('mapCanvas'), mapCard = $id('mapCard');
 function mapPx(x, z) {
   var k = MAP.size / (2 * MAP.half);
@@ -10139,8 +10202,9 @@ function buildMapBase() {
   c.putImageData(img, 0, 0);
   return cv;
 }
-function mapText(c, txt, x, z, size, fill, shadow) {
+function mapText(c, txt, x, z, size, fill, shadow, placed) {
   var p = mapPx(x, z);
+  if (placed) { placed.push({ x: p[0], y: p[1], w: Math.max(30, txt.length * size * 0.55), h: size }); }
   c.font = 'bold ' + size + 'px -apple-system, "Apple SD Gothic Neo", sans-serif';
   c.textAlign = 'center'; c.textBaseline = 'middle';
   if (shadow !== false) {
@@ -10150,6 +10214,7 @@ function mapText(c, txt, x, z, size, fill, shadow) {
   }
   c.fillStyle = fill;
   c.fillText(txt, p[0], p[1]);
+  return p;
 }
 function drawMap() {
   if (!mapCanvas) return;
@@ -10160,19 +10225,55 @@ function drawMap() {
   c.clearRect(0, 0, S, S);
   c.drawImage(MAP.base, 0, 0, S, S);
 
-  // ── 바이옴 이름 라벨
-  mapText(c, '🏜️ 사막', Math.cos(2.34) * 100, Math.sin(2.34) * 100, 19, '#fff3d0');
-  mapText(c, '❄️ 툰드라', Math.cos(-2.42) * 102, Math.sin(-2.42) * 102, 19, '#eaf6ff');
-  mapText(c, '🌲 숲', 108, 6, 19, '#dcf3d4');
-  mapText(c, '🌾 초원', -108, 4, 19, '#f2ffe2');
-  mapText(c, '🏔 고원', -38, -104, 19, '#f4efe0');
-  mapText(c, '🏹 들판', 46, 100, 18, '#f2ffe2');
-  mapText(c, '🌊 바다', -96, 132, 17, '#cfeeff');
+  // ── 바이옴 이름 라벨 (군락 라벨이 겹치지 않게 자리를 미리 잡아 둔다)
+  var placed = [];
+  mapText(c, '🏜️ 사막', Math.cos(2.34) * 100, Math.sin(2.34) * 100, 19, '#fff3d0', true, placed);
+  mapText(c, '❄️ 툰드라', Math.cos(-2.42) * 102, Math.sin(-2.42) * 102, 19, '#eaf6ff', true, placed);
+  mapText(c, '🌲 숲', 108, 6, 19, '#dcf3d4', true, placed);
+  mapText(c, '🌾 초원', -108, 4, 19, '#f2ffe2', true, placed);
+  mapText(c, '🏔 고원', -38, -104, 19, '#f4efe0', true, placed);
+  mapText(c, '🏹 들판', 46, 100, 18, '#f2ffe2', true, placed);
+  mapText(c, '🌊 바다', -96, 132, 17, '#cfeeff', true, placed);
   var rv = mapPx(riverCenterX(46), 46);
+  placed.push({ x: rv[0], y: rv[1], w: 18, h: 15 });
   c.font = 'bold 15px -apple-system, "Apple SD Gothic Neo", sans-serif';
   c.textAlign = 'center'; c.fillStyle = '#eafcff';
   c.strokeStyle = 'rgba(10,40,40,.6)'; c.lineWidth = 2.5;
   c.strokeText('강', rv[0], rv[1]); c.fillText('강', rv[0], rv[1]);
+
+  // ── 🦖 공룡 군락 — 이름 + 마릿수 (살짝 작게, 겹치면 아래로 한 줄씩 비켜 놓는다)
+  if (PACKS && PACKS.length) {
+    var PACK_COL = { raptor: '#ff9f80', compy: '#ffd479', trike: '#c8f0a0', mammoth: '#bfe6ff', stego: '#d9e8b0', pachy: '#f0d8a0' };
+    for (var pk = 0; pk < PACKS.length; pk++) {
+      var P = PACKS[pk];
+      if (!P || !P.n) continue;
+      var ppk = mapPx(P.x, P.z);
+      var ptw = Math.max(40, (P.label.length + 2) * 8.5);
+      var ly = ppk[1] + 13;
+      for (var tries = 0; tries < 5; tries++) {
+        var clash = false;
+        for (var q = 0; q < placed.length; q++) {
+          var ox2 = Math.abs(placed[q].x - ppk[0]), oy2 = Math.abs(placed[q].y - ly);
+          if (ox2 < (placed[q].w + ptw) * 0.5 && oy2 < 22) { clash = true; break; }
+        }
+        if (!clash) break;
+        ly += 22;
+      }
+      placed.push({ x: ppk[0], y: ly, w: ptw, h: 14 });
+      c.save();
+      c.beginPath(); c.arc(ppk[0], ppk[1], 3.4, 0, TAU);
+      c.fillStyle = PACK_COL[P.kind] || '#ffe6a8';
+      c.fill();
+      c.lineWidth = 1.4; c.strokeStyle = 'rgba(18,30,24,.65)'; c.stroke();
+      c.font = 'bold 15px -apple-system, "Apple SD Gothic Neo", sans-serif';
+      c.textAlign = 'center'; c.textBaseline = 'middle';
+      c.lineWidth = 3.2; c.strokeStyle = 'rgba(12,26,22,.62)';
+      c.strokeText(P.label + ' ' + P.n, ppk[0], ly);
+      c.fillStyle = 'rgba(255,248,226,.94)';
+      c.fillText(P.label + ' ' + P.n, ppk[0], ly);
+      c.restore();
+    }
+  }
 
   // ── 주거(안전) 구역 — 시작 마을
   var hm = mapPx(HOME.x, HOME.z);
@@ -10264,7 +10365,7 @@ function openMap() {
   mapCard.setAttribute('aria-hidden', 'false');
   if (mapNoteEl) mapNoteEl.textContent = '지도 그리는 중…';
   drawMap();
-  if (mapNoteEl) mapNoteEl.textContent = '내 위치(▶) · 🏡 내 집 · 오두막/모닥불/작업대 · 길들인 공룡 · ⚠ 대형 육식공룡';
+  if (mapNoteEl) mapNoteEl.textContent = '내 위치(▶) · 🏡 내 집 · 오두막/모닥불/작업대 · 길들인 공룡 · ⚠ 대형 육식공룡 · 🦖 군락(마릿수)';
 }
 function closeMap() {
   MAP.open = false;
@@ -11278,6 +11379,20 @@ function updateDinos(dt, t) {
 
     var dp = Math.sqrt((d.x - player.pos.x) * (d.x - player.pos.x) + (d.z - player.pos.z) * (d.z - player.pos.z));
 
+    // 🦖 야생 공룡 이름표 — 24m 이내일 때만 머리 위에 띄운다
+    //    · 가까워질수록 진해지고(20~24m 페이드인), 코앞(7m 이내)에서는 화면을 가리지 않게 사라진다
+    if (d.speciesTag) {
+      var _tagFar = (WILD_TAG_R - dp) / 4;
+      var _tagNear = (dp - 4.5) / 2.5;
+      var _tagA = Math.min(1, Math.min(_tagFar, _tagNear));
+      if (!d.tamed && !d.dead && _tagA > 0.02) {
+        d.speciesTag.material.opacity = _tagA;
+        if (!d.speciesTag.visible) d.speciesTag.visible = true;
+      } else if (d.speciesTag.visible) {
+        d.speciesTag.visible = false;
+      }
+    }
+
     if (d.kind === 'compy') {
       updateComp(d, dt, t, dp);
       animateComp(d, dt, t);
@@ -11521,6 +11636,7 @@ function revive() {
 function initWorld() {
   if (worldReady) return;
   worldReady = true;
+  PACKS.length = 0;
   makePlayer();
   var px = S.px || 0, pz = S.pz || 0;
   if (terrainH(px, pz) < 0.4) { px = HOME.x; pz = HOME.z; }
@@ -11553,6 +11669,41 @@ function initWorld() {
       if (terrainH(x2, z2) > 1.0 && biomeAt(x2, z2) === biome) return spawnDino(kind, x2, z2, opts);
     }
     return spawnDino(kind, rnd(-100, 100), rnd(-100, 20), opts);
+  }
+  /* ── 🦖 공룡 군락(무리 스폰) — 3~5마리가 한 자리를 중심으로 뭉쳐 다니다 ──
+     개체 수를 55 → 86마리로 늘리고, 지도에도 군락 이름을 표시한다. */
+  function packSpot(biome, minD) {
+    for (var t = 0; t < 260; t++) {
+      var aa = Math.random() * TAU, rr = rnd(30, 150);
+      var xx = Math.cos(aa) * rr, zz = Math.sin(aa) * rr;
+      var hh = terrainH(xx, zz);
+      if (hh < 1.1) continue;
+      if (biomeAt(xx, zz, hh) !== biome) continue;
+      var ddx = xx - player.pos.x, ddz = zz - player.pos.z;
+      if (ddx * ddx + ddz * ddz < minD * minD) continue;
+      if (isSafeZone(xx, zz)) continue;
+      if (riverDepth(xx, zz) > 0.02) continue;
+      return { x: xx, z: zz };
+    }
+    return null;
+  }
+  function spawnPack(kind, biome, minD, n, spread, label) {
+    var spot = packSpot(biome, minD);
+    if (!spot) return 0;
+    var made = 0;
+    for (var i = 0; i < n; i++) {
+      var a = (i / n) * TAU + rnd(-0.35, 0.35);
+      var rad = i === 0 ? 0 : rnd(spread * 0.4, spread);
+      var x = spot.x + Math.cos(a) * rad, z = spot.z + Math.sin(a) * rad;
+      if (terrainH(x, z) < 1.0 || riverDepth(x, z) > 0.02) { x = spot.x; z = spot.z; }
+      var d = spawnDino(kind, x, z, { biome: biome });
+      if (!d) continue;
+      d.homeX = spot.x; d.homeZ = spot.z;     // 무리 전체가 같은 자리를 중심으로 배회
+      d.packLabel = label;
+      made++;
+    }
+    if (made) PACKS.push({ x: spot.x, z: spot.z, label: label, kind: kind, n: made });
+    return made;
   }
   /* 강가·해안가 포식자 — 물길 옆 둑에 배치 */
   function spawnNearRiver(kind, minD) {
@@ -11614,6 +11765,17 @@ function initWorld() {
   spawnInBiome('ptero', 'desert', 38);
   spawnInBiome('ptero', 'shore', 60);
 
+  // 🦖 군락 — 3~5마리씩 무리로 배치 (기존 55 + 31 = 86마리)
+  spawnPack('raptor', 'forest', 46, 4, 6, '랩터 군락');
+  spawnPack('raptor', 'forest', 62, 3, 6, '랩터 군락');
+  spawnPack('compy', 'wilds', 34, 4, 4, '콤프 군락');
+  spawnPack('compy', 'forest', 42, 4, 4, '콤프 군락');
+  spawnPack('trike', 'meadow', 40, 3, 6, '트리케 군락');
+  spawnPack('trike', 'wilds', 52, 3, 6, '트리케 군락');
+  spawnPack('mammoth', 'tundra', 46, 4, 7, '매머드 군락');
+  spawnPack('stego', 'meadow', 44, 3, 6, '스테고 군락');
+  spawnPack('pachy', 'forest', 40, 3, 6, '파키 군락');
+
   // 콤프소그나투스 — 마을 밖 들판 1패 + 숲 속 1패
   var compSpots = [[12, 30], [16, 26], [8, 27]];
   for (var ci = 0; ci < compSpots.length; ci++) {
@@ -11640,6 +11802,7 @@ function initWorld() {
 
 /* ---------------- hud ---------------- */
 var hudT = 0, zoneT = 0;
+var _HOME_FWD = new THREE.Vector3(0, 0, -1);
 function updateHUD(dt) {
   hudT += dt;
   if (hudT < 0.1) return;
@@ -11663,9 +11826,17 @@ function updateHUD(dt) {
     var _showGuide = _dh > 30 && !MAP.open;
     if (homeGuideEl.classList.contains('on') !== _showGuide) homeGuideEl.classList.toggle('on', _showGuide);
     if (_showGuide) {
-      var _bear = Math.atan2(_dx, _dz);
-      var _rel = _bear - player.facing;
-      homeArrowEl.style.transform = 'rotate(' + (_rel * 180 / Math.PI).toFixed(0) + 'deg)';
+      // 🏡 화면 기준 방향 — 캐릭터가 보는 쪽(player.facing)이 아니라
+      // **카메라의 forward/right 벡터**에 (집 - 나) 벡터를 투영해 화살표를 돌린다.
+      // 0° = 화면 위(카메라 앞쪽으로 걸어갈 방향), 90° = 화면 오른쪽.
+      camera.getWorldDirection(_HOME_FWD);
+      _HOME_FWD.y = 0;
+      if (_HOME_FWD.lengthSq() < 1e-6) _HOME_FWD.set(0, 0, -1); else _HOME_FWD.normalize();
+      var _rx = -_HOME_FWD.z, _rz = _HOME_FWD.x;               // right = forward × up
+      var _rd = _dx * _rx + _dz * _rz;                        // 화면 오른쪽 성분
+      var _fd = _dx * _HOME_FWD.x + _dz * _HOME_FWD.z;        // 화면 위쪽 성분
+      var _deg = Math.atan2(_rd, _fd) * 180 / Math.PI;
+      homeArrowEl.style.transform = 'rotate(' + _deg.toFixed(0) + 'deg)';
       setText(homeDistEl, Math.round(_dh) + 'm');
     }
   }
@@ -12958,6 +13129,40 @@ window.__game = {
     return o;
   },
   /* ================= 🪺 익룡 알 부화 검수 ================= */
+  /* ================= 🦖 군락 · 이름표 · 집 화살표 검수 ================= */
+  packInfo: function () {
+    var tags = 0, shown = 0, wild = 0;
+    for (var i = 0; i < dinos.length; i++) {
+      var d = dinos[i];
+      if (d.tamed) continue;
+      wild++;
+      if (d.speciesTag) { tags++; if (d.speciesTag.visible) shown++; }
+    }
+    return {
+      total: dinos.length, wild: wild, tamed: dinos.length - wild,
+      packs: PACKS.map(function (p) { return { label: p.label, kind: p.kind, n: p.n, x: +p.x.toFixed(1), z: +p.z.toFixed(1) }; }),
+      byKind: (function () { var o = {}; for (var j = 0; j < dinos.length; j++) o[dinos[j].kind] = (o[dinos[j].kind] || 0) + 1; return o; })(),
+      tags: tags, tagsShown: shown
+    };
+  },
+  /* 집 화살표가 화면 기준으로 맞는지 — 0°=화면 위, 90°=오른쪽 */
+  homeArrow: function () {
+    var hs = homeSpot();
+    var dx = hs.x - player.pos.x, dz = hs.z - player.pos.z;
+    camera.getWorldDirection(_HOME_FWD);
+    _HOME_FWD.y = 0; _HOME_FWD.normalize();
+    var rx = -_HOME_FWD.z, rz = _HOME_FWD.x;
+    var deg = Math.atan2(dx * rx + dz * rz, dx * _HOME_FWD.x + dz * _HOME_FWD.z) * 180 / Math.PI;
+    return { dist: +Math.hypot(dx, dz).toFixed(1), deg: +deg.toFixed(1), css: homeArrowEl ? homeArrowEl.style.transform : '', on: !!(homeGuideEl && homeGuideEl.classList.contains('on')),
+      dir: Math.abs(deg) < 22.5 ? '화면 위' : (Math.abs(deg) > 157.5 ? '화면 아래' : (deg > 0 ? '화면 오른쪽' : '화면 왼쪽')) };
+  },
+  /* 둥지 알 드랍률 실측 — look(n) 번 둥지를 살펴본 것처럼 난수 돌렸을 때의 기대값 */
+  eggOdds: function (n) {
+    n = n || 5000;
+    var hit = 0;
+    for (var i = 0; i < n; i++) if (Math.random() < 0.02) hit++;
+    return { rolls: n, hits: hit, rate: +(hit / n * 100).toFixed(2) + '%', nestsForOne: Math.round(n / Math.max(1, hit)) };
+  },
   hatchSetup: function (withFire) {
     var x = HOME.x + 7, z = HOME.z - 7;
     if (withFire !== false && !nearestFire(9)) placeStructure('campfire', x, z, 0);
