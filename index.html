@@ -8744,10 +8744,10 @@ function makeCabin() {
     win.position.set(w * 1.20, 1.58, D / 2 + 0.07);
     front.add(win);
   }
-  // 굴뚝
+  // 굴뚝 — 지붕 염색에 휩쓸리지 않도록 벽(shell)에 넣는다
   var chim = new THREE.Mesh(new THREE.BoxGeometry(0.5, 1.35, 0.5), MAT.rock);
   chim.position.set(0.92, H + 0.82, -0.72);
-  roofG.add(chim);
+  shell.add(chim);
   // 지붕
   var roof = new THREE.Mesh(new THREE.ConeGeometry(3.25, 1.6, 4), MAT.roof);
   roof.position.y = H + 0.70;
