@@ -1243,7 +1243,7 @@
       </div>
       <div class="startSaveLine" id="startSaveLine"><span>저장 없음 · 새로 시작해요</span></div>
     </div>
-    <div class="startFoot" id="startFoot">WILD LIFE · v2.3d &nbsp;|&nbsp; 왼쪽 조이스틱으로 걷고 오른쪽 버튼으로 채집·공격</div>
+    <div class="startFoot" id="startFoot">WILD LIFE · v2.3e &nbsp;|&nbsp; 왼쪽 조이스틱으로 걷고 오른쪽 버튼으로 채집·공격</div>
   </div>
 
   <div class="slotPanel" id="slotPanel">
@@ -1955,13 +1955,19 @@ var RECIPES = [
   { id: 'dye', tab: 'process', station: 'dyeVat', benchCompat: true, out: 'dye', qty: 2, name: '염료(라벤더)', icon: '🎨', desc: '라벤더를 삶아 만든 보라 염료 · 보라 염색에 써요', cost: { lavender: 3, fiber: 1 }, unlock: 'lavender' }
 ];
 
-/* 가공·제작 시설 안내 — 가까이 서면 이 시설의 탭이 바로 열린다 */
+/* 가공·제작 시설 안내 — 가까이 서면 그 시설 전용 창이 바로 열린다 (v2.3e: 시설별 완전 분리) */
 var STATIONS = {
   dryingRack: { name: '건조대', icon: '🪵', tab: 'process', label: '🪵 건조대 쓰기', desc: '생가죽 → 무두질 가죽' },
   loom: { name: '베틀', icon: '🧵', tab: 'process', label: '🧵 베틀 쓰기', desc: '목화솜 → 옷감·솜' },
   dyeVat: { name: '염색대', icon: '🎨', tab: 'dye', label: '🎨 염색하기', desc: '꽃 염료로 옷·신발·지붕 염색' },
   tailorBench: { name: '의상 작업대', icon: '🧥', tab: 'clothes', label: '🧥 옷 만들기', desc: '옷·신발·배낭·솜옷' },
   smithBench: { name: '대장간', icon: '⚒️', tab: 'weapon', label: '⚒️ 무기 벼리기', desc: '칼·창·활' }
+};
+/* 시설 가공 탭 카드 — 한 줄 소개 (v2.3e) */
+var STATION_SHORT = {
+  dryingRack: '생가죽 → 무두질 가죽 5종',
+  loom: '목화솜 → 솜 · 옷감',
+  dyeVat: '꽃 염료 5색 · 옷/신발/지붕 염색'
 };
 var STATION_ORDER = ['dryingRack', 'loom', 'dyeVat', 'tailorBench', 'smithBench'];
 
@@ -10903,7 +10909,7 @@ function computeContext() {
     nearestStruct('dyeVat', 3.4) || nearestStruct('tailorBench', 3.4) || nearestStruct('smithBench', 3.4);
   if (_stn) {
     var _sd = STATIONS[_stn.type] || { label: '🛠 시설 쓰기', tab: 'basic' };
-    return { type: 'station', st: _stn, tab: _sd.tab, label: _sd.label };
+    return { type: 'station', st: _stn, station: _stn.type, tab: _sd.tab, label: _sd.label };
   }
   var n = nearestNode(3.1);
   if (n) return { type: 'gather', n: n, label: NODE_LABEL[n.kind] || '채집' };
@@ -10945,15 +10951,14 @@ function doAction() {
   if (c.type === 'shoot') { shootArrow(c.d); return; }
   if (c.type === 'chest') { openChest(c.st); return; }
   if (c.type === 'station') {
-    if (c.tab === 'dye') { openSheet('dye'); return; }
-    craftTab = c.tab || 'basic';
-    openSheet('craft');
+    // v2.3e — 그 시설 전용 창만 (건조대는 무두질만, 베틀은 솜·옷감만, 염색대는 염료·염색만)
+    openStationCraft(c.station || (c.tab === 'dye' ? 'dyeVat' : ''));
     return;
   }
   if (c.type === 'relight') { relightFire(c.st); return; }
   if (c.type === 'fire') { fireSt = c.st; openSheet('fire'); return; }
   if (c.type === 'gather') { gatherNode(c.n); return; }
-  if (c.type === 'bench') { craftTab = 'basic'; openSheet('craft'); return; }
+  if (c.type === 'bench') { openCraftHome(); return; }
   if (c.type === 'cook') { if (c.item) startCook(c.item); else sfx('deny'); return; }
   if (c.type === 'tame') { tameDino(c.d); return; }
   if (c.type === 'mount') { mountDino(c.d); return; }
@@ -12071,9 +12076,17 @@ function confirmDemolish() {
 /* ---------------- sheets ---------------- */
 var sheetMode = '';
 var craftTab = 'basic';
+/* v2.3e — 🏭 시설 전용 제작창.
+   값이 있으면(건조대·베틀·의상 작업대·대장간) 그 시설 레시피만 단독으로 보여 준다.
+   top 🛠 제작·간이 작업대에서는 null → 기초/의상/무기/시설 가공 탭 화면. */
+var craftStation = null;
 function openSheet(mode) {
   sheetMode = mode;
-  if (mode === 'craft') { sheetTitle.textContent = '제작'; sheetSub.textContent = '재료를 모아 물건을 만들어요'; }
+  if (mode === 'craft') {
+    var _cs = craftStation && STATIONS[craftStation] ? STATIONS[craftStation] : null;
+    if (_cs) { sheetTitle.textContent = _cs.icon + ' ' + _cs.name; sheetSub.textContent = _cs.desc; }
+    else { sheetTitle.textContent = '제작'; sheetSub.textContent = '재료를 모아 물건을 만들어요'; }
+  }
   else if (mode === 'book') { sheetTitle.textContent = '도감'; sheetSub.textContent = '이 섬의 것들'; }
   else if (mode === 'build') { sheetTitle.textContent = '설치'; sheetSub.textContent = '만든 물건을 놓아요'; }
   else if (mode === 'bag') { sheetTitle.textContent = '🎒 가방'; sheetSub.textContent = '소지품 · 장비 · 배낭'; }
@@ -12094,7 +12107,22 @@ function closeSheet() {
     chestSt = null;
   }
   if (sheetMode === 'fire') fireSt = null;
+  craftStation = null;
   sheet.classList.remove('on');
+}
+/* 시설 전용 제작창 열기 — 염색대는 염료 제작 + 염색할 곳이 한 장에 있는 염색 시트로 */
+function openStationCraft(id) {
+  var sd = STATIONS[id];
+  if (id === 'dyeVat') { craftStation = null; openSheet('dye'); return; }
+  craftStation = sd ? id : null;
+  craftTab = sd ? (sd.tab || 'basic') : 'basic';
+  openSheet('craft');
+}
+/* 전체 제작창(탭 화면) — 기초부터 */
+function openCraftHome() {
+  craftStation = null;
+  craftTab = 'basic';
+  openSheet('craft');
 }
 
 function recipeOwned(r) {
@@ -12825,6 +12853,16 @@ function renderDye() {
     })(DYE_ORDER[i]);
   }
 
+  /* 🌿 라벤더 염료(기존 레시피) — 해금했다면 염색대 창에서도 만들 수 있게 한 줄 더 */
+  var lavRec = findRecipe('dye');
+  if (lavRec && recipeUnlocked(lavRec)) {
+    var lavList = document.createElement('div');
+    lavList.className = 'recList';
+    lavList.style.marginTop = '7px';
+    lavList.appendChild(recipeRow(lavRec));
+    sheetBody.appendChild(lavList);
+  }
+
   // ── 2) 염색할 곳 ──
   var h2 = document.createElement('div');
   h2.className = 'sheetNote';
@@ -12906,7 +12944,47 @@ function renderSheet() {
     return;
   }
   if (sheetMode === 'craft') {
-    // 탭: 기초 / 의상 / 무기·대장간 / 가공·염색
+    /* ── 🏭 시설 전용 창 (v2.3e) — 앞에 선 그 시설의 레시피만 단독으로 ── */
+    var _sdOnly = (craftStation && STATIONS[craftStation]) ? STATIONS[craftStation] : null;
+    if (_sdOnly) {
+      sheetTitle.textContent = _sdOnly.icon + ' ' + _sdOnly.name;
+      sheetSub.textContent = _sdOnly.desc;
+      var _atSt = nearStationId(craftStation, 7.5);
+      var sHead = document.createElement('div');
+      sHead.className = 'sheetNote tight';
+      sHead.innerHTML = _sdOnly.icon + ' <b>' + _sdOnly.name + '</b> 전용 · ' + _sdOnly.desc +
+        (_atSt ? ' <span class="nearOk">앞에 있음</span>' : ' <span class="farTag">시설 앞에서 제작 가능</span>');
+      sheetBody.appendChild(sHead);
+      var sList = document.createElement('div');
+      sList.className = 'recList';
+      var sRows = 0;
+      for (var si = 0; si < RECIPES.length; si++) {
+        if (RECIPES[si].station !== craftStation) continue;
+        sRows++;
+        sList.appendChild(recipeRow(RECIPES[si]));
+      }
+      if (!sRows) {
+        var sEmpty = document.createElement('div');
+        sEmpty.className = 'sheetNote tight';
+        sEmpty.textContent = '아직 이 시설에서 만들 레시피가 없어요';
+        sList.appendChild(sEmpty);
+      }
+      sheetBody.appendChild(sList);
+      var sBack = document.createElement('button');
+      sBack.type = 'button';
+      sBack.textContent = '← 전체 제작창';
+      sBack.style.cssText = 'width:100%;margin:10px 0 0;padding:10px;border-radius:12px;border:2px dashed rgba(224,177,90,.35);background:rgba(255,255,255,.04);color:#E5D9C0;font-weight:900;font-size:12px;cursor:pointer';
+      sBack.addEventListener('click', function () { openCraftHome(); });
+      sheetBody.appendChild(sBack);
+      var sNote = document.createElement('div');
+      sNote.className = 'sheetNote tight';
+      sNote.textContent = '이 창은 ' + _sdOnly.name + ' 하나만 보여 줘요 · 다른 시설은 그 시설 앞에서 · 가방 ' + bagUsed() + '/' + bagSlots() + '칸';
+      sheetBody.appendChild(sNote);
+      return;
+    }
+
+    // 탭: 기초 / 의상 / 무기·대장간 / 시설 가공
+    if (craftTab === 'process') craftTab = 'station';
     var tabs = document.createElement('div');
     tabs.className = 'tabs';
     var _bench = nearWorkbench();
@@ -12914,7 +12992,7 @@ function renderSheet() {
       ['basic', '기초', '🧰', ''],
       ['clothes', '의상', '🧥', (_bench || nearStationId('tailorBench')) ? '' : '🔒'],
       ['weapon', '무기·대장', '⚒️', (_bench || nearStationId('smithBench')) ? '' : '🔒'],
-      ['process', '가공·염색', '🎨', (_bench || nearAnyStation()) ? '' : '🔒']
+      ['station', '시설 가공', '🏭', '']
     ];
     for (var ti = 0; ti < defs.length; ti++) {
       (function (d) {
@@ -12934,36 +13012,46 @@ function renderSheet() {
     _head.innerHTML = (craftTab === 'basic' ? '🧰 <b>기초</b> · 시설 없이 바로'
       : craftTab === 'clothes' ? '🧥 <b>의상</b> · 의상 작업대 / 간이 작업대'
         : craftTab === 'weapon' ? '⚒️ <b>무기·대장</b> · 대장간 / 간이 작업대'
-          : '🎨 <b>가공·염색</b> · 건조대 · 베틀 · 염색대') +
+          : '🏭 <b>시설 가공</b> · 시설마다 전용 창') +
       (_bench ? ' <span class="nearOk">🪚 작업대 OK</span>' : '') +
       (_nearSt ? ' <span class="nearOk">지금 앞: ' + (STATIONS[_nearSt.type] ? STATIONS[_nearSt.type].icon + ' ' + STATIONS[_nearSt.type].name : _nearSt.type) + '</span>' : '');
     sheetBody.appendChild(_head);
 
-    if (craftTab === 'process' && nearStationId('dyeVat', 3.4)) {
-      var dyeBtn = document.createElement('button');
-      dyeBtn.className = 'wideBtn';
-      dyeBtn.style.cssText = 'width:100%;margin:0 0 9px;padding:11px;border-radius:12px;border:0;background:linear-gradient(180deg,#8b5cc8,#6a44a0);color:#fff;font-weight:900;font-size:13px';
-      dyeBtn.textContent = '🎨 염색대 열기 — 옷 · 신발 · 지붕 물들이기';
-      dyeBtn.addEventListener('click', function () { openSheet('dye'); });
-      sheetBody.appendChild(dyeBtn);
+    /* 🏭 시설 가공 탭 — 건조대·베틀·염색대를 한 줄로 섞지 않고 시설 카드 3장으로 */
+    if (craftTab === 'station') {
+      var fList = document.createElement('div');
+      fList.className = 'recList';
+      for (var fi = 0; fi < STATION_ORDER.length; fi++) {
+        (function (fid) {
+          if (fid === 'tailorBench' || fid === 'smithBench') return;
+          var sd = STATIONS[fid];
+          var near = nearStationId(fid, 7.5);
+          var el = document.createElement('div');
+          el.className = 'rec' + (near ? '' : ' blocked');
+          el.title = sd.name + ' — ' + sd.desc;
+          el.innerHTML = '<div class="ic">' + sd.icon + '</div>' +
+            '<div class="txt"><div class="nmrow"><b>' + sd.name + '</b>' +
+            (near ? '<em class="tg own">앞에 있음</em>' : '<em class="tg lock">시설 필요</em>') + '</div>' +
+            '<div class="cost"><span class="short">' + (STATION_SHORT[fid] || sd.desc) + '</span></div></div>' +
+            '<button>열기</button>';
+          el.querySelector('button').addEventListener('click', function () { openStationCraft(fid); });
+          fList.appendChild(el);
+        })(STATION_ORDER[fi]);
+      }
+      sheetBody.appendChild(fList);
+      var fNote = document.createElement('div');
+      fNote.className = 'sheetNote tight';
+      fNote.innerHTML = '🏭 시설마다 창이 따로예요 — 앞에 서면 오른쪽 큰 버튼이 그 시설 전용 창으로 바뀌고, 여기서는 시설을 하나씩 열어 볼 수 있어요. 옷·무기는 의상 작업대·대장간 창에서 만들어요.';
+      sheetBody.appendChild(fNote);
+      return;
     }
 
-    var warmHdr = false, lastStation = null;
+    var warmHdr = false;
     var listEl = document.createElement('div');
     listEl.className = 'recList';
     for (var i = 0; i < RECIPES.length; i++) {
       var rec = RECIPES[i];
       if (rec.tab !== craftTab) continue;
-      if (craftTab === 'process' && rec.station !== lastStation) {
-        lastStation = rec.station;
-        var sd = STATIONS[rec.station];
-        if (sd) {
-          var hdr = document.createElement('div');
-          hdr.className = 'sheetNote tight group';
-          hdr.innerHTML = sd.icon + ' <b>' + sd.name + '</b>' + (nearStationId(rec.station, 7.5) ? ' <span class="nearOk">앞에 있음</span>' : ' <span class="farTag">시설 필요</span>');
-          listEl.appendChild(hdr);
-        }
-      }
       if (rec.warmSet && !warmHdr) {
         warmHdr = true;
         var wh = document.createElement('div');
@@ -12976,7 +13064,9 @@ function renderSheet() {
     sheetBody.appendChild(listEl);
     var note = document.createElement('div');
     note.className = 'sheetNote tight';
-    note.textContent = '시설 앞(7.5m)에서 만들 수 있어요 · 새 재료를 얻으면 🔓 해금 · 가방 ' + bagUsed() + '/' + bagSlots() + '칸';
+    note.textContent = (craftTab === 'clothes' ? '의상 작업대 / 간이 작업대 가까이에서 만들 수 있어요' :
+      craftTab === 'weapon' ? '대장간 / 간이 작업대 가까이에서 만들 수 있어요' :
+        '기초는 시설 없이 바로 만들 수 있어요') + ' · 새 재료를 얻으면 🔓 해금 · 가방 ' + bagUsed() + '/' + bagSlots() + '칸';
     sheetBody.appendChild(note);
   } else if (sheetMode === 'book') {
     var stats = document.createElement('div');
@@ -13722,13 +13812,13 @@ btnBuild.addEventListener('pointerdown', function (e) {
   var total = 0;
   for (var k in S.made) total += S.made[k] || 0;
   if (total <= 0) {
-    openSheet('craft');
+    openCraftHome();
     hint('먼저 모닥불·오두막·작업대를 제작해 보세요', 3000);
     return;
   }
   openSheet('build');
 });
-$id('btnCraft').addEventListener('click', function () { audioInit(); openSheet('craft'); });
+$id('btnCraft').addEventListener('click', function () { audioInit(); openCraftHome(); });
 if (btnDemolish) btnDemolish.addEventListener('pointerdown', function (e) { e.preventDefault(); openDemolish(); });
 if (btnPet) btnPet.addEventListener('pointerdown', function (e) { e.preventDefault(); audioInit(); openSheet('pet'); });
 $id('btnBag').addEventListener('click', function () { audioInit(); openSheet('bag'); });
@@ -16134,6 +16224,14 @@ requestAnimationFrame(loop);
 /* =========================================================
    debug hooks (testing only)
    ========================================================= */
+function namesOfRows(root) {
+  var out = [], els = root ? root.querySelectorAll('.rec') : [];
+  for (var i = 0; i < els.length; i++) {
+    var b = els[i].querySelector('.txt .nmrow b') || els[i].querySelector('.txt b');
+    out.push(b ? b.textContent : '?');
+  }
+  return out;
+}
 window.__game = {
   S: S, player: player, nodes: nodes, dinos: dinos, structures: structures,
   craft: craft, place: placeStructure, save: saveState,
@@ -17362,15 +17460,16 @@ window.__game = {
       CTX = ctx;                       // 실제 프레임에서는 updateHUD 가 CTX 를 채운다
       doAction();
       out.push({
-        type: type, ctx: ctx.type + ' / ' + ctx.label, tab: craftTab, sheet: sheetMode,
-        title: sheetTitle.textContent,
+        type: type, ctx: ctx.type + ' / ' + ctx.label, tab: craftTab, station: craftStation, sheet: sheetMode,
+        title: sheetTitle.textContent, sub: sheetSub.textContent,
         rows: sheetBody ? sheetBody.querySelectorAll('.rec').length : 0,
-        tabs: sheetBody ? sheetBody.querySelectorAll('.tabs .tab').length : 0
+        names: namesOfRows(sheetBody),
+        tabs: sheetBody ? sheetBody.querySelectorAll('.tabs .tab').length : 0,
+        head: (sheetBody && sheetBody.querySelector('.sheetNote')) ? sheetBody.querySelector('.sheetNote').textContent.slice(0, 80) : ''
       });
       closeSheet();
       removeStructure(st);
-    }
-    player.pos.set(px, 0, pz);
+    }    player.pos.set(px, 0, pz);
     player.pos.y = groundY(px, pz);
     player.group.position.copy(player.pos);
     return out;
@@ -17472,9 +17571,10 @@ window.__game = {
       saved: packState().dye, sheet: sheetMode, cabins: countStruct('cabin')
     };
   },
-  /* 제작창 탭 확인 — 탭 이름·행·버튼 상태 */
-  craftView: function (tab) {
-    craftTab = tab || 'process';
+  /* 제작창 탭 확인 — 탭 이름·행·버튼 상태 (station 을 넣으면 그 시설 전용 창) */
+  craftView: function (tab, station) {
+    craftStation = station || null;
+    craftTab = tab || (craftStation && STATIONS[craftStation] ? STATIONS[craftStation].tab : 'process');
     openSheet('craft');
     var rows = [], els = sheetBody.querySelectorAll('.rec'), i;
     for (i = 0; i < els.length; i++) {
@@ -17484,7 +17584,7 @@ window.__game = {
     }
     var tabs = [], ts = sheetBody.querySelectorAll('.tabs .tab');
     for (i = 0; i < ts.length; i++) tabs.push(ts[i].textContent);
-    return { tab: craftTab, tabs: tabs, mode: sheetMode, title: sheetTitle.textContent, rows: rows };
+    return { tab: craftTab, station: craftStation, tabs: tabs, mode: sheetMode, title: sheetTitle.textContent, sub: sheetSub.textContent, names: namesOfRows(sheetBody), rows: rows };
   },
   /* 근접 무기 궤적 — 무기 끝이 플레이어 머리 기준 정면(+lz)에 머무는지 */
   swingDir: function (wid) {
