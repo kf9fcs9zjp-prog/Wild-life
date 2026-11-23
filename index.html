@@ -10905,8 +10905,16 @@ function computeContext() {
   var _ch = nearestChest(2.6);
   if (_ch) return { type: 'chest', st: _ch, label: '📦 상자 열기' };
   /* 🏭 가공·제작 시설 — 작업대보다 가까우면(3.4m) 이쪽이 먼저 잡힌다 */
-  var _stn = nearestStruct('dryingRack', 3.4) || nearestStruct('loom', 3.4) ||
-    nearestStruct('dyeVat', 3.4) || nearestStruct('tailorBench', 3.4) || nearestStruct('smithBench', 3.4);
+  /* v2.3e — 3.4m 안에 여러 시설이 있어도(붙여 지은 내 기지) **가장 가까운 시설 하나**의 창을 연다.
+     고정 순서(건조대→베틀→…)로 고르면 염색대 바로 앞에 서도 건조대 창이 뜬다. */
+  var _stn = null, _stnD = 3.4 * 3.4;
+  for (var _si = 0; _si < STATION_ORDER.length; _si++) {
+    var _cand = nearestStruct(STATION_ORDER[_si], 3.4);
+    if (!_cand) continue;
+    var _sdx = _cand.x - player.pos.x, _sdz = _cand.z - player.pos.z;
+    var _sdd = _sdx * _sdx + _sdz * _sdz;
+    if (_sdd < _stnD) { _stnD = _sdd; _stn = _cand; }
+  }
   if (_stn) {
     var _sd = STATIONS[_stn.type] || { label: '🛠 시설 쓰기', tab: 'basic' };
     return { type: 'station', st: _stn, station: _stn.type, tab: _sd.tab, label: _sd.label };
