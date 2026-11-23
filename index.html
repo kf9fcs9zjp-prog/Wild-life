@@ -714,7 +714,9 @@
   }
   @media (max-height:560px){
     .stick{width:96px;height:96px}
-    .qslot{bottom:calc(env(safe-area-inset-bottom) + 150px)}
+    /* 가로 화면 — 세로 기둥은 화면 위로 넘치므로 오른쪽 아래 가로 줄로 눕힌다 */
+    .qslot{flex-direction:row-reverse;align-items:center;gap:4px;flex-wrap:wrap-reverse;
+      right:9px;left:auto;max-width:calc(100% - 120px);bottom:calc(env(safe-area-inset-bottom) + 150px)}
     .qbtn{width:30px;height:30px;font-size:13px}
     .qslot.many .qbtn.more{width:30px;height:18px;font-size:8px}
     .stick .knob{width:42px;height:42px;margin:-21px 0 0 -21px}
