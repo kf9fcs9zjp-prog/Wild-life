@@ -820,7 +820,7 @@
     background:rgba(255,255,255,.8);color:#4a5a4c;font-size:13px;font-weight:800;cursor:pointer;
   }
   #mapCanvas{
-    width:100%;aspect-ratio:1/1;display:block;border-radius:12px;
+    width:100%;aspect-ratio:1/1;max-height:48vh;display:block;border-radius:12px;
     background:#12303a;border:1px solid rgba(70,90,80,.25);
     box-shadow:inset 0 0 26px rgba(0,20,20,.35);
   }
@@ -831,6 +831,33 @@
   .mapLegend span{display:flex;align-items:center;gap:4px}
   .mapLegend i{width:9px;height:9px;border-radius:3px;display:inline-block;font-style:normal}
   .mapNote{font-size:8.5px;color:#7d8a7c;padding:0 3px}
+  /* ⛵ v3.0 — 섬 이동 연출 (뗏목 위에서 잠깐 덮인다) */
+  #isleVeil{
+    position:fixed;inset:0;z-index:64;display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(circle at 50% 42%, rgba(46,104,124,.55), rgba(6,14,22,.94));
+    opacity:0;pointer-events:none;transition:opacity .34s ease;
+  }
+  #isleVeil.on{opacity:1;pointer-events:auto}
+  .ivBox{display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center;color:#EAF6FF}
+  .ivBox b{font-size:34px;animation:ivBob 1.5s ease-in-out infinite}
+  .ivBox span{font-size:14px;font-weight:900;letter-spacing:-.01em}
+  .ivBox em{font-size:10px;font-style:normal;font-weight:700;color:#9FC2D2}
+  @keyframes ivBob{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-6px) rotate(4deg)}}
+  /* ⛵ v3.0 — 지도 아래 항해 줄 */
+  .travelBar{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:2px 0 0}
+  .tvBtn{
+    display:flex;flex-direction:column;gap:1px;align-items:flex-start;
+    padding:6px 8px 7px;border-radius:11px;cursor:pointer;text-align:left;
+    border:1px solid rgba(86,120,96,.28);background:rgba(255,255,255,.72);
+    font-family:inherit;color:#2f4238;
+  }
+  .tvBtn b{font-size:10.5px;font-weight:900;letter-spacing:-.01em}
+  .tvBtn small{font-size:8.5px;font-weight:700;color:#6d7c6c;line-height:1.25}
+  .tvBtn em{font-size:9px;font-style:normal;font-weight:900;color:#3f6b4a;margin-top:2px}
+  .tvBtn.on{border-color:rgba(224,177,90,.75);background:linear-gradient(180deg,rgba(255,241,209,.95),rgba(248,229,190,.9));color:#5a4527}
+  .tvBtn.on em{color:#8a6a32}
+  .tvBtn:active{transform:translateY(1px)}
+  .tvBtn[disabled]{cursor:default;opacity:.9}
 
   /* === 좁은 화면 가방 레이아웃 (맨 뒤에 두어 위 규칙을 덮는다) === */
   @media (max-width:440px){
@@ -1063,6 +1090,11 @@
   #mapCanvas{border-color:rgba(224,177,90,.24);box-shadow:inset 0 0 26px rgba(0,0,0,.5)}
   .mapLegend{color:#AAB3B7}
   .mapNote{color:#7F888C}
+  .tvBtn{background:rgba(38,46,44,.72);border-color:rgba(150,180,150,.24);color:#E8E2D2}
+  .tvBtn small{color:#A6B0A6}
+  .tvBtn em{color:#A9D8A6}
+  .tvBtn.on{background:linear-gradient(180deg,rgba(84,66,38,.9),rgba(58,44,24,.9));border-color:rgba(224,177,90,.55);color:#FFE9BE}
+  .tvBtn.on em{color:#F0C87A}
   #inapp{background:rgba(16,20,24,.95);border:1px solid rgba(224,177,90,.26)}
 
   /* v2.3d 새 컴포넌트 */
@@ -1487,6 +1519,7 @@
 
   <div class="hint" id="hint"></div>
   <div id="dmgFlash"></div>
+<div id="isleVeil" aria-hidden="true"><div class="ivBox"><b>⛵</b><span id="isleVeilTxt">항해 중…</span><em>잠시만 기다려 주세요</em></div></div>
 </div>
 
 <div id="mapCard" aria-hidden="true">
@@ -1504,6 +1537,7 @@
       <span><i style="background:#6ccdd2"></i>강가</span>
     </div>
     <div class="mapNote">내 위치(▶) · 오두막/모닥불/작업대 · 길들인 공룡 · ⚠ 대형 육식공룡 출몰</div>
+    <div class="travelBar" id="travelBar"></div>
   </div>
 </div>
 
@@ -1532,7 +1566,7 @@
       </div>
       <div class="startSaveLine" id="startSaveLine"><span>저장 없음 · 새로 시작해요</span></div>
     </div>
-    <div class="startFoot" id="startFoot">WILD LIFE · v2.9 &nbsp;|&nbsp; 왼쪽 조이스틱으로 걷고 오른쪽 버튼으로 채집·공격 · 빨간 예고선은 💨 구르기로 피하기</div>
+    <div class="startFoot" id="startFoot">WILD LIFE · v3.0 &nbsp;|&nbsp; 왼쪽 조이스틱으로 걷고 오른쪽 버튼으로 채집·공격 · 빨간 예고선은 💨 구르기로 피하기</div>
   </div>
 
   <div class="slotPanel" id="slotPanel">
@@ -1774,7 +1808,9 @@ function defaultState() {
       cotton: 0, cottonWool: 0, clothCotton: 0, clothHemp: 0, tanThin: 0, tanThick: 0, tanBeast: 0, tanGiant: 0, tanFur: 0,
       petalRed: 0, petalYellow: 0, petalBlue: 0, petalPurple: 0, petalWhite: 0,
       dyeRed: 0, dyeYellow: 0, dyeBlue: 0, dyePurple: 0, dyeWhite: 0,
-      cottonCoat: 0, cottonLeatherCoat: 0, tanCoat: 0
+      cottonCoat: 0, cottonLeatherCoat: 0, tanCoat: 0,
+      /* ⛵ v3.0 — 원시 섬 희귀 자원 */
+      metalOre: 0, rareHerb: 0, herbTonic: 0
     },
     tools: { axe: false, spear: false, bow: false, boneSpear: false, ironBow: false },
     equip: { armor: '', hat: '', boots: '', backpack: '', weapon: '' },
@@ -1784,7 +1820,8 @@ function defaultState() {
     made: {
       campfire: 0, cabin: 0, workbench: 0, chair: 0, table: 0, planter: 0, hatchNest: 0, chest: 0,
       woodBox: 0, metalBox: 0, premiumBox: 0,
-      dryingRack: 0, loom: 0, dyeVat: 0, tailorBench: 0, smithBench: 0, leatherRug: 0, leatherCanopy: 0
+      dryingRack: 0, loom: 0, dyeVat: 0, tailorBench: 0, smithBench: 0, leatherRug: 0, leatherCanopy: 0,
+      fence: 0, bed: 0, lantern: 0
     },
     structures: [],
     tamed: [],
@@ -1797,6 +1834,8 @@ function defaultState() {
     handReady: [],
     /* v2.4 — 📈 탐험 레벨 (채집·사냥·제작으로 쌓인다) */
     lv: 1, exp: 0,
+    /* ⛵ v3.0 — 지금 섬 · 동행 공룡 pid */
+    isle: 'home', companion: '',
     /* v2.3d — ⚡ 저사양 모드 (그림자 끄기·시야 축소·픽셀비 1.0) */
     lowSpec: false,
     px: 0, pz: 88,
@@ -1836,6 +1875,7 @@ function packState() {
     hand: (S.hand || []).slice(0, 6),
     handReady: (S.handReady || []).slice(0, 12),
     lv: S.lv || 1, exp: Math.round(S.exp || 0),
+    isle: ISLE.cur, companion: S.companion || '',
     lowSpec: !!S.lowSpec,
     world: { dayT: (typeof DAY !== 'undefined') ? DAY.t : 0.36 },
     muted: !!S.muted,
@@ -1927,6 +1967,8 @@ function applyData(d) {
     for (var si = 0; si < S.structures.length; si++) conv(S.structures[si] && S.structures[si].items);
     for (var pi = 0; pi < S.packed.length; pi++) conv(S.packed[pi] && S.packed[pi].items);
   })();
+  S.isle = (d.isle === 'jungle') ? 'jungle' : 'home';
+  S.companion = (typeof d.companion === 'string') ? d.companion : '';
   S.lowSpec = !!d.lowSpec;
   S.muted = !!d.muted;
   S.seen = true;
@@ -2142,6 +2184,10 @@ var ITEMS = {
   herb: { name: '약초', icon: '🌿', food: 6, hp: 14 },
   mushroom: { name: '버섯', icon: '🍄', food: 11, hp: 2 },
   iron: { name: '철광석', icon: '🔩' },
+  /* ── ⛵ v3.0 야생 원시 섬의 희귀 자원 ── */
+  metalOre: { name: '금속 광석', icon: '🪙', desc: '원시 섬 광맥에서만 나오는 고순도 광석 · 대장간에서 철로 제련' },
+  rareHerb: { name: '희귀 약초', icon: '🌱', food: 8, hp: 32, desc: '원시 섬 깊은 숲의 약초 · 강장제 재료' },
+  herbTonic: { name: '강장제', icon: '🧪', food: 12, hp: 62, buff: 'feast', desc: '희귀 약초를 달인 비약 · 체력 +62 · 공격·방어 +20% 5분' },
   hideThin: { name: '얇은 가죽', icon: '🦎' },
   hideTough: { name: '질긴 랩터 가죽', icon: '🦖' },
   hideThick: { name: '두꺼운 가죽', icon: '🦏' },
@@ -2275,6 +2321,7 @@ var ITEM_ORDER = [
   'dishSteak', 'dishHerbStew', 'dishSoup', 'dishKebab', 'dishFeast',
   'herb', 'mushroom', 'iron', 'hideThin', 'hideTough', 'hideThick', 'hideBeast', 'hideGiant', 'fang', 'trikeClaw',
   'cactusFruit', 'frostHerb', 'ice', 'bamboo', 'lavender', 'dye', 'banana', 'pineapple',
+  'metalOre', 'rareHerb', 'herbTonic',
   'mammothFur', 'spinoSail', 'tyrantLeather', 'tyrantFang', 'pteroEgg', 'feather',
   'cotton', 'cottonWool', 'clothCotton', 'clothHemp', 'tanThin', 'tanThick', 'tanBeast', 'tanGiant', 'tanFur',
   'petalRed', 'petalYellow', 'petalBlue', 'petalPurple', 'petalWhite',
@@ -2314,6 +2361,10 @@ var RECIPES = [
   { id: 'metalBox', tab: 'basic', made: true, name: '금속 박스', icon: '🗄️', desc: '보관함 20칸 · 철제 테두리로 튼튼하게', cost: { wood: 8, iron: 6, stone: 8 } },
   { id: 'premiumBox', tab: 'basic', made: true, name: '고급 박스', icon: '✨', desc: '보관함 30칸 · 무두질 가죽을 두른 최고급 보관함', cost: { wood: 12, iron: 10, stone: 10, tanBeast: 2 } },
   { id: 'hatchNest', tab: 'basic', made: true, name: '부화 둥지', icon: '🪺', desc: '모닥불(6m) 곁에 놓고 익룡 알을 품는 거점', cost: { stick: 4, reed: 3, fiber: 4 } },
+  /* ⛵ v3.0 — 공룡 울타리 · 생활 가구 */
+  { id: 'fence', tab: 'basic', made: true, name: '공룡 울타리', icon: '🪵', desc: '길들인 공룡 3마리까지 맡겨 두고 회복·교대하는 울타리', cost: { wood: 22, stick: 14, fiber: 10, hideThin: 3 } },
+  { id: 'bed', tab: 'basic', made: true, name: '가죽 침낭', icon: '🛏', desc: '옆에 서면 체력·허기가 빨리 차오르는 침낭 (밤엔 더 빠르게)', cost: { hideThin: 4, fiber: 6, stick: 2 } },
+  { id: 'lantern', tab: 'basic', made: true, name: '등불', icon: '🏮', desc: '밤을 밝히는 따뜻한 등불 · 곁에서 쉬면 회복이 조금 빨라져요', cost: { wood: 4, stick: 3, stone: 2, iron: 1 } },
 
   /* ── 🏭 듀랑고식 가공·제작 시설 5종 ── */
   { id: 'dryingRack', tab: 'basic', made: true, name: '건조대', icon: '🪵', desc: '생가죽을 말려 무두질 가죽으로 · 앞에서 「건조대 쓰기」', cost: { wood: 6, stick: 5, fiber: 4 } },
@@ -2381,6 +2432,9 @@ var RECIPES = [
   { id: 'dyeBlue', tab: 'process', station: 'dyeVat', out: 'dyeBlue', qty: 2, name: '파랑 꽃 염료', icon: '🔵', desc: '파랑 꽃잎 x3 + 섬유 → 파랑 염료 x2', cost: { petalBlue: 3, fiber: 1 } },
   { id: 'dyePurple', tab: 'process', station: 'dyeVat', out: 'dyePurple', qty: 2, name: '보라 꽃 염료', icon: '🟣', desc: '보라 꽃잎 x3 + 섬유 → 보라 염료 x2', cost: { petalPurple: 3, fiber: 1 } },
   { id: 'dyeWhite', tab: 'process', station: 'dyeVat', out: 'dyeWhite', qty: 2, name: '하양 꽃 염료', icon: '⚪', desc: '하양 꽃잎 x3 + 섬유 → 하양 염료 x2', cost: { petalWhite: 3, fiber: 1 } },
+  /* ⛵ v3.0 — 원시 섬 희귀 자원 가공 */
+  { id: 'ironSmelt', tab: 'process', station: 'smithBench', benchCompat: true, out: 'iron', qty: 3, name: '금속 광석 제련', icon: '🔩', desc: '금속 광석 1 + 돌 1 → 철광석 3 (대장간 화로)', cost: { metalOre: 1, stone: 1 }, unlock: 'metalOre' },
+  { id: 'herbTonic', tab: 'process', out: 'herbTonic', qty: 1, name: '강장제', icon: '🧪', desc: '희귀 약초 2 + 약초 2 → 체력 +62 · 공격·방어 +20% (5분)', cost: { rareHerb: 2, herb: 2 }, unlock: 'rareHerb' },
   { id: 'dye', tab: 'process', station: 'dyeVat', benchCompat: true, out: 'dye', qty: 2, name: '염료(라벤더)', icon: '🎨', desc: '라벤더를 삶아 만든 보라 염료 · 보라 염색에 써요', cost: { lavender: 3, fiber: 1 }, unlock: 'lavender' }
 ];
 
@@ -2478,6 +2532,7 @@ var CRAFT_T = {
   furHat: 360, furCoat: 480, furBoots: 360, sailCloak: 420, tyrantArmor: 900,
   cottonCoat: 210, cottonLeatherCoat: 300, tanCoat: 420,
   leatherRug: 120, leatherCanopy: 180,
+  fence: 90, bed: 60, lantern: 40, herbTonic: 45, ironSmelt: 50,
   /* 무기 */
   boneKnife: 180, boneSpear: 210, ironBow: 300, bambooSpear: 120,
   trikeKnife: 300, trikeSpear: 360, tyrantSpear: 900
@@ -2596,7 +2651,8 @@ var GATHER_TOOL = {
   bush: 'sickle', dryBush: 'sickle', herb: 'sickle', frostHerb: 'sickle',
   reed: 'sickle', wheat: 'sickle', fern: 'sickle', lavender: 'sickle', cotton: 'sickle',
   flower: 'sickle',
-  rock: 'pick', ore: 'pick', ice: 'pick'
+  rock: 'pick', ore: 'pick', ice: 'pick', metalVein: 'pick',
+  rareHerb: 'sickle', giantMushroom: 'sickle'
 };
 function gatherToolFor(kind) { return GATHER_TOOL[kind] || ''; }
 function gatherBoostFor(kind) {
@@ -3083,6 +3139,58 @@ function terrainBase(x, z) {
 }
 
 /* =========================================================
+   ⛵ v3.0 — 섬 이동 (고향 섬 · 야생 원시 섬)
+   ---------------------------------------------------------
+   terrainH() 가 ISLE.cur 를 보고 두 높이 함수 중 하나를 돌려준다.
+   지형 메시·나무/바위·공룡·구조물은 섬별로 따로 만들어 두고, 항해할 때
+   '지금 섬'의 것만 보이게 바꾼다(집·상자·제작 상태는 그대로 보존).
+   ========================================================= */
+var ISLE = {
+  cur: 'home',
+  built: { home: false, jungle: false },
+  dinoBuilt: { home: true, jungle: false },
+  spawn: { home: { x: 0, z: 90 }, jungle: null },
+  from: { home: null, jungle: null }
+};
+var ISLE_INFO = {
+  home: {
+    name: '고향 섬', icon: '🏡', short: '🏡 고향 섬',
+    sub: '내 집·상자·제작 시설이 그대로 있는 안전한 거점', lv: '입문', tint: '#8ede7a'
+  },
+  jungle: {
+    name: '야생 원시 섬', icon: '🌴', short: '🌴 원시 섬',
+    sub: 'Lv.15+ 거대 공룡 · 희귀 광석과 약초 · 더 험한 지형', lv: 'Lv.15+', tint: '#9be07a'
+  }
+};
+/* 야생 원시 섬 — 해안선이 조금 좁고 산줄기가 높으며, 대각선으로 깊은 협곡이 흐른다 */
+var HILLJ = { x: 26, z: -46, r: 72, h: 12.8 };
+var HILLJ2 = { x: -76, z: 16, r: 42, h: 7.6 };
+var HILLJ3 = { x: -14, z: 86, r: 32, h: 4.4 };
+function terrainBaseJ(x, z) {
+  var r = Math.sqrt(x * x + z * z);
+  var sh = smooth01((143 - r) / 54);
+  var h = -1.05 + 5.2 * sh;
+  h += Math.sin(x * 0.034 - 1.7) * Math.cos(z * 0.029 + 0.8) * 2.9 * sh;
+  h += Math.sin(x * 0.071 + 2.2) * Math.cos(z * 0.082 - 1.1) * 1.35 * sh;
+  h += (Math.sin(x * 0.26 - z * 0.21) * 0.28 + noise2(x * 0.45 + 5.1, z * 0.45 - 3.2) * 0.19) * sh;
+  var dx = x - HILLJ.x, dz = z - HILLJ.z;
+  var hm = clamp(1 - Math.sqrt(dx * dx + dz * dz) / HILLJ.r, 0, 1);
+  if (hm > 0) h += HILLJ.h * Math.pow(hm, 1.55) * sh;
+  var dx2 = x - HILLJ2.x, dz2 = z - HILLJ2.z;
+  var hm2 = clamp(1 - Math.sqrt(dx2 * dx2 + dz2 * dz2) / HILLJ2.r, 0, 1);
+  if (hm2 > 0) h += HILLJ2.h * Math.pow(hm2, 1.5) * sh;
+  var dx3 = x - HILLJ3.x, dz3 = z - HILLJ3.z;
+  var hm3 = clamp(1 - Math.sqrt(dx3 * dx3 + dz3 * dz3) / HILLJ3.r, 0, 1);
+  if (hm3 > 0) h += HILLJ3.h * Math.pow(hm3, 1.45) * sh;
+  /* 고대 협곡 — 섬을 비스듬히 가르는 깊은 골짜기 */
+  var cw = Math.abs((x * 0.82 + z * 0.57) - 10);
+  h -= smooth01((17 - cw) / 10) * sh * 2.8;
+  /* 가장자리 — 파도에 깎인 작은 만(灣) */
+  h += Math.sin(Math.atan2(z, x) * 5 + 1.2) * 1.05 * (1 - sh);
+  return h;
+}
+
+/* =========================================================
    얕은 강가 — 남쪽 들판/숲을 가로질러 바다로 흘러드는 개울
    ---------------------------------------------------------
    · 중심선은 z 의 함수(사행 곡선), 수면은 '둑보다 0.42m 아래'이면서
@@ -3152,8 +3260,8 @@ function riverProbe(x, z, out) {
 }
 
 function terrainH(x, z) {
-  var h = terrainBase(x, z);
-  if (z > RIVER.z0 && z < RIVER.z1) {
+  var h = (ISLE.cur === 'jungle') ? terrainBaseJ(x, z) : terrainBase(x, z);
+  if (ISLE.cur === 'home' && z > RIVER.z0 && z < RIVER.z1) {
     var rv = riverProbe(x, z, _rvA);
     if (rv) {
       var t = rv.d / rv.half;
@@ -3210,6 +3318,8 @@ function waterDepth(x, z) {
 function biomeAt(x, z, h) {
   if (h === undefined) h = terrainH(x, z);
   if (h < 1.15) return 'shore';
+  /* ⛵ 원시 섬은 'jungle'(원시 밈림) · 'highland'(바위 산등성이) 두 가지로만 나뉜다 */
+  if (ISLE.cur === 'jungle') return h > 7.4 ? 'highland' : 'jungle';
   var r = Math.sqrt(x * x + z * z);
   // 사막(남서) · 툰드라(북서) 는 고도와 무관하게 먼저 잡는다
   if (r > 30 && desertW(x, z) > 0.55) return 'desert';
@@ -3259,6 +3369,13 @@ var TC = {
   meadowC: new THREE.Color(0x4d5c33),
   mossy: new THREE.Color(0x4a5f33),
   dryGrass: new THREE.Color(0x9d955f),
+  /* ⛵ v3.0 원시 섬 팔레트 */
+  jungleA: new THREE.Color(0x35632c),
+  jungleB: new THREE.Color(0x477836),
+  jungleC: new THREE.Color(0x22461f),
+  jungleDirt: new THREE.Color(0x6f5230),
+  jungleRock: new THREE.Color(0x6d7462),
+  jungleMoss: new THREE.Color(0x486b3a),
   hill: new THREE.Color(0x6a7341),
   dirt: new THREE.Color(0x866e4d),
   dirtDark: new THREE.Color(0x634f35),
@@ -3334,8 +3451,8 @@ function terrainColor(x, z, h, slope, curv, out) {
     }
   }
 
-  // 🏜️ 사막 — 바닥 전체를 모래로 덮고 능선은 조금 밝게
-  var wDe = desertW(x, z);
+  // 🏜️ 사막 — 바닥 전체를 모래로 덮고 능선은 조금 밝게 (고향 섬에만)
+  var wDe = (ISLE.cur === 'jungle') ? 0 : desertW(x, z);
   if (wDe > 0.004) {
     _tc2.copy(TC.desertDune).lerp(TC.desertSand, smooth01((h - 1.4) / 2.4) * 0.7 + micro * 0.30);
     _tc2.multiplyScalar(0.94 + micro * 0.12);
@@ -3351,13 +3468,26 @@ function terrainColor(x, z, h, slope, curv, out) {
     out.lerp(_tc3, rockAmt * 0.92);
   }
 
-  // ❄️ 툰드라 — 눈이 덮인 설원 (가파른 면은 푸른 그늘)
-  var wTu = tundraW(x, z);
+  // ❄️ 툰드라 — 눈이 덮인 설원 (가파른 면은 푸른 그늘) · 고향 섬에만
+  var wTu = (ISLE.cur === 'jungle') ? 0 : tundraW(x, z);
   if (wTu > 0.004) {
     _tc2.copy(TC.snow).lerp(TC.snowShade, smooth01((slope - 0.22) / 0.9) * 0.62 + (1 - patch) * 0.22);
     if (h > 8.4) _tc2.lerp(TC.iceGlint, smooth01((h - 8.4) / 2.2) * 0.35);
     _tc2.multiplyScalar(0.97 + micro * 0.06);
     out.lerp(_tc2, Math.min(1, wTu * 1.14));
+  }
+
+  /* ⛵ v3.0 원시 섬 — 짙은 밈림 녹음과 붉은 흙, 이끼 낀 바위로 물들인다 */
+  if (ISLE.cur === 'jungle') {
+    _tc2.copy(TC.jungleA).lerp(TC.jungleB, micro * 0.62 + patch * 0.38);
+    _tc2.lerp(TC.jungleC, Math.pow(1 - patch, 2.0) * 0.52 + smooth01((h - 3.2) / 3.4) * 0.35);
+    _tc2.lerp(TC.jungleDirt, Math.pow(patch, 3.0) * 0.30 + bareAmt * 0.26);
+    out.lerp(_tc2, 0.95 * grassW);
+    if (rockAmt > 0.001) {
+      _tc3.copy(TC.jungleRock).lerp(TC.rockLight, micro * 0.38);
+      _tc3.lerp(TC.jungleMoss, (1 - micro) * 0.35);
+      out.lerp(_tc3, Math.min(0.95, rockAmt * 0.90));
+    }
   }
 
   // gentle AO from local curvature + fine dither (v2.4 — 얼룩 대비를 올려 바닥이 밋밋하지 않게)
@@ -3528,14 +3658,15 @@ function meshGroundY(x, z) {
   var b = TG.h[i01] + (TG.h[i11] - TG.h[i01]) * tx;
   return a + (b - a) * tz;
 }
-(function buildTerrain() {
-  var SIZE = 380, seg = 190;
-  var geo = new THREE.PlaneGeometry(SIZE, SIZE, seg, seg);
-  geo.rotateX(-Math.PI / 2);
+/* ⛵ v3.0 — 섬을 옮기면 이 함수가 지형 메시를 그 섬의 높이로 다시 채운다. */
+var TERRAIN_GEO = null, TERRAIN_SEG = 190;
+function terrainFill() {
+  var geo = TERRAIN_GEO;
+  if (!geo) return;
+  var seg = TERRAIN_SEG;
   var pos = geo.attributes.position;
   var n = pos.count;
-  var cols = new Float32Array(n * 3);
-  var hs = new Float32Array(n);
+  var hs = TG.h && TG.h.length === n ? TG.h : new Float32Array(n);
   var cells = seg + 1;
   var i, x, z;
   for (i = 0; i < n; i++) {
@@ -3544,8 +3675,10 @@ function meshGroundY(x, z) {
     hs[i] = hh;
     pos.setY(i, hh);
   }
+  pos.needsUpdate = true;
+  var cols = geo.attributes.color ? geo.attributes.color.array : new Float32Array(n * 3);
   var c = new THREE.Color();
-  var step = SIZE / seg;
+  var step = TERRAIN_SIZE / seg;
   for (i = 0; i < n; i++) {
     var ix = i % cells, iz = (i / cells) | 0;
     var h = hs[i];
@@ -3557,11 +3690,21 @@ function meshGroundY(x, z) {
     terrainColor(x, z, h, slope, curv, c);
     cols[i * 3] = c.r; cols[i * 3 + 1] = c.g; cols[i * 3 + 2] = c.b;
   }
-  geo.setAttribute('color', new THREE.BufferAttribute(cols, 3));
+  if (geo.attributes.color) geo.attributes.color.needsUpdate = true;
+  else geo.setAttribute('color', new THREE.BufferAttribute(cols, 3));
   geo.computeVertexNormals();
+  geo.computeBoundingSphere();
   TG.cells = cells; TG.step = step;
   TG.x0 = pos.getX(0); TG.z0 = pos.getZ(0);
   TG.h = hs;
+}
+var TERRAIN_SIZE = 380;
+(function buildTerrain() {
+  var SIZE = TERRAIN_SIZE, seg = TERRAIN_SEG;
+  var geo = new THREE.PlaneGeometry(SIZE, SIZE, seg, seg);
+  geo.rotateX(-Math.PI / 2);
+  TERRAIN_GEO = geo;
+  terrainFill();
   var gtex = makeGroundTex();
   var mat = new THREE.MeshPhongMaterial({
     vertexColors: true, flatShading: TERRAIN_FLAT, map: gtex.map,
@@ -3572,6 +3715,34 @@ function meshGroundY(x, z) {
   terrain.castShadow = false;
   scene.add(terrain);
 })();
+
+/* 물빛(깊이·색)을 지금 섬 기준으로 다시 계산한다 — 항해 후 호출 */
+function refreshWaterColors() {
+  if (!water || !water.geometry) return;
+  var geo = water.geometry, pos = geo.attributes.position;
+  var colA = geo.attributes.aCol, depA = geo.attributes.aDepth;
+  if (!colA || !depA) return;
+  var cols = colA.array, deps = depA.array;
+  var c = new THREE.Color();
+  var cSh = new THREE.Color(0x5bbcbc), cMd = new THREE.Color(0x2a5f92), cDp = new THREE.Color(0x1a2450);
+  for (var i = 0; i < pos.count; i++) {
+    var x = pos.getX(i), z = pos.getZ(i);
+    var r = Math.sqrt(x * x + z * z);
+    var h = terrainH(x, z);
+    var dH = clamp((WATER_Y - h) / 2.1, 0, 1);
+    var dR = clamp((r - SHORE_R) / 86, 0, 1);
+    var d = Math.max(dH * 0.78, dR);
+    if (d < 0.55) c.copy(cSh).lerp(cMd, d / 0.55);
+    else c.copy(cMd).lerp(cDp, (d - 0.55) / 0.45);
+    var mot = noise2(x * 0.07 + 3, z * 0.09 - 2) * 0.5 + 0.5;
+    c.multiplyScalar(0.965 + mot * 0.07);
+    cols[i * 3] = c.r; cols[i * 3 + 1] = c.g; cols[i * 3 + 2] = c.b;
+    deps[i] = d;
+    if (waterAmp) waterAmp[i] = 0.30 + clamp(d, 0, 1) * 1.35;
+  }
+  colA.needsUpdate = true; depA.needsUpdate = true;
+}
+
 
 /* ---------------- water ---------------- */
 var water, waterAttr, waterX, waterZ, waterAmp, waterMat, sparkle, sparkleMat;
@@ -5318,7 +5489,41 @@ function sr(a, b) { return a + srnd() * (b - a); }
 var nodes = [];
 var occupied = [];
 
+/* ⛵ v3.0 — 섬별 채집물 목록과 월드 루트.
+   섬을 옮기면 nodes 가 그 섬의 배열로 바뀌고, 안 보는 섬의 메시는
+   루트 그룹째 visible=false 가 되어 그리지 않는다. */
+var NODES = { home: [], jungle: [] };
+var OCC = { home: [], jungle: [] };
+var ISLE_ROOT = {};
+/* ⛵ 원시 섬에는 사막·툰드라가 없다 — 바이옴 가중치 검사를 섬별로 끊는다 */
+function dryOrSnow(x, z, lim) {
+  if (ISLE.cur === 'jungle') return false;
+  return desertW(x, z) > lim || tundraW(x, z) > lim;
+}
+function grassTopH() { return ISLE.cur === 'jungle' ? 8.6 : 6.9; }
 var SPAWN = [0, 88];
+function setIsleNodes(k) {
+  nodes = NODES[k] || (NODES[k] = []);
+  occupied = OCC[k] || (OCC[k] = []);
+  SPAWN = (ISLE.spawn[k] ? [ISLE.spawn[k].x, ISLE.spawn[k].z] : [0, 88]);
+}
+function worldAdd(o) {
+  var r = ISLE_ROOT[ISLE.cur];
+  if (r) r.add(o); else scene.add(o);
+  return o;
+}
+function isleRoot(k) {
+  if (!ISLE_ROOT[k]) {
+    ISLE_ROOT[k] = new THREE.Group();
+    ISLE_ROOT[k].name = 'isle-' + k;
+    scene.add(ISLE_ROOT[k]);
+  }
+  return ISLE_ROOT[k];
+}
+function setIsleVisible(k, on) {
+  var r = ISLE_ROOT[k];
+  if (r) r.visible = !!on;
+}
 function spotFree(x, z, minD) {
   if (x * x + z * z < 7 * 7) return false;
   var sx = x - SPAWN[0], sz = z - SPAWN[1];
@@ -5353,7 +5558,7 @@ function registerNode(kind, group, x, z, hp) {
   var n = { kind: kind, group: group, x: x, z: z, hp: hp, max: hp, respawnAt: 0, shake: 0, dead: false, op: 1, grow: 0 };
   group.position.set(x, terrainH(x, z) - 0.06, z);
   group.rotation.y = srnd() * TAU;
-  scene.add(group);
+  worldAdd(group);
   nodes.push(n);
   occupied.push([x, z]);
   return n;
@@ -5451,7 +5656,7 @@ function buildGrassField() {
     var cx = Math.cos(ca) * cr, cz = Math.sin(ca) * cr;
     var ch = terrainH(cx, cz);
     if (ch < 1.25 || ch > 6.6) continue;
-    if (desertW(cx, cz) > 0.30 || tundraW(cx, cz) > 0.30) continue;   // 모래·눈 위엔 잔디가 없다
+    if (dryOrSnow(cx, cz, 0.30)) continue;   // 모래·눈 위엔 잔디가 없다
     // 마을·숲 둘레는 더 촘촘하게 (주거 구역 중심 0,88 — main.js HOME 과 같은 값)
     var homeD = Math.sqrt(cx * cx + (cz - 88) * (cz - 88));
     var copies = (homeD < 46 || biomeAt(cx, cz, ch) === 'forest') ? 2 : 1;
@@ -5463,7 +5668,7 @@ function buildGrassField() {
     if (!cc) break;
     var gx = cc[0] + sr(-2.2, 2.2), gz = cc[1] + sr(-2.2, 2.2);
     var gh = terrainH(gx, gz);
-    if (gh < 1.18 || gh > 6.8) continue;
+    if (gh < 1.18 || gh > (ISLE.cur === 'jungle' ? 9.0 : 6.8)) continue;
     if (nearRiver(gx, gz, 2.0)) continue;
     dummy.position.set(gx, gh - 0.02, gz);
     dummy.rotation.set(sr(-0.10, 0.10), Math.random() * TAU, sr(-0.10, 0.10));
@@ -5472,14 +5677,15 @@ function buildGrassField() {
     dummy.updateMatrix();
     inst.setMatrixAt(placed, dummy.matrix);
     // v2.4 — 올리브·마른 풀 톤 (예전엔 형광 연두에 가까웠다)
-    color.setHSL(0.172 + Math.random() * 0.075, 0.20 + Math.random() * 0.18, 0.31 + Math.random() * 0.18);
+    if (ISLE.cur === 'jungle') color.setHSL(0.245 + Math.random() * 0.055, 0.34 + Math.random() * 0.20, 0.26 + Math.random() * 0.14);
+    else color.setHSL(0.172 + Math.random() * 0.075, 0.20 + Math.random() * 0.18, 0.31 + Math.random() * 0.18);
     inst.setColorAt(placed, color);
     placed++;
   }
   inst.count = placed;
   inst.instanceMatrix.needsUpdate = true;
   if (inst.instanceColor) inst.instanceColor.needsUpdate = true;
-  scene.add(inst);
+  worldAdd(inst);
   GRASS.mesh = inst;
   GRASS.mat = gMat;
   buildTallGrassField();
@@ -5550,8 +5756,8 @@ function buildTallGrassField() {
     var a = Math.random() * TAU, r = Math.sqrt(Math.random()) * 152;
     var x = Math.cos(a) * r, z = Math.sin(a) * r;
     var h = terrainH(x, z);
-    if (h < 1.12 || h > 6.9) continue;
-    if (desertW(x, z) > 0.28 || tundraW(x, z) > 0.28) continue;
+    if (h < 1.12 || h > grassTopH()) continue;
+    if (dryOrSnow(x, z, 0.28)) continue;
     var nearWater = nearRiver(x, z, 7.0);
     var bio = biomeAt(x, z, h);
     if (!nearWater && bio !== 'forest' && Math.random() > 0.22) continue;
@@ -5570,7 +5776,7 @@ function buildTallGrassField() {
   inst.count = placed;
   inst.instanceMatrix.needsUpdate = true;
   if (inst.instanceColor) inst.instanceColor.needsUpdate = true;
-  scene.add(inst);
+  worldAdd(inst);
   GRASS.tall = inst;
 }
 
@@ -5684,8 +5890,8 @@ function buildUndergrowth() {
     var a = Math.random() * TAU, r = Math.sqrt(Math.random()) * 150;
     var x = Math.cos(a) * r, z = Math.sin(a) * r;
     var h = terrainH(x, z);
-    if (h < 1.15 || h > 6.9) continue;
-    if (desertW(x, z) > 0.26 || tundraW(x, z) > 0.26) continue;
+    if (h < 1.15 || h > grassTopH()) continue;
+    if (dryOrSnow(x, z, 0.26)) continue;
     var bio = biomeAt(x, z, h);
     var nearWater = nearRiver(x, z, 8.0);
     // 숲·강가에 몰아 심고, 들판엔 드물게
@@ -5704,7 +5910,7 @@ function buildUndergrowth() {
   inst.count = placed;
   inst.instanceMatrix.needsUpdate = true;
   if (inst.instanceColor) inst.instanceColor.needsUpdate = true;
-  scene.add(inst);
+  worldAdd(inst);
   GRASS.under = inst;
 }
 
@@ -5745,12 +5951,12 @@ function buildShoreDecor() {
     box.add(drm);
   }
   if (box.children.length) {
-    scene.add(box);
+    worldAdd(box);
     flattenGroup(box, null, MAT.prop, false);
   }
 }
 
-(function placeProps() {
+function placePropsHome() {
   var s, i;
   // ---- shore belt: palms ----
   for (i = 0; i < 70; i++) {
@@ -5952,7 +6158,7 @@ function buildShoreDecor() {
     var bg = makeBush(1.05);
     var nn = { kind: 'bush', group: bg, x: sx, z: sz, hp: 2, max: 2, respawnAt: 0, shake: 0, dead: false, op: 1, grow: 0 };
     bg.position.set(sx, terrainH(sx, sz) - 0.06, sz);
-    scene.add(bg); nodes.push(nn); occupied.push([sx, sz]);
+    worldAdd(bg); nodes.push(nn); occupied.push([sx, sz]);
   }
   // flowers: decorative only, so the whole field is baked into ONE mesh
   var flowerBox = new THREE.Group();
@@ -5968,7 +6174,7 @@ function buildShoreDecor() {
     occupied.push([s5.x, s5.z]);
   }
   if (flowerBox.children.length) {
-    scene.add(flowerBox);
+    worldAdd(flowerBox);
     flattenGroup(flowerBox, null, MAT.prop, false);
   }
 
@@ -5977,7 +6183,273 @@ function buildShoreDecor() {
 
   // grass tufts — a single InstancedMesh keeps this at one draw call
   buildGrassField();
-})();
+}
+
+/* =========================================================
+   ⛵ v3.0 — 야생 원시 섬(원시 밈림)의 채집물과 식생
+   ---------------------------------------------------------
+   고향 섬과 같은 재질·지오메트리를 쓰되 색과 크기를 눌러
+   '더 깊고 오래된 숲'으로 보이게 한다.
+   ========================================================= */
+var JMAT = {
+  veinGold: new THREE.MeshLambertMaterial({ color: 0xd2a03e, flatShading: true, emissive: 0x2a1c04 }),
+  veinSteel: new THREE.MeshLambertMaterial({ color: 0x9fc0d4, flatShading: true }),
+  rareLeaf: new THREE.MeshLambertMaterial({ color: 0x7fe0bc, flatShading: true, emissive: 0x1d5a48 }),
+  rareBloom: new THREE.MeshLambertMaterial({ color: 0xd8fff4, flatShading: true, emissive: 0x4a9c88 }),
+  deepLeafA: new THREE.MeshLambertMaterial({ color: 0x2f5230, flatShading: true }),
+  deepLeafB: new THREE.MeshLambertMaterial({ color: 0x3d6636, flatShading: true }),
+  deepLeafC: new THREE.MeshLambertMaterial({ color: 0x27452a, flatShading: true }),
+  vine: new THREE.MeshLambertMaterial({ color: 0x54713a, flatShading: true }),
+  giantCap: new THREE.MeshLambertMaterial({ color: 0xa8523c, flatShading: true }),
+  giantCap2: new THREE.MeshLambertMaterial({ color: 0xc98a54, flatShading: true })
+};
+
+/* 🌟 금속 광맥 — 바위 틈에 금빛 결정이 박혀 있다 (금속 광석) */
+function makeMetalVein(scale) {
+  var g = new THREE.Group();
+  var base = new THREE.Mesh(GEO.rockVar[Math.floor(Math.random() * GEO.rockVar.length)], MAT.ore);
+  base.position.y = 0.46;
+  base.scale.set(1.1, 1.22, 1.06);
+  base.rotation.y = Math.random() * TAU;
+  g.add(base);
+  for (var i = 0; i < 9; i++) {
+    var a = (i / 9) * TAU + Math.random() * 0.6;
+    var yy = 0.30 + Math.random() * 0.86;
+    var rr = 0.46 + Math.random() * 0.30;
+    var cm = new THREE.Mesh(GEO.cone4, i % 3 === 0 ? JMAT.veinSteel : JMAT.veinGold);
+    cm.position.set(Math.cos(a) * rr, yy, Math.sin(a) * rr);
+    var ss = 0.16 + Math.random() * 0.14;
+    cm.scale.set(ss, ss * 1.9, ss);
+    cm.rotation.set(Math.cos(a) * 0.5, Math.random() * TAU, Math.sin(a) * 0.5);
+    g.add(cm);
+  }
+  var glint = new THREE.Mesh(new THREE.SphereGeometry(0.10, 7, 5), JMAT.veinSteel);
+  glint.position.set(0.12, 1.02, -0.06);
+  g.add(glint);
+  return propMesh(g, scale, true);
+}
+
+/* 🌱 희귀 약초 — 푸른빛으로 은은하게 빛나는 약초 */
+function makeRareHerb(scale) {
+  var g = new THREE.Group();
+  var stem = new THREE.Mesh(GEO.herbStem, MAT.herbStem);
+  stem.scale.set(1.1, 1.5, 1.1);
+  stem.position.y = 0.30;
+  g.add(stem);
+  for (var i = 0; i < 5; i++) {
+    var a = (i / 5) * TAU + 0.4;
+    var leaf = new THREE.Mesh(GEO.ico0, JMAT.rareLeaf);
+    leaf.position.set(Math.cos(a) * 0.17, 0.26 + i * 0.055, Math.sin(a) * 0.17);
+    leaf.scale.set(0.13, 0.05, 0.21);
+    leaf.rotation.set(0.4, a, 0.2);
+    g.add(leaf);
+  }
+  for (var b = 0; b < 4; b++) {
+    var ba = (b / 4) * TAU + 1.1;
+    var bloom = new THREE.Mesh(GEO.ico0, JMAT.rareBloom);
+    bloom.position.set(Math.cos(ba) * 0.10, 0.60 + (b % 2) * 0.07, Math.sin(ba) * 0.10);
+    bloom.scale.setScalar(0.055);
+    g.add(bloom);
+  }
+  var tip = new THREE.Mesh(GEO.ico1, JMAT.rareBloom);
+  tip.position.y = 0.70;
+  tip.scale.set(0.06, 0.09, 0.06);
+  g.add(tip);
+  return propMesh(g, scale, false);
+}
+
+/* 🍄 거대 버섯 — 원시 섬의 이끼 낀 그루터기에 피어난 큰 버섯 */
+function makeGiantMushroom(scale) {
+  var g = new THREE.Group();
+  var stem = new THREE.Mesh(GEO.mushStem, MAT.mushStem);
+  stem.scale.set(2.6, 5.2, 2.6);
+  stem.position.y = 0.62;
+  g.add(stem);
+  var cap = new THREE.Mesh(GEO.mushCap, Math.random() < 0.5 ? JMAT.giantCap : JMAT.giantCap2);
+  cap.position.y = 1.32;
+  cap.scale.set(0.72, 0.50, 0.72);
+  g.add(cap);
+  var cap2 = new THREE.Mesh(GEO.mushCap, JMAT.giantCap);
+  cap2.position.set(0.34, 0.94, 0.18);
+  cap2.scale.set(0.30, 0.20, 0.30);
+  g.add(cap2);
+  for (var i = 0; i < 5; i++) {
+    var a = (i / 5) * TAU + 0.7;
+    var dot = new THREE.Mesh(GEO.ico0, MAT.mushStem);
+    dot.position.set(Math.cos(a) * 0.44, 1.42 + Math.random() * 0.10, Math.sin(a) * 0.44);
+    dot.scale.setScalar(0.07);
+    g.add(dot);
+  }
+  return propMesh(g, scale, true);
+}
+
+/* 🌴 원시수 — 더 크고 잎이 짙은 고대 활엽수.
+   베이크된 나무 메시의 정점색을 짙은 밈림 톤으로 곱해 색만 바꾼다(추가 draw call 0). */
+function makeJungleTree(scale) {
+  var m = makeTree(scale * 1.2);
+  if (m && m.geometry && m.geometry.attributes.color) {
+    var ca = m.geometry.attributes.color, arr = ca.array;
+    for (var i = 0; i < arr.length; i += 3) {
+      arr[i] *= 0.74; arr[i + 1] *= 0.98; arr[i + 2] *= 0.70;
+    }
+    ca.needsUpdate = true;
+    m.geometry.computeVertexNormals();
+  }
+  return m;
+}
+
+/* 잔디 대신 원시 섬 바닥을 덮는 넓은 잎 덤불 (한 draw call) */
+function placePropsJungle() {
+  var s, i;
+  SPAWN = [ISLE.spawn.jungle ? ISLE.spawn.jungle.x : 0, ISLE.spawn.jungle ? ISLE.spawn.jungle.z : 96];
+  // 해안 — 야자수
+  for (i = 0; i < 64; i++) {
+    s = findSpot(140, 0.85, 3.6, 92, 152, 4.2);
+    if (!s) continue;
+    registerNode('tree', makePalm(sr(0.80, 1.08)), s.x, s.z, 3);
+  }
+  // 원시림 — 큰 활엽수
+  for (i = 0; i < 84; i++) {
+    s = findSpot(180, 1.7, 8.4, 14, 138, 4.2, 'jungle');
+    if (!s) continue;
+    registerNode('tree', makeJungleTree(sr(0.92, 1.16)), s.x, s.z, 4);
+  }
+  // 바나나·대나무·파인애플
+  for (i = 0; i < 34; i++) {
+    s = findSpot(200, 1.4, 6.6, 20, 134, 4.0, 'jungle');
+    if (!s) continue;
+    registerNode('banana', makeBananaTree(sr(0.95, 1.25)), s.x, s.z, 2);
+  }
+  for (i = 0; i < 30; i++) {
+    s = findSpot(180, 1.4, 6.4, 22, 132, 3.4, 'jungle');
+    if (!s) continue;
+    registerNode('bamboo', makeBamboo(sr(1.0, 1.3)), s.x, s.z, 3);
+  }
+  for (i = 0; i < 26; i++) {
+    s = findSpot(180, 1.2, 6.2, 18, 132, 2.8, 'jungle');
+    if (!s) continue;
+    registerNode('pineapple', makePineapple(sr(1.0, 1.35)), s.x, s.z, 1);
+  }
+  // 고사리 · 덤불 · 약초
+  for (i = 0; i < 48; i++) {
+    s = findSpot(160, 1.25, 8.2, 12, 140, 2.2, 'jungle');
+    if (!s) continue;
+    registerNode('fern', makeFern(sr(1.0, 1.5)), s.x, s.z, 1);
+  }
+  for (i = 0; i < 38; i++) {
+    s = findSpot(150, 1.15, 7.6, 14, 140, 3.4, 'jungle');
+    if (!s) continue;
+    registerNode('bush', makeBush(sr(0.9, 1.2)), s.x, s.z, 2);
+  }
+  for (i = 0; i < 34; i++) {
+    s = findSpot(150, 1.3, 7.8, 14, 138, 3.0, 'jungle');
+    if (!s) continue;
+    registerNode('herb', makeHerb(sr(0.95, 1.3)), s.x, s.z, 1);
+  }
+  for (i = 0; i < 30; i++) {
+    s = findSpot(180, 1.4, 8.6, 18, 134, 3.4, 'jungle');
+    if (!s) continue;
+    registerNode('rareHerb', makeRareHerb(sr(1.0, 1.35)), s.x, s.z, 1);
+  }
+  // 거대 버섯
+  for (i = 0; i < 28; i++) {
+    s = findSpot(170, 1.5, 8.2, 18, 134, 3.2, 'jungle');
+    if (!s) continue;
+    registerNode('giantMushroom', makeGiantMushroom(sr(0.85, 1.25)), s.x, s.z, 1);
+  }
+  // 바위 · 광맥 — 고원과 협곡 둘레에 몰아 둔다
+  for (i = 0; i < 40; i++) {
+    s = findSpot(150, 1.2, 11.2, 16, 140, 3.6);
+    if (!s) continue;
+    registerNode('rock', makeRock(sr(0.9, 1.7)), s.x, s.z, 3);
+  }
+  for (i = 0; i < 34; i++) {
+    s = findSpot(200, 3.0, 12.4, 20, 130, 4.0);
+    if (!s) continue;
+    if (biomeAt(s.x, s.z, s.h) !== 'highland' && Math.random() > 0.55) continue;
+    registerNode('metalVein', makeMetalVein(sr(0.95, 1.3)), s.x, s.z, 4);
+  }
+  for (i = 0; i < 30; i++) {
+    s = findSpot(180, 3.4, 12.6, 22, 126, 3.8, 'highland');
+    if (!s) continue;
+    registerNode('ore', makeOre(sr(1.0, 1.35)), s.x, s.z, 4);
+  }
+  /* 높은 산등성이는 바위·이끼 고사리·거대 버섯이 드문드문 — 벌거벗은 능선을 막는다 */
+  for (i = 0; i < 26; i++) {
+    s = findSpot(180, 7.4, 12.4, 20, 128, 3.2, 'highland');
+    if (!s) continue;
+    registerNode('fern', makeFern(sr(0.9, 1.3)), s.x, s.z, 1);
+  }
+  for (i = 0; i < 22; i++) {
+    s = findSpot(180, 7.6, 12.6, 22, 126, 4.2, 'highland');
+    if (!s) continue;
+    registerNode('rock', makeRock(sr(0.8, 1.4)), s.x, s.z, 3);
+  }
+  for (i = 0; i < 16; i++) {
+    s = findSpot(180, 7.4, 12.2, 24, 124, 3.6, 'highland');
+    if (!s) continue;
+    registerNode('giantMushroom', makeGiantMushroom(sr(0.8, 1.1)), s.x, s.z, 1);
+  }
+  // 익룡 둥지 — 높은 산등성이
+  for (i = 0; i < 22; i++) {
+    s = findSpot(220, 4.6, 12.8, 28, 120, 8.0, 'highland');
+    if (!s) continue;
+    registerNode('nest', makePteroNest(sr(1.0, 1.28)), s.x, s.z, 1);
+  }
+  // 갈대 — 내륙 물가 대신 만(灣) 가장자리
+  for (i = 0; i < 26; i++) {
+    s = findSpot(140, 0.55, 1.7, 100, 150, 3.0);
+    if (!s) continue;
+    registerNode('reed', makeReed(sr(0.95, 1.25)), s.x, s.z, 2);
+  }
+  // 첫 상륙 지점 둘레 — 걸어 들어가자마자 보이는 시작 군락
+  var grove = [
+    ['tree', 15, -6], ['tree', -17, 7], ['tree', 21, 12], ['tree', -22, -10],
+    ['rock', -11, 4], ['rock', 12, -9], ['bush', -8, 11], ['bush', 18, 3],
+    ['bush', 6, 14], ['herb', -6, 6], ['rareHerb', 9, 8]
+  ];
+  for (var gq = 0; gq < grove.length; gq++) {
+    var gk = grove[gq][0];
+    var gx = SPAWN[0] + grove[gq][1], gz = SPAWN[1] - grove[gq][2];
+    if (terrainH(gx, gz) < 0.55) continue;
+    if (!spotFree(gx, gz, 2.2)) continue;
+    var obj = gk === 'tree' ? makeJungleTree(sr(0.9, 1.05)) : (gk === 'rock' ? makeRock(sr(0.9, 1.3)) :
+      (gk === 'bush' ? makeBush(1.05) : (gk === 'rareHerb' ? makeRareHerb(1.1) : makeHerb(1.05))));
+    registerNode(gk === 'rareHerb' ? 'rareHerb' : gk, obj, gx, gz, gk === 'bush' ? 2 : 3);
+  }
+  // 꽃 — 장식용은 한 메시로 굽는다
+  var flowerBox = new THREE.Group();
+  for (var f = 0; f < 150; f++) {
+    var s5 = findSpot(70, 1.2, 8.0, 8, 118, 1.6);
+    if (!s5) continue;
+    var fg = makeFlower(sr(0.9, 1.5));
+    fg.position.set(s5.x, terrainH(s5.x, s5.z) - 0.02, s5.z);
+    fg.rotation.y = Math.random() * TAU;
+    flowerBox.add(fg);
+    occupied.push([s5.x, s5.z]);
+  }
+  if (flowerBox.children.length) {
+    worldAdd(flowerBox);
+    flattenGroup(flowerBox, null, MAT.prop, false);
+  }
+  buildShoreDecor();
+  buildGrassField();
+}
+
+/* 섬 하나를 통째로(채집물·풀·해안 장식) 만든다 */
+function buildProps(kind) {
+  if (ISLE.built[kind]) return;
+  isleRoot(kind);
+  setIsleNodes(kind);
+  _seed = (kind === 'jungle') ? 771213 : 20261123;
+  occupied.length = 0;
+  if (kind === 'jungle') placePropsJungle();
+  else placePropsHome();
+  ISLE.built[kind] = true;
+}
+
+/* 고향 섬의 나무·바위·풀을 게임 시작 시 한 번 만든다 (원시 섬은 항해할 때) */
+buildProps('home');
 
 /* ---------------- player ---------------- */
 var player = {
@@ -7317,7 +7789,10 @@ function updateDyeOutfit() {
 }
 
 /* ---------------- dinosaurs ---------------- */
-var dinos = [];
+/* ⛵ v3.0 — 섬별 공룡 배열. 지금 섬의 배열만 dinos 가 가리킨다 */
+var DINOS = { home: [], jungle: [] };
+var dinos = DINOS.home;
+function setIsleDinos(k) { dinos = DINOS[k] || (DINOS[k] = []); }
 var DINO_NAMES = ['몽이', '콩이', '보리', '두부', '밤이', '솜이', '포도', '호두'];
 
 var _lamCache = {};
@@ -8030,7 +8505,9 @@ function spawnDino(kind, x, z, opt) {
   var meta0 = DINO_META[kind] || DINO_META.trike;
   var d = {
     kind: kind, group: built.group, parts: built,
-    x: x, z: z, hp: (opt.hp ? clamp(opt.hp, 1, st.hp) : st.hp), max: st.hp,
+    x: x, z: z, hp: (opt.hp ? clamp(opt.hp, 1, st.hp * (opt.hpMul || 1)) : Math.round(st.hp * (opt.hpMul || 1))), max: Math.round(st.hp * (opt.hpMul || 1)),
+    /* ⛵ v3.0 — 원시 섬 개체는 더 사납다: pow 는 피해 배율, lvl 은 표시용 레벨 */
+    pow: opt.pow || 1, lvl: opt.lvl || 0, isle: (typeof ISLE !== 'undefined' ? ISLE.cur : 'home'),
     hostile: !!meta0.hostile,
     attackable: meta0.attackable !== false, tamed: !!opt.tamed, name: opt.name || '',
     /* v2.3d — 내가 지어준 이름(petName) · 저장 연결용 pid */
@@ -8042,6 +8519,16 @@ function spawnDino(kind, x, z, opt) {
   };
   d.skinned = !!built.skinned;
   d.homeX = x; d.homeZ = z;
+  if (opt.tamed) {
+    if (!d.pid && typeof newPetId === 'function') d.pid = newPetId();   // 펫은 항상 고유 id 를 갖는다
+    /* 🐾 저장된 개체에서 레벨·경험치·동행 여부를 되살린다 */
+    d.lv = Math.max(1, opt.lv | 0 || 1);
+    d.exp = Math.max(0, opt.exp | 0);
+    d.companion = !!opt.companion;
+    d.penned = !!opt.penned;
+    d.max = Math.round(st.hp * (1 + 0.10 * (d.lv - 1)));
+    if (!opt.hp) d.hp = d.max;
+  }
   var meta = DINO_META[kind] || DINO_META.trike;
   d.reach = meta.reach; d.drop = meta.drop; d.tameStep = meta.tame; d.cullR = meta.cull;
   if (meta.fly) { d.flyer = true; d.airY = 0; }
@@ -8082,7 +8569,10 @@ function petSpeciesName(d) {
   return m.label || m.name || '공룡';
 }
 function petTagLabel(d) {
-  return d.petName ? d.petName : (petSpeciesName(d) + ' · 이름 없음');
+  /* 🐾 v3.0 — 동행은 레벨과 '동행' 표시를 이름표에 함께 보여 준다 */
+  var lv = (d.lv | 0) >= 1 ? (d.lv | 0) : 1;
+  if (d.petName) return (d.companion ? 'Lv.' + lv + ' ' : '') + d.petName + (d.companion ? ' · 동행' : '');
+  return petSpeciesName(d) + ' · 이름 없음';
 }
 function removeNameTag(d) {
   if (!d || !d.tag) return;
@@ -8189,6 +8679,8 @@ function addSpeciesTag(d) {
   var meta = DINO_META[d.kind] || {};
   var nm = meta.label || meta.name;
   if (!nm) return null;
+  /* ⛵ 원시 섬의 고레벨 개체는 이름표에 Lv 을 함께 보여 준다 */
+  if ((d.lvl | 0) >= 15) nm += ' Lv.' + (d.lvl | 0);
   var mat = new THREE.SpriteMaterial({ map: wildTagTexture(nm), transparent: true, depthWrite: false, opacity: 0 });
   var sp = new THREE.Sprite(mat);
   var hs = clamp((d.parts.height || 1) * 0.58, 2.6, 3.8);
@@ -11187,6 +11679,17 @@ function buildFoamRing() {
   return FOAM;
 }
 
+/* ⛵ v3.0 — 섬을 옮기면 해안선이 달라지므로 거품 띠를 새로 굽는다 */
+function rebuildFoam() {
+  if (FOAM && FOAM.mesh) {
+    if (FOAM.mesh.parent) FOAM.mesh.parent.remove(FOAM.mesh);
+    if (FOAM.mesh.geometry) FOAM.mesh.geometry.dispose();
+    if (FOAM.mat) FOAM.mat.dispose();
+  }
+  FOAM = null;
+  return buildFoamRing();
+}
+
 function updateFoam(t) {
   if (!FOAM) return;
   var u = FOAM.mat.uniforms;
@@ -11400,7 +11903,11 @@ function spawnBreath(x, y, z, dirX, dirZ) {
 }
 
 /* ---------------- structures ---------------- */
-var structures = [];
+/* ⛵ v3.0 — 구조물도 섬별 배열로 나눠 둔다 (집은 고향 섬에만) */
+var STRUCTS = { home: [], jungle: [] };
+var structures = STRUCTS.home;
+ISLE.structBuilt = { home: false, jungle: false };
+function setIsleStructs(k) { structures = STRUCTS[k] || (STRUCTS[k] = []); }
 var GHOST_MAT = new THREE.MeshLambertMaterial({ color: 0x7ce08a, transparent: true, opacity: 0.55, depthWrite: false });
 var GHOST_BAD = new THREE.MeshLambertMaterial({ color: 0xff7a6a, transparent: true, opacity: 0.5, depthWrite: false });
 var placing = null, ghost = null, ghostOk = false;
@@ -11620,6 +12127,13 @@ function gableGeo(D, H, apexY, xPos) {
 /* 오두막 — 정면(+Z)에 문을 뚫어 걸어 들어갈 수 있게 만들고,
    지붕·정면 벽은 따로 두어 안에 있을 때 반투명해지도록 분리한다. */
 var CABIN_W = 3.4, CABIN_D = 3.2, CABIN_H = 2.75;
+/* ⛵ v3.0 — 증축한 2×2 큰 집의 크기 (1×1 오두막의 두 배 바닥) */
+var CABIN2_W = 6.6, CABIN2_D = 6.0, CABIN2_H = 3.35;
+function cabinDims(s) {
+  if (s && (s.lv | 0) >= 2) return { W: CABIN2_W, D: CABIN2_D, H: CABIN2_H };
+  return { W: CABIN_W, D: CABIN_D, H: CABIN_H };
+}
+function cabinDoorHalf(s) { return (s && (s.lv | 0) >= 2) ? 0.98 : 0.72; }
 function makeCabin() {
   var g = new THREE.Group();
   var W = CABIN_W, H = CABIN_H, D = CABIN_D;
@@ -11797,6 +12311,410 @@ function makeCabin() {
     roofMesh: roofMeshes[0], frontMesh: front.children[0],
     roofT: 1, frontT: 1
   };
+  return g;
+}
+
+/* =========================================================
+   🏠 v3.0 — 증축한 2×2 큰 집 (야생 목재·가죽 오두막 2단계)
+   ---------------------------------------------------------
+   1×1 오두막의 두 배 바닥에 기단·현관 처마·창 4개·이층 침대와
+   벽난로까지 갖춘 살림집. 지붕·정면 벽은 1단계와 똑같이
+   염색·페이드(userData.roofMat/frontMat)에 반응한다.
+   ========================================================= */
+function makeCabinBig() {
+  var g = new THREE.Group();
+  var W = CABIN2_W, H = CABIN2_H, D = CABIN2_D;
+  var shell = new THREE.Group();
+  var front = new THREE.Group();
+  var roofG = new THREE.Group();
+  var inter = new THREE.Group();
+  var doorG = new THREE.Group();
+  var doorHalf = 0.98;
+
+  // 마루
+  var floor = new THREE.Mesh(new THREE.BoxGeometry(W + 0.4, 0.22, D + 0.4), MAT.cabinDark);
+  floor.position.y = 0.11;
+  inter.add(floor);
+  // 돌 기단 — 바깥을 두르는 낮은 돌벽
+  for (var sk = 0; sk < 4; sk++) {
+    var sx = sk < 2 ? (sk === 0 ? -1 : 1) * (W / 2 + 0.26) : 0;
+    var sz = sk < 2 ? 0 : (sk === 2 ? -1 : 1) * (D / 2 + 0.26);
+    var skm = new THREE.Mesh(new THREE.BoxGeometry(sk < 2 ? 0.34 : W + 0.9, 0.34, sk < 2 ? D + 0.9 : 0.34), MAT.rock);
+    skm.position.set(sx, 0.17, sz);
+    shell.add(skm);
+  }
+
+  // 벽 — 통나무 10단
+  for (var i = 0; i < 10; i++) {
+    var y = 0.36 + i * 0.31;
+    var mat = i % 2 ? MAT.cabinWood : MAT.cabinDark;
+    logRow(shell, 0, y, -D / 2, W, 'x', mat);
+    logRow(shell, -W / 2, y, 0, D, 'z', mat);
+    logRow(shell, W / 2, y, 0, D, 'z', mat);
+    if (i < 7) {
+      logRow(front, -(W / 2 + doorHalf) / 2, y, D / 2, W / 2 - doorHalf, 'x', mat);
+      logRow(front, (W / 2 + doorHalf) / 2, y, D / 2, W / 2 - doorHalf, 'x', mat);
+    } else {
+      logRow(front, 0, y, D / 2, W, 'x', mat);
+    }
+  }
+  // 모서리 기둥 (굵게)
+  for (var cx2 = -1; cx2 <= 1; cx2 += 2) {
+    for (var cz2 = -1; cz2 <= 1; cz2 += 2) {
+      var post2 = new THREE.Mesh(GEO.cabinPost, MAT.cabinDark);
+      post2.scale.set(1.25, (H + 0.3) / 2.5, 1.25);
+      post2.position.set(cx2 * W / 2, (H + 0.3) / 2, cz2 * D / 2);
+      shell.add(post2);
+    }
+  }
+  // 창문 4개 (앞 2 · 옆 2)
+  function bigWindow(grp, x, y2, z, rotY) {
+    var fr = new THREE.Mesh(new THREE.BoxGeometry(1.10, 0.92, 0.08), MAT.cabinDark);
+    fr.position.set(x, y2, z); fr.rotation.y = rotY || 0;
+    grp.add(fr);
+    var wn = new THREE.Mesh(new THREE.BoxGeometry(0.94, 0.76, 0.06), MAT.glass);
+    wn.position.set(x, y2, z + (rotY ? 0 : 0.03));
+    if (rotY) { wn.position.set(x + (x > 0 ? 0.03 : -0.03), y2, z); }
+    wn.rotation.y = rotY || 0;
+    grp.add(wn);
+  }
+  bigWindow(front, -2.15, 1.92, D / 2 + 0.02, 0);
+  bigWindow(front, 2.15, 1.92, D / 2 + 0.02, 0);
+  bigWindow(shell, -W / 2 - 0.03, 1.92, -1.2, Math.PI / 2);
+  bigWindow(shell, W / 2 + 0.03, 1.92, 1.2, Math.PI / 2);
+  // 문틀
+  for (var dxs2 = -1; dxs2 <= 1; dxs2 += 2) {
+    var fp2 = new THREE.Mesh(GEO.cabinPost, MAT.cabinDark);
+    fp2.scale.y = 2.55 / 2.5;
+    fp2.position.set(dxs2 * (doorHalf + 0.06), 1.27, D / 2);
+    front.add(fp2);
+  }
+  var lint2 = new THREE.Mesh(new THREE.BoxGeometry(doorHalf * 2 + 0.5, 0.24, 0.30), MAT.cabinDark);
+  lint2.position.set(0, 2.56, D / 2);
+  front.add(lint2);
+  // 굴뚝 — 벽 바깥으로 붙은 돌 굴뚝 (지붕과 겹치지 않게 밖에 세운다)
+  var CH_X = W / 2 + 0.44, CH_Z = -D / 2 + 1.30, CH_TOP = 5.30;
+  var chim2 = new THREE.Mesh(new THREE.BoxGeometry(0.62, CH_TOP - 0.16, 0.62), MAT.rock);
+  chim2.position.set(CH_X, (CH_TOP + 0.16) / 2, CH_Z);
+  shell.add(chim2);
+  var chimBase = new THREE.Mesh(new THREE.BoxGeometry(0.80, 0.42, 0.80), MAT.rockD);
+  chimBase.position.set(CH_X, 0.21, CH_Z);
+  shell.add(chimBase);
+  var cap2 = new THREE.Mesh(new THREE.BoxGeometry(0.76, 0.14, 0.76), MAT.rockD);
+  cap2.position.set(CH_X, CH_TOP + 0.05, CH_Z);
+  shell.add(cap2);
+  var smokeHole = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.10, 0.32), MAT.cabinDark);
+  smokeHole.position.set(CH_X, CH_TOP + 0.13, CH_Z);
+  shell.add(smokeHole);
+  var chArm = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.26, 0.5), MAT.rockD);
+  chArm.position.set(W / 2 + 0.16, 1.35, CH_Z);
+  shell.add(chArm);
+
+  // ⛺ 지붕 — 두 장의 큰 가죽 + 용마루
+  var apexY = H + 2.92, eaveY = H + 1.05;
+  var halfW = W / 2 + 0.42, reach = D / 2 + 0.42;
+  var roofMat = new THREE.MeshLambertMaterial({
+    color: 0xffffff, map: roofLeatherTex(), vertexColors: true,
+    flatShading: false, transparent: true, opacity: 1, side: THREE.DoubleSide
+  });
+  var roofTrimMat = new THREE.MeshLambertMaterial({ color: 0xffffff, vertexColors: true, transparent: true, opacity: 1 });
+  for (var sh2 = -1; sh2 <= 1; sh2 += 2) {
+    var sheet2 = new THREE.Mesh(hideRoofSheetGeo(halfW, reach, apexY, eaveY, sh2, sh2 > 0 ? 5 : 13), roofMat);
+    roofG.add(sheet2);
+  }
+  /* 박공 삼각벽 — 지붕과 같은 가죽이지만 자기 재질을 써서 안쪽 면이 검게 죽지 않는다 */
+  var gableMat = new THREE.MeshLambertMaterial({
+    color: 0xa88b68, map: roofLeatherTex(), vertexColors: true,
+    flatShading: false, transparent: true, opacity: 1, side: THREE.DoubleSide
+  });
+  var gL2 = new THREE.Mesh(gableGeo(D + 0.12, H, apexY - 0.34, W / 2 - 0.03), gableMat);
+  var gR2 = new THREE.Mesh(gableGeo(D + 0.12, H, apexY - 0.34, -W / 2 + 0.03), gableMat);
+  roofG.add(gL2); roofG.add(gR2);
+  var trimG2 = new THREE.Group();
+  for (var px2 = -1; px2 <= 1; px2 += 2) {
+    for (var pz2 = -1; pz2 <= 1; pz2 += 2) {
+      /* 박공 끝에서 용마루를 X자로 받치는 기둥 — 지붕 위로 0.55m만 솟는다 */
+      var poleH = (apexY + 0.55) - (eaveY + 0.10);
+      var pole2 = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.095, poleH, 6), MAT.barkD);
+      pole2.position.set(px2 * (W / 2 + 0.05), eaveY + 0.10 + poleH / 2, pz2 * 0.16);
+      pole2.rotation.z = -px2 * 0.05;
+      pole2.rotation.x = pz2 * 0.07;
+      trimG2.add(pole2);
+    }
+  }
+  var ridge2 = new THREE.Mesh(new THREE.CylinderGeometry(0.10, 0.10, 2 * halfW + 0.4, 6), MAT.barkP);
+  ridge2.position.set(0, apexY + 0.12, 0);
+  ridge2.rotation.z = Math.PI / 2;
+  trimG2.add(ridge2);
+  for (var rp2 = -1; rp2 <= 1; rp2 += 2) {
+    var tie2 = new THREE.Mesh(new THREE.TorusGeometry(0.20, 0.042, 4, 10), MAT.drift);
+    tie2.position.set(rp2 * halfW * 0.42, apexY + 0.07, 0);
+    tie2.rotation.y = Math.PI / 2;
+    trimG2.add(tie2);
+  }
+  for (var f2 = 0; f2 < 7; f2++) {
+    var fx2 = -halfW * 0.82 + f2 * (halfW * 1.64 / 6) + Math.sin(f2 * 1.9) * 0.13;
+    var fs2 = f2 % 2 ? 1 : -1;
+    var flap2 = new THREE.Mesh(new THREE.BoxGeometry(0.38 + Math.random() * 0.2, 0.03, 0.50 + Math.random() * 0.22), MAT.furD);
+    flap2.position.set(fx2, eaveY - 0.18 - Math.random() * 0.14, fs2 * (reach - 0.12));
+    flap2.rotation.x = fs2 * 0.55;
+    flap2.rotation.z = (Math.random() - 0.5) * 0.2;
+    trimG2.add(flap2);
+  }
+  addShadows(trimG2);
+  flattenGroup(trimG2, null, roofTrimMat, true);
+  roofG.add(trimG2);
+
+  // 현관 처마 — 문 위 작은 널빤지 지붕
+  var porch = new THREE.Group();
+  for (var pp = -1; pp <= 1; pp += 2) {
+    var ppost = new THREE.Mesh(GEO.cabinLog, MAT.barkD);
+    ppost.scale.set(0.40, 2.35, 0.40);
+    ppost.position.set(pp * (doorHalf + 0.72), 1.15, D / 2 + 1.02);
+    porch.add(ppost);
+  }
+  var proof = new THREE.Mesh(new THREE.BoxGeometry(2.7, 0.10, 1.45), MAT.planksD);
+  proof.position.set(0, 2.38, D / 2 + 0.78);
+  proof.rotation.x = -0.06;
+  porch.add(proof);
+  // 처마 밑 서까래 3개
+  for (var rr3 = -1; rr3 <= 1; rr3++) {
+    var raf = new THREE.Mesh(GEO.branch, MAT.barkD);
+    raf.position.set(rr3 * 0.7, 2.30, D / 2 + 0.22);
+    raf.scale.set(0.34, 0.95, 0.34);
+    raf.rotation.set(Math.PI / 2 - 0.08, 0, 0);
+    porch.add(raf);
+  }
+  addShadows(porch);
+  shell.add(porch);
+
+  // 여닫힌 두 짝 문
+  for (var dl = -1; dl <= 1; dl += 2) {
+    var hinge2 = new THREE.Group();
+    hinge2.position.set(dl * (doorHalf - 0.02), 0.95, D / 2 + 0.06);
+    hinge2.rotation.y = -dl * 1.18;
+    var leaf2 = new THREE.Mesh(new THREE.BoxGeometry(doorHalf - 0.03, 1.98, 0.08), MAT.cabinWood);
+    leaf2.position.set(-dl * (doorHalf - 0.03) / 2, 0.04, 0);
+    hinge2.add(leaf2);
+    var knob2 = new THREE.Mesh(new THREE.SphereGeometry(0.065, 8, 6), MAT.knob);
+    knob2.position.set(-dl * (doorHalf - 0.30), -0.02, 0.08);
+    hinge2.add(knob2);
+    doorG.add(hinge2);
+  }
+
+  // 실내 — 큰 침대 · 이불 · 탁자 · 의자 2 · 선반 · 벽난로 · 등불
+  var rug2 = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.02, 2.8), MAT.rug);
+  rug2.position.set(0.15, 0.235, 0.30);
+  inter.add(rug2);
+  var rug3 = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.02, 1.9), MAT.rugB);
+  rug3.position.set(0.15, 0.245, 0.30);
+  inter.add(rug3);
+  // 침대 (왼쪽 벽)
+  var bedF = new THREE.Mesh(new THREE.BoxGeometry(1.55, 0.34, 2.5), MAT.cabinDark);
+  bedF.position.set(-2.05, 0.40, -0.55);
+  inter.add(bedF);
+  var mat2 = new THREE.Mesh(new THREE.BoxGeometry(1.45, 0.22, 2.42), MAT.cloth);
+  mat2.position.set(-2.05, 0.66, -0.55);
+  inter.add(mat2);
+  var quilt = new THREE.Mesh(new THREE.BoxGeometry(1.38, 0.16, 1.55), MAT.furD);
+  quilt.position.set(-2.05, 0.83, -0.20);
+  inter.add(quilt);
+  var pil2 = new THREE.Mesh(new THREE.BoxGeometry(0.86, 0.17, 0.44), MAT.clothB);
+  pil2.position.set(-2.05, 0.84, -1.55);
+  inter.add(pil2);
+  var head2 = new THREE.Mesh(new THREE.BoxGeometry(1.62, 0.62, 0.10), MAT.cabinWood);
+  head2.position.set(-2.05, 0.72, -1.83);
+  inter.add(head2);
+  // 탁자 + 의자 2
+  var tb2 = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.10, 1.15), MAT.cabinWood);
+  tb2.position.set(1.65, 0.86, -1.1);
+  inter.add(tb2);
+  for (var lg3 = 0; lg3 < 4; lg3++) {
+    var leg2 = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.66, 0.09), MAT.cabinDark);
+    leg2.position.set(1.65 + (lg3 % 2 ? 0.46 : -0.46), 0.50, -1.1 + (lg3 < 2 ? 0.46 : -0.46));
+    inter.add(leg2);
+  }
+  for (var ch2 = -1; ch2 <= 1; ch2 += 2) {
+    var seat2 = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.08, 0.48), MAT.cabinWood);
+    seat2.position.set(1.65 + ch2 * 0.95, 0.60, -1.1);
+    inter.add(seat2);
+    var back2 = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.54, 0.48), MAT.cabinWood);
+    back2.position.set(1.65 + ch2 * 1.18, 0.86, -1.1);
+    inter.add(back2);
+  }
+  var jug2 = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.14, 0.24, 7), MAT.terracotta);
+  jug2.position.set(1.62, 1.03, -1.1);
+  inter.add(jug2);
+  // 선반 + 단지
+  var shelf2 = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.07, 0.30), MAT.cabinWood);
+  shelf2.position.set(1.95, 1.85, -2.72);
+  inter.add(shelf2);
+  for (var js = 0; js < 3; js++) {
+    var jm = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.11, 0.20, 7), js % 2 ? MAT.terracotta : MAT.clothB);
+    jm.position.set(1.35 + js * 0.55, 1.98, -2.72);
+    inter.add(jm);
+  }
+  // 벽난로 (오른쪽 뒤)
+  var hearth = new THREE.Mesh(new THREE.BoxGeometry(1.35, 1.05, 0.55), MAT.rock);
+  hearth.position.set(2.45, 0.71, -2.45);
+  inter.add(hearth);
+  var hearthTop = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.12, 0.68), MAT.rockD);
+  hearthTop.position.set(2.45, 1.30, -2.45);
+  inter.add(hearthTop);
+  var ember = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.14, 0.20), MAT.glassGlow);
+  ember.position.set(2.45, 0.30, -2.30);
+  inter.add(ember);
+  // 등불
+  var lamp2 = new THREE.Mesh(new THREE.SphereGeometry(0.16, 9, 7), MAT.glassGlow);
+  lamp2.position.set(0, 2.62, 0.1);
+  inter.add(lamp2);
+  var lampRing = new THREE.Mesh(new THREE.TorusGeometry(0.20, 0.022, 4, 10), MAT.knob);
+  lampRing.position.set(0, 2.80, 0.1);
+  lampRing.rotation.x = Math.PI / 2;
+  inter.add(lampRing);
+
+  g.add(shell); g.add(front); g.add(roofG); g.add(inter); g.add(doorG);
+  addShadows(g);
+
+  var frontMat = new THREE.MeshLambertMaterial({ color: 0xffffff, vertexColors: true, flatShading: true, transparent: true, opacity: 1 });
+  flattenGroup(shell, null, MAT.prop, true);
+  flattenGroup(front, null, frontMat, true);
+  flattenGroup(inter, null, MAT.prop, true);
+  flattenGroup(doorG, null, MAT.prop, true);
+
+  var roofMeshes = [];
+  roofG.traverse(function (o) { if (o.isMesh) roofMeshes.push(o); });
+
+  g.userData = {
+    type: 'cabin', big: true, roofMat: roofMat, roofTrimMat: roofTrimMat, frontMat: frontMat,
+    roofMats: [roofMat, roofTrimMat, gableMat], roofMeshes: roofMeshes,
+    roofMesh: roofMeshes[0], frontMesh: front.children[0],
+    roofT: 1, frontT: 1
+  };
+  return g;
+}
+
+/* =========================================================
+   🪵 v3.0 — 공룡 울타리 · 가죽 침낭 · 등불
+   ========================================================= */
+/* 🪵 공룡 울타리 — 기둥 8개와 두 줄 가로대, 안쪽엔 여물통 */
+function makeFence() {
+  var g = new THREE.Group();
+  var R = 2.55, N = 10;
+  for (var i = 0; i < N; i++) {
+    var a = (i / N) * TAU;
+    // 정면(아래쪽) 한 칸은 출입구로 비워 둔다
+    var gap = Math.abs(((a + Math.PI * 2) % (Math.PI * 2)) - Math.PI * 0.5) < 0.36;
+    var px = Math.cos(a) * R, pz = Math.sin(a) * R;
+    if (!gap) {
+      var post = new THREE.Mesh(GEO.cabinLog, i % 2 ? MAT.bark : MAT.barkD);
+      post.scale.set(0.52, 1.55, 0.52);
+      post.position.set(px, 0.72, pz);
+      post.rotation.z = Math.cos(a) * 0.05;
+      g.add(post);
+      var capF = new THREE.Mesh(GEO.ico0, MAT.barkP);
+      capF.position.set(px, 1.52, pz);
+      capF.scale.set(0.11, 0.09, 0.11);
+      g.add(capF);
+    }
+    // 다음 기둥까지 가로대 2줄
+    var a2 = ((i + 1) / N) * TAU;
+    var gap2 = Math.abs(((a2 + Math.PI * 2) % (Math.PI * 2)) - Math.PI * 0.5) < 0.36;
+    if (gap || gap2) continue;
+    var px2 = Math.cos(a2) * R, pz2 = Math.sin(a2) * R;
+    var mx = (px + px2) / 2, mz = (pz + pz2) / 2;
+    var len = Math.hypot(px2 - px, pz2 - pz);
+    for (var h = 0; h < 2; h++) {
+      var rail = new THREE.Mesh(GEO.cabinLog, h ? MAT.barkP : MAT.bark);
+      rail.scale.set(0.32, len, 0.32);
+      rail.position.set(mx, h ? 1.18 : 0.62, mz);
+      rail.rotation.z = Math.PI / 2;
+      rail.rotation.y = -Math.atan2(pz2 - pz, px2 - px);
+      g.add(rail);
+    }
+  }
+  // 여물통 · 건초
+  var trough = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.36, 0.62), MAT.planksD);
+  trough.position.set(-1.3, 0.22, -1.2);
+  g.add(trough);
+  var hay = new THREE.Mesh(GEO.ico1, MAT.dryGrass ? MAT.dryGrass : MAT.reedPlume);
+  hay.position.set(-1.3, 0.44, -1.2);
+  hay.scale.set(0.62, 0.16, 0.24);
+  g.add(hay);
+  var hay2 = new THREE.Mesh(GEO.ico0, MAT.reedPlume);
+  hay2.position.set(1.6, 0.16, -1.35);
+  hay2.scale.set(0.36, 0.14, 0.28);
+  g.add(hay2);
+  addShadows(g);
+  flattenGroup(g, null, MAT.prop, true);
+  g.userData = { type: 'fence' };
+  return g;
+}
+
+/* 🛏 가죽 침낭 — 바닥에 깐 두툼한 가죽 요와 베개·담요 */
+function makeBed() {
+  var g = new THREE.Group();
+  var pad = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.20, 2.05), MAT.furD);
+  pad.position.set(0, 0.12, 0);
+  g.add(pad);
+  var sheet = new THREE.Mesh(new THREE.BoxGeometry(1.02, 0.10, 1.35), MAT.cloth);
+  sheet.position.set(0, 0.25, 0.24);
+  g.add(sheet);
+  var pil = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.16, 0.34), MAT.clothB);
+  pil.position.set(0, 0.28, -0.76);
+  g.add(pil);
+  var roll = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 1.0, 7), MAT.fur);
+  roll.position.set(0, 0.28, 0.90);
+  roll.rotation.z = Math.PI / 2;
+  g.add(roll);
+  for (var i = 0; i < 4; i++) {
+    var a = (i / 4) * TAU + 0.4;
+    var peg = new THREE.Mesh(GEO.ico0, MAT.barkD);
+    peg.position.set(Math.cos(a) * 0.62, 0.05, Math.sin(a) * 1.06);
+    peg.scale.set(0.07, 0.05, 0.07);
+    g.add(peg);
+  }
+  addShadows(g);
+  flattenGroup(g, null, MAT.prop, true);
+  g.userData = { type: 'bed' };
+  return g;
+}
+
+/* 🏮 등불 — 기둥에 매단 유리 등. 밤에 따뜻한 불빛 덩어리가 된다 */
+function makeLantern() {
+  var g = new THREE.Group();
+  var base = new THREE.Mesh(GEO.rockSlab[1], MAT.rockD);
+  base.position.y = 0.06;
+  base.scale.set(0.34, 0.22, 0.34);
+  g.add(base);
+  var post = new THREE.Mesh(GEO.cabinLog, MAT.bark);
+  post.scale.set(0.36, 1.35, 0.36);
+  post.position.y = 0.72;
+  g.add(post);
+  var arm = new THREE.Mesh(GEO.branch, MAT.barkD);
+  arm.position.set(0.16, 1.38, 0);
+  arm.scale.set(0.42, 0.34, 0.42);
+  arm.rotation.set(Math.PI / 2, 0, -0.5);
+  g.add(arm);
+  var body = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.34, 0.26), MAT.glassGlow);
+  body.position.set(0.34, 1.18, 0);
+  g.add(body);
+  var top = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.16, 6), MAT.knob);
+  top.position.set(0.34, 1.40, 0);
+  g.add(top);
+  var frame = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.06, 0.32), MAT.barkD);
+  frame.position.set(0.34, 1.00, 0);
+  g.add(frame);
+  var glow = new THREE.Sprite(new THREE.SpriteMaterial({
+    color: 0xffd9a0, transparent: true, opacity: 0.62, depthWrite: false,
+    blending: THREE.AdditiveBlending
+  }));
+  glow.scale.set(1.9, 1.9, 1);
+  glow.position.set(0.34, 1.18, 0);
+  g.add(glow);
+  addShadows(g);
+  flattenGroup(g, null, MAT.prop, true);
+  g.userData = { type: 'lantern', glow: glow };
   return g;
 }
 
@@ -12649,7 +13567,11 @@ var STRUCT_DEF = {
   tailorBench: { name: '의상 작업대', icon: '🧥', make: makeTailorBench, r: 1.05, gap: 2.4, dist: 3.0 },
   smithBench: { name: '대장간', icon: '⚒️', make: makeSmithBench, r: 1.15, gap: 2.6, dist: 3.0 },
   leatherRug: { name: '가죽 러그', icon: '🟫', make: makeLeatherRug, r: 0.85, gap: 1.4, dist: 2.6, flat: true },
-  leatherCanopy: { name: '가죽 지붕', icon: '⛺', make: makeLeatherCanopy, r: 1.3, gap: 2.8, dist: 3.0 }
+  leatherCanopy: { name: '가죽 지붕', icon: '⛺', make: makeLeatherCanopy, r: 1.3, gap: 2.8, dist: 3.0 },
+  /* ⛵ v3.0 — 공룡 울타리 · 생활 가구 */
+  fence: { name: '공룡 울타리', icon: '🪵', make: makeFence, r: 2.55, gap: 5.4, dist: 5.6 },
+  bed: { name: '가죽 침낭', icon: '🛏', make: makeBed, r: 0.9, gap: 1.7, dist: 2.6, flat: false },
+  lantern: { name: '등불', icon: '🏮', make: makeLantern, r: 0.42, gap: 1.4, dist: 2.4 }
 };
 
 /* 🔥 모닥불 연료 수명(초) - 설치·재점화 후 5분 */
@@ -12679,6 +13601,11 @@ function setFireLit(st, lit, silent) {
 function makeStructure(type) {
   var def = STRUCT_DEF[type] || STRUCT_DEF.campfire;
   return def.make();
+}
+/* 🏠 v3.0 — 증축한 집(2단계)은 별도 모델을 만든다 */
+function makeStructureV(type, lv) {
+  if (type === 'cabin' && (lv | 0) >= 2) return makeCabinBig();
+  return makeStructure(type);
 }
 
 /* =========================================================
@@ -12905,13 +13832,14 @@ function updateCraftDisp(st) {
   if (green && st.craftSpr) st.craftSpr.material.color.setHex(0xffffff);
 }
 
-function placeStructure(type, x, z, rot) {
-  var g = makeStructure(type);
+function placeStructure(type, x, z, rot, lv) {
+  var g = makeStructureV(type, lv);
   g.position.set(x, terrainH(x, z) - 0.03, z);
   g.rotation.y = (rot === undefined) ? (Math.random() * 0.5 - 0.25) : rot;
   scene.add(g);
-  var rec = { type: type, x: Math.round(x * 10) / 10, z: Math.round(z * 10) / 10, rot: Math.round(g.rotation.y * 100) / 100 };
-  var st = { type: type, x: x, z: z, rot: g.rotation.y, group: g, t: Math.random() * 10, rec: rec };
+  var rec = { type: type, x: Math.round(x * 10) / 10, z: Math.round(z * 10) / 10, rot: Math.round(g.rotation.y * 100) / 100, isle: ISLE.cur };
+  if (lv) rec.lv = lv | 0;
+  var st = { type: type, x: x, z: z, rot: g.rotation.y, group: g, t: Math.random() * 10, rec: rec, isle: ISLE.cur, lv: lv | 0 };
   if (type === 'cabin') st.floorY = terrainH(x, z) + 0.19;
   if (type === 'hatchNest') { st.egg = null; st.eggT = 0; }
   if (isCraftStation(type)) {
@@ -12937,13 +13865,14 @@ function restoreStructures() {
   for (var i = 0; i < S.structures.length; i++) {
     var s = S.structures[i];
     if (!s || !STRUCT_DEF[s.type]) continue;
+    if ((s.isle || 'home') !== ISLE.cur) continue;      // ⛵ 다른 섬의 구조물은 그 섬에 갈 때 복원
     var x = Number(s.x) || 0, z = Number(s.z) || 0;
     if (terrainH(x, z) < 0.4) continue;
-    var g = makeStructure(s.type);
+    var g = makeStructureV(s.type, s.lv);
     g.position.set(x, terrainH(x, z) - 0.03, z);
     g.rotation.y = (typeof s.rot === 'number') ? s.rot : 0;
     scene.add(g);
-    var st2 = { type: s.type, x: x, z: z, rot: g.rotation.y, group: g, t: Math.random() * 10, rec: s };
+    var st2 = { type: s.type, x: x, z: z, rot: g.rotation.y, group: g, t: Math.random() * 10, rec: s, isle: ISLE.cur, lv: s.lv | 0 };
     if (s.type === 'cabin') st2.floorY = terrainH(x, z) + 0.19;
     if (s.type === 'campfire') {
       // 이 패치 이전 저장은 연료 정보가 없다 → 가득 찬 불로 복원
@@ -13061,7 +13990,8 @@ function insideCabin(s, x, z, pad) {
   if (!s || s.type !== 'cabin') return false;
   cabinLocal(s, x, z, _cl);
   var p = pad || 0;
-  return Math.abs(_cl.x) < CABIN_W / 2 - p && Math.abs(_cl.z) < CABIN_D / 2 - p;
+  var dm = cabinDims(s);
+  return Math.abs(_cl.x) < dm.W / 2 - p && Math.abs(_cl.z) < dm.D / 2 - p;
 }
 
 /* 바닥 높이 — 오두막 안이면 마루 위로 올라선다 */
@@ -13070,7 +14000,8 @@ function groundY(x, z) {
   for (var i = 0; i < structures.length; i++) {
     var s = structures[i];
     if (s.type !== 'cabin') continue;
-    if (Math.abs(x - s.x) > 4 || Math.abs(z - s.z) > 4) continue;
+    var _dm = cabinDims(s);
+    if (Math.abs(x - s.x) > _dm.W / 2 + 1.5 || Math.abs(z - s.z) > _dm.D / 2 + 1.5) continue;
     if (insideCabin(s, x, z, 0.30)) return Math.max(y, s.floorY === undefined ? y + 0.19 : s.floorY);
   }
   return y;
@@ -13084,13 +14015,14 @@ function pushStructure(s, px, pz, rad) {
   if (s.type === 'cabin') {
     cabinLocal(s, px, pz, _cl);
     var lx = _cl.x, lz = _cl.z;
-    var W2 = CABIN_W / 2, D2 = CABIN_D / 2, t = 0.22;
+    var _pd = cabinDims(s), _dh = cabinDoorHalf(s);
+    var W2 = _pd.W / 2, D2 = _pd.D / 2, t = 0.22;
     var boxes = [
       [-W2 - t, W2 + t, -D2 - t, -D2 + t],
       [-W2 - t, -W2 + t, -D2 - t, D2 + t],
       [W2 - t, W2 + t, -D2 - t, D2 + t],
-      [-W2 - t, -0.72, D2 - t, D2 + t],
-      [0.72, W2 + t, D2 - t, D2 + t]
+      [-W2 - t, -_dh, D2 - t, D2 + t],
+      [_dh, W2 + t, D2 - t, D2 + t]
     ];
     for (var b = 0; b < boxes.length; b++) {
       var B = boxes[b];
@@ -14375,7 +15307,8 @@ function inHomeCircle(x, z) {
   return dx * dx + dz * dz < HOME.r * HOME.r;
 }
 function isSafeZone(x, z) {
-  if (inHomeCircle(x, z)) return true;
+  /* ⛵ 원시 섬에는 마을 안전지대가 없다 — 내가 지은 불·집 둘레만 안전하다 */
+  if (ISLE.cur === 'home' && inHomeCircle(x, z)) return true;
   for (var i = 0; i < structures.length; i++) {
     var s = structures[i];
     if (s.type !== 'cabin' && s.type !== 'campfire' && s.type !== 'workbench') continue;
@@ -14387,7 +15320,8 @@ function isSafeZone(x, z) {
 }
 /* 가장 가까운 안전 거점 (마을 중심 또는 설치물) — 육식공룡을 밖으로 돌려보낼 때 쓴다 */
 function safeAnchor(x, z) {
-  var best = { x: HOME.x, z: HOME.z, r: HOME.r }, bd = (x - HOME.x) * (x - HOME.x) + (z - HOME.z) * (z - HOME.z);
+  var best = (ISLE.cur === 'home') ? { x: HOME.x, z: HOME.z, r: HOME.r } : { x: x, z: z, r: 0 };
+  var bd = (ISLE.cur === 'home') ? ((x - HOME.x) * (x - HOME.x) + (z - HOME.z) * (z - HOME.z)) : 1e9;
   for (var i = 0; i < structures.length; i++) {
     var s = structures[i];
     if (s.type !== 'cabin' && s.type !== 'campfire' && s.type !== 'workbench') continue;
@@ -14707,7 +15641,7 @@ function petHurt(pet, dmg, src) {
 function petStrike(d, A, tdp, pet) {
   if (!pet || pet.dead) return;
   if (tdp <= A.hitR + 0.25) {
-    petHurt(pet, A.atkDmg, d);
+    petHurt(pet, Math.max(1, Math.round(A.atkDmg * (d.pow || 1))), d);
     spawnBurst(pet.x, terrainH(pet.x, pet.z) + (pet.parts.height || 1.2) * 0.5, pet.z, 0xd8583c, 5, 0.8);
     if (d.kind === 'allo' || d.kind === 'trex' || d.kind === 'carno') sfx('roar'); else sfx('hit');
   } else sfx('miss');
@@ -14873,7 +15807,8 @@ var NODE_LABEL = {
   cactus: '선인장 열매 따기', dryBush: '마른 가지 줍기', pine: '전나무 베기', nest: '익룡 둥지 살피기',
   frostHerb: '서리 약초 뽑기', ice: '얼음 캐기', bamboo: '대나무 베기',
   fern: '고사리 뜯기', lavender: '라벤더 꺾기', banana: '바나나 따기', pineapple: '파인애플 따기',
-  cotton: '목화 따기', flower: '꽃 따기'
+  cotton: '목화 따기', flower: '꽃 따기',
+  metalVein: '금속 광맥 캐기', rareHerb: '희귀 약초 뽑기', giantMushroom: '큰 버섯 따기'
 };
 function gatherNode(n) {
   var y = terrainH(n.x, n.z);
@@ -14975,6 +15910,20 @@ function gatherNode(n) {
     addItem('pineapple', 1 + bonus); got.push('파인애플 +' + (1 + bonus));
     sfx('pick');
     spawnBurst(n.x, y + 0.6, n.z, 0xd9a437, 6, 0.6);
+  } else if (n.kind === 'metalVein') {
+    addItem('metalOre', 1 + bonus); addItem('stone', 1);
+    got.push('🪙 금속 광석 +' + (1 + bonus), '돌 +1');
+    sfx('hitrock');
+    spawnBurst(n.x, y + 0.9, n.z, 0xe0b74e, 10, 1.1);
+  } else if (n.kind === 'rareHerb') {
+    addItem('rareHerb', 1 + bonus); got.push('🌱 희귀 약초 +' + (1 + bonus));
+    if (Math.random() < 0.4) { addItem('herb', 1); got.push('약초 +1'); }
+    sfx('pick');
+    spawnBurst(n.x, y + 0.6, n.z, 0x8ff0d6, 9, 0.7);
+  } else if (n.kind === 'giantMushroom') {
+    addItem('mushroom', 2 + bonus); got.push('🍄 버섯 +' + (2 + bonus));
+    sfx('pick');
+    spawnBurst(n.x, y + 0.8, n.z, 0xc98a54, 8, 0.7);
   } else if (n.kind === 'nest') {
     // 🥚 아주 희귀한 드랍 — 보통은 빈 둥지(깃털·나뭇가지)
     //    둥지 50곳 중 1곳 꼴(2%)로 낮춰 익룡 알 희귀도를 크게 올렸다
@@ -15586,6 +16535,7 @@ function killDino(d) {
   var gy = terrainH(d.x, d.z);
   toast(meta.name + ' 사냥 성공! ' + names.join(' · '), 'good');
   spawnBurst(d.x, gy + (d.parts.height || 1.2) * 0.5, d.z, 0xffcf7a, 12, 1.3);
+  if (typeof petKillExp === 'function') petKillExp(d);      // 🐾 동행도 함께 자란다
   if (rideDino === d) dismount();
 }
 
@@ -15885,10 +16835,30 @@ function newPetId() {
 }
 function syncTamedData() {
   var byPid = {}, i;
+  /* ⛵ 섬별 배열까지 모두 훑어 '저장 목록에 없는 펫'도 자동으로 등재한다 */
+  for (var kk in DINOS) {
+    var arr = DINOS[kk];
+    for (i = 0; i < arr.length; i++) {
+      var dd0 = arr[i];
+      if (dd0.tamed && !dd0.dead && dd0.pid) byPid[dd0.pid] = dd0;
+    }
+  }
   for (i = 0; i < dinos.length; i++) {
     var d = dinos[i];
     if (!d.tamed || d.dead || !d.pid) continue;
     byPid[d.pid] = d;
+  }
+  /* 저장 목록에 빠진 펫(테이밍·부화 경로가 아닌 개체)을 채워 넣는다 */
+  var known = {};
+  for (i = 0; i < S.tamed.length; i++) if (S.tamed[i] && S.tamed[i].pid) known[S.tamed[i].pid] = 1;
+  for (var pid in byPid) {
+    if (known[pid]) continue;
+    var nd = byPid[pid];
+    S.tamed.push({
+      kind: nd.kind, x: Math.round(nd.x), z: Math.round(nd.z), name: nd.name || '',
+      petName: nd.petName || '', pid: pid, hp: Math.round(nd.hp), lv: petLvOf(nd), exp: Math.round(nd.exp || 0),
+      isle: nd.isle || ISLE.cur, penned: !!nd.penned
+    });
   }
   for (i = 0; i < S.tamed.length; i++) {
     var t = S.tamed[i];
@@ -15898,6 +16868,12 @@ function syncTamedData() {
     t.name = dd.name || '';
     t.petName = dd.petName || '';
     t.hp = Math.round(dd.hp);
+    /* 🐾 v3.0 — 레벨·경험치·동행 여부·울타리 상태도 함께 저장 */
+    t.lv = petLvOf(dd);
+    t.exp = Math.round(dd.exp || 0);
+    t.companion = dd.pid === S.companion ? 1 : 0;
+    t.penned = !!dd.penned;
+    t.isle = dd.isle || ISLE.cur;
   }
 }
 
@@ -16393,6 +17369,7 @@ function doPackStruct(st) {
   if (!st || !st.type) return;
   var def = STRUCT_DEF[st.type];
   if (!def) return;
+  if (st.type === 'fence') releaseFencePets(st);      // 🪵 맡긴 공룡은 먼저 꺼내 준다
   if (st.type === 'cabin' && insideCabin(st, player.pos.x, player.pos.z, 0.1)) {
     sfx('deny'); toast('🏚️ 오두막 밖으로 나온 뒤 포장할 수 있어요', 'warn'); return;
   }
@@ -16425,6 +17402,24 @@ function doPackStruct(st) {
   saveState();
   toast('📦 ' + nm + '을(를) 통째로 포장했어요' + extra, 'good');
   hint('「🏕 설치」 맨 위 「포장한 구조물」에서 원하는 자리에 그대로 다시 놓을 수 있어요', 4400);
+}
+
+/* 🪵 울타리를 치우기 전에 맡긴 공룡을 모두 꺼내 준다 */
+function releaseFencePets(st) {
+  if (!st) return;
+  var list = (st.pens || ((st.rec && st.rec.pens) || [])).slice(0);
+  for (var i = 0; i < list.length; i++) {
+    var d = petByPid(list[i]);
+    if (!d) continue;
+    d.penned = false;
+    var a = Math.random() * TAU;
+    d.x = st.x + Math.cos(a) * 3.2; d.z = st.z + Math.sin(a) * 3.2;
+    if (terrainH(d.x, d.z) < 0.4) { d.x = st.x; d.z = st.z + 3.0; }
+    d.group.position.set(d.x, terrainH(d.x, d.z), d.z);
+    d.group.visible = true;
+  }
+  st.pens = [];
+  if (st.rec) st.rec.pens = [];
 }
 
 /* 포장한 상자를 다시 설치 — 고스트 표시까지 동일 */
@@ -16473,6 +17468,7 @@ function confirmDemolish() {
   var st = demolishSt;
   if (!st) { closeSheet(); return; }
   var type = st.type, def = STRUCT_DEF[type];
+  if (type === 'fence') releaseFencePets(st);      // 🪵 맡긴 공룡은 먼저 밖으로
   var refund = structRefund(type), got = [], lost = [];
   for (var k in refund) { var n = addItem(k, refund[k]); if (n > 0) got.push((ITEMS[k] ? ITEMS[k].icon + ' ' : '') + (ITEMS[k] ? ITEMS[k].name : k) + ' +' + n); if (n < refund[k]) lost.push(ITEMS[k] ? ITEMS[k].name : k); }
   if (type === 'hatchNest') {
@@ -16529,6 +17525,8 @@ function openSheet(mode) {
   else if (mode === 'pet') { sheetTitle.textContent = '🐾 내 공룡'; sheetSub.textContent = '이름 짓기 · 체력 · 먹이 주기'; }
   else if (mode === 'demolish') { sheetTitle.textContent = '🔨 철거'; sheetSub.textContent = '구조물을 없애고 재료를 일부 회수해요'; }
   else if (mode === 'dye') { sheetTitle.textContent = '🎨 염색대'; sheetSub.textContent = '꽃 염료로 옷·신발·오두막 지붕을 물들여요'; }
+  else if (mode === 'cabinUp') { sheetTitle.textContent = '🏠 집 증축'; sheetSub.textContent = '1×1 오두막 → 2×2 큰 집'; }
+  else if (mode === 'fence') { sheetTitle.textContent = '🪵 공룡 울타리'; sheetSub.textContent = '최대 3마리 보관 · 교대 · 회복'; }
   else { sheetTitle.textContent = '설정'; sheetSub.textContent = ''; }
   closeHexMenu();
   renderSheet();
@@ -17238,9 +18236,14 @@ function renderPet() {
       var row = document.createElement('div');
       row.className = 'petCard' + (d.downed ? ' down' : '') + (named ? ' named' : '');
       row.innerHTML = '<div class="petHead"><span class="pi">🐾</span><b>' + escHtml(petLabel(d)) + '</b>' +
-        '<small>' + (meta.name || d.kind) + '</small>' +
-        '<em>' + (d.downed ? '😵 쓰러짐 — 먹이를 주세요' : (named ? (d.mounted ? '타는 중' : '따라오는 중') : '그 자리에 머무름')) + '</em></div>' +
-        '<div class="petHp"><i style="width:' + hpPct + '%"></i><span>' + Math.round(d.hp) + ' / ' + d.max + '</span></div>';
+        '<small>' + (meta.name || d.kind) + ' · Lv.' + petLvOf(d) + '</small>' +
+        '<em>' + (d.downed ? '😵 쓰러짐 — 먹이를 주세요' :
+          (d.penned ? '🪵 울타리 안 · 회복 중' :
+            (d.companion ? (d.mounted ? '🐾 타는 중' : '🐾 동행 · 함께 사냥') :
+              (named ? '이름표만 · 동행 지정 전' : '그 자리에 머무름')))) + '</em></div>' +
+        '<div class="petHp"><i style="width:' + hpPct + '%"></i><span>' + Math.round(d.hp) + ' / ' + d.max + '</span></div>' +
+        '<div class="petExp"><i style="width:' + Math.min(100, Math.round((d.exp || 0) / petExpNeed(d) * 100)) + '%"></i>' +
+        '<span>EXP ' + Math.round(d.exp || 0) + ' / ' + petExpNeed(d) + ' · 보조 공격 ' + petAtkOf(d) + '</span></div>';
       var nameRow = document.createElement('div');
       nameRow.className = 'petNameRow';
       var inp = document.createElement('input');
@@ -17286,6 +18289,21 @@ function renderPet() {
         renderSheet();
       });
       acts.appendChild(rb);
+      if (!d.companion && !d.penned) {
+        var cb2 = document.createElement('button');
+        cb2.type = 'button';
+        cb2.className = 'petRide';
+        cb2.textContent = '🐾 동행 지정';
+        cb2.addEventListener('click', function () { audioInit(); setCompanion(d.pid); renderSheet(); });
+        acts.appendChild(cb2);
+      } else if (d.companion) {
+        var cb3 = document.createElement('button');
+        cb3.type = 'button';
+        cb3.className = 'petClear';
+        cb3.textContent = '동행 해제';
+        cb3.addEventListener('click', function () { audioInit(); S.companion = ''; refreshCompanion(); syncTamedData(); saveState(); toast('동행을 해제했어요 · 제자리에 머물러요', undefined); renderSheet(); });
+        acts.appendChild(cb3);
+      }
       if (named) {
         var cl = document.createElement('button');
         cl.type = 'button';
@@ -17300,7 +18318,7 @@ function renderPet() {
   }
   var note = document.createElement('div');
   note.className = 'sheetNote tight';
-  note.textContent = '이름 지은 공룡만 따라와요 · 이름 없는 공룡은 제자리 · 먹이로 체력 회복';
+  note.textContent = '🐾 동행 한 마리가 나를 따라오며 함께 싸우고 레벨이 올라요 · 나머지는 제자리 · 「공룡 울타리」에 맡기면 쉬면서 회복해요';
   sheetBody.appendChild(note);
 }
 
@@ -17525,6 +18543,14 @@ function renderSheet() {
     renderDye();
     return;
   }
+  if (sheetMode === 'cabinUp') {
+    renderCabinUp();
+    return;
+  }
+  if (sheetMode === 'fence') {
+    renderFence();
+    return;
+  }
   if (sheetMode === 'craft') {
     /* ── 🏭 시설 전용 창 (v2.3e) — 앞에 선 그 시설의 레시피만 단독으로 ── */
     var _sdOnly = (craftStation && STATIONS[craftStation]) ? STATIONS[craftStation] : null;
@@ -17638,7 +18664,12 @@ function renderSheet() {
       ['🧥', '방한 풀세트', '방한 모자(머리) · 방한 털옷(몸) · 방한 털부츠(발) 3종을 모두 착용하면 툰드라 냉기에 완전 면역(HP 감소 0). 1종 -25% · 2종 -55% 로 덜 얼어붙어요. 레시피는 재료를 못 모았어도 작업대 목록에 항상 보여요.'],
       ['🐣', '익룡 알 · 부화', '북쪽 고원 절벽의 둥지에서 드물게 익룡 알이 나와요. 모닥불 곁 「부화 둥지」에 넣고 게임 이틀을 품으면 프테라노돈이 태어나요.'],
       ['🕊', '비행 탑승', '길들인 프테라노돈에 타면 장애물·강·절벽을 넘어 맵 전역을 1.4배 빠른 속도로 날 수 있어요.'],
-      ['🗺', '지도', '상단 🗺 버튼(또는 M)으로 바이옴·내 위치·🏡 내 집·설치물·길들인 공룡을 한눈에 봐요.']
+      ['🗺', '지도', '상단 🗺 버튼(또는 M)으로 바이옴·내 위치·🏡 내 집·설치물·길들인 공룡을 한눈에 봐요.'],
+      ['🏠', '집 증축', '오두막 앞에서 육각 메뉴 「증축」 — 통나무·두꺼운 가죽·돌·거친 천으로 1×1 오두막을 2×2 큰 집으로 넓혀요. 안에서 회복이 1.75배, 지붕 염색 색은 그대로예요.'],
+      ['🛏', '침낭 · 등불', '가죽 침낭 곁에 서면 체력·허기가 2배 이상으로 차오르고(밤엔 더), 등불 곁에서도 조금 더 빨라져요.'],
+      ['🐾', '동행 공룡', '「펫」에서 「동행 지정」한 한 마리가 나를 따라오며, 내가 싸우는 적에게 달려들어 어그로를 나누고 보조 공격을 해요. 함께 사냥하면 Lv 이 올라 최대 체력·보조 딜이 자라요.'],
+      ['🪵', '공룡 울타리', '울타리에는 3마리까지 맡길 수 있어요. 맡긴 공룡은 쉬면서 체력이 회복되고 쓰러져도 스스로 일어나요. 앞에서 육각 메뉴 「울타리」로 교대해요.'],
+      ['⛵', '섬 이동', '지도(🗺) 맨 아래 ⛵ 항해에서 야생 원시 섬(Lv.15+)으로 갈 수 있어요. 고향 섬의 집·상자·제작 상태는 그대로 보존되고, 언제든 🏠 고향 섬으로 돌아와요.']
     ];
     for (var b = 0; b < BOOK.length; b++) {
       var it = document.createElement('div');
@@ -17647,7 +18678,7 @@ function renderSheet() {
       sheetBody.appendChild(it);
     }
   } else if (sheetMode === 'build') {
-    var keys = ['campfire', 'cabin', 'workbench', 'dryingRack', 'loom', 'dyeVat', 'tailorBench', 'smithBench', 'chest', 'woodBox', 'metalBox', 'premiumBox', 'leatherRug', 'leatherCanopy', 'hatchNest', 'chair', 'table', 'planter'];
+    var keys = ['campfire', 'cabin', 'workbench', 'dryingRack', 'loom', 'dyeVat', 'tailorBench', 'smithBench', 'chest', 'woodBox', 'metalBox', 'premiumBox', 'leatherRug', 'leatherCanopy', 'hatchNest', 'chair', 'table', 'planter', 'fence', 'bed', 'lantern'];
     /* 한 줄 짧은 설명 — 긴 설명은 title 툴팁으로 */
     var STRUCT_SHORT = {
       campfire: '요리 · 휴식', cabin: '내 집 · 휴식', workbench: '기초 제작',
@@ -17655,7 +18686,8 @@ function renderSheet() {
       tailorBench: '옷·신발·배낭', smithBench: '칼·창·활',
       chest: '보관함', woodBox: '보관함', metalBox: '보관함', premiumBox: '보관함',
       leatherRug: '바닥 러그', leatherCanopy: '천막 지붕', hatchNest: '익룡 알 품기',
-      chair: '의자 소품', table: '테이블 소품', planter: '화분 소품'
+      chair: '의자 소품', table: '테이블 소품', planter: '화분 소품',
+      fence: '공룡 3마리 보관', bed: '빠른 휴식', lantern: '밤 등불'
     };
     var STRUCT_DESC = {
       campfire: '불꽃·요리·휴식 · 5분마다 장작 필요',
@@ -17675,7 +18707,10 @@ function renderSheet() {
       hatchNest: '익룡 알을 품는 둥지 · 6m 안에 모닥불 필요',
       chair: '오두막 앞에 놓는 소품',
       table: '오두막 앞에 놓는 소품',
-      planter: '꽃을 심은 돌 화분'
+      planter: '꽃을 심은 돌 화분',
+      fence: '길들인 공룡 3마리까지 맡겨 두고 교대 · 쉬면서 회복 · 앞에서 「울타리」',
+      bed: '가죽 침낭 · 곁에 서면 체력·허기 회복이 2배 이상 (밤엔 더)',
+      lantern: '밤을 밝히는 등불 · 곁에서 쉬면 회복이 조금 빨라져요'
     };
     // 📦 v2.4 — 포장해 둔 구조물 (상자·모닥불·시설·집 전부)
     if (S.packed && S.packed.length) {
@@ -18128,6 +19163,7 @@ function drawMap() {
   mapText(c, '🏔 고원', -38, -104, 19, '#f4efe0', true, placed);
   mapText(c, '🏹 들판', 46, 100, 18, '#f2ffe2', true, placed);
   mapText(c, '🌊 바다', -96, 132, 17, '#cfeeff', true, placed);
+  // 🏡 내 집 표시 — 고향 섬에서만
   // ☁️ 목화밭 — 작게 표시
   var cp = mapPx(COTTON.x, COTTON.z);
   var cr2 = COTTON.r * S / (2 * MAP.half);
@@ -18215,8 +19251,11 @@ function drawMap() {
     c.fillText(ICON[s.type], sp[0], sp[1]);
   }
 
-  // ── 🏡 내 집 — 가장 크고 밝게
-  var hs = homeSpot(), hp2 = mapPx(hs.x, hs.z);
+  // ── 🏡 내 집 — 고향 섬에서만 표시 (원시 섬엔 상륙지만)
+  var hs = (ISLE.cur === 'jungle')
+    ? (ISLE.spawn.jungle || { x: 0, z: 96 })
+    : homeSpot();
+  var hp2 = mapPx(hs.x, hs.z);
   c.save();
   c.globalAlpha = 0.95;
   c.fillStyle = 'rgba(255,255,255,.92)';
@@ -18224,11 +19263,12 @@ function drawMap() {
   c.strokeStyle = '#3f7a44'; c.lineWidth = 2.5; c.stroke();
   c.font = '21px -apple-system, "Apple SD Gothic Neo", sans-serif';
   c.textAlign = 'center'; c.textBaseline = 'middle';
-  c.fillText('🏡', hp2[0], hp2[1] + 0.5);
+  c.fillText(ISLE.cur === 'jungle' ? '⛵' : '🏡', hp2[0], hp2[1] + 0.5);
   c.font = 'bold 12px -apple-system, "Apple SD Gothic Neo", sans-serif';
   c.lineWidth = 3; c.strokeStyle = 'rgba(12,26,22,.65)';
-  c.strokeText('내 집', hp2[0], hp2[1] + 24);
-  c.fillStyle = '#f4ffe8'; c.fillText('내 집', hp2[0], hp2[1] + 24);
+  var _homeLbl = ISLE.cur === 'jungle' ? '상륙지' : '내 집';
+  c.strokeText(_homeLbl, hp2[0], hp2[1] + 24);
+  c.fillStyle = '#f4ffe8'; c.fillText(_homeLbl, hp2[0], hp2[1] + 24);
   c.restore();
 
   // ── 길들인 공룡 (익룡 포함)
@@ -18283,7 +19323,10 @@ function openMap() {
   mapCard.setAttribute('aria-hidden', 'false');
   if (mapNoteEl) mapNoteEl.textContent = '지도 그리는 중…';
   drawMap();
-  if (mapNoteEl) mapNoteEl.textContent = '내 위치(▶) · 🏡 내 집 · 오두막/모닥불/작업대 · 길들인 공룡 · ⚠ 대형 육식공룡 · 🦖 군락(마릿수)';
+  if (mapNoteEl) mapNoteEl.textContent = ISLE.cur === 'home'
+    ? '내 위치(▶) · 🏡 내 집 · 오두막/모닥불/작업대 · 길들인 공룡 · ⚠ 대형 육식공룡 · 🦖 군락(마릿수)'
+    : '🌴 야생 원시 섬 · 🪙 금속 광맥 · 🌱 희귀 약초 · ⚠ Lv.15+ 거대 공룡';
+  renderTravelBar();
 }
 function closeMap() {
   MAP.open = false;
@@ -19835,7 +20878,7 @@ function beginDinoAttack(d, A) {
 function dinoStrike(d, A, dp) {
   killTelegraphOf(d);
   if (dp <= A.hitR) {
-    hurtPlayer(A.atkDmg, d);
+    hurtPlayer(Math.max(1, Math.round(A.atkDmg * (d.pow || 1))), d);
     spawnBurst(player.pos.x, terrainH(player.pos.x, player.pos.z) + 1.0, player.pos.z, 0xd8583c, 5, 0.8);
     if (d.kind === 'allo' || d.kind === 'trex' || d.kind === 'carno') sfx('roar'); else sfx('hit');
   } else {
@@ -19912,8 +20955,27 @@ function updateCreatureAI(d, dt, t, dp) {
 
   // 🐾 길들인 개체 — 이름을 지어준 공룡만 주인을 따라오고, 이름이 없으면 그 자리에 머둔다
   if (d.tamed) {
-    if (d.downed) { d.walking = 0; d.animSpeed = 0; d.cstate = 'idle'; return; }
-    if (!d.petName) {
+    if (d.penned) { d.walking = 0; d.animSpeed = 0; d.cstate = 'idle'; return; }
+    if (d.downed) {
+      d.walking = 0; d.animSpeed = 0; d.cstate = 'idle';
+      /* 🪵 기지(안전지대)에서 쓰러진 공룡은 스스로 일어난다 — 스트레스 방지 */
+      d.downT = (d.downT || 0) + dt;
+      if (d.downT > 18 && isSafeZone(d.x, d.z)) {
+        d.downed = false; d.downT = 0;
+        d.hp = Math.max(d.hp, Math.round(d.max * 0.4));
+        addNameTag(d);
+        toast('🐾 ' + petLabel(d) + '이(가) 기지에서 스스로 일어났어요', 'good');
+        syncTamedData();
+      }
+      return;
+    }
+    d.downT = 0;
+    /* 🐾 동행 — 가까이 있는 위협에게 먼저 달려들어 어그로를 나눈다 */
+    if (d.companion && !d.mounted) {
+      var foe0 = companionFoe(d);
+      if (foe0) { petCombatTick(d, foe0, dt); return; }
+    }
+    if (!d.petName && !d.companion) {
       d.walking = Math.max(0, (d.walking || 0) - dt * 3);
       d.animSpeed = 0;
       if (d.idle > 0) d.idle -= dt;
@@ -20007,7 +21069,7 @@ function updateCreatureAI(d, dt, t, dp) {
           d.strike2Done = true;
           if (tdp <= A.hitR + 0.35) {
             if (pet) {
-              petHurt(pet, 8, d);
+              petHurt(pet, Math.round(8 * (d.pow || 1)), d);
               spawnSplash(pet.x, terrainH(pet.x, pet.z) + 0.4, pet.z, 8);
               sfx('splash');
             } else {
@@ -20325,23 +21387,28 @@ function updateStructures(dt, t) {
 }
 
 /* ---------------- rest ---------------- */
-var REST = { on: false, where: '', heat: 0 };
+var REST = { on: false, where: '', heat: 0, k: 1 };
 function updateRest(dt) {
   if (!started) return;
-  var where = '';
-  if (nearestFire(4.5)) where = '모닥불';
-  else {
-    for (var i = 0; i < structures.length; i++) {
-      var s = structures[i];
-      if (s.type !== 'cabin') continue;
-      if (insideCabin(s, player.pos.x, player.pos.z, -0.15)) { where = '오두막'; break; }
-    }
+  var where = '', k = 1, camp = nearestFire(4.5);
+  if (camp) where = '모닥불';
+  for (var i = 0; i < structures.length; i++) {
+    var s = structures[i];
+    if (s.type !== 'cabin') continue;
+    if (!insideCabin(s, player.pos.x, player.pos.z, -0.15)) continue;
+    if ((s.lv | 0) >= 2) { where = '큰 오두막'; k = Math.max(k, 1.75); }
+    else { where = '오두막'; k = Math.max(k, 1.15); }
   }
+  /* 🛏 v3.0 — 가죽 침낭: 곁에 서면 휴식이 훨씬 빠르다 (밤엔 더) */
+  var bed = nearestStruct('bed', 2.4);
+  if (bed) { where = '가죽 침낭'; k = Math.max(k, DAY.night > 0.35 ? 2.9 : 2.1); }
+  /* 🏮 등불 곁은 온기가 있어 조금 더 빨리 회복된다 */
+  else if (nearestStruct('lantern', 3.2)) { if (!camp) where = '등불 곁'; k = Math.max(k, 1.25); }
   REST.where = where;
+  REST.k = k;
   var on = !!where;
   if (on !== REST.on) { REST.on = on; }
   if (on) {
-    var k = where === '오두막' ? 1.15 : 1;
     if (S.hp < 100) S.hp = clamp(S.hp + 3.2 * k * dt, 0, 100);
     if (S.hunger < 100) S.hunger = clamp(S.hunger + 1.4 * k * dt, 0, 100);
     REST.heat = Math.min(1, REST.heat + dt * 2);
@@ -20367,6 +21434,7 @@ function tempAt(x, z, night) {
   else if (b === 'meadow') base = 23;
   else if (b === 'shore') base = 24;
   else if (b === 'wilds') base = 21;
+  else if (b === 'jungle') base = 27;      // ⛵ 원시 섬은 늘 후덥지근하다
   var n = (night === undefined ? DAY.night : night) || 0;
   return base - n * (b === 'desert' ? 9 : 6);
 }
@@ -20528,6 +21596,7 @@ function initWorld() {
   camLook.set(px, terrainH(px, pz) + 1.6, pz);
 
   restoreStructures();
+  ISLE.structBuilt.home = true;          // ⛵ 고향 섬 구조물은 여기서 한 번만 복원한다
 
   var kinds = ['trike', 'para', 'trike', 'para', 'trike', 'pachy', 'para', 'stego', 'pachy'];   // 온순한 초식 — 마을 근처에도
   function spawnInBiome(kind, biome, minD, opts) {
@@ -20697,8 +21766,29 @@ function initWorld() {
     if (terrainH(tx, tz) < 0.4) { tx = 4; tz = 4; }
     /* v2.3d — 이름(petName)과 체력을 함께 복원. 예전 세이브는 name 을 그대로 이름으로 본다 */
     var _pn = (tm.petName !== undefined) ? tm.petName : (tm.name || '');
-    var _d = spawnDino(tm.kind, tx, tz, { tamed: true, name: _pn, petName: _pn, pid: tm.pid, hp: tm.hp, scale: 1 });
+    var _d = spawnDino(tm.kind, tx, tz, {
+      tamed: true, name: _pn, petName: _pn, pid: tm.pid, hp: tm.hp, scale: 1,
+      lv: tm.lv, exp: tm.exp, companion: S.companion && S.companion === tm.pid, penned: !!tm.penned
+    });
     if (!_d.pid) { _d.pid = newPetId(); tm.pid = _d.pid; }
+  }
+  /* 🐾 저장된 동행이 없으면 이름 지은 공룡을 첫 동행으로 삼는다 */
+  if (!S.companion) {
+    for (var ci = 0; ci < dinos.length; ci++) {
+      var cd = dinos[ci];
+      if (cd.tamed && cd.petName && !cd.penned && !cd.dead) { S.companion = cd.pid; break; }
+    }
+  }
+  refreshCompanion();
+  /* 🪵 울타리 목록에 있는 공룡은 숨겨 둔다 */
+  for (var pi2 = 0; pi2 < structures.length; pi2++) {
+    var sf = structures[pi2];
+    if (sf.type !== 'fence') continue;
+    var pl = penList(sf);
+    for (var pj = 0; pj < pl.length; pj++) {
+      var pd = petByPid(pl[pj]);
+      if (pd) { pd.penned = true; pd.group.visible = false; }
+    }
   }
   refreshTool();
   updateOutfit();
@@ -20832,6 +21922,9 @@ var HEX_ICONS = {
   use: '<path d="M4.6 12.6l4.6 4.6L19.4 6.8"/>',
   pack: '<path d="M4.6 9.4 12 4.4l7.4 5v9.8a1.2 1.2 0 0 1-1.2 1.2H5.8a1.2 1.2 0 0 1-1.2-1.2z"/><path d="M8.6 16.2 12 12.8l3.4 3.4"/><path d="M12 12.8v-4"/>',
   trash: '<path d="M5.4 6.8h13.2M9.4 6.8V4.6h5.2v2.2"/><path d="M7.2 6.8l.9 12.4a1.4 1.4 0 0 0 1.4 1.3h5a1.4 1.4 0 0 0 1.4-1.3l.9-12.4"/>',
+  up: '<path d="M12 20V5.4"/><path d="M6.4 11 12 5.4 17.6 11"/><path d="M4 20.4h16"/>',
+  bed: '<path d="M3.4 18.4v-6.2h17.2v6.2"/><path d="M3.4 15.4h17.2"/><path d="M3.4 12.2V8.4"/><path d="M7.4 12.2V9.6h3.4v2.6"/>',
+  pen: '<path d="M4.4 20.4V7.6M12 20.4V7.6M19.6 20.4V7.6"/><path d="M4.4 10.4h15.2M4.4 15.4h15.2"/>',
   take: '<path d="M12 4.2v10.4"/><path d="M7.6 10.6 12 15l4.4-4.4"/><path d="M4.6 17.6v1.6a1.2 1.2 0 0 0 1.2 1.2h12.4a1.2 1.2 0 0 0 1.2-1.2v-1.6"/>'
 };
 function hexActionsFor(st) {
@@ -20854,7 +21947,12 @@ function hexActionsFor(st) {
   } else if (t === 'campfire') {
     acts.push({ a: 'fire', icon: 'fire', label: st.lit === false ? '불 피우기' : '요리', big: true });
   } else if (t === 'cabin') {
-    acts.push({ a: 'enter', icon: 'door', label: '들어가기', big: true });
+    acts.push({ a: 'enter', icon: 'door', label: (st.lv | 0) >= 2 ? '큰 집' : '들어가기', big: true });
+    if ((st.lv | 0) < 2) acts.push({ a: 'upgrade', icon: 'up', label: '증축' });
+  } else if (t === 'fence') {
+    acts.push({ a: 'pen', icon: 'pen', label: '울타리', big: true });
+  } else if (t === 'bed') {
+    acts.push({ a: 'rest', icon: 'bed', label: '휴식', big: true });
   } else if (t === 'hatchNest') {
     acts.push({ a: 'use', icon: 'nest', label: '둥지', big: true });
   } else if (t === 'leatherRug') {
@@ -20871,6 +21969,7 @@ function hexActionsFor(st) {
 function hexSignature(st) {
   var a = hexActionsFor(st);
   return st.type + '|' + (st.lit === false ? 0 : 1) + '|' + st.x.toFixed(1) + ',' + st.z.toFixed(1) + '|' + a.length +
+    '|L' + (st.lv | 0) + '|p' + penCount(st) +
     '|r' + stationReadyCount(st) + '|j' + stationJobs(st).length;
 }
 function buildHexMenu(st) {
@@ -20972,9 +22071,16 @@ function doHexAction(st, act) {
   } else if (act === 'fire') {
     if (st.lit === false) relightFire(st); else { fireSt = st; openSheet('fire'); }
     closeHexMenu();
+  } else if (act === 'upgrade') {
+    cabinUpSt = st; openSheet('cabinUp'); closeHexMenu();
+  } else if (act === 'pen') {
+    fenceSt = st; openSheet('fence'); closeHexMenu();
+  } else if (act === 'rest') {
+    closeHexMenu();
+    hint('🛏 침낭 곁에 서 있으면 체력·허기가 빠르게 차올라요', 2800);
   } else if (act === 'enter') {
     closeHexMenu();
-    hint('🚪 오두막 문 앞으로 걸어 들어가면 안으로 들어가요', 2600);
+    hint(st.lv >= 2 ? '🏠 큰 집 안으로 걸어 들어가면 지붕이 열리고 휴식이 빨라져요' : '🚪 오두막 문 앞으로 걸어 들어가면 안으로 들어가요', 2600);
   } else if (act === 'use') {
     if (st.type === 'hatchNest') {
       if (st.egg && !st.egg.done) { toast('🥚 알을 품는 중이에요 · ' + Math.round(clamp(st.egg.p / HATCH_DAYS, 0, 1) * 100) + '%', undefined); }
@@ -21082,10 +22188,17 @@ function updateHUD(dt) {
 
   // 귀환 방향 안내 — 집에서 30m 이상 떨어졌을 때
   if (homeGuideEl && homeArrowEl) {
-    var _hs = homeSpot();
+    var _hs = (ISLE.cur === 'jungle') ? (ISLE.spawn.jungle || { x: 0, z: 96 }) : homeSpot();
     var _dx = _hs.x - player.pos.x, _dz = _hs.z - player.pos.z;
     var _dh = Math.sqrt(_dx * _dx + _dz * _dz);
-    var _showGuide = _dh > 30 && !MAP.open;
+    var _showGuide = _dh > (ISLE.cur === 'jungle' ? 45 : 30) && !MAP.open;
+    var _hgl = homeGuideEl.querySelector('b');
+    if (_hgl) {
+      var _lbl = (ISLE.cur === 'jungle') ? '상륙지' : '내 집';
+      if (_hgl.textContent !== _lbl) _hgl.textContent = _lbl;
+      var _ico = homeGuideEl.querySelector('i');
+      if (_ico && _ico.textContent !== (ISLE.cur === 'jungle' ? '⛵' : '🏡')) _ico.textContent = (ISLE.cur === 'jungle' ? '⛵' : '🏡');
+    }
     if (homeGuideEl.classList.contains('on') !== _showGuide) homeGuideEl.classList.toggle('on', _showGuide);
     if (_showGuide) {
       // 🏡 화면 기준 방향 — 캐릭터가 보는 쪽(player.facing)이 아니라
@@ -21231,7 +22344,9 @@ function updateHUD(dt) {
     if (z !== ZONE.cur) {
       ZONE.cur = z;
       if (zoneBanner) {
-        zoneBanner.textContent = z === 'home' ? '🏡 주거 구역 · 안전지대' : '🏹 야생 사냥터 · 조심해';
+        zoneBanner.textContent = (ISLE.cur === 'jungle')
+          ? (z === 'home' ? '🔥 내 불 · 안전한 자리' : '🌴 야생 원시 섬 · 거대 공룡 주의')
+          : (z === 'home' ? '🏡 주거 구역 · 안전지대' : '🏹 야생 사냥터 · 조심해');
         zoneBanner.className = 'on ' + (z === 'home' ? 'home' : 'wild');
         setTimeout(function () { if (zoneBanner) zoneBanner.className = ''; }, 2600);
       }
@@ -21239,8 +22354,13 @@ function updateHUD(dt) {
       musicZone(z);
     }
     if (zonePill) {
-      setText(zonePill, ZONE.cur === 'home' ? '🏡 주거 구역' : '🏹 야생 사냥터');
-      zonePill.className = ZONE.cur === 'home' ? 'home' : 'wild';
+      if (ISLE.cur === 'jungle') {
+        setText(zonePill, ZONE.cur === 'home' ? '🔥 내 자리' : '🌴 원시 섬 · Lv.15+');
+        zonePill.className = ZONE.cur === 'home' ? 'home' : 'wild';
+      } else {
+        setText(zonePill, ZONE.cur === 'home' ? '🏡 주거 구역' : '🏹 야생 사냥터');
+        zonePill.className = ZONE.cur === 'home' ? 'home' : 'wild';
+      }
     }
   }
 
@@ -21342,6 +22462,7 @@ var SKY_KEYS = [
 ];
 var _kA = new THREE.Color(), _kB = new THREE.Color(), _kC = new THREE.Color();
 
+var _JUNGLE_FOG = new THREE.Color(0x8fae7a);
 function applySky() {
   var t = DAY.t;
   var k0 = SKY_KEYS[0], k1 = SKY_KEYS[SKY_KEYS.length - 1];
@@ -21364,6 +22485,12 @@ function applySky() {
   scene.fog.color.copy(LC('fog', _kC));
   scene.fog.near = L(k0.fn, k1.fn) * (LOWSPEC.on ? 0.72 : 1);
   scene.fog.far = L(k0.ff, k1.ff) * (LOWSPEC.on ? 0.66 : 1);
+  /* ⛵ 원시 섬은 짙은 밈림 안개 — 살짝 초록빛을 섞고 시야를 조금 더 멀리 둔다 */
+  if (ISLE.cur === 'jungle') {
+    scene.fog.color.lerp(_JUNGLE_FOG, 0.34);
+    scene.fog.near *= 1.45;
+    scene.fog.far *= 1.55;
+  }
   skyMat.uniforms.top.value.copy(LC('top', _kC));
   skyMat.uniforms.bot.value.copy(LC('bot', _kC));
   skyMat.uniforms.glowCol.value.copy(LC('gc', _kC));
@@ -21422,6 +22549,7 @@ function loop(now) {
   if (started && !FREEZE_SIM) {
     updatePlayer(dt);
     updateDinos(dt, t);
+    updatePens(dt);
     updateArrows(dt);
     updateVenom(dt);
     updateHatch(dt);
@@ -21648,6 +22776,17 @@ function beginSession(slot, isNew, nick) {
   initWorld();
   if (!FOAM) buildFoamRing();
   if (!RIVER_WATER) buildRiverWater();
+  /* ⛵ 마지막에 원시 섬에 있었다면 그 섬에서 이어서 시작한다 */
+  if (S.isle === 'jungle') {
+    applyIsland('jungle');
+    if (!ISLE.spawn.jungle) ISLE.spawn.jungle = findLandingSpot();
+    var _sj = { x: S.px || ISLE.spawn.jungle.x, z: S.pz || ISLE.spawn.jungle.z };
+    if (terrainH(_sj.x, _sj.z) < 0.4) _sj = ISLE.spawn.jungle;
+    player.pos.set(_sj.x, groundY(_sj.x, _sj.z), _sj.z);
+    player.group.position.copy(player.pos);
+    camLook.set(_sj.x, player.pos.y + 1.6, _sj.z);
+    placeCompanionNear(_sj.x, _sj.z);
+  }
   setLowSpec(!!S.lowSpec);          // 저장된 ⚡ 저사양 설정 복원
   started = true;
   // 검수용: URL 해시 #tools 로 열면 기본 도구 세트(도끼·낫·곡괭이·칼·창·활)를 쥐여 준다
@@ -21674,6 +22813,7 @@ function beginSession(slot, isNew, nick) {
   applySky();
   onResize();
   ZONE.cur = zoneAt(player.pos.x, player.pos.z);
+  renderTravelBar();
   saveState();
   audioInit();
   // 첫 터치 제스처 안에서 배경음악 자동 재생 (iOS 정책상 이 시점이 유일한 기회)
@@ -21822,6 +22962,597 @@ SaveSys.init(function () {
 requestAnimationFrame(loop);
 
 /* =========================================================
+   🏠 v3.0 — 오두막 증축 (1×1 → 2×2 큰 집)
+   ---------------------------------------------------------
+   재료: 통나무 · 두꺼운 가죽 · 돌 · 거친 천.
+   안에서의 회복 속도가 빨라지고, 지붕 염색 색은 그대로 이어진다.
+   ========================================================= */
+var cabinUpSt = null;
+var CABIN_UP_COST = { wood: 40, hideThick: 6, stone: 25, clothHemp: 6 };
+function costPayable(cost) {
+  for (var k in cost) if (((S.inv[k] | 0) < cost[k])) return false;
+  return true;
+}
+function costPay(cost) {
+  for (var k in cost) {
+    S.inv[k] = (S.inv[k] | 0) - cost[k];
+    if (S.inv[k] <= 0) delete S.inv[k];
+  }
+  chipsDirty = true;
+}
+function upgradeCabin(st) {
+  if (!st || st.type !== 'cabin') return false;
+  if ((st.lv | 0) >= 2) { sfx('deny'); toast('이미 큰 집으로 증축했어요', 'warn'); return false; }
+  if (!structInReach(st)) { sfx('deny'); toast('집 가까이 가서 증축해 주세요', 'warn'); return false; }
+  if (insideCabin(st, player.pos.x, player.pos.z, 0.10)) { sfx('deny'); toast('🏚️ 집 밖으로 나온 뒤 증축할 수 있어요', 'warn'); return false; }
+  if (!costPayable(CABIN_UP_COST)) { sfx('deny'); toast('증축 재료가 모자라요 · 아래 목록을 확인해 주세요', 'warn'); return false; }
+  costPay(CABIN_UP_COST);
+  var g = makeCabinBig();
+  g.position.copy(st.group.position);
+  g.rotation.y = st.group.rotation.y;
+  scene.add(g);
+  if (st.group.parent) st.group.parent.remove(st.group);
+  st.group = g;
+  st.lv = 2;
+  st.floorY = terrainH(st.x, st.z) + 0.19;
+  if (st.rec) st.rec.lv = 2;
+  if (S.dye && S.dye.roof) dyeRoofMesh(g, S.dye.roof);
+  PAD.dirty = true;
+  addExp(30);
+  sfx('place');
+  spawnBurst(st.x, terrainH(st.x, st.z) + 1.0, st.z, 0xc9b58a, 18, 1.4);
+  spawnHearts(st.x, terrainH(st.x, st.z) + 1.4, st.z, 5);
+  toast('🏠 오두막을 큰 집으로 증축했어요! 안에서 회복이 훨씬 빨라져요', 'good');
+  hint('큰 집 안에서는 체력·허기 회복이 1.75배 · 「가죽 침낭」을 놓으면 더 빨라요', 5200);
+  cabinUpSt = st;
+  syncStructData();
+  saveState();
+  closeSheet();
+  return true;
+}
+function renderCabinUp() {
+  var st = cabinUpSt;
+  if (!st) { sheetBody.innerHTML = '<div class="sheetNote">증축할 오두막을 찾지 못했어요.</div>'; return; }
+  var lv2 = (st.lv | 0) >= 2;
+  var head = document.createElement('div');
+  head.className = 'sheetNote';
+  head.innerHTML = lv2
+    ? '🏠 <b>이미 2×2 큰 집</b>이에요 · 안에서 회복이 1.75배 빨라요'
+    : '🏚️ <b>1×1 오두막</b> → 🏠 <b>2×2 큰 집</b>으로 넓혀요 · 창 4개 · 현관 처마 · 벽난로 · 큰 침대';
+  sheetBody.appendChild(head);
+  if (lv2) return;
+  var box = document.createElement('div');
+  box.className = 'rec open';
+  var costHtml = '';
+  for (var k in CABIN_UP_COST) {
+    var have = S.inv[k] | 0, need = CABIN_UP_COST[k];
+    costHtml += '<span class="' + (have >= need ? '' : 'lack') + '">' + (ITEMS[k] ? ITEMS[k].icon + ' ' + ITEMS[k].name : k) +
+      ' <b>' + have + '/' + need + '</b></span>';
+  }
+  box.innerHTML = '<div class="ic">🏠</div><div class="txt"><div class="nmrow"><b>큰 집으로 증축</b>' +
+    '<span class="statline"><i>통나무·가죽·돌·거친 천</i></span></div>' +
+    '<div class="recDetail"><div class="dReq">' + costHtml + '</div>' +
+    '<div class="ddesc">내부 회복 1.75배 · 지붕 염색 색 유지 · 안전 반경 13m → 16m</div></div></div>';
+  sheetBody.appendChild(box);
+  var go = document.createElement('button');
+  go.className = 'rec';
+  go.style.cssText = 'width:100%;height:46px;margin-top:8px;border-radius:12px;border:1px solid rgba(224,177,90,.45);background:linear-gradient(180deg,rgba(224,177,90,.28),rgba(224,177,90,.12));color:#FFECC6;font-family:inherit;font-size:14px;font-weight:900;cursor:pointer';
+  go.textContent = costPayable(CABIN_UP_COST) ? '⬆️ 증축하기' : '재료가 모자라요';
+  go.disabled = !costPayable(CABIN_UP_COST);
+  go.addEventListener('click', function () { upgradeCabin(st); });
+  sheetBody.appendChild(go);
+  var note = document.createElement('div');
+  note.className = 'sheetNote tight';
+  note.textContent = '증축해도 집 위치·지붕 염색·안에 둔 가구는 그대로예요.';
+  sheetBody.appendChild(note);
+}
+
+/* =========================================================
+   🪵 v3.0 — 공룡 울타리 (3마리까지 보관 · 교대 · 회복)
+   ========================================================= */
+var fenceSt = null;
+var FENCE_MAX = 3;
+function penList(st) {
+  if (!st) return [];
+  if (!st.pens) st.pens = (st.rec && Array.isArray(st.rec.pens)) ? st.rec.pens.slice(0) : [];
+  return st.pens;
+}
+function penCount(st) { return st && st.pens ? st.pens.length : 0; }
+function petByPid(pid) {
+  if (!pid) return null;
+  for (var i = 0; i < dinos.length; i++) if (dinos[i].tamed && dinos[i].pid === pid && !dinos[i].dead) return dinos[i];
+  return null;
+}
+function penPet(st, d) {
+  if (!st || !d || !d.tamed) return false;
+  var list = penList(st);
+  if (list.length >= FENCE_MAX) { sfx('deny'); toast('울타리가 가득 찼어요 (최대 ' + FENCE_MAX + '마리)', 'warn'); return false; }
+  if (list.indexOf(d.pid) >= 0) return false;
+  list.push(d.pid);
+  d.penned = true;
+  d.penT = 0;
+  d.walking = 0; d.animSpeed = 0; d.cstate = 'idle';
+  if (rideDino === d) dismountNow();
+  if (d.group) d.group.visible = false;
+  if (S.companion === d.pid) { S.companion = ''; refreshCompanion(); }
+  if (st.rec) st.rec.pens = list.slice(0);
+  sfx('pop');
+  toast('🪵 ' + petLabel(d) + '을(를) 울타리에 들였어요 · 쉬면서 체력이 회복돼요', 'good');
+  syncTamedData();
+  saveState();
+  return true;
+}
+function unpenPet(st, d) {
+  if (!st || !d) return false;
+  var list = penList(st);
+  var i = list.indexOf(d.pid);
+  if (i < 0) return false;
+  list.splice(i, 1);
+  d.penned = false;
+  var a = Math.random() * TAU;
+  var px = st.x + Math.cos(a) * (STRUCT_DEF.fence ? 3.4 : 3.0);
+  var pz = st.z + Math.sin(a) * 3.4;
+  if (terrainH(px, pz) < 0.4) { px = st.x; pz = st.z + 3.2; }
+  d.x = px; d.z = pz;
+  d.group.position.set(px, terrainH(px, pz), pz);
+  d.group.visible = true;
+  if (d.hp < d.max * 0.35) d.hp = Math.round(d.max * 0.35);
+  if (st.rec) st.rec.pens = list.slice(0);
+  sfx('pop');
+  toast('🐾 ' + petLabel(d) + '을(를) 울타리에서 꺼냈어요', 'good');
+  syncTamedData();
+  saveState();
+  return true;
+}
+/* 울타리 안의 공룡은 게임을 켜 둔 동안에도, 꺼 둔 동안에도 천천히 회복된다 */
+function updatePens(dt) {
+  for (var i = 0; i < structures.length; i++) {
+    var st = structures[i];
+    if (st.type !== 'fence') continue;
+    var list = penList(st);
+    for (var j = 0; j < list.length; j++) {
+      var d = petByPid(list[j]);
+      if (!d) continue;
+      if (d.hp < d.max) d.hp = Math.min(d.max, d.hp + dt * Math.max(2.4, d.max * 0.035));
+      if (d.downed && d.hp > d.max * 0.30) { d.downed = false; d.downT = 0; }
+    }
+  }
+}
+function renderFence() {
+  var st = fenceSt;
+  if (!st) { sheetBody.innerHTML = '<div class="sheetNote">울타리를 찾지 못했어요.</div>'; return; }
+  var list = penList(st);
+  var head = document.createElement('div');
+  head.className = 'sheetNote';
+  head.innerHTML = '🪵 <b>공룡 울타리</b> · ' + list.length + '/' + FENCE_MAX + '마리 · 들어온 공룡은 <b>쉬면서 체력이 회복</b>되고 쓰러져도 일어나요';
+  sheetBody.appendChild(head);
+  var mine = [];
+  for (var i = 0; i < dinos.length; i++) {
+    var d = dinos[i];
+    if (!d.tamed || d.dead) continue;
+    mine.push(d);
+  }
+  if (!mine.length) {
+    var e = document.createElement('div');
+    e.className = 'sheetNote';
+    e.textContent = '길들인 공룡이 없어요 · 온순한 공룡에게 열매를 주면 마음을 열어요.';
+    sheetBody.appendChild(e);
+    return;
+  }
+  for (var j = 0; j < mine.length; j++) {
+    (function (d) {
+      var inp = list.indexOf(d.pid) >= 0;
+      var hpPct = Math.max(0, Math.round(d.hp / Math.max(1, d.max) * 100));
+      var row = document.createElement('div');
+      row.className = 'petCard' + (inp ? ' named' : '') + (d.downed ? ' down' : '');
+      row.innerHTML = '<div class="petHead"><span class="pi">🐾</span><b>' + escHtml(petLabel(d)) + '</b>' +
+        '<small>' + (DINO_META[d.kind] ? (DINO_META[d.kind].name || d.kind) : d.kind) + ' · Lv.' + petLvOf(d) + '</small>' +
+        '<em>' + (inp ? '🪵 울타리 안' : (d.companion ? '🐾 동행 중' : '제자리')) + '</em></div>' +
+        '<div class="petHp"><i style="width:' + hpPct + '%"></i><span>' + Math.round(d.hp) + ' / ' + d.max + '</span></div>';
+      var acts = document.createElement('div');
+      acts.className = 'petActs';
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = inp ? 'petClear' : 'petFeed';
+      b.textContent = inp ? '꺼내기' : (list.length >= FENCE_MAX ? '울타리 가득' : '울타리에 들이기');
+      b.disabled = !inp && list.length >= FENCE_MAX;
+      b.addEventListener('click', function () {
+        audioInit();
+        if (inp) unpenPet(st, d); else penPet(st, d);
+        renderSheet();
+      });
+      acts.appendChild(b);
+      if (!inp && !d.companion) {
+        var cb = document.createElement('button');
+        cb.type = 'button';
+        cb.className = 'petRide';
+        cb.textContent = '🐾 동행 지정';
+        cb.addEventListener('click', function () { audioInit(); setCompanion(d.pid); renderSheet(); });
+        acts.appendChild(cb);
+      }
+      row.appendChild(acts);
+      sheetBody.appendChild(row);
+    })(mine[j]);
+  }
+  var note = document.createElement('div');
+  note.className = 'sheetNote tight';
+  note.textContent = '울타리 안 공룡은 시간이 지나면 체력이 회복되고, 쓰러져 있던 공룡도 스스로 일어나요.';
+  sheetBody.appendChild(note);
+}
+
+/* =========================================================
+   🐾 v3.0 — 동행 공룡 · 레벨 · 보조 공격
+   ---------------------------------------------------------
+   · 동행은 한 마리. 플레이어를 따라오며, 내가 교전 중인 야생 공룡에게
+     달려들어 어그로를 나누고 보조 공격을 한다.
+   · 함께 사냥하며 경험치를 얻어 Lv 이 오르고, 최대 체력과 보조 딜이 자란다.
+   ========================================================= */
+function petLvOf(d) { return Math.max(1, d && (d.lv | 0) || 1); }
+function petExpNeed(d) { return Math.round(40 + petLvOf(d) * 34); }
+function petMaxHpOf(kind, lv) {
+  var base = (DINO_STAT[kind] || DINO_STAT.trike).hp;
+  return Math.round(base * (1 + 0.10 * (Math.max(1, lv) - 1)));
+}
+function petAtkOf(d) {
+  var base = (DINO_STAT[d.kind] || DINO_STAT.trike).hp;
+  return Math.max(3, Math.round((2.5 + base / 42) * (1 + 0.13 * (petLvOf(d) - 1))));
+}
+function petAddExp(d, n) {
+  if (!d || !d.tamed || d.dead || !(n > 0)) return;
+  d.exp = (d.exp || 0) + n;
+  var up = 0, guard = 0;
+  while (d.exp >= petExpNeed(d) && guard++ < 30) {
+    d.exp -= petExpNeed(d);
+    d.lv = petLvOf(d) + 1;
+    up++;
+  }
+  if (up) {
+    var nm = petMaxHpOf(d.kind, d.lv);
+    d.hp = Math.min(nm, d.hp + (nm - d.max));
+    d.max = nm;
+    addNameTag(d);
+    sfx('craft');
+    spawnHearts(d.x, terrainH(d.x, d.z) + (d.parts.height || 12) * 0.7, d.z, 6);
+    toast('🐾 ' + petLabel(d) + ' Lv.' + d.lv + ' 달성! 최대 체력 ' + d.max + ' · 보조 공격 ' + petAtkOf(d), 'good');
+    syncTamedData();
+  }
+}
+function companionPet() {
+  if (!S.companion) return null;
+  var d = petByPid(S.companion);
+  return (d && !d.penned && !d.downed) ? d : null;
+}
+function setCompanion(pid) {
+  var d = pid ? petByPid(pid) : null;
+  if (!d) return false;
+  if (d.penned) { sfx('deny'); toast('울타리에서 먼저 꺼내 주세요', 'warn'); return false; }
+  if (!d.petName) {
+    d.petName = d.petName || '';
+  }
+  S.companion = pid;
+  refreshCompanion();
+  sfx('tame');
+  spawnHearts(d.x, terrainH(d.x, d.z) + (d.parts.height || 12) * 0.7, d.z, 5);
+  toast('🐾 ' + petLabel(d) + '이(가) 동행이 되었어요 · 함께 사냥하며 자라요', 'good');
+  hint('동행은 내가 싸우는 적에게 달려들어 어그로를 나누고 보조 공격을 해요', 4600);
+  syncTamedData();
+  saveState();
+  return true;
+}
+function refreshCompanion() {
+  for (var i = 0; i < dinos.length; i++) {
+    var d = dinos[i];
+    if (!d.tamed) continue;
+    var on = !!S.companion && d.pid === S.companion;
+    if (!!d.companion !== on) { d.companion = on; addNameTag(d); }
+  }
+}
+/* 동행이 달려들 대상 — 나와 교전 중이거나 가까이 있는 야생 공룡 */
+function companionFoe(d) {
+  var best = null, bd = 17 * 17;
+  for (var i = 0; i < dinos.length; i++) {
+    var o = dinos[i];
+    if (o.dead || o.tamed || o.mounted) continue;
+    if (!o.hostile && !o.attackable) continue;
+    var dx = o.x - d.x, dz = o.z - d.z, dd = dx * dx + dz * dz;
+    if (dd > bd) continue;
+    var pdx = o.x - player.pos.x, pdz = o.z - player.pos.z;
+    var pdd = pdx * pdx + pdz * pdz;
+    // 내 옆(16m)에서 위협하는 적만 문다 — 멀리 있는 야생을 쫓아가지 않는다
+    if (pdd > 16 * 16 && !o.aggro && !o.petTarget) continue;
+    bd = dd; best = o;
+  }
+  return best;
+}
+/* 동행의 보조 공격 — 짧은 쿨다운으로 물어뜯고, 명중하면 작은 경험치 */
+function petCombatTick(d, foe, dt) {
+  d.petAtkCd = Math.max(0, (d.petAtkCd || 0) - dt);
+  d.petAtkT = Math.max(0, (d.petAtkT || 0) - dt);
+  var dd = Math.hypot(foe.x - d.x, foe.z - d.z);
+  var reach = (d.reach || 3.4) + 0.9;
+  if (dd > reach) {
+    d.cstate = 'walk';
+    moveDino(d, foe.x, foe.z, Math.min(4.6, (d.speed || 3) * 1.15), dt);
+    return;
+  }
+  d.cstate = 'idle';
+  d.lookYaw = compFaceAngle(d, foe.x, foe.z);
+  if (d.petAtkCd > 0) return;
+  d.petAtkCd = 1.45;
+  d.petAtkT = 0.35;
+  var dmg = petAtkOf(d);
+  foe.hp -= dmg;
+  foe.hurt = 0.3;
+  wakeDino(foe);
+  /* 어그로 분산 — 맞은 야생은 동행 쪽으로 고개를 돌린다 */
+  if (foe.cstate !== 'attack' && Math.random() < 0.55) { foe.petTarget = d; foe.aggro = 1; }
+  var gy = terrainH(foe.x, foe.z);
+  spawnBurst(foe.x, gy + (foe.parts.height || 1.2) * 0.55, foe.z, 0xd8583c, 6, 0.8);
+  spawnFloatText(foe.x, gy + (foe.parts.height || 1.2) * 0.9, foe.z, '-' + dmg + ' 🐾', '#a8e8a0', 0.85);
+  sfx('hit');
+  petAddExp(d, 3);
+  if (foe.hp <= 0) { killDino(foe); }
+}
+/* 사냥 성공 경험치 — 동행이 40m 안에 있으면 함께 성장한다 */
+function petKillExp(d) {
+  var pet = companionPet();
+  if (!pet || !d) return;
+  var dd = Math.hypot(pet.x - d.x, pet.z - d.z);
+  if (dd > 45) return;
+  var base = DINO_STAT[d.kind] ? DINO_STAT[d.kind].hp / 22 : 4;
+  petAddExp(pet, Math.max(4, Math.round(4 + base)));
+}
+
+/* 야생 원시 섬의 공룡 — 고향 섬보다 크고 사나운 개체들(Lv.15+) */
+function spawnJungleDinos() {
+  function spotFor(biome, minD) {
+    for (var t = 0; t < 300; t++) {
+      var a = Math.random() * TAU, r = rnd(22, 132);
+      var x = Math.cos(a) * r, z = Math.sin(a) * r;
+      var h = terrainH(x, z);
+      if (h < 1.1) continue;
+      if (biome && biomeAt(x, z, h) !== biome) continue;
+      var dx = x - (ISLE.spawn.jungle ? ISLE.spawn.jungle.x : 0), dz = z - (ISLE.spawn.jungle ? ISLE.spawn.jungle.z : 96);
+      if (dx * dx + dz * dz < (minD || 22) * (minD || 22)) continue;
+      return { x: x, z: z };
+    }
+    return null;
+  }
+  function put(kind, biome, minD, opt) {
+    var sp = spotFor(biome, minD);
+    if (!sp) return null;
+    return spawnDino(kind, sp.x, sp.z, opt || {});
+  }
+  function packAt(kind, biome, n, spread, minD) {
+    var sp = spotFor(biome, minD);
+    if (!sp) return 0;
+    var made = 0;
+    for (var i = 0; i < n; i++) {
+      var a = (i / n) * TAU + rnd(-0.4, 0.4);
+      var rad = i === 0 ? 0 : rnd(spread * 0.4, spread);
+      var x = sp.x + Math.cos(a) * rad, z = sp.z + Math.sin(a) * rad;
+      if (terrainH(x, z) < 1.0) { x = sp.x; z = sp.z; }
+      var d = spawnDino(kind, x, z, { biome: biome, hpMul: 1.8, pow: 1.5, lvl: 16 });
+      if (!d) continue;
+      d.homeX = sp.x; d.homeZ = sp.z;
+      made++;
+    }
+    return made;
+  }
+  var big = { hpMul: 1.8, pow: 1.5, lvl: 16 };
+  var huge = { hpMul: 2.2, pow: 1.75, lvl: 20 };
+  // 온순 초식 — 밈림의 초입
+  packAt('trike', 'jungle', 3, 6, 26);
+  packAt('stego', 'jungle', 3, 6, 34);
+  put('para', 'jungle', 24, big);
+  put('pachy', 'jungle', 26, big);
+  put('anky', 'jungle', 30, big);
+  put('brachio', 'jungle', 36, { scale: 1.0, hpMul: 1.6, pow: 1.3, lvl: 15 });
+  // 사나운 무리
+  packAt('raptor', 'jungle', 4, 6, 30);
+  packAt('raptor', 'jungle', 4, 6, 52);
+  packAt('compy', 'jungle', 5, 5, 24);
+  packAt('dilo', 'jungle', 3, 6, 40);
+  put('carno', 'jungle', 34, big);
+  put('carno', 'jungle', 52, big);
+  put('allo', 'highland', 40, big);
+  put('allo', 'highland', 66, big);
+  put('spino', 'jungle', 48, huge);
+  put('trex', 'highland', 46, huge);
+  put('trex', 'highland', 74, huge);
+  put('trex', 'jungle', 88, huge);
+  put('mammoth', 'jungle', 58, big);
+  put('ptero', 'highland', 30, big);
+  put('ptero', 'jungle', 44, big);
+}
+
+/* =========================================================
+   ⛵ v3.0 — 섬 이동 (고향 섬 ⇄ 야생 원시 섬)
+   ---------------------------------------------------------
+   지형·채집물·공룡·구조물을 섬별로 나눠 두고, 항해할 때
+   '지금 섬'의 것만 보이게 바꾼다. 고향 섬의 집·상자·제작 상태는
+   SaveSys 레코드 그대로 보존되므로 돌아오면 그대로 있다.
+   ========================================================= */
+var TRAVEL = { busy: 0, fade: 0 };
+function findLandingSpot() {
+  // 해안에서 안쪽으로 6m가 뭍인 모래사장을 찾아 상륙지로 삼는다
+  for (var a = 0; a < 48; a++) {
+    var ang = a / 48 * TAU;
+    for (var r = 128; r >= 60; r -= 2) {
+      var x = Math.cos(ang) * r, z = Math.sin(ang) * r;
+      var h = terrainH(x, z);
+      if (h < 0.9 || h > 1.9) continue;
+      var ix = Math.cos(ang) * (r - 5), iz = Math.sin(ang) * (r - 5);
+      if (terrainH(ix, iz) < 1.5) continue;
+      if (Math.abs(ix) > 120 || Math.abs(iz) > 120) continue;
+      return { x: x, z: z };
+    }
+  }
+  return { x: 0, z: 96 };
+}
+function applyIsland(k) {
+  if (!ISLE_INFO[k]) return false;
+  var prev = ISLE.cur;
+  /* 🐾 동행은 함께 항해한다 — 쓰러졌거나 울타리에 있으면 고향에 남는다 */
+  var comp = null;
+  if (S.companion && prev !== k) {
+    var srcArr = DINOS[prev] || [];
+    for (var ci = 0; ci < srcArr.length; ci++) {
+      var cd = srcArr[ci];
+      if (cd.tamed && cd.pid === S.companion && !cd.dead && !cd.downed && !cd.penned) {
+        comp = cd;
+        srcArr.splice(ci, 1);
+        break;
+      }
+    }
+  }
+  ISLE.cur = k;
+  // 1) 지형 먼저 — 그 섬의 높이로 메시를 다시 채운다
+  terrainFill();
+  if (typeof applySky === 'function') applySky();
+  refreshWaterColors();
+  rebuildFoam();
+  // 2) 채집물·풀·해안 장식 (처음 갈 때 한 번만 만든다)
+  if (!ISLE.built[k]) buildProps(k);
+  setIsleNodes(k);
+  // 3) 구조물 · 공룡
+  setIsleStructs(k);
+  if (!ISLE.structBuilt[k]) { restoreStructures(); ISLE.structBuilt[k] = true; }
+  setIsleDinos(k);
+  if (!ISLE.dinoBuilt[k]) { ISLE.dinoBuilt[k] = true; if (k === 'jungle') spawnJungleDinos(); }
+  if (comp) {
+    dinos.push(comp);
+    comp.isle = k;
+    comp.x = player.pos.x + 2.2; comp.z = player.pos.z + 1.8;
+    comp.group.position.set(comp.x, terrainH(comp.x, comp.z), comp.z);
+    comp.group.visible = true;
+    comp.tx = comp.x; comp.tz = comp.z;
+  }
+  // 4) 보이기/숨기기
+  setIsleVisible('home', k === 'home');
+  setIsleVisible('jungle', k === 'jungle');
+  for (var s in STRUCTS) {
+    var arr = STRUCTS[s];
+    for (var i = 0; i < arr.length; i++) if (arr[i].group) arr[i].group.visible = (s === k);
+  }
+  for (var s2 in DINOS) {
+    var da = DINOS[s2];
+    for (var j = 0; j < da.length; j++) {
+      var d = da[j];
+      if (!d.group) continue;
+      d.group.visible = (s2 === k) && !d.penned && !d.dead && !(d.dying > 0);
+    }
+  }
+  if (RIVER_WATER && RIVER_WATER.mesh) RIVER_WATER.mesh.visible = (k === 'home');
+  if (GRASS.mesh) GRASS.mesh.visible = true;
+  PAD.dirty = true;
+  MAP.base = null;
+  /* 지도 군락 라벨도 섬별로 보관한다 */
+  if (!ISLE.packs) ISLE.packs = { home: [], jungle: [] };
+  ISLE.packs[prev] = PACKS.slice(0);
+  PACKS.length = 0;
+  var _pk = ISLE.packs[k] || [];
+  for (var pi3 = 0; pi3 < _pk.length; pi3++) PACKS.push(_pk[pi3]);
+  refreshCompanion();
+  return true;
+}
+/* 동행을 플레이어 옆에 세운다 (항해 직후) */
+function placeCompanionNear(x, z) {
+  var d = companionPet();
+  if (!d) return;
+  var a = Math.random() * TAU;
+  var px = x + Math.cos(a) * 2.4, pz = z + Math.sin(a) * 2.4;
+  if (terrainH(px, pz) < 0.45) { px = x + 1.6; pz = z + 1.6; }
+  d.x = px; d.z = pz; d.tx = px; d.tz = pz;
+  d.group.position.set(px, terrainH(px, pz), pz);
+  d.group.visible = true;
+}
+function travelTo(k) {
+  if (TRAVEL.busy > 0 || k === ISLE.cur || !ISLE_INFO[k]) return false;
+  audioInit();
+  // 떠나기 전 위치를 기억해 둔다 (집으로 돌아오면 그 자리로)
+  ISLE.from[ISLE.cur] = { x: player.pos.x, z: player.pos.z };
+  if (rideDino) dismountNow();
+  TRAVEL.busy = 1.6;
+  closeSheet();
+  closeMap();
+  sfx('splash');
+  var nm = ISLE_INFO[k].name;
+  toast('⛵ ' + nm + '으로 항해를 시작해요…', undefined);
+  // 뗏목 타는 사이 잠깐 덮었다가 새 섬에서 내린다
+  var veil = $id('isleVeil');
+  var veilTxt = $id('isleVeilTxt');
+  if (veilTxt) veilTxt.textContent = nm + '으로 항해 중…';
+  if (veil) veil.classList.add('on');
+  setTimeout(function () {
+    applyIsland(k);
+    // 상륙 지점
+    var sp;
+    if (k === 'home') {
+      sp = ISLE.from.home || { x: HOME.x, z: HOME.z - 4 };
+      if (terrainH(sp.x, sp.z) < 0.4) sp = { x: HOME.x, z: HOME.z - 4 };
+    } else {
+      if (!ISLE.spawn.jungle) ISLE.spawn.jungle = findLandingSpot();
+      sp = ISLE.spawn.jungle;
+    }
+    player.pos.set(sp.x, groundY(sp.x, sp.z), sp.z);
+    player.group.position.copy(player.pos);
+    camLook.set(sp.x, player.pos.y + 1.6, sp.z);
+    placeCompanionNear(sp.x, sp.z);
+    if (k === 'jungle') {
+      toast('🌴 야생 원시 섬에 닿았어요 · Lv.15+ 거대 공룡이 살아요', 'good');
+      hint('🪙 금속 광맥 · 🌱 희귀 약초를 찾아보세요 · 지도(🗺)에서 언제든 고향 섬으로 돌아올 수 있어요', 5600);
+      sfx('roar');
+    } else {
+      toast('🏡 고향 섬에 돌아왔어요 · 집과 상자는 그대로예요', 'good');
+      hint('내 오두막·상자·제작 대기열이 모두 그대로 보존되어 있어요', 4200);
+    }
+    if (veil) {
+      setTimeout(function () { veil.classList.remove('on'); }, 120);
+    }
+    TRAVEL.busy = 0.6;
+    /* 도착 즉시 구역 표시를 새 섬 기준으로 바꾼다 */
+    ZONE.cur = zoneAt(player.pos.x, player.pos.z);
+    if (zonePill) {
+      if (ISLE.cur === 'jungle') {
+        setText(zonePill, ZONE.cur === 'home' ? '🔥 내 자리' : '🌴 원시 섬 · Lv.15+');
+        zonePill.className = ZONE.cur === 'home' ? 'home' : 'wild';
+      } else {
+        setText(zonePill, ZONE.cur === 'home' ? '🏡 주거 구역' : '🏹 야생 사냥터');
+        zonePill.className = ZONE.cur === 'home' ? 'home' : 'wild';
+      }
+    }
+    renderTravelBar();
+    saveState();
+    chipsDirty = true;
+  }, 420);
+  return true;
+}
+/* 지도 카드의 항해 버튼 — 지금 섬 · 갈 수 있는 섬 */
+function renderTravelBar() {
+  var box = $id('travelBar');
+  if (!box) return;
+  var html = '';
+  for (var k in ISLE_INFO) {
+    var on = (k === ISLE.cur);
+    var info = ISLE_INFO[k];
+    html += '<button type="button" class="tvBtn' + (on ? ' on' : '') + '" data-isle="' + k + '"' + (on ? ' disabled' : '') + '>' +
+      '<b>' + info.icon + ' ' + info.name + '</b>' +
+      '<small>' + (on ? '지금 이곳' : info.sub) + '</small>' +
+      '<em>' + (on ? '📍 현재' : (k === 'home' ? '🏠 귀환' : '⛵ ' + info.lv + ' 항해')) + '</em></button>';
+  }
+  box.innerHTML = html;
+  var btns = box.querySelectorAll('.tvBtn');
+  for (var i = 0; i < btns.length; i++) {
+    btns[i].addEventListener('click', function (e) {
+      e.stopPropagation();
+      var k2 = this.getAttribute('data-isle');
+      if (k2 && k2 !== ISLE.cur) travelTo(k2);
+    });
+  }
+}
+
+/* =========================================================
    debug hooks (testing only)
    ========================================================= */
 function namesOfRows(root) {
@@ -21833,7 +23564,11 @@ function namesOfRows(root) {
   return out;
 }
 window.__game = {
-  S: S, player: player, nodes: nodes, dinos: dinos, structures: structures,
+  S: S, player: player,
+  /* 섬을 옮기면 배열이 바뀌므로 항상 지금 섬의 것을 돌려준다 */
+  get nodes() { return nodes; },
+  get dinos() { return dinos; },
+  get structures() { return structures; },
   craft: craft, place: placeStructure, save: saveState,
   teleport: function (x, z) {
     player.pos.set(x, groundY(x, z), z);
@@ -21912,7 +23647,8 @@ window.__game = {
   },
   zone: function () {
     return {
-      here: zoneAt(player.pos.x, player.pos.z), cur: ZONE.cur,
+      here: zoneAt(player.pos.x, player.pos.z), cur: ZONE.cur, zoneT: +(zoneT || 0).toFixed(2), hudT: +(hudT || 0).toFixed(2),
+      pill: zonePill ? zonePill.textContent : null, isle: ISLE.cur, sheetOn: sheet ? sheet.classList.contains('on') : null,
       distHome: +Math.hypot(player.pos.x - HOME.x, player.pos.z - HOME.z).toFixed(1),
       rest: REST.on, restWhere: REST.where
     };
@@ -23833,6 +25569,9 @@ window.__game = {
     }
     return out;
   },
+  hexAll: function () {
+    return structures.map(function (st) { return { type: st.type, lv: st.lv | 0, actions: hexActionsFor(st).map(function (a) { return a.label; }) }; });
+  },
   openHex: function (idx) {
     var st = structures[idx];
     if (!st) return null;
@@ -24014,6 +25753,170 @@ window.__game = {
     };
     player.pos.set(ox, 0, oz);
     return res;
+  },
+
+  /* ══════════════ ⛵ v3.0 검수 훅 ══════════════ */
+  v30Info: function () {
+    var out = { isle: ISLE.cur, isleName: ISLE_INFO[ISLE.cur].name };
+    for (var k in ISLE_INFO) {
+      out[k] = {
+        built: !!ISLE.built[k], nodes: (NODES[k] || []).length,
+        liveNodes: (NODES[k] || []).filter(function (n) { return !n.dead; }).length,
+        dinos: (DINOS[k] || []).length, structures: (STRUCTS[k] || []).length
+      };
+    }
+    out.cabins = structures.filter(function (x) { return x.type === 'cabin'; }).map(function (x) { return { lv: x.lv | 0, x: +x.x.toFixed(1), z: +x.z.toFixed(1) }; });
+    out.companion = (function () { var p = companionPet(); return p ? { name: p.petName, lv: petLvOf(p), exp: Math.round(p.exp || 0), hp: Math.round(p.hp), max: p.max, atk: petAtkOf(p) } : null; })();
+    out.player = { x: +player.pos.x.toFixed(1), z: +player.pos.z.toFixed(1) };
+    out.terrain = { h0: +terrainH(0, 88).toFixed(2), hCenter: +terrainH(0, 0).toFixed(2), biomeCenter: biomeAt(0, 0) };
+    out.drawCalls = renderer.info ? renderer.info.render.calls : -1;
+    out.tris = renderer.info ? renderer.info.render.triangles : -1;
+    out.err = (window.__gameErrors || []).length;
+    return out;
+  },
+  sail: function (k) { travelTo(k); return ISLE.cur; },
+  sailNow: function (k) {
+    // 테스트용 — 연출 없이 즉시 섬을 바꾼다
+    applyIsland(k);
+    var sp = (k === 'home') ? (ISLE.from.home || { x: HOME.x, z: HOME.z - 4 }) : (ISLE.spawn.jungle || (ISLE.spawn.jungle = findLandingSpot()));
+    player.pos.set(sp.x, groundY(sp.x, sp.z), sp.z);
+    player.group.position.copy(player.pos);
+    camLook.set(sp.x, player.pos.y + 1.6, sp.z);
+    placeCompanionNear(sp.x, sp.z);
+    return { isle: ISLE.cur, x: +sp.x.toFixed(1), z: +sp.z.toFixed(1) };
+  },
+  cabinTest: function () {
+    var st = null, i;
+    for (i = 0; i < structures.length; i++) if (structures[i].type === 'cabin') { st = structures[i]; break; }
+    if (!st) {
+      var px = player.pos.x + 4.2, pz = player.pos.z + 1.6;
+      st = placeStructure('cabin', px, pz, 0);
+      player.pos.set(px + 3.6, groundY(px + 3.6, pz), pz);
+      player.group.position.copy(player.pos);
+    }
+    for (var k in CABIN_UP_COST) S.inv[k] = Math.max((S.inv[k] | 0), CABIN_UP_COST[k]);
+    var before = { lv: st.lv | 0, roof: S.dye.roof, inside: insideCabin(st, player.pos.x, player.pos.z, 0.1) };
+    var ok = upgradeCabin(st);
+    var dm = cabinDims(st);
+    return {
+      ok: ok, before: before, lv: st.lv | 0, W: dm.W, D: dm.D,
+      savedLv: st.rec ? st.rec.lv : null,
+      roofDyed: !!st.group.userData.roofMesh, insideNew: insideCabin(st, st.x, st.z, 0),
+      x: +st.x.toFixed(1), z: +st.z.toFixed(1), cost: CABIN_UP_COST, invWood: S.inv.wood | 0
+    };
+  },
+  sleepTest: function () {
+    var st = null, i;
+    for (i = 0; i < structures.length; i++) if (structures[i].type === 'cabin') { st = structures[i]; break; }
+    if (!st) return 'no cabin';
+    player.pos.set(st.x, 0, st.z);
+    player.pos.y = groundY(st.x, st.z);
+    player.group.position.copy(player.pos);
+    S.hp = 40; S.hunger = 40;
+    for (var t = 0; t < 60; t++) updateRest(1 / 60);
+    return { where: REST.where, k: REST.k, hp: +S.hp.toFixed(1), hunger: +S.hunger.toFixed(1), lv: st.lv | 0 };
+  },
+  fenceTest: function () {
+    var st = placeStructure('fence', player.pos.x + 3.6, player.pos.z + 1.2, 0);
+    var d = spawnDino('trike', st.x + 1.6, st.z + 1.2, { tamed: true, petName: '울타리테스트', hp: 40 });
+    d.max = petMaxHpOf('trike', 1); d.lv = 1; d.exp = 0;
+    var inOk = penPet(st, d);
+    var hid = !d.group.visible;
+    var hp0 = d.hp;
+    for (var t = 0; t < 120; t++) updatePens(1 / 60);
+    var healed = d.hp - hp0;
+    var outOk = unpenPet(st, d);
+    return { st: !!st, penIn: inOk, hidden: hid, healed: +healed.toFixed(1), penOut: outOk, visible: !!d.group.visible, pens: penCount(st) };
+  },
+  petLevelTest: function () {
+    var d = companionPet();
+    if (!d) {
+      var sp = { x: player.pos.x + 2.2, z: player.pos.z + 2.2 };
+      d = spawnDino('raptor', sp.x, sp.z, { tamed: true, petName: '렙테스트' });
+      d.max = petMaxHpOf('raptor', 1); d.hp = d.max; d.lv = 1; d.exp = 0;
+      S.companion = d.pid; refreshCompanion();
+    }
+    return { name: d.petName, lv: petLvOf(d), max0: d.max, atk0: petAtkOf(d), need0: petExpNeed(d) };
+  },
+  petBattleTest: function () {
+    var d = companionPet();
+    if (!d) return 'no companion';
+    d.downed = false; d.hp = d.max;
+    var foe = null, i;
+    for (i = 0; i < dinos.length; i++) if (!dinos[i].tamed && !dinos[i].dead && DINO_AI[dinos[i].kind] && DINO_AI[dinos[i].kind].type === 'carn') { foe = dinos[i]; break; }
+    if (!foe) return 'no wild carn';
+    foe.dead = false; foe.hp = foe.max; foe.group.visible = true;
+    foe.x = d.x + 2.6; foe.z = d.z + 1.0;
+    foe.group.position.set(foe.x, terrainH(foe.x, foe.z), foe.z);
+    var hp0 = foe.hp, lv0 = petLvOf(d), exp0 = Math.round(d.exp || 0);
+    for (var f = 0; f < 180; f++) updateCreatureAI(d, 1 / 60, f / 60, Math.hypot(d.x - player.pos.x, d.z - player.pos.z));
+    return {
+      pet: petLabel(d), foe: foe.kind, foeHp0: Math.round(hp0), foeHp1: Math.round(foe.hp),
+      dmg: Math.round(hp0 - foe.hp), lv0: lv0, lv1: petLvOf(d), exp: Math.round(d.exp || 0), exp0: exp0,
+      petTarget: !!foe.petTarget, aggro: !!foe.aggro, state: d.cstate
+    };
+  },
+  companionInfo: function () {
+    var out = [];
+    for (var i = 0; i < dinos.length; i++) {
+      var d = dinos[i];
+      if (!d.tamed || d.dead) continue;
+      out.push({ name: d.petName, pid: d.pid, lv: petLvOf(d), hp: Math.round(d.hp), max: d.max,
+        companion: !!d.companion, penned: !!d.penned, downed: !!d.downed, atk: petAtkOf(d) });
+    }
+    return { companion: S.companion, pets: out };
+  },
+  openSheetHook: function (mode) { openSheet(mode); return { mode: sheetMode, title: sheetTitle.textContent }; },
+  sheetNames: function () {
+    var out = [];
+    var els = sheetBody ? sheetBody.querySelectorAll('.rec') : [];
+    for (var i = 0; i < els.length; i++) {
+      var b = els[i].querySelector('.txt b') || els[i].querySelector('b');
+      var btn = els[i].querySelector('button');
+      out.push({ n: b ? b.textContent : '?', btn: btn ? btn.textContent : '' });
+    }
+    return { title: sheetTitle.textContent, rows: out.length, names: out.slice(0, 40) };
+  },
+  gatherAt: function (kind) {
+    var best = null, bd = 1e9;
+    for (var i = 0; i < nodes.length; i++) {
+      var n = nodes[i];
+      if (n.kind !== kind || n.dead) continue;
+      var dx = n.x - player.pos.x, dz = n.z - player.pos.z;
+      var d = dx * dx + dz * dz;
+      if (d < bd) { bd = d; best = n; }
+    }
+    if (!best) return 'none';
+    player.pos.set(best.x + 0.7, groundY(best.x + 0.7, best.z + 0.7), best.z + 0.7);
+    player.group.position.copy(player.pos);
+    camLook.set(player.pos.x, player.pos.y + 1.6, player.pos.z);
+    var ctx0 = computeContext();
+    var before = {};
+    for (var k in S.inv) before[k] = S.inv[k] | 0;
+    gatherNode(best);
+    var got = {};
+    for (var k2 in S.inv) if ((S.inv[k2] | 0) > (before[k2] | 0)) got[k2] = (S.inv[k2] | 0) - before[k2];
+    return { kind: kind, ctx: ctx0.type + '/' + ctx0.label, got: got, node: [+best.x.toFixed(1), +best.z.toFixed(1)] };
+  },
+  petExp: function (n) {
+    var d = companionPet();
+    if (!d) return 'no companion';
+    var b = { lv: petLvOf(d), max: d.max, atk: petAtkOf(d), exp: Math.round(d.exp || 0) };
+    petAddExp(d, n || 100);
+    return { before: b, after: { lv: petLvOf(d), max: d.max, hp: Math.round(d.hp), atk: petAtkOf(d), exp: Math.round(d.exp || 0) } };
+  },
+  stationNear: function (type, x, z) {
+    var st = placeStructure(type, x === undefined ? player.pos.x + 2.6 : x, z === undefined ? player.pos.z + 1.4 : z, 0);
+    player.pos.set(st.x - 1.1, groundY(st.x - 1.1, st.z - 1.1), st.z - 1.1);
+    player.group.position.copy(player.pos);
+    return { type: st.type, x: +st.x.toFixed(1), z: +st.z.toFixed(1), ctx: computeContext().type };
+  },
+  boatInfo: function () {
+    var bar = $id('travelBar');
+    var btns = bar ? bar.querySelectorAll('.tvBtn') : [];
+    var labels = [];
+    for (var i = 0; i < btns.length; i++) labels.push(btns[i].textContent.replace(/\s+/g, ' ').trim());
+    return { bar: !!bar, count: btns.length, labels: labels, isle: ISLE.cur };
   }
 };
 })();
