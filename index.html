@@ -12214,7 +12214,17 @@ function drawMap() {
   c.beginPath(); c.arc(cp[0], cp[1], cr2, 0, TAU); c.stroke();
   c.setLineDash([]);
   c.restore();
-  mapText(c, '☁️ 목화밭', COTTON.x, COTTON.z - 1, 13, '#ffffff', true, placed);
+  // 라벨은 밝은 알약 배경 위에 올려 군락 라벨과 겹쳐도 읽히게 한다
+  var ctLbl = '☁️ 목화밭';
+  var ctPos = mapPx(COTTON.x, COTTON.z - 17);
+  c.save();
+  c.font = 'bold 14px -apple-system, "Apple SD Gothic Neo", sans-serif';
+  var ctW = c.measureText(ctLbl).width + 16;
+  c.fillStyle = 'rgba(16,34,26,.62)';
+  roundRect(c, ctPos[0] - ctW / 2, ctPos[1] - 11, ctW, 22, 11);
+  c.fill();
+  c.restore();
+  mapText(c, ctLbl, COTTON.x, COTTON.z - 17, 14, '#ffffff', false, placed);
   var rv = mapPx(riverCenterX(46), 46);
   placed.push({ x: rv[0], y: rv[1], w: 18, h: 15 });
   c.font = 'bold 15px -apple-system, "Apple SD Gothic Neo", sans-serif';
