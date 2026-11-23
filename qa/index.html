@@ -6220,25 +6220,25 @@ function makePlayer() {
 
   // 두개골 (부드러운 타원) — 이마는 살짝 넓고 턱으로 갈수록 좁아진다
   var skull = new THREE.Mesh(GEO.ico1, M(C.skin));
-  skull.scale.set(0.132, 0.152, 0.138);
+  skull.scale.set(0.124, 0.150, 0.136);
   head.add(skull);
   var brow2 = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 7), M(C.skin));
-  brow2.scale.set(0.120, 0.042, 0.118);
+  brow2.scale.set(0.114, 0.040, 0.116);
   brow2.position.set(0, 0.048, 0.022);
   head.add(brow2);
   var jaw = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 9), M(C.skin));
-  jaw.scale.set(0.101, 0.088, 0.106);
-  jaw.position.set(0, -0.062, 0.020);
+  jaw.scale.set(0.094, 0.086, 0.104);
+  jaw.position.set(0, -0.064, 0.018);
   head.add(jaw);
   var chin = new THREE.Mesh(new THREE.SphereGeometry(1, 9, 7), M(C.skin));
-  chin.scale.set(0.046, 0.036, 0.046);
-  chin.position.set(0, -0.116, 0.058);
+  chin.scale.set(0.040, 0.034, 0.044);
+  chin.position.set(0, -0.114, 0.062);
   head.add(chin);
   // 광대뼈 — 얼굴 입체감
   for (var ck2 = -1; ck2 <= 1; ck2 += 2) {
     var cheek = new THREE.Mesh(new THREE.SphereGeometry(1, 9, 7), M(C.skin));
-    cheek.scale.set(0.050, 0.040, 0.044);
-    cheek.position.set(ck2 * 0.080, -0.020, 0.070);
+    cheek.scale.set(0.038, 0.032, 0.034);
+    cheek.position.set(ck2 * 0.074, -0.022, 0.074);
     head.add(cheek);
   }
   // 코 — 콧대 + 코끝 + 콧구멍
@@ -10640,6 +10640,22 @@ function animateCreature(d, dt, t) {
     if (ft) ft.rotation.x = (T.ankle || 0.2) * Math.max(0, Math.sin(ph + 2.8)) * amp;
   }
 
+  /* v2.7 — 무게감: 걸을 때 몸통이 좌우로 실리고 목·꼬리가 반대로 균형을 잡는다 */
+  var rollAmt = Math.sin(a.ph) * 0.055 * Math.min(1.2, amp / 0.26);
+  if (B.spine) B.spine.rotation.z = rollAmt;
+  if (B.chest) B.chest.rotation.z = rollAmt * 0.55;
+  if (B.hip) B.hip.rotation.z = -rollAmt * 0.70;
+  if (nb.length && B[nb[0]]) B[nb[0]].rotation.z = (B[nb[0]].rotation.z || 0) - rollAmt * 0.45;
+  // 피격 움찔 — 맞은 쪽으로 몸이 접히고 목이 젖혀진다
+  if (d.hurt > 0) {
+    var hk = Math.min(1, d.hurt / 0.35);
+    if (B.spine) B.spine.rotation.x = a.s - 0.14 * hk;
+    if (B.hip) B.hip.rotation.z = -rollAmt * 0.7 + 0.08 * hk;
+    if (nb.length && B[nb[0]]) B[nb[0]].rotation.x += 0.22 * hk;
+    if (B.head) B.head.rotation.x = a.h - 0.10 * hk;
+    if (B.jaw) B.jaw.rotation.x = a.jaw * 0.6 + 0.25 * hk;
+  }
+
   /* ---- 날개(프테라노돈) ---- */
   var wl = B['wingL'], wr = B['wingR'];
   if (wl && wr) {
@@ -14448,7 +14464,10 @@ function wakeDino(d) {
 function killDino(d) {
   if (!d || d.tamed) return;          // 아군이 죽는 일이 없도록 마지막 안전장치
   d.dead = true; d.deadAt = worldT + 50;
-  d.group.visible = false;
+  /* v2.7 — 바로 사라지지 않고 옆으로 무겁게 쓰러진 뒤 사라진다 */
+  d.dying = 1.25; d.dyingMax = 1.25;
+  d.deathDir = Math.random() < 0.5 ? -1 : 1;
+  d.group.visible = true;
   var meta = DINO_META[d.kind] || DINO_META.trike;
   var drops = meta.drops || [['meat', meta.drop || 2]];
   var names = [];
@@ -18356,9 +18375,20 @@ function updateCreatureAI(d, dt, t, dp) {
 function updateDinos(dt, t) {
   for (var i = 0; i < dinos.length; i++) {
     var d = dinos[i];
+    if (d.dead && d.dying > 0) {
+      // 쓰러지는 동안은 그룹을 남겨 두고 기울인다
+      d.dying = Math.max(0, d.dying - dt);
+      var fk = 1 - d.dying / (d.dyingMax || 1.25);
+      var fall = fk * fk * (3 - 2 * fk);
+      d.group.rotation.z = (d.deathDir || 1) * fall * 1.42;
+      d.group.position.y = terrainH(d.x, d.z) - fall * 0.08;
+      if (d.dying <= 0) d.group.visible = false;
+      continue;
+    }
     if (d.dead) {
       if (worldT > d.deadAt) {
         d.dead = false; d.hp = d.max; d.group.visible = true;
+        d.group.rotation.z = 0; d.dying = 0;   // 쓰러진 자세 초기화
         d.aggro = 0; d.provoked = 0;
         var a = Math.random() * TAU, r = rnd(24, 144);
         d.x = Math.cos(a) * r; d.z = Math.sin(a) * r;
