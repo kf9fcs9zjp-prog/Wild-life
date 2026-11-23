@@ -1570,7 +1570,7 @@ var RECIPES = [
   /* 🧵 베틀 — 목화솜을 옷감·솜으로 */
   { id: 'cottonWool', tab: 'process', station: 'loom', out: 'cottonWool', qty: 1, name: '솜', icon: '🫧', desc: '목화솜 x2 → 폭신한 솜(솜옷 재료)', cost: { cotton: 2 } },
   { id: 'clothLoom', tab: 'process', station: 'loom', out: 'cloth', qty: 2, name: '옷감(베틀)', icon: '🧶', desc: '목화솜 x2 → 옷감 x2', cost: { cotton: 2 } },
-  { id: 'cloth', tab: 'process', station: 'loom', benchCompat: true, out: 'cloth', qty: 1, name: '옷감', icon: '🧶', desc: '섬유와 갈대를 엮어 짠 천 · 재료', cost: { fiber: 3, reed: 2 } },
+  { id: 'cloth', tab: 'process', station: 'loom', benchCompat: true, out: 'cloth', qty: 1, name: '옷감(섬유)', icon: '🧶', desc: '섬유와 갈대를 엮어 짠 천 · 재료', cost: { fiber: 3, reed: 2 } },
 
   /* 🎨 염색대 — 꽃잎으로 꽃 염료 */
   { id: 'dyeRed', tab: 'process', station: 'dyeVat', out: 'dyeRed', qty: 2, name: '빨강 꽃 염료', icon: '🔴', desc: '빨강 꽃잎 x3 + 섬유 → 빨강 염료 x2', cost: { petalRed: 3, fiber: 1 } },
@@ -8600,8 +8600,7 @@ function spawnSplash(x, y, z, n) {
 var ANGER_GEO = new THREE.RingGeometry(0.42, 0.56, 24);
 function spawnAngerRing(x, y, z) {
   var mat = new THREE.MeshBasicMaterial({
-    color: 0xff4a34, transparent: true, opacity: 0.55, depthWrite: false,
-    side: THREE.DoubleSide, blending: THREE.AdditiveBlending
+    color: 0xff3b28, transparent: true, opacity: 0.5, depthWrite: false, side: THREE.DoubleSide
   });
   var m = new THREE.Mesh(ANGER_GEO, mat);
   m.rotation.x = -Math.PI / 2;
@@ -9777,7 +9776,7 @@ function updateFx(dt) {
     if (f.anger) {
       var asc = 0.55 + k * 2.35;
       f.mesh.scale.set(asc, asc, asc);
-      f.mesh.material.opacity = 0.55 * (1 - k);
+      f.mesh.material.opacity = 0.5 * (1 - k) * (1 - k);
       continue;
     }
     f.vy -= f.grav * dt;
