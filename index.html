@@ -244,6 +244,10 @@
     box-shadow:0 4px 12px rgba(150,90,20,.32);
   }
   .mbtn.eat.hot{animation:eatPulse 1.15s ease-in-out infinite}
+  .mbtn.dem{
+    background:linear-gradient(180deg,rgba(255,226,214,.95),rgba(228,152,130,.95));
+    color:#6b2b1d;border-color:rgba(255,255,255,.7);
+  }
   @keyframes eatPulse{
     0%,100%{transform:scale(1);box-shadow:0 4px 12px rgba(150,90,20,.32)}
     50%{transform:scale(1.07);box-shadow:0 0 0 6px rgba(255,200,90,0)}
@@ -776,6 +780,7 @@
     <div class="minibtns">
       <button class="mbtn eat" id="btnEat" style="display:none">🍖 먹기</button>
       <button class="mbtn" id="btnMount">🐾 타기</button>
+      <button class="mbtn dem" id="btnDemolish" style="display:none">🗑 철거</button>
       <button class="mbtn" id="btnBuild">🏕 설치</button>
     </div>
     <button class="actbtn dim" id="btnAct"><div class="ring" id="actRing"></div><span id="actLabel">채집</span></button>
@@ -827,7 +832,7 @@
       </div>
       <div class="startSaveLine" id="startSaveLine"><span>저장 없음 · 새로 시작해요</span></div>
     </div>
-    <div class="startFoot" id="startFoot">WILD LIFE · v2.2 &nbsp;|&nbsp; 왼쪽 조이스틱으로 걷고 오른쪽 버튼으로 채집·공격</div>
+    <div class="startFoot" id="startFoot">WILD LIFE · v2.3 &nbsp;|&nbsp; 왼쪽 조이스틱으로 걷고 오른쪽 버튼으로 채집·공격</div>
   </div>
 
   <div class="slotPanel" id="slotPanel">
@@ -982,7 +987,7 @@ function defaultState() {
     tools: { axe: false, spear: false, bow: false, boneSpear: false, ironBow: false },
     equip: { armor: '', hat: '', boots: '', backpack: '', weapon: '' },
     found: {},
-    made: { campfire: 0, cabin: 0, workbench: 0, chair: 0, table: 0, planter: 0, hatchNest: 0 },
+    made: { campfire: 0, cabin: 0, workbench: 0, chair: 0, table: 0, planter: 0, hatchNest: 0, chest: 0 },
     structures: [],
     tamed: [],
     nests: {},
@@ -997,6 +1002,8 @@ var SAVE = { ready: false, db: null, recs: {}, active: 0, last: 0, playTime: 0, 
 
 /* ---- 레코드 ⇄ 런타임 상태 ---- */
 function packState() {
+  // 모닥불 연료·꺼짐 상태, 상자 내용물 같은 '살아 있는' 구조물 값을 저장 레코드에 맞춘다
+  if (typeof syncStructData === 'function') syncStructData();
   return {
     schemaVersion: SAVE_SCHEMA,
     nick: S.nick,
@@ -1060,7 +1067,7 @@ function applyData(d) {
   takeNewUnlocks();
   for (k in def.made) S.made[k] = (d.made && (d.made[k] | 0)) || 0;
   syncTools();
-  S.structures = Array.isArray(d.structures) ? d.structures.slice(0, 60) : [];
+  S.structures = Array.isArray(d.structures) ? d.structures.slice(0, 80) : [];
   S.tamed = Array.isArray(d.tamed) ? d.tamed.slice(0, 8) : [];
   S.nests = (d.nests && typeof d.nests === 'object') ? d.nests : {};
   S.muted = !!d.muted;
@@ -1367,6 +1374,8 @@ var RECIPES = [
   { id: 'chair', tab: 'basic', made: true, name: '나무 의자', icon: '🪑', desc: '오두막 앞에 놓는 소품', cost: { wood: 3, stick: 2 } },
   { id: 'table', tab: 'basic', made: true, name: '나무 테이블', icon: '🪵', desc: '오두막 앞에 놓는 소품', cost: { wood: 5, stick: 3 } },
   { id: 'planter', tab: 'basic', made: true, name: '꽃 화분', icon: '🪴', desc: '꽃을 심은 돌 화분', cost: { stone: 2, fiber: 2, herb: 1 } },
+  /* 📦 나무 상자 — 설치 후 상자 앞에서 가방 ↔ 상자로 물건을 넣고 뺀다 (내용물은 세이브에 저장) */
+  { id: 'chest', tab: 'basic', made: true, name: '나무 상자', icon: '📦', desc: '아이템을 넣어 두는 보관함 · 앞에서 「상자 열기」', cost: { wood: 4, stick: 4 } },
 
   { id: 'cloth', tab: 'bench', out: 'cloth', qty: 1, name: '옷감', icon: '🧶', desc: '섬유와 갈대를 엮어 짠 천 · 재료', cost: { fiber: 3, reed: 2 } },
   { id: 'boneKnife', tab: 'bench', out: 'boneKnife', qty: 1, name: '맹수 뼈칼', icon: '⚔️', desc: '돌칼 + 송곳니 → 공격 34', cost: { stoneKnife: 1, fang: 2, fiber: 2 }, unlock: 'fang' },
@@ -1627,6 +1636,10 @@ function sfx(name) {
   else if (name === 'freeze') { tone(1046, 0.20, 'sine', 0.07, 640); noise(0.30, 2600, 0.07, 0, 'highpass'); }
   else if (name === 'wing') { noise(0.22, 700, 0.13, 0, 'lowpass'); tone(180, 0.18, 'sine', 0.06, 240); }
   else if (name === 'growl') { tone(78, 0.34, 'sawtooth', 0.11, 50); noise(0.24, 430, 0.07, 0, 'lowpass'); }
+  else if (name === 'chest') { noise(0.14, 620, 0.15, 0, 'lowpass'); tone(300, 0.09, 'triangle', 0.07, 210); }
+  else if (name === 'chestClose') { noise(0.12, 420, 0.13, 0, 'lowpass'); tone(180, 0.10, 'triangle', 0.06, 120); }
+  else if (name === 'demolish') { noise(0.30, 430, 0.22); tone(132, 0.19, 'square', 0.07, 62); }
+  else if (name === 'relight') { noise(0.42, 950, 0.17, 0, 'bandpass'); tone(180, 0.30, 'sine', 0.07, 430); }
 }
 
 /* ---------------- three base ---------------- */
@@ -1911,6 +1924,23 @@ function riverDepth(x, z) {
 function riverWalk(x, z) {
   var d = riverDepth(x, z);
   return d > 0.02 && d < 0.52;
+}
+
+/* 🌊 발목이 잠기는 해안 물가의 수심(m) — 물가 바로 앞 얕은 띠만 해당 */
+var _rvC = { d: 0, half: 0, surf: 0 };
+function seaDepth(x, z) {
+  if (z > RIVER.z0 && z < RIVER.z1) {
+    var rv = riverProbe(x, z, _rvC);
+    if (rv && rv.d <= rv.half * 1.25) return 0;      // 강이면 riverDepth 가 담당
+  }
+  var h = terrainH(x, z);
+  return h < 0 ? -h : 0;
+}
+/* 강물 + 해안 얕은 물을 합친 '발이 잠긴 깊이' — 걸을 때 첨벙 효과의 기준 */
+function waterDepth(x, z) {
+  var r = riverDepth(x, z);
+  if (r > 0) return r;
+  return seaDepth(x, z);
 }
 
 /* biomes: four sectors (forest / highland / meadow / wilds) + the shore ring */
@@ -8161,6 +8191,20 @@ function spawnSplash(x, y, z, n) {
   }
 }
 
+/* ❄️ 입김 — 추운 툰드라에서 하얀 숨결이 피어오른다 */
+function spawnBreath(x, y, z, dirX, dirZ) {
+  var mat = new THREE.MeshBasicMaterial({ color: 0xf2fbff, transparent: true, opacity: 0.45, depthWrite: false });
+  var m = new THREE.Mesh(GEO.ico0, mat);
+  m.position.set(x, y, z);
+  m.scale.setScalar(0.07);
+  scene.add(m);
+  fx.push({
+    mesh: m, life: 0, max: rnd(0.7, 1.0),
+    vx: (dirX || 0) * 0.55 + rnd(-0.12, 0.12), vy: rnd(0.30, 0.55), vz: (dirZ || 0) * 0.55 + rnd(-0.12, 0.12),
+    spin: 0, grav: -0.35, breath: true, fxMat: mat
+  });
+}
+
 /* ---------------- structures ---------------- */
 var structures = [];
 var GHOST_MAT = new THREE.MeshLambertMaterial({ color: 0x7ce08a, transparent: true, opacity: 0.55, depthWrite: false });
@@ -8213,7 +8257,7 @@ function makeCampfire() {
   light.position.set(0, 1.1, 0);
   g.add(light);
 
-  g.userData = { flames: flames, light: light, type: 'campfire', smokeT: 0 };
+  g.userData = { flames: flames, light: light, ash: ash, type: 'campfire', smokeT: 0 };
   addShadows(g);
   ash.castShadow = false; ash.receiveShadow = false;
   g.traverse(function (o) { if (o.isMesh && o.material && o.material.transparent) o.castShadow = false; });
@@ -8554,6 +8598,59 @@ function makeHatchNest() {
   return g;
 }
 
+/* 📦 나무 상자 - 통나무로 짠 보관함(뚜껑은 열고 닫는다) */
+function makeChest() {
+  var g = new THREE.Group();
+  var body = new THREE.Group(), lid = new THREE.Group();
+  var W = 0.88, H = 0.52, D = 0.60;
+  // 몸통
+  var box = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), MAT.planks);
+  box.position.y = H / 2 + 0.02;
+  body.add(box);
+  // 판자 홈 3겹
+  for (var i = 0; i < 3; i++) {
+    var ln = new THREE.Mesh(new THREE.BoxGeometry(W + 0.015, 0.022, D + 0.015), MAT.planksD);
+    ln.position.y = 0.12 + i * 0.16;
+    body.add(ln);
+  }
+  // 세로 기둥 4개 + 바닥
+  [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(function (c) {
+    var post = new THREE.Mesh(new THREE.BoxGeometry(0.075, H + 0.02, 0.075), MAT.cabinDark);
+    post.position.set(c[0] * (W / 2 - 0.03), H / 2 + 0.02, c[1] * (D / 2 - 0.03));
+    body.add(post);
+  });
+  var base = new THREE.Mesh(new THREE.BoxGeometry(W + 0.04, 0.06, D + 0.04), MAT.cabinDark);
+  base.position.y = 0.03;
+  body.add(base);
+  // 앞면 손잡이·잠금쇠
+  var latch = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.10, 0.035), MAT.iron);
+  latch.position.set(0, 0.34, D / 2 + 0.02);
+  body.add(latch);
+
+  // 뚜껑 - 뒤쪽 모서리를 경침으로 돌린다
+  lid.position.set(0, H + 0.04, -D / 2);
+  var lidTop = new THREE.Mesh(new THREE.BoxGeometry(W + 0.03, 0.11, D + 0.03), MAT.cabinWood);
+  lidTop.position.set(0, 0.055, D / 2);
+  lid.add(lidTop);
+  var lidEdge = new THREE.Mesh(new THREE.BoxGeometry(W + 0.05, 0.04, 0.05), MAT.cabinDark);
+  lidEdge.position.set(0, 0.02, D + 0.01);
+  lid.add(lidEdge);
+  for (var s = -1; s <= 1; s += 2) {
+    var strap = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.125, D + 0.04), MAT.iron);
+    strap.position.set(s * (W / 2 - 0.16), 0.058, D / 2);
+    lid.add(strap);
+    var hinge = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.05, 0.07), MAT.ironD);
+    hinge.position.set(s * (W / 2 - 0.16), 0.0, 0.0);
+    lid.add(hinge);
+  }
+  g.add(body); g.add(lid);
+  addShadows(g);
+  flattenGroup(body, null, MAT.prop, true);
+  flattenGroup(lid, null, MAT.prop, true);
+  g.userData = { type: 'chest', lid: lid };
+  return g;
+}
+
 /* 설치물 정의 */
 var STRUCT_DEF = {
   campfire: { name: '모닥불', icon: '🔥', make: makeCampfire, r: 1.25, gap: 2.4, dist: 3.1 },
@@ -8562,8 +8659,25 @@ var STRUCT_DEF = {
   chair: { name: '나무 의자', icon: '🪑', make: makeChair, r: 0.48, gap: 1.4, dist: 2.5 },
   table: { name: '나무 테이블', icon: '🪵', make: makeTable, r: 0.75, gap: 1.7, dist: 2.8 },
   planter: { name: '꽃 화분', icon: '🪴', make: makePlanter, r: 0.42, gap: 1.3, dist: 2.4 },
-  hatchNest: { name: '부화 둥지', icon: '🪺', make: makeHatchNest, r: 0.9, gap: 1.8, dist: 2.6 }
+  hatchNest: { name: '부화 둥지', icon: '🪺', make: makeHatchNest, r: 0.9, gap: 1.8, dist: 2.6 },
+  chest: { name: '나무 상자', icon: '📦', make: makeChest, r: 0.68, gap: 1.6, dist: 2.6 }
 };
+
+/* 🔥 모닥불 연료 수명(초) - 설치·재점화 후 5분 */
+var FIRE_LIFE = 300;
+
+/* 모닥불의 불꽃·불빛을 켜고 끈다 (꺼진 모닥불은 재와 통나무만 남긴다) */
+function setFireLit(st, lit, silent) {
+  if (!st) return;
+  st.lit = !!lit;
+  var u = st.group && st.group.userData;
+  if (u) {
+    if (u.flames) for (var f = 0; f < u.flames.length; f++) u.flames[f].visible = st.lit;
+    if (u.light) u.light.intensity = st.lit ? u.light.intensity : 0;
+    if (u.glow) u.glow.visible = st.lit;
+  }
+  if (!silent && st.rec) { st.rec.lit = st.lit ? 1 : 0; st.rec.fuel = Math.round(st.fuel || 0); }
+}
 
 function makeStructure(type) {
   var def = STRUCT_DEF[type] || STRUCT_DEF.campfire;
@@ -8575,11 +8689,14 @@ function placeStructure(type, x, z, rot) {
   g.position.set(x, terrainH(x, z) - 0.03, z);
   g.rotation.y = (rot === undefined) ? (Math.random() * 0.5 - 0.25) : rot;
   scene.add(g);
-  var st = { type: type, x: x, z: z, rot: g.rotation.y, group: g, t: Math.random() * 10 };
+  var rec = { type: type, x: Math.round(x * 10) / 10, z: Math.round(z * 10) / 10, rot: Math.round(g.rotation.y * 100) / 100 };
+  var st = { type: type, x: x, z: z, rot: g.rotation.y, group: g, t: Math.random() * 10, rec: rec };
   if (type === 'cabin') st.floorY = terrainH(x, z) + 0.19;
   if (type === 'hatchNest') { st.egg = null; st.eggT = 0; }
+  if (type === 'campfire') { st.fuel = FIRE_LIFE; st.lit = true; rec.fuel = FIRE_LIFE; rec.lit = 1; }
+  if (type === 'chest') { st.items = {}; st.lidT = 0; rec.items = {}; }
   structures.push(st);
-  S.structures.push({ type: type, x: Math.round(x * 10) / 10, z: Math.round(z * 10) / 10, rot: Math.round(g.rotation.y * 100) / 100 });
+  S.structures.push(rec);
   return st;
 }
 
@@ -8593,17 +8710,57 @@ function restoreStructures() {
     g.position.set(x, terrainH(x, z) - 0.03, z);
     g.rotation.y = (typeof s.rot === 'number') ? s.rot : 0;
     scene.add(g);
-    var st2 = { type: s.type, x: x, z: z, rot: g.rotation.y, group: g, t: Math.random() * 10 };
+    var st2 = { type: s.type, x: x, z: z, rot: g.rotation.y, group: g, t: Math.random() * 10, rec: s };
     if (s.type === 'cabin') st2.floorY = terrainH(x, z) + 0.19;
+    if (s.type === 'campfire') {
+      // 이 패치 이전 저장은 연료 정보가 없다 → 가득 찬 불로 복원
+      st2.fuel = (typeof s.fuel === 'number') ? s.fuel : FIRE_LIFE;
+      st2.lit = (s.lit === undefined) ? (st2.fuel > 0) : !!s.lit;
+      if (st2.fuel <= 0) { st2.fuel = 0; st2.lit = false; }
+      setFireLit(st2, st2.lit, true);
+    }
+    if (s.type === 'chest') {
+      if (!s.items || typeof s.items !== 'object') s.items = {};
+      st2.items = s.items; st2.lidT = 0;
+    }
     structures.push(st2);
   }
 }
 
-function nearestFire(maxD) {
+/* 런타임 구조물의 살아 있는 값(연료·꺼짐·상자 내용물)을 저장 레코드에 맞춘다 */
+function syncStructData() {
+  for (var i = 0; i < structures.length; i++) {
+    var st = structures[i], r = st.rec;
+    if (!r) continue;
+    if (st.type === 'campfire') {
+      r.fuel = Math.round(st.fuel === undefined ? FIRE_LIFE : st.fuel);
+      r.lit = st.lit ? 1 : 0;
+    } else if (st.type === 'chest') {
+      r.items = st.items || {};
+    }
+  }
+}
+
+/* 설치물 철거 - 씬·배열·저장 레코드에서 함께 없앤다 */
+function removeStructure(st) {
+  if (!st) return false;
+  var k = structures.indexOf(st);
+  if (k < 0) return false;
+  structures.splice(k, 1);
+  if (st.group && st.group.parent) st.group.parent.remove(st.group);
+  if (st.rec) {
+    var j = S.structures.indexOf(st.rec);
+    if (j >= 0) S.structures.splice(j, 1);
+  }
+  return true;
+}
+
+function nearestFire(maxD, anyLit) {
   var best = null, bd = maxD * maxD;
   for (var i = 0; i < structures.length; i++) {
     var s = structures[i];
     if (s.type !== 'campfire') continue;
+    if (!anyLit && s.lit === false) continue;          // 꺼진 모닥불은 온기·요리가 안 된다
     var d = (s.x - player.pos.x) * (s.x - player.pos.x) + (s.z - player.pos.z) * (s.z - player.pos.z);
     if (d < bd) { bd = d; best = s; }
   }
@@ -8791,6 +8948,10 @@ function updateFx(dt) {
     if (f.smoke) { f.mesh.scale.setScalar(0.14 + k * 0.42); }
     else if (f.heart) { f.mesh.scale.setScalar(0.6 + Math.sin(k * 10) * 0.15); }
     else if (f.splash) { f.mesh.scale.setScalar(Math.max(0.02, 0.11 * (1 - k))); }
+    else if (f.breath) {
+      f.mesh.scale.setScalar(0.06 + k * 0.22);
+      if (f.mesh.material) f.mesh.material.opacity = 0.42 * (1 - k);
+    }
     else if (f.slash) { }
     else { f.mesh.scale.setScalar(Math.max(0.05, s)); }
     if (f.mesh.position.y < terrainH(f.mesh.position.x, f.mesh.position.z) + 0.05 && !f.smoke) {
@@ -8804,7 +8965,7 @@ var hpFill = $id('hpFill'), hgFill = $id('hgFill'), hpTxt = $id('hpTxt'), hgTxt 
 var atkTxt = $id('atkTxt'), defTxt = $id('defTxt');
 var chipsEl = $id('chips'), toastsEl = $id('toasts');
 var btnAct = $id('btnAct'), actLabel = $id('actLabel'), actRing = $id('actRing');
-var btnMount = $id('btnMount'), btnBuild = $id('btnBuild'), btnEat = $id('btnEat');
+var btnMount = $id('btnMount'), btnBuild = $id('btnBuild'), btnEat = $id('btnEat'), btnDemolish = $id('btnDemolish');
 var stickEl = $id('stick'), knobEl = $id('knob');
 var sheet = $id('sheet'), sheetTitle = $id('sheetTitle'), sheetSub = $id('sheetSub'), sheetBody = $id('sheetBody');
 var hintEl = $id('hint');
@@ -9086,6 +9247,31 @@ function nearestTamed(maxD) {
   return best;
 }
 
+/* 가장 가까운 내 구조물(종류 무관) — 철거 버튼용 */
+function nearestStructure(maxD) {
+  var best = null, bd = maxD * maxD;
+  for (var i = 0; i < structures.length; i++) {
+    var s = structures[i];
+    if (!STRUCT_DEF[s.type]) continue;
+    var dx = s.x - player.pos.x, dz = s.z - player.pos.z;
+    var dd = dx * dx + dz * dz;
+    if (dd < bd) { bd = dd; best = s; }
+  }
+  return best;
+}
+/* 구조물 상호작용 거리 — 큰 구조물(오두막)은 조금 멀리서도 잡힌다 */
+function structReach(s) {
+  var def = s && STRUCT_DEF[s.type];
+  var d = def ? (def.dist || 3.0) : 3.0;
+  return clamp(d + 0.7, 2.8, 6.0);
+}
+/* 모닥불 남은 연료 표기 — 4:12 */
+function fireLeftText(st) {
+  var s = Math.max(0, Math.ceil((st && st.fuel) || 0));
+  var m = Math.floor(s / 60), sec = s % 60;
+  return m + ':' + (sec < 10 ? '0' : '') + sec;
+}
+
 function computeContext() {
   if (cooking) return { type: 'busy', label: '요리 중…' };
   if (placing) return { type: 'place', label: ghostOk ? '설치' : '자리 좁아요' };
@@ -9105,10 +9291,19 @@ function computeContext() {
   }
   var r = nearestHostile(3.9);
   if (r) return { type: 'attack', d: r, label: r.kind === 'compy' ? '사냥' : '공격' };
+  // 📦 상자 앞 — 가방 ↔ 상자 보관함 UI
+  var _ch = nearestStruct('chest', 2.6);
+  if (_ch) return { type: 'chest', st: _ch, label: '📦 상자 열기' };
   var n = nearestNode(3.1);
   if (n) return { type: 'gather', n: n, label: NODE_LABEL[n.kind] || '채집' };
   // 🛠 작업대 앞(3.5m) — 오른쪽 메인 버튼이 「작업하기」로 바뀐다
   if (nearestStruct('workbench', 3.5)) return { type: 'bench', label: '🛠 작업하기' };
+  // 🔥 꺼진 모닥불 — 통나무 1개나 나뭇가지 2개로 다시 5분 피운다
+  var _fo = nearestFire(4.2, true);
+  if (_fo && _fo.lit === false) {
+    var _fuelOk = (S.inv.wood || 0) > 0 || (S.inv.stick || 0) >= 2;
+    return { type: 'relight', st: _fo, label: _fuelOk ? '🔥 불 지피기' : '🔥 연료 필요' };
+  }
   if (nearestFire(4.6)) {
     var ck = cookCandidate();
     if (ck) return { type: 'cook', item: ck, label: COOK[ck].name };
@@ -9120,7 +9315,7 @@ function computeContext() {
     return { type: 'tame', d: h, label: (S.inv[ti] || 0) > 0 ? (ITEMS[ti] ? ITEMS[ti].name : ti) + ' 주기' : (ITEMS[ti] ? ITEMS[ti].name : ti) + ' 필요' };
   }
   if (bowEquipped()) {
-    var bt = bowTarget();
+    var bt = bowTarget() || bowAutoAim();
     return { type: 'shoot', d: bt, label: '활 쏘기' };
   }
   return { type: 'none', label: '채집' };
@@ -9137,6 +9332,8 @@ function doAction() {
   if (c.type === 'dismount') { dismount(); return; }
   if (c.type === 'attack') { attackDino(c.d); return; }
   if (c.type === 'shoot') { shootArrow(c.d); return; }
+  if (c.type === 'chest') { openChest(c.st); return; }
+  if (c.type === 'relight') { relightFire(c.st); return; }
   if (c.type === 'gather') { gatherNode(c.n); return; }
   if (c.type === 'bench') { craftTab = 'bench'; openSheet('craft'); return; }
   if (c.type === 'cook') { if (c.item) startCook(c.item); else sfx('deny'); return; }
@@ -9517,16 +9714,34 @@ function arrowGeo(iron) {
   return merged.geometry;
 }
 
+/* 🏹 이동 사격용 자동 조준 — 사거리 안에서 가장 가까운 사냥감 */
+function bowAutoAim() {
+  var best = null, bd = ARROW_RANGE * ARROW_RANGE;
+  for (var i = 0; i < dinos.length; i++) {
+    var d = dinos[i];
+    if (d.dead || d.tamed || d.mounted) continue;
+    if (!d.hostile && !d.attackable) continue;
+    var dx = d.x - player.pos.x, dz = d.z - player.pos.z;
+    var dd = dx * dx + dz * dz;
+    if (dd < bd) { bd = dd; best = d; }
+  }
+  return best;
+}
+
 function shootArrow(target) {
   if (!bowEquipped()) { sfx('deny'); toast('활을 장착해야 쏠 수 있어요 · 가방에서 장착', 'warn'); return; }
   if (player.arrowCd > 0) return;
+  if (!target || target.dead) target = bowAutoAim();     // 조이스틱을 잡은 채 누르면 가장 가까운 적으로 자동 조준
   player.arrowCd = 0.85;
-  player.bowT = 0.55;
-  player.bowTotal = 0.55;
+  // 0.15초짜리 발사 동작 — 이 짧은 순간만 발을 멈추고, 끝나면 후딜 없이 바로 이동이 이어진다
+  player.bowLock = 0.15;
+  player.bowT = 0.18;
+  player.bowTotal = 0.18;
   var ox = player.pos.x, oz = player.pos.z, oy = terrainH(ox, oz) + 1.30;
+  var aim = player.facing;
   var tx, ty, tz;
   if (target && !target.dead) {
-    player.facing = Math.atan2(target.x - ox, target.z - oz);
+    aim = Math.atan2(target.x - ox, target.z - oz);
     tx = target.x; tz = target.z;
     ty = terrainH(tx, tz) + (target.parts.height || 1.2) * 0.55;
   } else {
@@ -9534,6 +9749,9 @@ function shootArrow(target) {
     tx = ox + fx * ARROW_RANGE; tz = oz + fz * ARROW_RANGE;
     ty = terrainH(tx, tz) + 1.0;
   }
+  player.aim = aim;
+  // 서 있을 땐 바로 돌아보고, 걷는 중엔 발사 동작 0.15초 동안 부드럽게 돌아간다
+  if (!player.moving) player.facing = aim;
   var dx = tx - ox, dy = ty - oy, dz = tz - oz;
   var dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
   if (dist < 0.6) dist = 0.6;
@@ -9542,8 +9760,8 @@ function shootArrow(target) {
   var iron = !!S.tools.ironBow;
   var mesh = new THREE.Mesh(arrowGeo(iron), ARROW_MAT);
   mesh.rotation.order = 'YXZ';
-  mesh.position.set(ox + Math.sin(player.facing) * 0.55, oy, oz + Math.cos(player.facing) * 0.55);
-  mesh.rotation.y = player.facing;
+  mesh.position.set(ox + Math.sin(aim) * 0.55, oy, oz + Math.cos(aim) * 0.55);
+  mesh.rotation.y = aim;
   mesh.castShadow = false;
   scene.add(mesh);
   ARROWS.push({ mesh: mesh, vx: dx / flight, vy: vy, vz: dz / flight, life: 0, max: 2.6, trav: 0, range: ARROW_RANGE, dmg: arrowAtk() });
@@ -9709,6 +9927,7 @@ function nestFireNear(st) {
   for (var i = 0; i < structures.length; i++) {
     var s = structures[i];
     if (s.type !== 'campfire') continue;
+    if (s.lit === false) continue;                    // 꺼진 모닥불은 온기가 없다
     var dx = s.x - st.x, dz = s.z - st.z;
     if (dx * dx + dz * dz < 36) return s;     // 6m 이내
   }
@@ -9826,6 +10045,150 @@ function confirmPlace() {
   chipsDirty = true;
 }
 
+/* =========================================================
+   🔥 모닥불 재점화 · 🔨 철거 · 📦 상자 보관함 (v2.3)
+   ========================================================= */
+function relightFire(st) {
+  if (!st) return;
+  if (st.lit) { sfx('deny'); toast('이미 불이 붙어 있어요', 'warn'); return; }
+  var useWood = (S.inv.wood || 0) > 0;
+  var useStick = !useWood && (S.inv.stick || 0) >= 2;
+  if (!useWood && !useStick) {
+    sfx('deny');
+    toast('연료가 없어요 · 통나무 1개 또는 나뭇가지 2개가 필요해요', 'warn');
+    return;
+  }
+  if (useWood) S.inv.wood--; else S.inv.stick -= 2;
+  st.fuel = FIRE_LIFE;
+  setFireLit(st, true);
+  spawnBurst(st.x, terrainH(st.x, st.z) + 0.5, st.z, 0xffc86a, 12, 1.1);
+  spawnSmoke(st.x, terrainH(st.x, st.z) + 1.0, st.z);
+  sfx('relight');
+  toast('🔥 모닥불에 불을 지폈어요 · 5분간 활활 타요' + (useWood ? ' (통나무 -1)' : ' (나뭇가지 -2)'), 'good');
+  hint('모닥불 4.5m 안에서는 체력·허기가 서서히 회복돼요', 3600);
+  chipsDirty = true;
+  syncStructData();
+  saveState();
+}
+
+/* 📦 상자 — 가방 양식(100개 스택)으로 24칸까지 */
+var chestSt = null;
+var CHEST_SLOTS = 24;
+function chestUsed(st) {
+  var n = 0, it = (st && st.items) || {};
+  for (var k in it) if (it[k] > 0) n += Math.ceil(it[k] / STACK_MAX);
+  return n;
+}
+function chestRoom(st, k) {
+  var it = (st && st.items) || {};
+  var have = it[k] | 0;
+  var others = chestUsed(st) - (have > 0 ? Math.ceil(have / STACK_MAX) : 0);
+  var room = Math.max(0, CHEST_SLOTS - others) * STACK_MAX;
+  if (have > 0 && have % STACK_MAX) room += STACK_MAX - (have % STACK_MAX);
+  return room;
+}
+function isEquippedItem(k) {
+  return S.equip.weapon === k || S.equip.hat === k || S.equip.armor === k ||
+    S.equip.boots === k || S.equip.backpack === k;
+}
+function chestPut(st, k, n) {
+  if (!st || !ITEMS[k]) return 0;
+  if (isEquippedItem(k)) { sfx('deny'); toast('착용 중인 장비는 먼저 벗어 주세요', 'warn'); return 0; }
+  var have = S.inv[k] | 0;
+  var add = Math.max(0, Math.min(n || 1, have, chestRoom(st, k)));
+  if (add <= 0) { sfx('deny'); toast('상자가 가득 찼어요', 'warn'); return 0; }
+  S.inv[k] = have - add;
+  if (S.inv[k] <= 0) delete S.inv[k];
+  if (!st.items) st.items = {};
+  st.items[k] = (st.items[k] | 0) + add;
+  ensureEquipValid();
+  syncStructData();
+  chipsDirty = true;
+  return add;
+}
+function chestTake(st, k, n) {
+  if (!st || !st.items) return 0;
+  var have = st.items[k] | 0;
+  var add = Math.max(0, Math.min(n || 1, have, bagRoomFor(k)));
+  if (add <= 0) { bagFullNotice(); return 0; }
+  st.items[k] = have - add;
+  if (st.items[k] <= 0) delete st.items[k];
+  S.inv[k] = (S.inv[k] | 0) + add;
+  if (S.found && !S.found[k]) S.found[k] = 1;
+  if (WEAPONS[k] || GEAR[k]) { syncTools(); refreshTool(); }
+  syncStructData();
+  chipsDirty = true;
+  return add;
+}
+function chestSaveSoon() {
+  if (chestSaveSoon.t) return;
+  chestSaveSoon.t = setTimeout(function () {
+    chestSaveSoon.t = 0;
+    syncStructData();
+    saveState();
+  }, 320);
+}
+function openChest(st) {
+  if (!st) return;
+  audioInit();
+  chestSt = st;
+  sfx('chest');
+  openSheet('chest');
+}
+
+/* 🔨 철거 — 재료 일부(절반, 내림)를 돌려받고 구조물을 깔끔히 없앤다 */
+var demolishSt = null;
+function structRefund(type) {
+  var out = {}, r = null;
+  for (var i = 0; i < RECIPES.length; i++) if (RECIPES[i].id === type) { r = RECIPES[i]; break; }
+  if (!r || !r.cost) return out;
+  for (var k in r.cost) {
+    var n = Math.floor((r.cost[k] || 0) * 0.5);
+    if (n > 0) out[k] = n;
+  }
+  return out;
+}
+function openDemolish() {
+  audioInit();
+  if (!started) return;
+  if (placing) { cancelPlacing(); toast('설치를 취소했어요', undefined); return; }
+  var st = nearestStructure(6);
+  if (!st) { sfx('deny'); toast('철거할 구조물 가까이에 서 주세요', 'warn'); return; }
+  var dx = st.x - player.pos.x, dz = st.z - player.pos.z;
+  if (Math.hypot(dx, dz) > structReach(st)) { sfx('deny'); toast('조금 더 가까이 가 주세요', 'warn'); return; }
+  if (st.type === 'chest' && chestUsed(st) > 0) {
+    sfx('deny');
+    toast('상자에 물건이 남아 있어요 · 먼저 꺼내 주세요', 'warn');
+    return;
+  }
+  demolishSt = st;
+  openSheet('demolish');
+}
+function confirmDemolish() {
+  var st = demolishSt;
+  if (!st) { closeSheet(); return; }
+  var type = st.type, def = STRUCT_DEF[type];
+  var refund = structRefund(type), got = [], lost = [];
+  for (var k in refund) { var n = addItem(k, refund[k]); if (n > 0) got.push((ITEMS[k] ? ITEMS[k].icon + ' ' : '') + (ITEMS[k] ? ITEMS[k].name : k) + ' +' + n); if (n < refund[k]) lost.push(ITEMS[k] ? ITEMS[k].name : k); }
+  if (type === 'hatchNest') {
+    if (st.egg && st.egg.p > 0 && !st.egg.done) lost.push('품던 알');
+    delete S.nests[nestKey(st.x, st.z)];
+    if (st.group.userData.egg) st.group.userData.egg.visible = false;
+  }
+  var gx = st.x, gz = st.z;
+  removeStructure(st);
+  demolishSt = null;
+  spawnBurst(gx, terrainH(gx, gz) + 0.5, gz, 0xb08a55, 14, 1.0);
+  spawnSmoke(gx, terrainH(gx, gz) + 0.55, gz);
+  sfx('demolish');
+  closeSheet();
+  toast('🔨 ' + (def ? def.name : '구조물') + ' 철거 완료' + (got.length ? ' · ' + got.join(' · ') + ' 회수' : ''), got.length ? 'good' : undefined);
+  if (lost.length) hint('가방이 가득 차 ' + lost.join(' · ') + '은(는) 회수하지 못했어요', 4200);
+  chipsDirty = true;
+  syncStructData();
+  saveState();
+}
+
 /* ---------------- sheets ---------------- */
 var sheetMode = '';
 var craftTab = 'basic';
@@ -9835,11 +10198,21 @@ function openSheet(mode) {
   else if (mode === 'book') { sheetTitle.textContent = '도감'; sheetSub.textContent = '이 섬의 것들'; }
   else if (mode === 'build') { sheetTitle.textContent = '설치'; sheetSub.textContent = '만든 물건을 놓아요'; }
   else if (mode === 'bag') { sheetTitle.textContent = '🎒 가방'; sheetSub.textContent = '소지품 · 장비 · 배낭'; }
+  else if (mode === 'chest') { sheetTitle.textContent = '📦 나무 상자'; sheetSub.textContent = '가방 ↔ 상자 · 넣고 빼기'; }
+  else if (mode === 'demolish') { sheetTitle.textContent = '🔨 철거'; sheetSub.textContent = '구조물을 없애고 재료를 일부 회수해요'; }
   else { sheetTitle.textContent = '설정'; sheetSub.textContent = ''; }
   renderSheet();
   sheet.classList.add('on');
 }
-function closeSheet() { sheet.classList.remove('on'); }
+function closeSheet() {
+  if (sheetMode === 'chest' && chestSt) {
+    sfx('chestClose');
+    syncStructData();
+    saveState();
+    chestSt = null;
+  }
+  sheet.classList.remove('on');
+}
 
 function recipeOwned(r) {
   if (r.made) return S.made[r.id] || 0;
@@ -9972,10 +10345,163 @@ function renderBag() {
   sheetBody.appendChild(note);
 }
 
+/* ---------------- 📦 상자 시트 · 🔨 철거 확인 시트 ---------------- */
+function chestItemRow(k, count, dir, st) {
+  var it = ITEMS[k] || { name: k, icon: '❔' };
+  var on = isEquippedItem(k);
+  var cells = Math.ceil(count / STACK_MAX);
+  var el = document.createElement('div');
+  el.className = 'rec' + (on ? ' blocked' : '');
+  el.innerHTML = '<div class="ic">' + it.icon + '</div><div class="txt"><b>' + it.name +
+    (on ? ' <em>착용 중</em>' : '') + '</b><small>' + count + '개' +
+    (cells > 1 ? ' · ' + cells + '칸' : '') + '</small></div>';
+  if (on) {
+    var off = document.createElement('button');
+    off.textContent = '벗어야 함';
+    off.disabled = true;
+    el.appendChild(off);
+  } else {
+    var b1 = document.createElement('button');
+    b1.textContent = '1';
+    b1.title = dir > 0 ? '1개 넣기' : '1개 꺼내기';
+    b1.addEventListener('click', function () {
+      if (dir > 0) chestPut(st, k, 1); else chestTake(st, k, 1);
+      chestSaveSoon(); renderSheet();
+    });
+    el.appendChild(b1);
+    var bA = document.createElement('button');
+    bA.textContent = '전부';
+    bA.title = dir > 0 ? '가진 만큼 전부 넣기' : '상자에 있는 만큼 전부 꺼내기';
+    bA.addEventListener('click', function () {
+      var n = dir > 0 ? (S.inv[k] | 0) : (((st.items || {})[k]) | 0);
+      if (dir > 0) chestPut(st, k, n); else chestTake(st, k, n);
+      chestSaveSoon(); renderSheet();
+    });
+    el.appendChild(bA);
+  }
+  return el;
+}
+function renderChest() {
+  var st = chestSt;
+  if (!st) {
+    var gone = document.createElement('div');
+    gone.className = 'sheetNote';
+    gone.textContent = '상자가 사라졌어요.';
+    sheetBody.appendChild(gone);
+    return;
+  }
+  var used = chestUsed(st), pct = Math.min(100, Math.round(used / CHEST_SLOTS * 100));
+  var cap = document.createElement('div');
+  cap.className = 'capbar';
+  cap.innerHTML = '<div class="track"><div class="fill' + (pct > 88 ? ' warn' : '') + '" style="width:' + pct + '%"></div></div>' +
+    '<b>' + used + ' / ' + CHEST_SLOTS + '칸</b><small style="font-size:9px;color:#8a7a58;font-weight:800">한 칸에 ' + STACK_MAX + '개</small>';
+  sheetBody.appendChild(cap);
+
+  var h1 = document.createElement('div');
+  h1.className = 'tabs';
+  h1.innerHTML = '<div class="tab on" style="cursor:default">🎒 내 가방 ' + bagUsed() + '/' + bagSlots() + '칸</div>';
+  sheetBody.appendChild(h1);
+
+  var anyBag = false;
+  for (var i = 0; i < ITEM_ORDER.length; i++) {
+    var k = ITEM_ORDER[i], c = S.inv[k] | 0;
+    if (c <= 0) continue;
+    anyBag = true;
+    sheetBody.appendChild(chestItemRow(k, c, 1, st));
+  }
+  if (!anyBag) {
+    var eb = document.createElement('div');
+    eb.className = 'sheetNote';
+    eb.textContent = '가방이 비었어요.';
+    sheetBody.appendChild(eb);
+  }
+
+  var h2 = document.createElement('div');
+  h2.className = 'tabs';
+  h2.style.marginTop = '12px';
+  h2.innerHTML = '<div class="tab on" style="cursor:default">📦 상자 안</div>';
+  sheetBody.appendChild(h2);
+  var anyChest = false, it = st.items || {};
+  for (var j = 0; j < ITEM_ORDER.length; j++) {
+    var k2 = ITEM_ORDER[j], c2 = it[k2] | 0;
+    if (c2 <= 0) continue;
+    anyChest = true;
+    sheetBody.appendChild(chestItemRow(k2, c2, -1, st));
+  }
+  for (var k3 in it) {
+    if ((it[k3] | 0) <= 0 || ITEM_ORDER.indexOf(k3) >= 0) continue;
+    anyChest = true;
+    sheetBody.appendChild(chestItemRow(k3, it[k3] | 0, -1, st));
+  }
+  if (!anyChest) {
+    var ec = document.createElement('div');
+    ec.className = 'sheetNote';
+    ec.textContent = '상자가 비었어요. 위 목록에서 「1」이나 「전부」를 눌러 넣어 보세요.';
+    sheetBody.appendChild(ec);
+  }
+
+  var note = document.createElement('div');
+  note.className = 'sheetNote';
+  note.textContent = '상자 내용물은 자동으로 저장돼요. 창을 닫으면 뚜껑이 닫혀요.';
+  sheetBody.appendChild(note);
+}
+
+function renderDemolish() {
+  var st = demolishSt;
+  if (!st) {
+    var gone = document.createElement('div');
+    gone.className = 'sheetNote';
+    gone.textContent = '철거할 구조물이 없어요.';
+    sheetBody.appendChild(gone);
+    return;
+  }
+  var def = STRUCT_DEF[st.type] || { name: st.type, icon: '❔' };
+  var refund = structRefund(st.type), costHtml = '';
+  for (var k in refund) {
+    costHtml += '<span>' + (ITEMS[k] ? ITEMS[k].icon : '') + ' ' + (ITEMS[k] ? ITEMS[k].name : k) + ' <b>+' + refund[k] + '</b></span>';
+  }
+  var row = document.createElement('div');
+  row.className = 'rec';
+  row.innerHTML = '<div class="ic">' + def.icon + '</div><div class="txt"><b>' + def.name + '</b>' +
+    '<small>여기를 철거하면 구조물이 사라져요</small>' +
+    (costHtml ? '<div class="cost">' + costHtml + '</div>' : '<small>회수할 재료가 없어요</small>') + '</div>';
+  sheetBody.appendChild(row);
+  if (st.type === 'chest') {
+    var warn = document.createElement('div');
+    warn.className = 'sheetNote';
+    warn.textContent = '상자 안에 물건이 남아 있으면 철거할 수 없어요. 먼저 꺼내 주세요.';
+    sheetBody.appendChild(warn);
+  }
+  var go = document.createElement('button');
+  go.className = 'danger';
+  go.style.marginTop = '4px';
+  go.textContent = '🔨 철거하기';
+  go.addEventListener('click', function () { confirmDemolish(); });
+  sheetBody.appendChild(go);
+  var no = document.createElement('button');
+  no.className = 'rec';
+  no.style.cssText = 'width:100%;height:40px;margin-top:7px;border-radius:11px;border:1px solid rgba(150,120,70,.28);background:rgba(255,255,255,.86);color:#6b5e3d;font-family:inherit;font-size:12px;font-weight:900;cursor:pointer';
+  no.textContent = '그만두기';
+  no.addEventListener('click', function () { demolishSt = null; closeSheet(); });
+  sheetBody.appendChild(no);
+  var note = document.createElement('div');
+  note.className = 'sheetNote';
+  note.textContent = '한 번 확인하면 바로 없어져요. 재료는 절반(내림)만 돌려받아요.';
+  sheetBody.appendChild(note);
+}
+
 function renderSheet() {
   sheetBody.innerHTML = '';
   if (sheetMode === 'bag') {
     renderBag();
+    return;
+  }
+  if (sheetMode === 'chest') {
+    renderChest();
+    return;
+  }
+  if (sheetMode === 'demolish') {
+    renderDemolish();
     return;
   }
   if (sheetMode === 'craft') {
@@ -10034,6 +10560,9 @@ function renderSheet() {
       ['🏡', '주거 구역', '시작 해안과 오두막·모닥불 주변은 육식공룡이 들어오지 않는 안전지대예요. 집을 짓고 작업대를 쓰고 온순한 공룡과 쉬기 좋아요.'],
       ['🏹', '야생 사냥터', '숲(동쪽)·바위 고원(북쪽)·초원 외곽은 육식공룡과 희귀 광물·약초가 있는 사냥터예요. 들어가면 전투 준비를 하세요.'],
       ['🔥', '모닥불 휴식', '모닥불 4.5m 안에 서 있으면 체력과 허기가 서서히 회복돼요. 요리도 여기서 해요.'],
+      ['⏳', '모닥불 수명 · 재점화', '모닥불은 설치하거나 다시 지피면 5분(300초) 동안 타요. 다 타서 꺼진 모닥불 앞에서는 「🔥 불 지피기」가 떠고, 통나무 1개 또는 나뭇가지 2개를 넣으면 다시 5분 활활 타요.'],
+      ['📦', '나무 상자', '통나무 4 + 나뭇가지 4로 만들어 설치해요. 상자 2.6m 안에서 「📦 상자 열기」를 누르면 가방 ↔ 상자로 물건을 넣고 뺄 수 있고, 내용물은 저장돼요(24칸).'],
+      ['🔨', '철거', '내가 설치한 모닥불·작업대·상자·오두막·부화 둥지 가까이에 서면 오른쪽 「🗑 철거」 버튼이 나타나요. 한 번 확인하면 깔끔히 없어지고 재료를 절반(내림) 돌려받아요.'],
       ['🏚️', '오두막', '문 앞으로 걸어 들어가면 지붕이 열리고 실내가 보여요. 안에 있으면 휴식 회복이 더 잘 돼요.'],
       ['🪚', '작업대', '작업대 3.5m 안에 서면 오른쪽 큰 버튼이 「🛠 작업하기」로 바뀌어요. 누르면 제작창이 바로 열리고, 작업대 목록은 7.5m 안에서 열려요.'],
       ['🦎', '콤프소그나투스', '작은 고기(생고기 +1)와 얇은 가죽 +1을 남겨요. 무리로 몰려오면 위험해요.'],
@@ -10059,7 +10588,7 @@ function renderSheet() {
       sheetBody.appendChild(it);
     }
   } else if (sheetMode === 'build') {
-    var keys = ['campfire', 'cabin', 'workbench', 'hatchNest', 'chair', 'table', 'planter'];
+    var keys = ['campfire', 'cabin', 'workbench', 'chest', 'hatchNest', 'chair', 'table', 'planter'];
     for (var j = 0; j < keys.length; j++) {
       (function (key) {
         var def = STRUCT_DEF[key];
@@ -10069,8 +10598,9 @@ function renderSheet() {
         el.innerHTML = '<div class="ic">' + def.icon + '</div><div class="txt"><b>' + def.name + ' x' + cnt + '</b>' +
           '<small>' + (key === 'cabin' ? '문이 있는 내 집 · 안에서 휴식' :
             (key === 'workbench' ? '장비 제작 거점' :
-              (key === 'campfire' ? '불꽃·요리·휴식' :
-                (key === 'hatchNest' ? '익룡 알을 품는 둥지 · 6m 안에 모닥불 필요' : '오두막 앞 꾸미기')))) + '</small></div>' +
+              (key === 'campfire' ? '불꽃·요리·휴식 · 5분마다 장작 필요' :
+                (key === 'chest' ? '아이템 보관함 · 앞에서 「📦 상자 열기」' :
+                  (key === 'hatchNest' ? '익룡 알을 품는 둥지 · 6m 안에 모닥불 필요' : '오두막 앞 꾸미기'))))) + '</small></div>' +
           '<button' + (cnt ? '' : ' disabled') + '>놓기</button>';
         el.querySelector('button').addEventListener('click', function () { if (cnt) startPlacing(key); });
         sheetBody.appendChild(el);
@@ -10078,7 +10608,7 @@ function renderSheet() {
     }
     var n2 = document.createElement('div');
     n2.className = 'sheetNote';
-    n2.textContent = '제작 메뉴에서 먼저 만들어 주세요. 설치한 모닥불·오두막 주변은 육식공룡이 들어오지 않는 안전지대가 돼요. 🪺 부화 둥지는 반경 6m 안에 🔥 모닥불이 있어야 알이 부화해요.';
+    n2.textContent = '제작 메뉴에서 먼저 만들어 주세요. 설치한 모닥불·오두막 주변은 육식공룡이 들어오지 않는 안전지대가 돼요. 모닥불은 5분간 타고 꺼지면 「불 지피기」로 다시 피워요. 설치한 구조물 가까이에서 오른쪽 「🗑 철거」를 누르면 재료 일부를 돌려받고 없앨 수 있어요.';
     sheetBody.appendChild(n2);
   } else if (sheetMode === 'set') {
     var box = document.createElement('div');
@@ -10653,6 +11183,7 @@ btnBuild.addEventListener('pointerdown', function (e) {
   openSheet('build');
 });
 $id('btnCraft').addEventListener('click', function () { audioInit(); openSheet('craft'); });
+if (btnDemolish) btnDemolish.addEventListener('pointerdown', function (e) { e.preventDefault(); openDemolish(); });
 $id('btnBag').addEventListener('click', function () { audioInit(); openSheet('bag'); });
 $id('btnBook').addEventListener('click', function () { audioInit(); openSheet('book'); });
 $id('btnSound').addEventListener('click', function () { audioInit(); toggleSound(); });
@@ -10721,7 +11252,11 @@ function updateCamera(dt) {
 /* ---------------- movement ---------------- */
 /* 바다처럼 깊은 물은 못 들어가지만 얕은 강물은 걸어서 건널 수 있다 */
 function canStand(x, z) {
-  return terrainH(x, z) > 0.32 || riverWalk(x, z);
+  var h = terrainH(x, z);
+  if (h > 0.32) return true;
+  if (riverWalk(x, z)) return true;
+  // 🌊 물가의 발목 깊이(≈0.30m)까지는 첨벙첨벙 걸어 들어갈 수 있다
+  return h > -0.30;
 }
 
 var worldT = 0;
@@ -10734,6 +11269,20 @@ function updatePlayer(dt) {
   var len = Math.hypot(ix, iy);
   if (len > 1) { ix /= len; iy /= len; len = 1; }
   player.moving = len > 0.12;
+
+  // 🏹 활 카이팅 — 발사 동작 0.15초만 발을 멈추고 조준 쪽으로 몸만 돌린다.
+  //    조이스틱에서 손을 떼지 않아도 이 시간이 끝나면 그 방향으로 곧바로 이어진다(후딜 0).
+  var bowStop = false;
+  if (player.bowLock > 0) {
+    player.bowLock = Math.max(0, player.bowLock - dt);
+    bowStop = true;
+    if (player.aim !== undefined && player.aim !== null) {
+      var ad = ((player.aim - player.facing + Math.PI * 3) % TAU) - Math.PI;
+      player.facing += ad * Math.min(1, dt * 26);
+    }
+    player.moving = false;
+    if (player.bowLock <= 0) player.aim = null;      // 다음 프레임부터 조이스틱 방향으로 복귀
+  }
 
   // 비행 중 착륙 처리 — 고도를 내리다 땅에 닿으면 안전하게 내린다
   if (rideDino && rideDino.flyer && rideDino.descend) {
@@ -10760,8 +11309,8 @@ function updatePlayer(dt) {
   var speed = rideDino ? 8.6 * (1 + gearSpeed() * 0.5) : 4.5 * (1 + gearSpeed());
   // 익룡 비행은 다른 지상 탈것보다 정확히 1.4배 빠르다
   if (rideDino && rideDino.flyer) speed = 8.6 * (1 + gearSpeed() * 0.5) * 1.4;
-  // 얕은 강물에서는 걸음이 조금 느려지고 첨벙거린다
-  var wadeD = riverDepth(player.pos.x, player.pos.z);
+  // 얕은 강물·해안 물가에서는 걸음이 조금 느려지고 첨벙거린다
+  var wadeD = waterDepth(player.pos.x, player.pos.z);
   if (!rideDino && wadeD > 0.04) speed *= 0.84;
 
   // 피격 넉백 (조이스틱 입력과 별개로 살짝 밀린다)
@@ -10774,7 +11323,7 @@ function updatePlayer(dt) {
   if (player.atkCd > 0) player.atkCd = Math.max(0, player.atkCd - dt);
   if (player.arrowCd > 0) player.arrowCd = Math.max(0, player.arrowCd - dt);
 
-  if (len > 0.12) {
+  if (len > 0.12 && !bowStop) {
     var dirX = ix, dirZ = iy;
     var wantRot = Math.atan2(dirX, dirZ);
     var diff = ((wantRot - player.facing + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
@@ -10843,23 +11392,24 @@ function updatePlayer(dt) {
     }
   }
 
-  // ── 얕은 강가: 발이 물에 잠기면 첨벙첨벙 (물보라 + 효과음)
+  // ── 🌊 얕은 강가·해안 물가: 발걸음 주기에 맞춰 철퍽철퍽 (물보라 + 효과음)
   if (!rideDino) {
-    wadeD = riverDepth(player.pos.x, player.pos.z);
+    wadeD = waterDepth(player.pos.x, player.pos.z);
     player.wade = wadeD;
+    player.stepPh = (player.stepPh || 0) + dt * 9.5 * (player.moving ? 1 : 0);
+    var stepN = Math.floor(player.stepPh / Math.PI);
     if (wadeD > 0.03 && player.moving) {
-      player.splashT = (player.splashT || 0) + dt;
-      var splashGap = wadeD > 0.18 ? 0.19 : 0.30;
-      if (player.splashT > splashGap) {
-        player.splashT = 0;
-        spawnSplash(player.pos.x, terrainH(player.pos.x, player.pos.z) + 0.02, player.pos.z, wadeD > 0.18 ? 6 : 4);
-        sfx(wadeD > 0.18 ? 'splash' : 'wade');
+      if (stepN !== player.stepN) {
+        player.stepN = stepN;
+        var deepW = wadeD > 0.18;
+        spawnSplash(player.pos.x, Math.max(terrainH(player.pos.x, player.pos.z), 0) + 0.02, player.pos.z, deepW ? 6 : 4);
+        sfx(deepW ? 'splash' : 'wade');
       }
     } else {
-      player.splashT = 0;
+      player.stepN = stepN;
     }
   } else {
-    player.wade = riverDepth(rideDino.x, rideDino.z);
+    player.wade = waterDepth(rideDino.x, rideDino.z);
   }
 
   // ── 애니메이션: 걷기 / 근접 스윙 / 활 당기기
@@ -10940,6 +11490,111 @@ function updatePlayer(dt) {
     player.pos.y = groundY(player.pos.x, player.pos.z);
     player.group.position.set(player.pos.x, player.pos.y, player.pos.z);
     player.group.rotation.y = player.facing;
+  }
+  // ❄️ 툰드라 덜덜 떨림 — 좌표·자세를 다 잡은 뒤 마지막에 미세 진동만 더한다
+  updateShiver(dt, t);
+}
+
+/* =========================================================
+   🥶 툰드라 덜덜 떨림
+   ---------------------------------------------------------
+   툰드라에서 방한 모자·털옷·털부츠를 다 못 입었고 모닥불도 없으면
+   실제로 오들오들 떨며 걷는다. 0/1/2종을 입었을 때 떨림 폭이 1 → 0.66 → 0.33,
+   3종을 모두 입으면 0(멀짐).
+   ========================================================= */
+var SHIVER = { amp: 0, lvl: 0, breathT: 0, bubbleT: 0, bubbleLeft: 0, tex: {} };
+function shiverLevel() {
+  if (!started || rideDino) return 0;
+  if (tundraW(player.pos.x, player.pos.z) <= 0.42) return 0;
+  var wn = warmSetCount();
+  if (wn >= 3) return 0;
+  if (nearestFire(5.0)) return 0;      // 불을 쬐고 있으면 떨지 않는다
+  return (3 - wn) / 3;
+}
+function chillTexture(txt) {
+  if (SHIVER.tex[txt]) return SHIVER.tex[txt];
+  var cv = document.createElement('canvas');
+  cv.width = 512; cv.height = 192;
+  var ctx = cv.getContext('2d');
+  var font = 'bold 70px -apple-system, "Apple SD Gothic Neo", sans-serif';
+  ctx.font = font;
+  var tw = Math.ceil(ctx.measureText(txt).width);
+  var w = Math.min(480, Math.max(150, tw + 74)), h = 112, x = (512 - w) / 2, y = 24;
+  ctx.fillStyle = 'rgba(52,110,158,.82)';
+  if (typeof roundRect === 'function') { roundRect(ctx, x, y, w, h, 32); ctx.fill(); }
+  else ctx.fillRect(x, y, w, h);
+  ctx.strokeStyle = 'rgba(228,246,255,.9)';
+  ctx.lineWidth = 4; ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(226, y + h - 4); ctx.lineTo(256, y + h + 28); ctx.lineTo(286, y + h - 4);
+  ctx.closePath(); ctx.fill();
+  ctx.font = font;
+  ctx.fillStyle = '#f2fbff';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(txt, 256, y + h / 2 + 2);
+  SHIVER.tex[txt] = new THREE.CanvasTexture(cv);
+  return SHIVER.tex[txt];
+}
+function chillBubble(txt) {
+  var sp = player.chillSp;
+  if (!sp) {
+    sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: chillTexture(txt), transparent: true, depthTest: false, depthWrite: false }));
+    sp.scale.set(1.5, 0.56, 1);
+    sp.position.set(0, 2.32, 0);
+    player.group.add(sp);
+    player.chillSp = sp;
+  }
+  sp.material.map = chillTexture(txt);
+  sp.material.needsUpdate = true;
+  sp.material.opacity = 1;
+  sp.visible = true;
+}
+function updateShiver(dt, t) {
+  var lvl = shiverLevel();
+  SHIVER.lvl = lvl;
+  SHIVER.amp += (lvl - SHIVER.amp) * Math.min(1, dt * 4);
+  var a = SHIVER.amp;
+  player.shiver = Math.round(a * 100) / 100;
+  var sp = player.chillSp;
+  if (a < 0.02) {
+    player.group.rotation.z = 0;
+    player.body.rotation.z = 0;
+    if (sp && sp.visible) sp.visible = false;
+    SHIVER.bubbleT = 0; SHIVER.bubbleLeft = 0;
+    return;
+  }
+  // 미세 좌우·상하 진동 (걸을 때는 보폭에 섞여 자연스럽게)
+  player.group.position.x += Math.sin(t * 46) * 0.040 * a;
+  player.group.position.z += Math.cos(t * 53) * 0.032 * a;
+  player.group.position.y += Math.sin(t * 61) * 0.013 * a;
+  player.group.rotation.z = Math.sin(t * 47) * 0.022 * a;
+  player.body.rotation.z = Math.sin(t * 44 + 0.6) * 0.038 * a;
+  player.head.rotation.z += Math.sin(t * 43) * 0.070 * a;
+  // 팔을 몸통에 감싸고 어깨를 움츠린다 (공격·활 동작 중에는 건드리지 않는다)
+  if (!(player.bowT > 0) && !(player.swing > 0) && !rideDino) {
+    var tr = Math.sin(t * 40) * 0.06 * a;
+    player.armL.rotation.x = -0.92 + tr;
+    player.armL.rotation.z = -0.40;
+    player.armR.rotation.x = -0.92 - tr;
+    player.armR.rotation.z = 0.40;
+  }
+  // 입김
+  SHIVER.breathT += dt;
+  if (SHIVER.breathT > (player.moving ? 0.9 : 1.35)) {
+    SHIVER.breathT = 0;
+    var bfx = Math.sin(player.facing), bfz = Math.cos(player.facing);
+    spawnBreath(player.pos.x + bfx * 0.26, player.pos.y + 1.42, player.pos.z + bfz * 0.26, bfx, bfz);
+  }
+  // 덜덜 말풍선 — 3.6초마다 1.7초씩
+  var txt = a > 0.84 ? '덜덜덜…' : (a > 0.5 ? '덜덜…' : '으슬으슬');
+  SHIVER.bubbleT += dt;
+  if (sp && sp.visible) {
+    SHIVER.bubbleLeft -= dt;
+    if (SHIVER.bubbleLeft <= 0) sp.visible = false;
+  } else if (SHIVER.bubbleT > 3.6) {
+    SHIVER.bubbleT = 0;
+    SHIVER.bubbleLeft = 1.7;
+    chillBubble(txt);
   }
 }
 
@@ -11677,27 +12332,58 @@ function updateStructures(dt, t) {
   var near = 999;
   for (var i = 0; i < structures.length; i++) {
     var s = structures[i];
+    // 📦 상자 뚜껑 — 열어 둔 동안만 활짝 열린다
+    if (s.type === 'chest') {
+      var want = (chestSt === s && sheetMode === 'chest') ? 1 : 0;
+      s.lidT = (s.lidT || 0) + (want - (s.lidT || 0)) * Math.min(1, dt * 6);
+      var lid = s.group.userData.lid;
+      if (lid) lid.rotation.x = -1.15 * s.lidT;
+      continue;
+    }
     if (s.type !== 'campfire') continue;
     s.t += dt;
     var u = s.group.userData;
-    if (u.flames) {
-      for (var f = 0; f < u.flames.length; f++) {
-        var fm = u.flames[f];
-        fm.scale.set(
-          0.85 + Math.sin(s.t * 9 + f * 2) * 0.12,
-          0.9 + Math.sin(s.t * 12 + f * 1.7) * 0.22,
-          0.85 + Math.cos(s.t * 8 + f) * 0.12
-        );
-        fm.rotation.y += dt * (1.2 + f * 0.4);
-        fm.position.y = 0.5 + f * 0.05 + Math.sin(s.t * 7 + f) * 0.04;
+    // 🔥 연료 수명 — 설치·재점화 후 5분(300초) 동안 타고, 다 타면 꺼진 모닥불이 된다
+    if (s.fuel === undefined) s.fuel = FIRE_LIFE;
+    if (s.lit === undefined) s.lit = s.fuel > 0;
+    if (s.lit) {
+      s.fuel -= dt;
+      if (s.fuel <= 0) {
+        s.fuel = 0;
+        setFireLit(s, false);
+        spawnSmoke(s.x, terrainH(s.x, s.z) + 0.8, s.z);
+        spawnSmoke(s.x + rnd(-0.2, 0.2), terrainH(s.x, s.z) + 1.1, s.z + rnd(-0.2, 0.2));
+        var edx = s.x - player.pos.x, edz = s.z - player.pos.z;
+        if (started && edx * edx + edz * edz < 64) {
+          toast('🔥 모닥불이 꺼졌어요 · 통나무 1개나 나뭇가지 2개로 다시 피울 수 있어요', 'warn');
+          sfx('freeze');
+        }
       }
     }
-    if (u.light) u.light.intensity = (1.35 + Math.sin(s.t * 11) * 0.18 + Math.sin(s.t * 23) * 0.08) * (0.85 + DAY.night * 0.75);
-    u.smokeT = (u.smokeT || 0) + dt;
-    if (u.smokeT > 0.42) { u.smokeT = 0; spawnSmoke(s.x + rnd(-0.15, 0.15), terrainH(s.x, s.z) + 1.15, s.z + rnd(-0.15, 0.15)); }
-    var sdx = s.x - player.pos.x, sdz = s.z - player.pos.z;
-    var dd = Math.sqrt(sdx * sdx + sdz * sdz);
-    if (dd < near) near = dd;
+    if (s.lit) {
+      if (u.flames) {
+        for (var f = 0; f < u.flames.length; f++) {
+          var fm = u.flames[f];
+          fm.scale.set(
+            0.85 + Math.sin(s.t * 9 + f * 2) * 0.12,
+            0.9 + Math.sin(s.t * 12 + f * 1.7) * 0.22,
+            0.85 + Math.cos(s.t * 8 + f) * 0.12
+          );
+          fm.rotation.y += dt * (1.2 + f * 0.4);
+          fm.position.y = 0.5 + f * 0.05 + Math.sin(s.t * 7 + f) * 0.04;
+        }
+      }
+      if (u.light) u.light.intensity = (1.35 + Math.sin(s.t * 11) * 0.18 + Math.sin(s.t * 23) * 0.08) * (0.85 + DAY.night * 0.75);
+      u.smokeT = (u.smokeT || 0) + dt;
+      if (u.smokeT > 0.42) { u.smokeT = 0; spawnSmoke(s.x + rnd(-0.15, 0.15), terrainH(s.x, s.z) + 1.15, s.z + rnd(-0.15, 0.15)); }
+      var sdx = s.x - player.pos.x, sdz = s.z - player.pos.z;
+      var dd = Math.sqrt(sdx * sdx + sdz * sdz);
+      if (dd < near) near = dd;
+    } else {
+      if (u.light) u.light.intensity = 0;
+      u.smokeT2 = (u.smokeT2 || 0) + dt;
+      if (u.smokeT2 > 2.6) { u.smokeT2 = 0; spawnSmoke(s.x + rnd(-0.12, 0.12), terrainH(s.x, s.z) + 0.55, s.z + rnd(-0.12, 0.12)); }
+    }
   }
   if (FIRE.gain) {
     var g = clamp(1 - near / 13, 0, 1) * 0.34 * (muted ? 0 : 1);
@@ -12178,6 +12864,11 @@ function updateHUD(dt) {
   }
 
   CTX = computeContext();
+  // 상자 창을 열어 둔 채 멀어지면 자동으로 닫는다
+  if (sheetMode === 'chest' && chestSt) {
+    var _cdx = chestSt.x - player.pos.x, _cdz = chestSt.z - player.pos.z;
+    if (_cdx * _cdx + _cdz * _cdz > 20) closeSheet();
+  }
   setText(actLabel, CTX.label);
   btnAct.classList.toggle('dim', CTX.type === 'none');
   btnAct.classList.toggle('busy', !!cooking);
@@ -12196,10 +12887,33 @@ function updateHUD(dt) {
   else { setText(btnMount, '🐾 타기'); btnMount.classList.toggle('dim', !t); }
   setText(btnBuild, placing ? '✕ 취소' : '🏕 설치');
 
+  // 🔨 철거 버튼 — 내 구조물 바로 앞에 있을 때만 나타난다
+  if (btnDemolish) {
+    var _ds = placing ? null : nearestStructure(6);
+    var _nearDem = false;
+    if (_ds) {
+      var _ddem = Math.hypot(_ds.x - player.pos.x, _ds.z - player.pos.z);
+      _nearDem = _ddem <= structReach(_ds);
+    }
+    var _flag = _nearDem ? '1' : '0';
+    if (btnDemolish.getAttribute('data-on') !== _flag) {
+      btnDemolish.setAttribute('data-on', _flag);
+      btnDemolish.style.display = _nearDem ? '' : 'none';
+    }
+  }
+
   // 휴식 배지
   if (restBadge) {
     restBadge.classList.toggle('on', REST.on);
-    if (REST.on) { setText(restWhere, REST.where); setText(restVal, '+HP +허기'); }
+    if (REST.on) {
+      var _rw = REST.where;
+      if (REST.where === '모닥불') {
+        var _rf = nearestFire(4.5);
+        if (_rf) _rw = '모닥불 ' + fireLeftText(_rf);
+      }
+      setText(restWhere, _rw);
+      setText(restVal, '+HP +허기');
+    }
   }
 
   // 구역 표시
@@ -12606,6 +13320,11 @@ function beginSession(slot, isNew, nick) {
   if (!FOAM) buildFoamRing();
   if (!RIVER_WATER) buildRiverWater();
   started = true;
+  // v2.3 — 활 카이팅·물걸음·떨림 상태 초기화
+  player.bowLock = 0; player.aim = null;
+  player.stepPh = 0; player.stepN = 0; player.wade = 0;
+  SHIVER.amp = 0; SHIVER.breathT = 0; SHIVER.bubbleT = 0; SHIVER.bubbleLeft = 0;
+  chestSt = null; demolishSt = null;
   var st = $id('start');
   if (st) {
     st.classList.add('hide');
@@ -13610,6 +14329,271 @@ window.__game = {
       }
     }
     return this.nestInfo();
+  },
+  /* ================= v2.3 검수 훅 ================= */
+  /* 🏹 활 카이팅 — 조이스틱을 잡은 채 사격했을 때 0.15초만 멈추고 곧바로 다시 걷는지 */
+  kiteTest: function (frames) {
+    var hadBow = !!bowEquipped();
+    S.inv.bow = Math.max(1, S.inv.bow || 0); syncTools();
+    S.equip.weapon = 'bow'; refreshTool();
+    var d = null;
+    for (var i = 0; i < dinos.length; i++) { var q = dinos[i]; if (q.kind === 'raptor' && !q.dead) { d = q; break; } }
+    if (d) {
+      var ang = player.facing + 0.9;                  // 시선에서 벗어난 곳에 적을 두어 자동 조준 확인
+      d.x = player.pos.x + Math.sin(ang) * 7.2;
+      d.z = player.pos.z + Math.cos(ang) * 7.2;
+      d.group.position.set(d.x, terrainH(d.x, d.z), d.z);
+      d.dead = false; d.hp = d.max; d.frozen = true; d.aggro = 0; d.cstate = 'idle';
+    }
+    var facing0 = null, aim0 = null, shot = false;
+    var lockFrames = 0, moveLock = 0, afterFrames = 0, moveAfter = 0, moved = 0;
+    joy.x = 0; joy.y = 1;                             // 으로 계속 걷는 중
+    var N = frames || 70;
+    for (var f = 0; f < N; f++) {
+      if (f === 8) { var tgt = bowAutoAim(); shootArrow(tgt); shot = true; facing0 = player.facing; aim0 = player.aim; }
+      var bx = player.pos.x, bz = player.pos.z;
+      updatePlayer(1 / 60);
+      var mv = Math.hypot(player.pos.x - bx, player.pos.z - bz);
+      moved += mv;
+      if (player.bowLock > 0) { lockFrames++; moveLock += mv; }
+      else if (shot && afterFrames < 12) { afterFrames++; moveAfter += mv; }
+    }
+    joy.x = 0; joy.y = 0;
+    var ferr = (facing0 !== null && aim0 !== null) ? Math.abs(((aim0 - facing0 + Math.PI * 3) % TAU) - Math.PI) : null;
+    var aimErrNow = (player.aim === null || player.aim === undefined) ? null :
+      Math.abs(((player.aim - player.facing + Math.PI * 3) % TAU) - Math.PI);
+    var out = {
+      hadBow: hadBow, weapon: S.equip.weapon, autoAimTarget: d ? d.kind : null,
+      lockFrames: lockFrames, lockSec: +(lockFrames / 60).toFixed(2),
+      moveDuringLock: +moveLock.toFixed(3), moveAfterLock: +moveAfter.toFixed(2),
+      movedTotal: +moved.toFixed(2), facingErrAtShot: ferr === null ? null : +ferr.toFixed(2),
+      facingErrAfterLock: aimErrNow === null ? null : +aimErrNow.toFixed(2),
+      arrows: ARROWS.length, bowLock: +(player.bowLock || 0).toFixed(2), moving: player.moving
+    };
+    if (d) d.frozen = false;
+    return out;
+  },
+  /* 🥶 툰드라 덜덜 떨림 — 방한 n종(0~3) 입고 실제 updatePlayer 를 돌려 흔들림 폭 비교 */
+  shiverTest: function (n, frames) {
+    this.goBiome('tundra', 92);
+    this.warmTest(n || 0);
+    SHIVER.amp = 0; SHIVER.breathT = 0; SHIVER.bubbleT = 3.5; SHIVER.bubbleLeft = 0;
+    if (player.chillSp) player.chillSp.visible = false;
+    var minX = 1e9, maxX = -1e9, minY = 1e9, maxY = -1e9;
+    var rL0 = player.armL.rotation.x, rR0 = player.armR.rotation.x;
+    for (var f = 0; f < (frames || 200); f++) {
+      updatePlayer(1 / 60);
+      if (player.group.position.x < minX) minX = player.group.position.x;
+      if (player.group.position.x > maxX) maxX = player.group.position.x;
+      if (player.group.position.y < minY) minY = player.group.position.y;
+      if (player.group.position.y > maxY) maxY = player.group.position.y;
+    }
+    var breathN = 0;
+    for (var i = 0; i < fx.length; i++) if (fx[i].breath) breathN++;
+    return {
+      warmN: warmSetCount(), level: +SHIVER.lvl.toFixed(2), amp: +SHIVER.amp.toFixed(2), playerShiver: player.shiver,
+      jitterX: +(maxX - minX).toFixed(3), jitterY: +(maxY - minY).toFixed(3),
+      bubble: !!(player.chillSp && player.chillSp.visible),
+      bubbleTxt: (player.chillSp && player.chillSp.visible) ? 'on' : 'off',
+      breathFx: breathN, armL: +player.armL.rotation.x.toFixed(2), armR: +player.armR.rotation.x.toFixed(2),
+      armStart: [+rL0.toFixed(2), +rR0.toFixed(2)],
+      tundraW: +tundraW(player.pos.x, player.pos.z).toFixed(2),
+      hud: tempPill ? tempPill.textContent : '', fire: !!nearestFire(5.0)
+    };
+  },
+  /* 🌊 해안 얕은 물 걸어가기 — 수심·걸음 가능·물보라 */
+  waterTest: function (frames, ang) {
+    ang = (ang === undefined) ? -1.2 : ang;
+    var x = 0, z = 0, found = false;
+    for (var rr = 128; rr < 166; rr += 0.4) {
+      x = Math.cos(ang) * rr; z = Math.sin(ang) * rr;
+      var h = terrainH(x, z);
+      if (h < -0.10 && h > -0.27) { found = true; break; }
+    }
+    var spl0 = 0;
+    for (var i = 0; i < fx.length; i++) if (fx[i].splash) spl0++;
+    player.pos.set(x, terrainH(x, z), z);
+    player.group.position.copy(player.pos);
+    camLook.set(x, player.pos.y + 1.6, z);
+    var stand = canStand(x, z);
+    // 바다 쪽(반경 바깥)으로 걸어본다
+    joy.x = Math.cos(ang); joy.y = Math.sin(ang);
+    var moved = 0, px0 = player.pos.x, pz0 = player.pos.z;
+    for (var f2 = 0; f2 < (frames || 60); f2++) updatePlayer(1 / 60);
+    joy.x = 0; joy.y = 0;
+    var spl1 = 0;
+    for (var j = 0; j < fx.length; j++) if (fx[j].splash) spl1++;
+    moved = Math.hypot(player.pos.x - px0, player.pos.z - pz0);
+    return {
+      x: +x.toFixed(1), z: +z.toFixed(1), terrain: +terrainH(x, z).toFixed(2),
+      depth: +waterDepth(x, z).toFixed(2), riverDepth: +riverDepth(x, z).toFixed(2),
+      seaDepth: +seaDepth(x, z).toFixed(2), canStand: stand, found: found,
+      moved: +moved.toFixed(2), wade: +(player.wade || 0).toFixed(2), splashFx: spl1 - spl0,
+      endTerrain: +terrainH(player.pos.x, player.pos.z).toFixed(2)
+    };
+  },
+  /* 🔥 모닥불 5분 수명 → 꺼짐 → 재점화 */
+  fireTest: function () {
+    for (var i = structures.length - 1; i >= 0; i--) {
+      if (structures[i].type === 'campfire' && Math.hypot(structures[i].x - player.pos.x, structures[i].z - player.pos.z) < 8) removeStructure(structures[i]);
+    }
+    var st = placeStructure('campfire', player.pos.x + 1.7, player.pos.z + 1.1, 0);
+    var ctxLit = computeContext();
+    st.fuel = 0.35; st.lit = true; setFireLit(st, true);
+    for (var f = 0; f < 30; f++) updateStructures(1 / 60, f / 60);
+    var outState = {
+      lit: st.lit, fuel: +st.fuel.toFixed(2),
+      flamesVisible: st.group.userData.flames ? st.group.userData.flames[0].visible : null,
+      light: +(st.group.userData.light ? st.group.userData.light.intensity : 0).toFixed(2),
+      rec: st.rec ? { fuel: st.rec.fuel, lit: st.rec.lit } : null
+    };
+    var ctxOut = computeContext();
+    S.inv.wood = Math.max(1, S.inv.wood || 0);
+    var w0 = S.inv.wood;
+    relightFire(st);
+    var saved = packState().structures.filter(function (r) { return r.type === 'campfire'; });
+    return {
+      ctxLit: ctxLit.type + ' / ' + ctxLit.label, out: outState,
+      ctxOut: ctxOut.type + ' / ' + ctxOut.label,
+      relit: st.lit, fuelAfter: Math.round(st.fuel), woodSpent: w0 - (S.inv.wood | 0),
+      recAfter: st.rec ? { fuel: st.rec.fuel, lit: st.rec.lit } : null,
+      saved: saved.length ? { fuel: saved[saved.length - 1].fuel, lit: saved[saved.length - 1].lit } : null,
+      ctxAfter: computeContext().type
+    };
+  },
+  /* 📦 상자 — 넣기/빼기·저장 레코드·시트 */
+  /* 내용물이 있는 상자는 철거되지 않는지 + 상자 뚜껑 열림 */
+  chestGuard: function () {
+    var st = null;
+    for (var i = 0; i < structures.length; i++) {
+      if (structures[i].type === 'chest' && chestUsed(structures[i]) > 0) { st = structures[i]; break; }
+    }
+    if (!st) return { err: 'no filled chest' };
+    player.pos.set(st.x + 1.0, 0, st.z + 0.6);
+    player.pos.y = groundY(player.pos.x, player.pos.z);
+    player.group.position.copy(player.pos);
+    camLook.set(player.pos.x, player.pos.y + 1.6, player.pos.z);
+    var ctx = computeContext();
+    var near = nearestStructure(6);
+    demolishSt = null;
+    openDemolish();
+    return {
+      ctx: ctx.type, nearest: near ? near.type : null, nearDist: near ? +Math.hypot(near.x - player.pos.x, near.z - player.pos.z).toFixed(2) : null,
+      chestItems: chestUsed(st), sheet: sheetMode, blockOpened: demolishSt ? demolishSt.type : null,
+      stillThere: structures.indexOf(st) >= 0
+    };
+  },
+  /* 📦 상자 뚜껑 열림/닫힘 */
+  lidTest: function () {
+    var st = null;
+    for (var i = 0; i < structures.length; i++) if (structures[i].type === 'chest') { st = structures[i]; break; }
+    if (!st) return { err: 'no chest' };
+    player.pos.set(st.x + 1.0, 0, st.z + 0.6);
+    player.pos.y = groundY(player.pos.x, player.pos.z);
+    player.group.position.copy(player.pos);
+    openChest(st);
+    for (var f = 0; f < 45; f++) updateStructures(1 / 60, f / 60);
+    var opened = st.group && st.group.userData.lid ? +st.group.userData.lid.rotation.x.toFixed(2) : null;
+    var sheetNow = sheetMode;
+    closeSheet();
+    for (var g2 = 0; g2 < 60; g2++) updateStructures(1 / 60, g2 / 60);
+    return {
+      openRot: opened, lidT: +(st.lidT || 0).toFixed(2), sheet: sheetNow,
+      closedRot: st.group && st.group.userData.lid ? +st.group.userData.lid.rotation.x.toFixed(2) : null,
+      chestStCleared: !chestSt
+    };
+  },
+  chestTest: function () {
+    for (var i = structures.length - 1; i >= 0; i--) {
+      if (structures[i].type === 'chest' && Math.hypot(structures[i].x - player.pos.x, structures[i].z - player.pos.z) < 8) removeStructure(structures[i]);
+    }
+    var st = placeStructure('chest', player.pos.x + 1.3, player.pos.z + 0.4, 0);
+    S.inv.wood = Math.max(12, S.inv.wood || 0);
+    var w0 = S.inv.wood | 0;
+    var put = chestPut(st, 'wood', 5);
+    var recWood = st.rec && st.rec.items ? (st.rec.items.wood | 0) : null;
+    var ctx = computeContext();
+    openChest(st);
+    var sheetRows = sheetBody ? sheetBody.children.length : 0;
+    var modeNow = sheetMode;
+    closeSheet();
+    var take = chestTake(st, 'wood', 2);
+    var savedRec = packState().structures.filter(function (r) { return r.type === 'chest'; });
+    var res = {
+      put: put, chestWood: st.items.wood | 0, recWood: recWood, ctx: ctx.type + ' / ' + ctx.label,
+      sheet: modeNow, sheetRows: sheetRows,
+      take: take, afterTake: (st.items.wood | 0), invGain: (S.inv.wood | 0) - (w0 - put + take),
+      saved: savedRec.length ? (savedRec[savedRec.length - 1].items || {}) : null,
+      slotsUsed: chestUsed(st), slots: CHEST_SLOTS, lidT: +(st.lidT || 0).toFixed(2),
+      ctxAfter: computeContext().type, woodNow: S.inv.wood | 0
+    };
+    return res;
+  },
+  /* 🔨 철거 — 확인 시트 → 재료 일부 회수 → 씬·세이브에서 제거 */
+  demolishTest: function (kind) {
+    var st = placeStructure(kind || 'workbench', player.pos.x + 1.5, player.pos.z + 1.2, 0);
+    var w0 = S.inv.wood | 0, s0 = S.inv.stone | 0, f0 = S.inv.fiber | 0;
+    var c0 = structures.length, sc0 = S.structures.length;
+    openDemolish();
+    var opened = sheetMode, rows = sheetBody ? sheetBody.children.length : 0;
+    var target = demolishSt ? demolishSt.type : null;
+    confirmDemolish();
+    return {
+      target: target, opened: opened, rows: rows,
+      removed: structures.length === c0 - 1, savedRemoved: S.structures.length === sc0 - 1,
+      wood: (S.inv.wood | 0) - w0, stone: (S.inv.stone | 0) - s0, fiber: (S.inv.fiber | 0) - f0,
+      sheet: sheetMode, left: structures.length
+    };
+  },
+  /* 비행 정보 */
+  fireInfo: function () {
+    var out = [];
+    for (var i = 0; i < structures.length; i++) {
+      var s = structures[i];
+      if (s.type !== 'campfire') continue;
+      out.push({
+        x: +s.x.toFixed(1), z: +s.z.toFixed(1), lit: !!s.lit,
+        fuel: Math.round(s.fuel === undefined ? FIRE_LIFE : s.fuel),
+        dist: (function () { var dx = s.x - player.pos.x, dz = s.z - player.pos.z; return +Math.hypot(dx, dz).toFixed(1); })(),
+        rec: s.rec ? { fuel: s.rec.fuel, lit: s.rec.lit } : null
+      });
+    }
+    return out;
+  },
+  structInfo: function () {
+    return structures.map(function (s) {
+      var o = { type: s.type, x: +s.x.toFixed(1), z: +s.z.toFixed(1) };
+      if (s.type === 'campfire') { o.fuel = Math.round(s.fuel === undefined ? FIRE_LIFE : s.fuel); o.lit = !!s.lit; }
+      if (s.type === 'chest') o.items = s.items || {};
+      return o;
+    });
+  },
+  /* ❄️ 떨림 상태 + 말풍선 강제 표시(스크린샷·검수용) */
+  shiverInfo: function () {
+    var sp = player.chillSp;
+    return {
+      level: +SHIVER.lvl.toFixed(2), amp: +SHIVER.amp.toFixed(2), shiver: player.shiver,
+      bubbleExists: !!sp, bubbleVisible: !!(sp && sp.visible),
+      bubbleY: sp ? sp.position.y : null, bubbleScale: sp ? [+sp.scale.x.toFixed(2), +sp.scale.y.toFixed(2)] : null,
+      bubbleT: +SHIVER.bubbleT.toFixed(2), bubbleLeft: +SHIVER.bubbleLeft.toFixed(2),
+      breathFx: (function () { var n = 0; for (var i = 0; i < fx.length; i++) if (fx[i].breath) n++; return n; })(),
+      tundraW: +tundraW(player.pos.x, player.pos.z).toFixed(2), warmN: warmSetCount()
+    };
+  },
+  chill: function (txt) { chillBubble(txt || '덜덜덜…'); return this.shiverInfo(); },
+  /* 🔥 모닥불 데모 — 'out' 이면 꺼진 불, 'lit' 이면 타는 불을 앞에 놓는다 */
+  fireDemo: function (mode) {
+    for (var i = structures.length - 1; i >= 0; i--) {
+      if (structures[i].type === 'campfire') removeStructure(structures[i]);
+    }
+    var fx0 = Math.sin(player.facing) * 2.1, fz0 = Math.cos(player.facing) * 2.1;
+    var st = placeStructure('campfire', player.pos.x + fx0, player.pos.z + fz0, 0);
+    if (mode === 'out') {
+      st.fuel = 0; setFireLit(st, false);
+    } else {
+      st.fuel = 248; setFireLit(st, true);
+    }
+    return { lit: !!st.lit, fuel: Math.round(st.fuel), ctx: computeContext().type + ' / ' + computeContext().label, x: +st.x.toFixed(1), z: +st.z.toFixed(1) };
   },
   flyOver: function () {
     // 날면서 강·바다·절벽 위를 지나도 높이가 지형보다 위인지 확인
