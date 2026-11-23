@@ -104,9 +104,9 @@
     display:flex;flex-wrap:wrap;gap:4px;max-width:calc(100% - 100px);pointer-events:auto;
   }
   .chip{
-    display:flex;align-items:center;gap:3px;height:22px;padding:0 7px 0 5px;
+    display:flex;align-items:center;gap:3px;height:24px;padding:0 8px 0 6px;
     border-radius:8px;background:rgba(255,248,232,.86);border:1px solid rgba(120,96,60,.16);
-    font-size:10.5px;font-weight:700;color:#3c4a3f;box-shadow:0 2px 6px rgba(20,40,30,.14);
+    font-size:11px;font-weight:700;color:#3c4a3f;box-shadow:0 2px 6px rgba(20,40,30,.14);
     cursor:pointer;transition:transform .1s;
   }
   .chip:active{transform:scale(.95)}
@@ -120,7 +120,7 @@
     display:flex;flex-direction:column;align-items:center;gap:5px;width:100%;pointer-events:none;
   }
   .toast{
-    padding:5px 12px;border-radius:11px;font-size:11.5px;font-weight:800;color:#3a2c18;
+    padding:6px 13px;border-radius:11px;font-size:12px;font-weight:800;color:#3a2c18;
     background:rgba(255,246,225,.94);border:1px solid rgba(180,140,80,.35);
     box-shadow:0 6px 16px rgba(30,50,40,.18);animation:toastIn .28s ease both;
     white-space:nowrap;
@@ -871,6 +871,7 @@
   .actbtn{border:2px solid rgba(232,190,116,.82);
     background:radial-gradient(circle at 40% 30%,#3C424A,#242A31 62%,#151A1F);
     color:#F7E3BC;text-shadow:0 1px 2px rgba(0,0,0,.5);
+    font-size:13.5px;
     box-shadow:0 10px 26px rgba(0,0,0,.55), inset 0 -3px 10px rgba(0,0,0,.45)}
   .actbtn:active{background:radial-gradient(circle at 40% 30%,#4C4434,#2B241B 62%,#1A1612)}
   .actbtn.dim{filter:none;opacity:.8;color:#D3C9B4}
@@ -1022,9 +1023,9 @@
   .slotCell{position:relative;aspect-ratio:1/1;min-height:44px;border-radius:9px;
     border:1px solid rgba(224,177,90,.18);background:rgba(255,255,255,.045);color:#F1E8D5;
     display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:inherit;padding:0}
-  .slotCell .sic{font-size:18px;line-height:1}
-  .slotCell b{position:absolute;right:3px;bottom:2px;font-size:9px;font-weight:900;color:#F5E9CE;
-    text-shadow:0 1px 2px rgba(0,0,0,.75)}
+  .slotCell .sic{font-size:20px;line-height:1}
+  .slotCell b{position:absolute;right:5px;bottom:3px;font-size:10.5px;font-weight:900;color:#FFF3D6;
+    text-shadow:0 1px 3px rgba(0,0,0,.85)}
   .slotCell.empty{background:rgba(255,255,255,.02);border-style:dashed;border-color:rgba(255,255,255,.08);cursor:default}
   .slotCell.empty .sic{color:#4A5158;font-size:13px}
   .slotCell.sel{border-color:#F0CC84;box-shadow:0 0 0 2px rgba(240,204,132,.32);background:rgba(224,177,90,.16)}
@@ -1085,6 +1086,66 @@
   .petActs .petFeed:disabled{background:#3A4046;color:#7E878F;border-color:rgba(255,255,255,.08)}
   .petActs .petRide{background:rgba(120,170,210,.16);border-color:rgba(150,190,215,.36);color:#D9E9F5}
   .petActs .petClear{color:#E0B4AA;border-color:rgba(214,120,100,.3)}
+
+  /* =====================================================================
+     v2.3d.2 · 제작/설치/상자 패널 시인성
+     장분한 설명은 title 툰툴으로 보내고, 큰 아이콘 + 짧은 이름 + 재료 뱃지로 한 화면에 많이 들어오게
+     ===================================================================== */
+  .sheet{background:linear-gradient(180deg,rgba(26,30,36,.995),rgba(17,21,26,.998));border-top-color:rgba(232,190,116,.45)}
+  .sheetHead{padding:11px 14px 8px}
+  .sheetHead h3{font-size:15px;color:#F8F2E3}
+  .sheetHead .sub{font-size:9.5px;color:#A6B0B5}
+  .sheetBody{padding:9px 12px 12px}
+  .sheetBody .rec{padding:6px 8px;gap:8px;border-radius:11px;margin-bottom:5px;
+    background:rgba(255,255,255,.055);border:1px solid rgba(224,177,90,.17)}
+  .sheetBody .rec.done{opacity:.55}
+  .sheetBody .rec .ic{width:44px;height:44px;font-size:23px;border-radius:11px;
+    background:linear-gradient(180deg,rgba(66,57,41,.92),rgba(38,32,23,.94));border:1px solid rgba(224,177,90,.22)}
+  .rec .txt{flex:1;min-width:0}
+  .rec .nmrow{display:flex;align-items:center;gap:4px;min-width:0}
+  .rec .nmrow b{display:block;flex:0 1 auto;min-width:0;font-size:13px;font-weight:900;color:#F8F2E3;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.01em}
+  .rec .tg{font-style:normal;flex:0 0 auto;font-size:8px;font-weight:900;border-radius:5px;padding:1px 4px;
+    letter-spacing:0;margin-left:0}
+  .rec .tg.own{color:#F2D69C;background:rgba(224,177,90,.18)}
+  .rec .tg.worn{color:#C6E0F4;background:rgba(120,170,210,.22)}
+  .rec .tg.lock{color:#E8C58F;background:rgba(224,177,90,.12)}
+  .rec .tg.unlock{color:#C3F0AE;background:rgba(120,200,100,.22)}
+  .rec .cost{display:flex;flex-wrap:wrap;gap:3px;margin-top:3px}
+  .rec .cost span{font-size:9.5px;font-weight:800;color:#D6DEE2;background:rgba(255,255,255,.08);
+    border-radius:5px;padding:1px 5px;line-height:1.55;white-space:nowrap;flex:0 0 auto}
+  .rec .cost span b{color:#F8EEDA;font-weight:900;opacity:1;display:inline}
+  .rec .cost span.lack{color:#FFC0B0;background:rgba(160,50,38,.3)}
+  .rec .cost span.lack b{color:#FFD9CF}
+  .rec .cost span.lockmsg{color:#E3C592;background:rgba(224,177,90,.12)}
+  .rec .cost span.short{color:#9FB0B8;background:none;padding:0;font-weight:700}
+  .sheetBody .rec button{height:31px;padding:0 12px;font-size:11px;border-radius:9px}
+  .sheetBody .rec button:disabled{background:rgba(255,255,255,.1);color:#A9B3B9}
+  @media (max-width:440px){
+    .rec .nmrow b{font-size:13px}
+    .rec .cost span{font-size:10px}
+  }
+  .sheetNote.tight{margin:6px 0 8px;padding:0 1px;font-size:9.5px;line-height:1.45;color:#A7B1B6}
+  .sheetNote.group{margin:10px 0 5px;padding:3px 8px;border-radius:7px;background:rgba(224,177,90,.1);
+    color:#EADFC8;font-size:10px;font-weight:800}
+  .sheetNote.tight b{color:#F3E9D3}
+  .nearOk{color:#B7E8A2;font-weight:900}
+  .farTag{color:#F0B08A;font-weight:900}
+  .gridHead{margin:2px 0 5px}
+  .gridHead b{font-size:12px;color:#F7F0DF}
+  .gridHead em{color:#98A2A7}
+  .chestNameRow{margin:0 0 6px}
+  /* 넓은 화면 — 목록을 2열로 펼쳐 한 화면에 더 많이 */
+  .recList{display:flex;flex-direction:column}
+  @media (min-width:900px){
+    .sheetHead,.sheetBody{max-width:940px}
+    .recList{display:grid;grid-template-columns:1fr 1fr;gap:6px;align-items:start}
+    .recList .rec{margin-bottom:0}
+    .recList .sheetNote{grid-column:1 / -1;margin:2px 0 2px}
+    .slotGrid,.slotGrid.dense{grid-template-columns:repeat(10,minmax(0,1fr))}
+    .slotCell .sic{font-size:24px}
+    .slotCell b{font-size:11px}
+  }
 </style>
 </head>
 <body>
@@ -12051,34 +12112,47 @@ function recipeRow(r) {
   var el = document.createElement('div');
   el.className = 'rec' + (unlocked ? '' : ' locked') + (benchOk ? '' : ' blocked') +
     ((equipped || held) ? ' done' : '');
+  el.title = r.name + ' — ' + (r.desc || '');
+  // 태그 — 아이콘·이름 옆에 짧게
+  var tags = '';
+  if (own > 0) tags += '<em class="tg own">' + own + '</em>';
+  if (equipped || held) tags += '<em class="tg worn">' + (equipped ? '착용' : '장착') + '</em>';
+  if (!unlocked) tags += '<em class="tg lock">🔒</em>';
+  else if (r.unlock && own === 0) tags += '<em class="tg unlock">해금</em>';
+  // 필요 재료 뱃지 — 아이콘 + 보유/필요
   var costHtml = '';
-  for (var k in r.cost) {
-    var have = S.inv[k] || 0;
-    var cnm = ITEMS[k] ? ITEMS[k].name : k;
-    var csrc = ITEM_SOURCE[k] ? ' · ' + ITEM_SOURCE[k] : '';
-    costHtml += '<span class="' + (have < r.cost[k] ? 'lack' : '') + '" title="' + cnm + ' ' + have + '/' + r.cost[k] + (csrc ? ' · 획득: ' + ITEM_SOURCE[k] : '') + '">' +
-      (ITEMS[k] ? ITEMS[k].icon : '') + ' ' + cnm + ' <b>' + have + '/' + r.cost[k] + '</b></span>';
+  if (unlocked) {
+    for (var k in r.cost) {
+      var have = S.inv[k] || 0;
+      var cnm = ITEMS[k] ? ITEMS[k].name : k;
+      var csrc = ITEM_SOURCE[k] ? ' · 획득: ' + ITEM_SOURCE[k] : '';
+      costHtml += '<span class="' + (have < r.cost[k] ? 'lack' : '') + '" title="' + cnm + ' ' + have + '/' + r.cost[k] + csrc + '">' +
+        (ITEMS[k] ? ITEMS[k].icon : '') + ' <b>' + have + '</b>/' + r.cost[k] + '</span>';
+    }
+    if (!benchOk) costHtml += '<span class="lack" title="' + stationNeedLabel(r) + ' 앞에서 만들 수 있어요">🏭 ' + stationNeedLabel(r) + '</span>';
+  } else {
+    costHtml = '<span class="lockmsg" title="' + unlockItemName(r) + '을 한 번 얻으면 열려요">🔒 ' + unlockItemName(r) + ' 획득 시 해금</span>';
   }
-  var tags = '<span class="own' + (own > 0 ? '' : ' zero') + '">보유중 ' + own + '개</span>';
-  if (!unlocked) tags += '<span class="lockreq">🔒 ' + unlockItemName(r) + ' 획득 시 해금</span>';
-  else if (r.unlock && own === 0) tags += '<span class="unlock">🔓 해금됨!</span>';
-  if (equipped) tags += '<span class="worn">착용 중</span>';
-  else if (held) tags += '<span class="worn">장착 중</span>';
 
   var btnLabel = '제작', btnOff = false;
   if (!unlocked) { btnLabel = '잠금'; btnOff = true; }
-  else if (!benchOk) { btnLabel = stationNeedLabel(r); btnOff = true; }
-  else if (!canCraft(r)) { btnOff = true; if (!bagCanAdd(r.out || r.id, r.qty || 1)) btnLabel = '가방 칸 가득'; }
-  // 해금 전에도 목록에 이름·재료를 그대로 보여준다 (???? 로 숨기지 않음)
-  var lockHint = unlocked ? '' :
-    '<small style="color:#b4652f;font-weight:800">🔒 아직 잠김 — ' + josaEul(unlockItemName(r)) + ' 한 번 얻으면 바로 만들 수 있어요</small>';
+  else if (!benchOk) { btnOff = true; }
+  else if (!canCraft(r)) {
+    btnOff = true;
+    if (!bagCanAdd(r.out || r.id, r.qty || 1)) btnLabel = '칸 가득';
+    else if (!costAllOk(r)) btnLabel = '재료 부족';
+  }
   el.innerHTML = '<div class="ic">' + r.icon + '</div>' +
-    '<div class="txt"><b>' + r.name + '</b>' + tags +
-    '<small>' + r.desc + '</small>' + lockHint +
+    '<div class="txt"><div class="nmrow"><b>' + r.name + '</b>' + tags + '</div>' +
     '<div class="cost">' + costHtml + '</div></div>' +
     '<button' + (btnOff ? ' disabled' : '') + '>' + btnLabel + '</button>';
   el.querySelector('button').addEventListener('click', function () { if (!btnOff) craft(r.id); });
   return el;
+}
+/* 재료가 개수만 모자라는지 (버튼 라벨용) */
+function costAllOk(r) {
+  for (var k in r.cost) { if ((S.inv[k] || 0) < r.cost[k]) return false; }
+  return true;
 }
 
 /* ---------------- 가방 시트 ---------------- */
@@ -12348,7 +12422,7 @@ function renderChest() {
   // ① 내 가방
   var h1 = document.createElement('div');
   h1.className = 'gridHead';
-  h1.innerHTML = '<b>🎒 내 가방</b><span>' + bagUsed() + ' / ' + bagSlots() + '칸</span><em>칸을 누르면 넣을 수 있어요</em>';
+  h1.innerHTML = '<b>🎒 내 가방</b><span>' + bagUsed() + ' / ' + bagSlots() + '칸</span><em>칸 탭 → 넣기</em>';
   sheetBody.appendChild(h1);
   chestGrid(sheetBody, S.inv, bagSlots(), 1, st);
   chestMoveBar(sheetBody, 1, st);
@@ -12357,14 +12431,14 @@ function renderChest() {
   var h2 = document.createElement('div');
   h2.className = 'gridHead';
   h2.style.marginTop = '11px';
-  h2.innerHTML = '<b>📦 ' + escHtml(chestName(st)) + ' 안</b><span>' + used + ' / ' + cap + '칸</span><em>칸을 누르면 꺼낼 수 있어요</em>';
+  h2.innerHTML = '<b>📦 ' + escHtml(chestName(st)) + ' 안</b><span>' + used + ' / ' + cap + '칸</span><em>칸 탭 → 꺼내기</em>';
   sheetBody.appendChild(h2);
   chestGrid(sheetBody, st.items || {}, cap, -1, st);
   chestMoveBar(sheetBody, -1, st);
 
   var note = document.createElement('div');
-  note.className = 'sheetNote';
-  note.textContent = '상자 내용물과 이름은 자동으로 저장돼요. 「상자 회수(포장)」를 누르면 내용물을 담은 채 가방으로 들어가고, 「🏕 설치」 맨 위에서 다른 자리에 그대로 다시 놓을 수 있어요.';
+  note.className = 'sheetNote tight';
+  note.textContent = '이름·내용물 자동 저장 · 「상자 회수(포장)」로 이름째 옮겨요';
   sheetBody.appendChild(note);
 }
 
@@ -12489,8 +12563,8 @@ function renderFire() {
   }
 
   var note = document.createElement('div');
-  note.className = 'sheetNote';
-  note.textContent = '모닥불마다 따로 굽기 때문에 여러 곳에 불을 피워 두면 동시에 굽어요. 불이 다 타서 꺼지면 굽기가 잠시 멈추고, 다시 불을 지피면 이어서 구워져요. 다 구워진 음식은 여기서 꺼내 가방에 넣어요.';
+  note.className = 'sheetNote tight';
+  note.textContent = '올려두고 자리를 떠도 구워져요 · 불이 꺼지면 잠시 멈춤';
   sheetBody.appendChild(note);
 }
 
@@ -12620,8 +12694,8 @@ function renderPet() {
     })(list[j]);
   }
   var note = document.createElement('div');
-  note.className = 'sheetNote';
-  note.textContent = '이름을 지어준 공룡만 나를 따라와요. 이름이 없는 공룡은 그 자리에 얌전히 머물고, 타기·내리기는 둘 다 돼요. 야생 공룡에게 다친 공룡은 체력바가 줄고, 먹이를 주면 회복해요(쓰러지면 먹이로 일으켜 주세요).';
+  note.className = 'sheetNote tight';
+  note.textContent = '이름 지은 공룡만 따라와요 · 이름 없는 공룡은 제자리 · 먹이로 체력 회복';
   sheetBody.appendChild(note);
 }
 
@@ -12853,24 +12927,16 @@ function renderSheet() {
     }
     sheetBody.appendChild(tabs);
 
-    // 지금 앞에 있는 시설을 알려 준다
+    // 지금 앞에 있는 시설을 알려 준다 — 한 줄로 짧게
     var _nearSt = nearestStationId(3.4);
     var _head = document.createElement('div');
-    _head.className = 'sheetNote';
-    _head.style.margin = '0 0 8px';
-    if (craftTab === 'basic') {
-      _head.innerHTML = '🧰 <b>기초</b> — 혼자서도 바로 만드는 도구·시설물. 여기서 <b>건조대 · 베틀 · 염색대 · 의상 작업대 · 대장간</b>을 지으면 제작 거점이 늘어나요.';
-    } else if (craftTab === 'clothes') {
-      _head.innerHTML = '🧥 <b>의상</b> — 옷·신발·배낭·방한·솜옷. <b>의상 작업대</b> 앞에서 만들고, 초반에는 <b>간이 작업대(🪚)</b>로도 같은 레시피를 만들 수 있어요.' +
-        (_bench ? '<br><small>🪚 간이 작업대 범위 안 — 지금 바로 제작 가능</small>' : '');
-    } else if (craftTab === 'weapon') {
-      _head.innerHTML = '⚒️ <b>무기·대장간</b> — 뼈·발톱·철 무기를 벼려요. <b>대장간</b> 또는 초반 <b>간이 작업대(🪚)</b> 앞에서.' +
-        '<br><small>돌칼·돌창·나무 활처럼 첫날 쓰는 도구는 「기초」에서 바로 만들 수 있어요.</small>';
-    } else {
-      _head.innerHTML = '🎨 <b>가공·염색</b> — 🪵 건조대(생가죽→무두질 가죽) · 🧵 베틀(목화솜→옷감·솜) · 🎨 염색대(꽃잎→꽃 염료).' +
-        '<br><small>옷감(섬유+갈대)과 라벤더 염료는 예전처럼 간이 작업대에서도 만들 수 있어요.</small>';
-    }
-    if (_nearSt) _head.innerHTML += '<br><small style="color:#2f6b46;font-weight:900">지금 앞: ' + (STATIONS[_nearSt.type] ? STATIONS[_nearSt.type].icon + ' ' + STATIONS[_nearSt.type].name : _nearSt.type) + '</small>';
+    _head.className = 'sheetNote tight';
+    _head.innerHTML = (craftTab === 'basic' ? '🧰 <b>기초</b> · 시설 없이 바로'
+      : craftTab === 'clothes' ? '🧥 <b>의상</b> · 의상 작업대 / 간이 작업대'
+        : craftTab === 'weapon' ? '⚒️ <b>무기·대장</b> · 대장간 / 간이 작업대'
+          : '🎨 <b>가공·염색</b> · 건조대 · 베틀 · 염색대') +
+      (_bench ? ' <span class="nearOk">🪚 작업대 OK</span>' : '') +
+      (_nearSt ? ' <span class="nearOk">지금 앞: ' + (STATIONS[_nearSt.type] ? STATIONS[_nearSt.type].icon + ' ' + STATIONS[_nearSt.type].name : _nearSt.type) + '</span>' : '');
     sheetBody.appendChild(_head);
 
     if (craftTab === 'process' && nearStationId('dyeVat', 3.4)) {
@@ -12883,6 +12949,8 @@ function renderSheet() {
     }
 
     var warmHdr = false, lastStation = null;
+    var listEl = document.createElement('div');
+    listEl.className = 'recList';
     for (var i = 0; i < RECIPES.length; i++) {
       var rec = RECIPES[i];
       if (rec.tab !== craftTab) continue;
@@ -12891,27 +12959,24 @@ function renderSheet() {
         var sd = STATIONS[rec.station];
         if (sd) {
           var hdr = document.createElement('div');
-          hdr.className = 'sheetNote';
-          hdr.style.margin = '10px 0 7px';
-          hdr.style.background = 'rgba(255,241,214,.65)';
-          hdr.innerHTML = sd.icon + ' <b>' + sd.name + '</b> · ' + sd.desc + (nearStationId(rec.station, 7.5) ? ' <small style="color:#2f6b46;font-weight:900">· 지금 앞에 있어요</small>' : ' <small style="color:#a05a2c;font-weight:900">· 시설 필요</small>');
-          sheetBody.appendChild(hdr);
+          hdr.className = 'sheetNote tight group';
+          hdr.innerHTML = sd.icon + ' <b>' + sd.name + '</b>' + (nearStationId(rec.station, 7.5) ? ' <span class="nearOk">앞에 있음</span>' : ' <span class="farTag">시설 필요</span>');
+          listEl.appendChild(hdr);
         }
       }
       if (rec.warmSet && !warmHdr) {
         warmHdr = true;
         var wh = document.createElement('div');
-        wh.className = 'sheetNote';
-        wh.style.margin = '0 0 8px';
-        wh.innerHTML = '🧥 <b>방한 풀세트</b> · 방한 모자 + 방한 털옷 + 방한 털부츠 <b>3종을 모두 입으면</b> 툰드라 냉기에 완전 면역(HP 감소 0)' +
-          '<br><small>1종 -25% · 2종 -55% 완화 · 지금 ' + warmSetCount() + '/3 착용 · 솜 가죽옷도 몸통 방한으로 세트에 들어요</small>';
-        sheetBody.appendChild(wh);
+        wh.className = 'sheetNote tight group';
+        wh.innerHTML = '🧥 <b>방한 풀세트</b> <span class="nearOk">' + warmSetCount() + '/3</span> — 3종 모두 입으면 냉기 면역';
+        listEl.appendChild(wh);
       }
-      sheetBody.appendChild(recipeRow(rec));
+      listEl.appendChild(recipeRow(rec));
     }
+    sheetBody.appendChild(listEl);
     var note = document.createElement('div');
-    note.className = 'sheetNote';
-    note.textContent = '각 카드의 「보유중 N개」는 지금 가방에 있는 개수예요. 시설을 짓고 그 앞(7.5m)에 서면 해당 레시피가 열려요 — 시설 바로 앞(3.4m)에서는 오른쪽 큰 버튼이 그 시설의 전용 레시피로 바뀝니다. 공룡 전리품·새 재료를 처음 얻으면 잠겨 있던 레시피가 🔓 해금돼요. 가방은 ' + bagUsed() + '/' + bagSlots() + '칸 · 종류당 ' + STACK_MAX + '개.';
+    note.className = 'sheetNote tight';
+    note.textContent = '시설 앞(7.5m)에서 만들 수 있어요 · 새 재료를 얻으면 🔓 해금 · 가방 ' + bagUsed() + '/' + bagSlots() + '칸';
     sheetBody.appendChild(note);
   } else if (sheetMode === 'book') {
     var stats = document.createElement('div');
@@ -12964,6 +13029,15 @@ function renderSheet() {
     }
   } else if (sheetMode === 'build') {
     var keys = ['campfire', 'cabin', 'workbench', 'dryingRack', 'loom', 'dyeVat', 'tailorBench', 'smithBench', 'chest', 'woodBox', 'metalBox', 'premiumBox', 'leatherRug', 'leatherCanopy', 'hatchNest', 'chair', 'table', 'planter'];
+    /* 한 줄 짧은 설명 — 긴 설명은 title 툴팁으로 */
+    var STRUCT_SHORT = {
+      campfire: '요리 · 휴식', cabin: '내 집 · 휴식', workbench: '기초 제작',
+      dryingRack: '생가죽 → 무두질', loom: '목화솜 → 옷감', dyeVat: '옷·지붕 염색',
+      tailorBench: '옷·신발·배낭', smithBench: '칼·창·활',
+      chest: '보관함', woodBox: '보관함', metalBox: '보관함', premiumBox: '보관함',
+      leatherRug: '바닥 러그', leatherCanopy: '천막 지붕', hatchNest: '익룡 알 품기',
+      chair: '의자 소품', table: '테이블 소품', planter: '화분 소품'
+    };
     var STRUCT_DESC = {
       campfire: '불꽃·요리·휴식 · 5분마다 장작 필요',
       cabin: '문이 있는 내 집 · 안에서 휴식',
@@ -13008,22 +13082,29 @@ function renderSheet() {
         })(S.packed[pk]);
       }
     }
+    var listEl2 = document.createElement('div');
+    listEl2.className = 'recList';
     for (var j = 0; j < keys.length; j++) {
       (function (key) {
         var def = STRUCT_DEF[key];
         var cnt = S.made[key] || 0;
         var el = document.createElement('div');
         el.className = 'rec' + (cnt ? '' : ' done');
-        el.innerHTML = '<div class="ic">' + def.icon + '</div><div class="txt"><b>' + def.name + ' x' + cnt + '</b>' +
-          '<small>' + (STRUCT_DESC[key] || '') + '</small></div>' +
+        el.title = def.name + ' — ' + (STRUCT_DESC[key] || '');
+        var badges = def.slots ? '<em class="tg own">' + def.slots + '칸</em>' : '';
+        badges += cnt ? '<em class="tg own">×' + cnt + '</em>' : '<em class="tg lock">없음</em>';
+        el.innerHTML = '<div class="ic">' + def.icon + '</div>' +
+          '<div class="txt"><div class="nmrow"><b>' + def.name + '</b>' + badges + '</div>' +
+          '<div class="cost"><span class="short">' + (STRUCT_SHORT[key] || '') + '</span></div></div>' +
           '<button' + (cnt ? '' : ' disabled') + '>놓기</button>';
         el.querySelector('button').addEventListener('click', function () { if (cnt) startPlacing(key); });
-        sheetBody.appendChild(el);
+        listEl2.appendChild(el);
       })(keys[j]);
     }
+    sheetBody.appendChild(listEl2);
     var n2 = document.createElement('div');
-    n2.className = 'sheetNote';
-    n2.textContent = '제작 메뉴에서 먼저 만들어 주세요. 설치한 모닥불·오두막 주변은 육식공룡이 들어오지 않는 안전지대가 돼요. 모닥불은 5분간 타고 꺼지면 「불 지피기」로 다시 피워요. 설치한 구조물 가까이에서 오른쪽 「🗑 철거」를 누르면 재료 일부를 돌려받고 없앨 수 있어요.';
+    n2.className = 'sheetNote tight';
+    n2.textContent = '제작창에서 먼저 만들어요 · 모닥불·오두막 주변은 안전지대 · 앞에서 🗑 철거로 재료 절반 회수';
     sheetBody.appendChild(n2);
   } else if (sheetMode === 'set') {
     var box = document.createElement('div');
