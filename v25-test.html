@@ -18221,6 +18221,13 @@ window.__game = {
   walkDemo: function (v) { WALK_DEMO = !!v; player.walk = v ? 1 : 0; return WALK_DEMO; },
   errors: ERR,
   started: function () { return started; },
+  /* v2.5 검수용 — 멀티 상태·가방 칸 읽기 */
+  netInfo: function () {
+    var names = [];
+    for (var id in NET.peers) names.push({ id: id, nick: NET.peers[id].nick, x: +NET.peers[id].x.toFixed(1), z: +NET.peers[id].z.toFixed(1), av: !!NET.peers[id].av, bub: !!(NET.peers[id].av && NET.peers[id].av.bub) });
+    return { on: NET.on, code: NET.code, st: NET.st, bc: !!NET.bc, mq: !!NET.mq, topic: NET.topic, me: { nick: NET.nick, x: +player.pos.x.toFixed(1), z: +player.pos.z.toFixed(1) }, peers: names, rs: Object.keys(NET.rs).length, log: Array.prototype.map.call((document.getElementById('mpLog') || { children: [] }).children, function (d) { return d.textContent; }) };
+  },
+  bagInfo: function () { return { base: BAG_SLOTS, bonus: bagSlotBonus(), cap: bagSlots(), used: bagUsed(), stack: STACK_MAX, pack: S.equip.backpack || '' }; },
   eat: eatOrInfo,
   setZoom: function (v) { camZoom = v; },
   fps: function () { return Math.round(fpsVal); },
