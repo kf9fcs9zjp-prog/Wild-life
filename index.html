@@ -284,6 +284,47 @@
   }
   .hint.on{opacity:1}
 
+  /* ================= 🛠 무기·도구 퀵슬롯 (오른쪽 가장자리) ================= */
+  .qslot{
+    position:absolute;right:9px;bottom:calc(env(safe-area-inset-bottom) + 172px);
+    display:flex;flex-direction:column-reverse;align-items:flex-end;gap:5px;
+    pointer-events:auto;z-index:4;
+  }
+  .qslot.two{
+    display:grid;grid-template-columns:repeat(2, 39px);justify-items:end;gap:5px;
+  }
+  .qbtn.more{
+    width:0;height:0;opacity:0;overflow:hidden;border:0;box-shadow:none;padding:0;
+  }
+  /* 도구가 9개를 넘으면 넘치는 수를 작은 배지 버튼으로 보여준다 */
+  .qslot.many .qbtn.more{
+    width:39px;height:21px;border-radius:11px;opacity:1;overflow:visible;
+    border:1px solid rgba(255,255,255,.40);background:rgba(34,54,45,.55);
+    color:#fff6e4;font-size:8.5px;font-weight:900;box-shadow:0 3px 8px rgba(12,32,24,.24);
+  }
+  .qbtn{
+    position:relative;width:39px;height:39px;padding:0;border-radius:50%;flex:0 0 auto;
+    border:2px solid rgba(255,255,255,.42);
+    background:radial-gradient(circle at 38% 32%,rgba(255,250,236,.94),rgba(230,216,184,.88));
+    color:#4a3f28;font-family:inherit;font-size:17px;line-height:1;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;
+    box-shadow:0 4px 12px rgba(12,32,24,.26), inset 0 -2px 4px rgba(120,100,60,.16);
+    transition:transform .1s ease, box-shadow .18s ease, background .18s ease;
+  }
+  .qbtn:active{transform:scale(.9)}
+  .qbtn.on{
+    border-color:#ffe08a;
+    background:radial-gradient(circle at 38% 30%,#fff6d4,#f2c669 64%,#d99b2d);
+    box-shadow:0 0 0 3px rgba(255,214,110,.40), 0 6px 16px rgba(120,70,10,.34);
+  }
+  .qbtn .qk{
+    position:absolute;left:50%;bottom:-4px;transform:translateX(-50%);
+    min-width:12px;height:12px;padding:0 3px;border-radius:7px;
+    background:rgba(46,64,52,.86);color:#fff6e4;
+    font-size:7px;font-weight:900;line-height:12px;text-align:center;letter-spacing:.02em;
+    box-shadow:0 1px 3px rgba(0,0,0,.28);white-space:nowrap;
+  }
+
   /* ================= YouTube 미니 플레이어 ================= */
   #ytCard{
     position:fixed;z-index:63;top:calc(env(safe-area-inset-top) + 58px);right:9px;
@@ -666,8 +707,16 @@
     .menu{max-width:420px;width:100%;margin:0 auto}
     .startSaveLine{margin-top:12px}
   }
+  @media (max-height:700px){
+    .qslot{bottom:calc(env(safe-area-inset-bottom) + 164px);gap:4px}
+    .qbtn{width:35px;height:35px;font-size:15px}
+    .qslot.many .qbtn.more{width:35px;height:18px}
+  }
   @media (max-height:560px){
     .stick{width:96px;height:96px}
+    .qslot{bottom:calc(env(safe-area-inset-bottom) + 150px)}
+    .qbtn{width:30px;height:30px;font-size:13px}
+    .qslot.many .qbtn.more{width:30px;height:18px;font-size:8px}
     .stick .knob{width:42px;height:42px;margin:-21px 0 0 -21px}
     .actbtn{width:68px;height:68px;font-size:11.5px}
     .mbtn{height:28px;min-width:56px;font-size:9.5px}
@@ -786,6 +835,8 @@
     <button class="actbtn dim" id="btnAct"><div class="ring" id="actRing"></div><span id="actLabel">채집</span></button>
   </div>
 
+  <div class="qslot" id="qslot" role="toolbar" aria-label="무기·도구 퀵슬롯"></div>
+
   <div class="hint" id="hint"></div>
   <div id="dmgFlash"></div>
 </div>
@@ -832,7 +883,7 @@
       </div>
       <div class="startSaveLine" id="startSaveLine"><span>저장 없음 · 새로 시작해요</span></div>
     </div>
-    <div class="startFoot" id="startFoot">WILD LIFE · v2.3 &nbsp;|&nbsp; 왼쪽 조이스틱으로 걷고 오른쪽 버튼으로 채집·공격</div>
+    <div class="startFoot" id="startFoot">WILD LIFE · v2.3b &nbsp;|&nbsp; 왼쪽 조이스틱으로 걷고 오른쪽 버튼으로 채집·공격</div>
   </div>
 
   <div class="slotPanel" id="slotPanel">
@@ -980,6 +1031,7 @@ function defaultState() {
       cookedBerry: 0, bread: 0, herb: 0, mushroom: 0, iron: 0,
       hideThin: 0, hideTough: 0, hideThick: 0, hideBeast: 0, hideGiant: 0, fang: 0,
       axe: 0, spear: 0, stoneKnife: 0, boneKnife: 0, boneSpear: 0, bow: 0, ironBow: 0,
+      stoneSickle: 0, stonePick: 0,
       hideVest: 0, thickArmor: 0, beastCoat: 0, fineDress: 0,
       furHat: 0, furCoat: 0, furBoots: 0,
       leatherBoots: 0, raptorBoots: 0, leatherPack: 0, raptorPack: 0
@@ -1325,6 +1377,8 @@ var WEAPONS = {
   stoneKnife: { name: '돌칼', icon: '🔪', kind: 'knife', atk: 18, desc: '가로로 넓게 베는 칼' },
   boneKnife: { name: '맹수 뼈칼', icon: '⚔️', kind: 'knife', atk: 34, desc: '송곳니를 세운 뼈칼 · 가로 베기' },
   axe: { name: '돌도끼', icon: '🪓', kind: 'axe', atk: 14, desc: '나무 채집 2배 · 내려찍기' },
+  stoneSickle: { name: '돌낫', icon: '🌾', kind: 'sickle', atk: 12, desc: '풀·덤불·갈대·밀 채집 2배 · 낮게 쓸기' },
+  stonePick: { name: '돌곡괭이', icon: '⛏', kind: 'pick', atk: 13, desc: '바위·철광석·얼음 채집 2배 · 내려찍기' },
   spear: { name: '돌창', icon: '🔱', kind: 'spear', atk: 26, desc: '앞으로 빠르게 찌르기' },
   boneSpear: { name: '맹수 뼈창', icon: '🗡️', kind: 'spear', atk: 40, desc: '송곳니를 박은 창 · 강한 찌르기' },
   bow: { name: '나무 활', icon: '🏹', kind: 'bow', atk: 9, arrow: 30, desc: '화살 30 · 시위 당겨 쏘기' },
@@ -1351,7 +1405,7 @@ var ITEM_ORDER = [
   'herb', 'mushroom', 'iron', 'hideThin', 'hideTough', 'hideThick', 'hideBeast', 'hideGiant', 'fang', 'trikeClaw',
   'cactusFruit', 'frostHerb', 'ice', 'bamboo', 'lavender', 'dye', 'banana', 'pineapple',
   'mammothFur', 'spinoSail', 'tyrantLeather', 'tyrantFang', 'pteroEgg', 'feather',
-  'stoneKnife', 'axe', 'spear', 'boneKnife', 'boneSpear', 'bow', 'ironBow', 'bambooSpear', 'tyrantSpear', 'trikeKnife', 'trikeSpear',
+  'stoneKnife', 'axe', 'stoneSickle', 'stonePick', 'spear', 'boneKnife', 'boneSpear', 'bow', 'ironBow', 'bambooSpear', 'tyrantSpear', 'trikeKnife', 'trikeSpear',
   'hideVest', 'thickArmor', 'beastCoat', 'fineDress', 'dyedDress', 'sailCloak', 'furHat', 'furCoat', 'tyrantArmor',
   'leatherBoots', 'raptorBoots', 'furBoots', 'leatherPack', 'raptorPack'
 ];
@@ -1366,6 +1420,8 @@ var ITEM_ORDER = [
 var RECIPES = [
   { id: 'stoneKnife', tab: 'basic', out: 'stoneKnife', qty: 1, name: '돌칼', icon: '🔪', desc: '가로로 넓게 베는 칼 · 공격 18', cost: { stone: 3, stick: 1, fiber: 1 } },
   { id: 'axe', tab: 'basic', out: 'axe', qty: 1, name: '돌도끼', icon: '🪓', desc: '나무 채집 2배 · 내려찍기 · 공격 14', cost: { stone: 3, stick: 2, fiber: 2 } },
+  { id: 'stoneSickle', tab: 'basic', out: 'stoneSickle', qty: 1, name: '돌낫', icon: '🌾', desc: '풀·덤불·갈대·밀 채집 2배 · 공격 12', cost: { stone: 2, stick: 1, fiber: 2 } },
+  { id: 'stonePick', tab: 'basic', out: 'stonePick', qty: 1, name: '돌곡괭이', icon: '⛏', desc: '바위·철광석·얼음 채집 2배 · 공격 13', cost: { stone: 3, stick: 2, fiber: 1 } },
   { id: 'spear', tab: 'basic', out: 'spear', qty: 1, name: '돌창', icon: '🔱', desc: '앞으로 빠르게 찌르기 · 공격 26', cost: { stone: 4, stick: 3, fiber: 2 } },
   { id: 'bow', tab: 'basic', out: 'bow', qty: 1, name: '나무 활', icon: '🏹', desc: '화살로 원거리 사격 · 화살 30', cost: { stick: 3, fiber: 3 } },
   { id: 'campfire', tab: 'basic', made: true, name: '모닥불', icon: '🔥', desc: '설치 후 근처에서 요리·휴식', cost: { stone: 8, wood: 4 } },
@@ -1462,7 +1518,7 @@ function syncTools() {
   return S.tools;
 }
 function bestWeaponId() {
-  var order = ['tyrantSpear', 'trikeSpear', 'boneSpear', 'bambooSpear', 'trikeKnife', 'boneKnife', 'spear', 'stoneKnife', 'axe', 'ironBow', 'bow'];
+  var order = ['tyrantSpear', 'trikeSpear', 'boneSpear', 'bambooSpear', 'trikeKnife', 'boneKnife', 'spear', 'stoneKnife', 'axe', 'stoneSickle', 'stonePick', 'ironBow', 'bow'];
   for (var i = 0; i < order.length; i++) if ((S.inv[order[i]] || 0) > 0) return order[i];
   return '';
 }
@@ -1478,6 +1534,23 @@ function weaponKind() {
 function bowEquipped() {
   var w = equippedWeapon();
   return (w && WEAPONS[w].kind === 'bow') ? w : '';
+}
+
+/* ---------------- 채집 도구 궁합 ----------------
+   채집 대상마다 잘 맞는 도구가 따로 있다.
+     나무·전나무·대나무 → 🪓 도끼 · 풀·덤불·갈대·밀·약초·꽃 → 🌾 낫 · 바위·철광석·얼음 → ⛏ 곡괭이
+   맞는 도구를 들고 캐면 채집량이 2배가 되고, 대상 hp 도 2씩 줄어 두 배로 빨리 캔다.
+   맞지 않는 도구·맨손으로도 캘 수는 있다 (보너스만 없다). */
+var GATHER_TOOL = {
+  tree: 'axe', pine: 'axe', bamboo: 'axe',
+  bush: 'sickle', dryBush: 'sickle', herb: 'sickle', frostHerb: 'sickle',
+  reed: 'sickle', wheat: 'sickle', fern: 'sickle', lavender: 'sickle',
+  rock: 'pick', ore: 'pick', ice: 'pick'
+};
+function gatherToolFor(kind) { return GATHER_TOOL[kind] || ''; }
+function gatherBoostFor(kind) {
+  var need = GATHER_TOOL[kind];
+  return (need && weaponKind() === need) ? 2 : 1;
 }
 
 /* 장비 스탯 계산 */
@@ -3745,6 +3818,45 @@ function makePlayer() {
   armR.add(knifeG);
   knifeG.visible = false;
 
+  // 돌낫 — 휘어진 낫날을 세운 풀베기 도구
+  var sickleG = new THREE.Group();
+  var scHandle = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.036, 0.54, 5), MAT.woodTool);
+  scHandle.position.y = -0.16;
+  sickleG.add(scHandle);
+  var scBlade = new THREE.Mesh(new THREE.TorusGeometry(0.25, 0.022, 4, 10, Math.PI * 0.9), MAT.stoneTool);
+  scBlade.position.set(0.07, 0.10, 0);
+  scBlade.rotation.z = -0.45;
+  sickleG.add(scBlade);
+  var scBand = new THREE.Mesh(new THREE.CylinderGeometry(0.042, 0.042, 0.09, 5), MAT.boot);
+  scBand.position.y = 0.05;
+  sickleG.add(scBand);
+  sickleG.position.set(0, -0.44, 0.08);
+  sickleG.rotation.x = -0.18;
+  armR.add(sickleG);
+  sickleG.visible = false;
+
+  // 돌곡괭이 — T자로 뻗은 곡괭이 머리
+  var pickG = new THREE.Group();
+  var pkHandle = new THREE.Mesh(new THREE.CylinderGeometry(0.030, 0.034, 0.80, 5), MAT.woodTool);
+  pkHandle.position.y = -0.30;
+  pickG.add(pkHandle);
+  var pkHead = new THREE.Mesh(new THREE.BoxGeometry(0.40, 0.072, 0.072), MAT.stoneTool);
+  pkHead.position.y = 0.11;
+  pickG.add(pkHead);
+  for (var pks = -1; pks <= 1; pks += 2) {
+    var pkTip = new THREE.Mesh(new THREE.ConeGeometry(0.048, 0.17, 4), MAT.stoneTool);
+    pkTip.position.set(pks * 0.235, 0.11, 0);
+    pkTip.rotation.z = pks * -Math.PI / 2;
+    pickG.add(pkTip);
+  }
+  var pkBand = new THREE.Mesh(new THREE.CylinderGeometry(0.040, 0.040, 0.10, 5), MAT.boot);
+  pkBand.position.y = 0.04;
+  pickG.add(pkBand);
+  pickG.position.set(0, -0.46, 0.08);
+  pickG.rotation.x = -0.25;
+  armR.add(pickG);
+  pickG.visible = false;
+
   // 맹수 뼈칼 — 송곳니를 세운 뼈칼
   var boneKnifeG = new THREE.Group();
   var bkHandle = new THREE.Mesh(new THREE.CylinderGeometry(0.040, 0.046, 0.22, 6), MAT.fur);
@@ -3840,7 +3952,7 @@ function makePlayer() {
   flattenGroup(torso, [armL, armR, head], MAT.prop, true);
   flattenGroup(head, null, MAT.prop, true);
   flattenGroup(armL, null, MAT.prop, true);
-  flattenGroup(armR, [axeG, spearG, boneSpearG, knifeG, boneKnifeG], MAT.prop, true);
+  flattenGroup(armR, [axeG, spearG, boneSpearG, knifeG, boneKnifeG, sickleG, pickG], MAT.prop, true);
   flattenGroup(armL, [bowG, ironBowG], MAT.prop, true);
   flattenGroup(axeG, null, MAT.prop, true);
   flattenGroup(spearG, null, MAT.prop, true);
@@ -3848,6 +3960,8 @@ function makePlayer() {
   flattenGroup(boneSpearG, null, MAT.prop, true);
   flattenGroup(knifeG, null, MAT.prop, true);
   flattenGroup(boneKnifeG, null, MAT.prop, true);
+  flattenGroup(sickleG, null, MAT.prop, true);
+  flattenGroup(pickG, null, MAT.prop, true);
   flattenGroup(ironBowG, null, MAT.prop, true);
   flattenGroup(legL, null, MAT.prop, true);
   flattenGroup(legR, null, MAT.prop, true);
@@ -3859,6 +3973,7 @@ function makePlayer() {
   player.axe = axeG; player.spear = spearG; player.hat = hatG; player.bow = bowG;
   player.boneSpear = boneSpearG; player.ironBow = ironBowG;
   player.knife = knifeG; player.boneKnife = boneKnifeG;
+  player.sickle = sickleG; player.pick = pickG;
   player.armorSets = buildArmorSets(torso);
   player.hatSets = buildHatSets(head);
   player.bootSets = buildBootSets(legL, legR);
@@ -3876,6 +3991,9 @@ function refreshTool() {
   if (player.boneKnife) player.boneKnife.visible = w === 'boneKnife' || w === 'trikeKnife';
   if (player.bow) player.bow.visible = w === 'bow';
   if (player.ironBow) player.ironBow.visible = w === 'ironBow';
+  if (player.sickle) player.sickle.visible = w === 'stoneSickle';
+  if (player.pick) player.pick.visible = w === 'stonePick';
+  if (typeof renderQuickSlots === 'function') renderQuickSlots();
   updateOutfit();
 }
 
@@ -9074,6 +9192,73 @@ function addItem(k, n) {
   if (add < n) bagFullNotice();
   return add;
 }
+/* ---------------- 🛠 무기·도구 퀵슬롯 --------------
+   가방을 열지 않고 오른쪽 가장자리 작은 원형 버튼 한 번으로
+   맨손 / 돌도끼 / 돌낫 / 돌곡괭이 / 돌칼 / 창 / 활 … 을 바로 바꿔 든다.
+   지금 든 도구는 금빛 테두리(.on)로 표시된다. */
+var qslotEl = $id('qslot');
+/* 위로 쌓이는 순서 — 아래(메인 버튼 가까운 쪽)부터 도끼·곡괭이·낫·칼·창·활 */
+var QS_ORDER = ['axe', 'stonePick', 'stoneSickle', 'stoneKnife', 'boneKnife', 'trikeKnife',
+  'spear', 'bambooSpear', 'boneSpear', 'trikeSpear', 'tyrantSpear', 'bow', 'ironBow'];
+var QS_KIND_TAG = { axe: '베기', pick: '캐기', sickle: '풀베기' };
+
+function quickSlotItems() {
+  var out = [], i;
+  for (i = 0; i < QS_ORDER.length; i++) if ((S.inv[QS_ORDER[i]] || 0) > 0) out.push(QS_ORDER[i]);
+  return out;
+}
+
+function equipQuick(id) {
+  audioInit();
+  if (id && (S.inv[id] || 0) <= 0) return;
+  if (id === equippedWeapon()) id = '';          // 같은 걸 다시 누르면 내려놓는다
+  S.equip.weapon = id || '';
+  refreshTool();                                  // 손 3D 모델·퀵슬롯 강조 갱신
+  chipsDirty = true;
+  if (!id) { toast('맨손으로 바꿨어요'); return; }
+  sfx('pick');
+  var w = WEAPONS[id];
+  var tag = w.kind === 'axe' ? '🪓 나무 2배' : (w.kind === 'sickle' ? '🌾 풀·덤불 2배' :
+    (w.kind === 'pick' ? '⛏ 바위·광석 2배' : (w.kind === 'bow' ? '🏹 원거리 사격' : '⚔ 근접 무기')));
+  toast(w.icon + ' ' + w.name + ' 장착 · ' + tag);
+}
+
+function renderQuickSlots() {
+  if (!qslotEl) return;
+  var items = quickSlotItems();
+  var cur = equippedWeapon();
+  var frag = document.createDocumentFragment();
+  function mk(id) {
+    var b = document.createElement('button');
+    b.className = 'qbtn' + (cur === id ? ' on' : '');
+    b.type = 'button';
+    var w = id ? WEAPONS[id] : null;
+    var icon = id ? (ITEMS[id] ? ITEMS[id].icon : '🔪') : '✊';
+    var name = id ? w.name : '맨손';
+    b.innerHTML = '<span>' + icon + '</span>' + (id && QS_KIND_TAG[w.kind] ? '<i class="qk">' + QS_KIND_TAG[w.kind] + '</i>' : '');
+    b.setAttribute('aria-label', name + (id ? ' 장착' : ' 내려놓기'));
+    b.title = name;
+    b.addEventListener('click', function (e) { e.preventDefault(); equipQuick(id); });
+    return b;
+  }
+  frag.appendChild(mk(''));                       // 맨손 — 맨 아래(메인 버튼과 가장 가까움)
+  var shown = items.length > 9 ? items.slice(0, 9) : items;
+  for (var i = 0; i < shown.length; i++) frag.appendChild(mk(shown[i]));
+  qslotEl.innerHTML = '';
+  qslotEl.appendChild(frag);
+  if (items.length > shown.length) {              // 넘치는 도구는 가방에서
+    var more = document.createElement('button');
+    more.className = 'qbtn more';
+    more.type = 'button';
+    more.innerHTML = '<span>＋' + (items.length - shown.length) + '</span>';
+    more.setAttribute('aria-label', '나머지 도구 — 가방 열기');
+    more.title = '나머지 도구는 가방에서';
+    more.addEventListener('click', function (e) { e.preventDefault(); openSheet('bag'); });
+    qslotEl.appendChild(more);
+  }
+  qslotEl.classList.toggle('many', items.length > 9);
+}
+
 var chipsDirty = true;
 var chipsOpen = false;
 var CHIP_COLLAPSED = 7;
@@ -9359,33 +9544,37 @@ var NODE_LABEL = {
 function gatherNode(n) {
   var y = terrainH(n.x, n.z);
   var got = [];
+  // 맞는 도구를 들고 있으면 채집량 2배 (b=2) — 아래 수량에 모두 곱한다
+  var b = gatherBoostFor(n.kind);
+  var w, pw;
   if (n.kind === 'tree') {
-    var w = weaponKind() === 'axe' ? 2 : 1;
+    w = 1 * b;
     addItem('wood', w); got.push('통나무 +' + w);
     if (Math.random() < 0.55) { addItem('stick', 1); got.push('나뭇가지 +1'); }
     sfx('hitwood');
     spawnBurst(n.x, y + 2.4, n.z, 0x8a5d3a, 9, 1);
   } else if (n.kind === 'rock') {
-    addItem('stone', 2); got.push('돌 +2');
+    w = 2 * b;
+    addItem('stone', w); got.push('돌 +' + w);
     sfx('hitrock');
     spawnBurst(n.x, y + 0.7, n.z, 0x9aa19a, 9, 1);
   } else if (n.kind === 'ore') {
-    addItem('iron', 1); addItem('stone', 2);
-    got.push('철광석 +1', '돌 +2');
+    addItem('iron', 1 * b); addItem('stone', 2 * b);
+    got.push('철광석 +' + (1 * b), '돌 +' + (2 * b));
     sfx('hitrock');
     spawnBurst(n.x, y + 0.6, n.z, 0x9fb3c4, 10, 1.1);
   } else if (n.kind === 'herb') {
-    addItem('herb', 2); got.push('약초 +2');
+    addItem('herb', 2 * b); got.push('약초 +' + (2 * b));
     sfx('pick');
     spawnBurst(n.x, y + 0.45, n.z, 0x9fd47a, 7, 0.6);
   } else if (n.kind === 'reed') {
-    addItem('fiber', 3); addItem('reed', 2);
-    got.push('섬유 +3', '갈대 +2');
+    addItem('fiber', 3 * b); addItem('reed', 2 * b);
+    got.push('섬유 +' + (3 * b), '갈대 +' + (2 * b));
     if (Math.random() < 0.35) { addItem('stick', 1); got.push('나뭇가지 +1'); }
     sfx('hit');
     spawnBurst(n.x, y + 1.0, n.z, 0xc9b68a, 7, 0.7);
   } else if (n.kind === 'wheat') {
-    addItem('wheat', 2); got.push('밀 +2');
+    addItem('wheat', 2 * b); got.push('밀 +' + (2 * b));
     if (Math.random() < 0.5) { addItem('fiber', 1); got.push('섬유 +1'); }
     sfx('pick');
     spawnBurst(n.x, y + 0.7, n.z, 0xe0cf8a, 7, 0.6);
@@ -9398,37 +9587,37 @@ function gatherNode(n) {
     sfx('pick');
     spawnBurst(n.x, y + 1.4, n.z, 0xd0432f, 7, 0.7);
   } else if (n.kind === 'dryBush') {
-    addItem('stick', 2); addItem('fiber', 1);
-    got.push('나뭇가지 +2', '섬유 +1');
+    addItem('stick', 2 * b); addItem('fiber', 1 * b);
+    got.push('나뭇가지 +' + (2 * b), '섬유 +' + (1 * b));
     sfx('hitwood');
     spawnBurst(n.x, y + 0.6, n.z, 0xa8916a, 7, 0.6);
   } else if (n.kind === 'pine') {
-    var pw = weaponKind() === 'axe' ? 3 : 2;
+    pw = 2 * b;
     addItem('wood', pw); got.push('통나무 +' + pw);
     if (Math.random() < 0.5) { addItem('stick', 1); got.push('나뭇가지 +1'); }
     sfx('hitwood');
     spawnBurst(n.x, y + 2.0, n.z, 0xdfeaf6, 9, 0.9);
   } else if (n.kind === 'frostHerb') {
-    addItem('frostHerb', 2); got.push('서리 약초 +2');
+    addItem('frostHerb', 2 * b); got.push('서리 약초 +' + (2 * b));
     sfx('pick');
     spawnBurst(n.x, y + 0.5, n.z, 0xd8f2ff, 8, 0.6);
   } else if (n.kind === 'ice') {
-    addItem('ice', 2); addItem('stone', 1);
-    got.push('얼음 결정 +2', '돌 +1');
+    addItem('ice', 2 * b); addItem('stone', 1 * b);
+    got.push('얼음 결정 +' + (2 * b), '돌 +' + (1 * b));
     sfx('hitrock');
     spawnBurst(n.x, y + 0.7, n.z, 0xcdeaff, 9, 1.0);
   } else if (n.kind === 'bamboo') {
-    addItem('bamboo', 2); addItem('fiber', 2);
-    got.push('대나무 +2', '섬유 +2');
+    addItem('bamboo', 2 * b); addItem('fiber', 2 * b);
+    got.push('대나무 +' + (2 * b), '섬유 +' + (2 * b));
     sfx('hitwood');
     spawnBurst(n.x, y + 1.8, n.z, 0x8fbf5c, 8, 0.8);
   } else if (n.kind === 'fern') {
-    addItem('fiber', 2); addItem('herb', 1);
-    got.push('섬유 +2', '약초 +1');
+    addItem('fiber', 2 * b); addItem('herb', 1 * b);
+    got.push('섬유 +' + (2 * b), '약초 +' + (1 * b));
     sfx('pick');
     spawnBurst(n.x, y + 0.5, n.z, 0x8dc471, 6, 0.5);
   } else if (n.kind === 'lavender') {
-    addItem('lavender', 2); got.push('라벤더 +2');
+    addItem('lavender', 2 * b); got.push('라벤더 +' + (2 * b));
     sfx('pick');
     spawnBurst(n.x, y + 0.7, n.z, 0x9b7bd0, 7, 0.6);
   } else if (n.kind === 'banana') {
@@ -9457,16 +9646,22 @@ function gatherNode(n) {
       spawnBurst(n.x, y + 0.7, n.z, 0xe8dcc0, 7, 0.6);
     }
   } else {
-    addItem('berry', 2); addItem('fiber', 1);
-    got.push('열매 +2', '섬유 +1');
+    addItem('berry', 2 * b); addItem('fiber', 1 * b);
+    got.push('열매 +' + (2 * b), '섬유 +' + (1 * b));
     sfx('hit');
     spawnBurst(n.x, y + 0.8, n.z, 0xcf4b58, 8, 0.9);
   }
-  n.hp--;
+  // 맞는 도구면 두 배로 빨리 캔다 — 대상 hp 도 2씩 깎임
+  n.hp -= (b > 1 ? 2 : 1);
   n.shake = 0.4;
-  player.swing = 0.35; player.swingKind = 'axe';
+  var wkNow = weaponKind();
+  player.swing = 0.35; player.swingKind = (wkNow === 'bow' ? 'axe' : wkNow);
   if (n.kind !== 'nest') sfx('pick');
   if (n.kind !== 'nest') toast(got.join(' · '), 'good');
+  if (b > 1) {
+    var tw = equippedWeapon();
+    hint('🔨 +도구 보너스! ' + ITEMS[tw].icon + ' ' + ITEMS[tw].name + ' — 채집량 2배 · 두 배로 빨라요', 1900);
+  }
   chipsDirty = true;
   if (n.hp <= 0) {
     n.dead = true;
@@ -9661,6 +9856,7 @@ function swingFx(kind) {
   var py = groundY(player.pos.x, player.pos.z) + 1.05;
   if (kind === 'knife' || kind === 'boneKnife' || kind === 'stoneKnife') spawnSlashArc(px, py, pz, player.facing, 'knife');
   else if (kind === 'spear') spawnSlashArc(px, py - 0.05, pz, player.facing, 'spear');
+  else if (kind === 'sickle') spawnSlashArc(px, py - 0.28, pz, player.facing, 'knife');
 }
 
 function attackDino(d) {
@@ -9764,7 +9960,7 @@ function shootArrow(target) {
   mesh.rotation.y = aim;
   mesh.castShadow = false;
   scene.add(mesh);
-  ARROWS.push({ mesh: mesh, vx: dx / flight, vy: vy, vz: dz / flight, life: 0, max: 2.6, trav: 0, range: ARROW_RANGE, dmg: arrowAtk() });
+  ARROWS.push({ mesh: mesh, vx: dx / flight, vy: vy, vz: dz / flight, life: 0, max: 2.6, trav: 0, range: ARROW_RANGE, dmg: arrowAtk(), ox: ox, oz: oz });
   if (ARROWS.length > 8) { var old = ARROWS.shift(); scene.remove(old.mesh); }
   sfx('bow');
 }
@@ -9773,6 +9969,13 @@ function shootArrow(target) {
 var FAR_SHOT = 22;
 /* 화살 최대 사정거리 — 시야 안 중거리(19m)까지만 날아가고 사라진다 */
 var ARROW_RANGE = 19;
+/* 🏹 거리 비례 데미지 — 근·중거리(0~9m) 100%, 9~19m 는 선형 감쇠해 끝 사거리에서 57% */
+var BOW_NEAR = 9, BOW_FAR = ARROW_RANGE, BOW_FAR_SCALE = 0.57;
+function bowRangeScale(dist) {
+  if (!(dist > BOW_NEAR)) return 1;
+  if (dist >= BOW_FAR) return BOW_FAR_SCALE;
+  return 1 - (dist - BOW_NEAR) / (BOW_FAR - BOW_NEAR) * (1 - BOW_FAR_SCALE);
+}
 
 function pokeDino(d, dist) {
   if (dist > FAR_SHOT) {
@@ -9785,17 +9988,21 @@ function pokeDino(d, dist) {
   wakeDino(d);
 }
 
-function hitDinoByArrow(d, dmg, p) {
-  var dist = Math.sqrt((d.x - player.pos.x) * (d.x - player.pos.x) + (d.z - player.pos.z) * (d.z - player.pos.z));
-  d.hp -= dmg;
+function hitDinoByArrow(d, dmg, p, arrow) {
+  // 발사 지점 → 명중 지점 수평 거리로 데미지 배율을 정한다 (근거리 100% · 원거리 57%까지)
+  var dist = arrow ? Math.hypot(p.x - arrow.ox, p.z - arrow.oz) : Math.hypot(d.x - player.pos.x, d.z - player.pos.z);
+  var scale = bowRangeScale(dist);
+  var real = Math.max(1, Math.round(dmg * scale));
+  d.hp -= real;
   d.hurt = 0.32;
   // 짧은 경직 — 맞은 직후 굳어서 한 발 더 쏘며 거리를 벌 수 있다(카이팅)
   d.stagger = Math.max(d.stagger || 0, d.kind === 'brachio' ? 0.28 : 0.45);
   spawnBurst(p.x, p.y, p.z, 0xd8583c, 7, 0.9);
   sfx('hit');
   pokeDino(d, dist);
+  var rngTag = scale < 0.995 ? ' (원거리 ' + Math.round(scale * 100) + '%)' : ' (근거리) ';
   if (d.hp <= 0) { killDino(d); return; }
-  toast('화살 명중! -' + dmg + ' · ' + Math.max(0, Math.round(d.hp)) + '/' + d.max, undefined);
+  toast('화살 명중!' + rngTag + ' -' + real + ' · ' + Math.max(0, Math.round(d.hp)) + '/' + d.max, undefined);
 }
 
 function updateArrows(dt) {
@@ -9826,7 +10033,7 @@ function updateArrows(dt) {
         var base = terrainH(d.x, d.z);
         var hh = (d.parts.height || 1.4) * (d.scale || 1);
         if (p.y < base - 0.2 || p.y > base + hh + 0.5) continue;
-        hitDinoByArrow(d, a.dmg, p);
+        hitDinoByArrow(d, a.dmg, p, a);
         gone = true; break;
       }
     }
@@ -10260,6 +10467,7 @@ function recipeRow(r) {
 }
 
 /* ---------------- 가방 시트 ---------------- */
+var bagTab = 'all';                        // 전체 / 🍖 음식 / ⚔ 장비
 function bagSlotBox(label, slot, id) {
   var box = document.createElement('div');
   box.className = 'slotBox';
@@ -10278,7 +10486,6 @@ function renderBag() {
   sheetBody.innerHTML = '';
   var used = bagUsed(), cap = bagSlots();
   var pct = Math.min(100, Math.round(used / cap * 100));
-
   var capEl = document.createElement('div');
   capEl.className = 'capbar';
   capEl.innerHTML = '<div class="track"><div class="fill' + (pct > 88 ? ' warn' : '') + '" style="width:' + pct + '%"></div></div>' +
@@ -10293,6 +10500,21 @@ function renderBag() {
     '<div class="stat">배낭 <b>' + (S.equip.backpack && GEAR[S.equip.backpack] ? GEAR[S.equip.backpack].name : '기본') + '</b></div>';
   sheetBody.appendChild(stat);
 
+  // 🍖 음식만 모아보기 / ⚔ 장비만 보기 탭
+  var tabsEl = document.createElement('div');
+  tabsEl.className = 'tabs';
+  var tabDefs = [['all', '전체', '🎒'], ['food', '음식', '🍖'], ['gear', '장비', '⚔']];
+  for (var tb = 0; tb < tabDefs.length; tb++) {
+    (function (d) {
+      var b = document.createElement('button');
+      b.className = 'tab' + (bagTab === d[0] ? ' on' : '');
+      b.innerHTML = '<span>' + d[2] + '</span>' + d[1];
+      b.addEventListener('click', function () { bagTab = d[0]; renderSheet(); });
+      tabsEl.appendChild(b);
+    })(tabDefs[tb]);
+  }
+  sheetBody.appendChild(tabsEl);
+
   var slots = document.createElement('div');
   slots.className = 'slotRow';
   slots.appendChild(bagSlotBox('무기', 'weapon', equippedWeapon()));
@@ -10306,10 +10528,28 @@ function renderBag() {
   var grid = document.createElement('div');
   grid.className = 'bagGrid';
   var any = false;
-  for (var i = 0; i < ITEM_ORDER.length; i++) {
-    var k = ITEM_ORDER[i];
+  var keys = [], i, k;
+  for (i = 0; i < ITEM_ORDER.length; i++) {
+    k = ITEM_ORDER[i];
+    if ((S.inv[k] || 0) <= 0) continue;
+    var kit = ITEMS[k];
+    if (bagTab === 'food' && !kit.food) continue;
+    if (bagTab === 'gear' && !(kit.weapon || kit.gear)) continue;
+    keys.push(k);
+  }
+  // 음식 탭은 회복량(배고픔+체력) 순 — 생고기처럼 체력을 깎는 건 맨 뒤로
+  if (bagTab === 'food') {
+    keys.sort(function (a, b) {
+      function sc(id) {
+        var it = ITEMS[id];
+        return (it.food || 0) + (it.hp || 0) - (it.raw ? 100 : 0);
+      }
+      return sc(b) - sc(a);
+    });
+  }
+  for (i = 0; i < keys.length; i++) {
+    k = keys[i];
     var c = S.inv[k] || 0;
-    if (c <= 0) continue;
     any = true;
     var it = ITEMS[k];
     var on = (S.equip.weapon === k) || (S.equip.hat === k) || (S.equip.armor === k) || (S.equip.boots === k) || (S.equip.backpack === k);
@@ -10335,13 +10575,15 @@ function renderBag() {
   if (!any) {
     var empty = document.createElement('div');
     empty.className = 'sheetNote';
-    empty.textContent = '가방이 비었어요. 덤불·나무·바위에서 재료를 모아 보세요.';
+    empty.textContent = bagTab === 'food' ? '먹을 게 없어요. 덤불에서 열매를 따거나 모닥불에서 고기를 구워요.' :
+      (bagTab === 'gear' ? '장비·무기가 없어요. 제작창에서 돌칼·돌도끼·돌낫을 만들어 보세요.' :
+        '가방이 비었어요. 덤불·나무·바위에서 재료를 모아 보세요.');
     sheetBody.appendChild(empty);
   } else sheetBody.appendChild(grid);
 
   var note = document.createElement('div');
   note.className = 'sheetNote';
-  note.textContent = '음식은 「먹기」로 바로 먹고, 모자·옷·신발·무기·배낭은 「장착」으로 바꿔요. 가방은 칸(슬롯) 방식이라 기본 ' + BAG_SLOTS + '칸 · 한 칸에 ' + STACK_MAX + '개까지 쌓여요(100개 넘으면 칸이 하나 더 필요). 배낭을 장착하면 칸이 늘어나요 (가죽 +6 · 큰 랩터 +12).';
+  note.textContent = '음식은 「먹기」로 바로 먹고, 모자·옷·신발·무기·배낭은 「장착」으로 바꿔요. 위 탭에서 🍖음식만·⚔장비만 골라 볼 수 있어요(음식 탭은 회복량이 큰 순). 가방은 칸(슬롯) 방식이라 기본 ' + BAG_SLOTS + '칸 · 한 칸에 ' + STACK_MAX + '개까지 쌓여요(100개 넘으면 칸이 하나 더 필요). 배낭을 장착하면 칸이 늘어나요 (가죽 +6 · 큰 랩터 +12).';
   sheetBody.appendChild(note);
 }
 
@@ -10573,6 +10815,8 @@ function renderSheet() {
       ['🌾', '밀 · 빵', '초원과 들판의 밀을 2개 모아 모닥불에서 구우면 빵이 돼요.'],
       ['🧶', '옷감 · 예쁜 옷', '섬유와 갈대로 작업대에서 옷감을 짜고, 옷감으로 예쁜 옷을 지어요.'],
       ['🍖', '먹기 버튼', '오른쪽 아래 「먹기」 버튼으로 가장 좋은 음식을 바로 먹어요.'],
+      ['🛠', '도구 퀵슬롯', '화면 오른쪽 작은 원형 버튼으로 가방을 열지 않고 도끼·낫·곡괭이·칼·창·활을 바로 바꿔 들어요. 지금 든 도구는 금빛 테두리로 표시되고, 같은 버튼을 한 번 더 누르면 맨손으로 내려놔요.'],
+      ['🌾', '도구 궁합 2배', '나무·전나무·대나무엔 🪓도끼, 풀·덤불·갈대·밀·약초·꽃엔 🌾낫, 바위·철광석·얼음엔 ⛏곡괭이 — 맞는 도구를 들면 채집량 2배에 대상이 두 배로 빨리 캐져요. 맞지 않은 도구·맨손으로도 캘 수는 있어요.'],
       ['🏜️', '사막', '서남쪽 모래언덕. 선인장 열매와 마른 가지가 나고 카르노타우루스·딜로포사우루스가 살아요.'],
       ['❄️', '툰드라 설원', '서북쪽 설원. 눈 덮인 전나무·서리 약초·얼음 결정이 있고 매머드가 살아요. 방한 풀세트 없이 오래 있으면 체력이 깎여요.'],
       ['🦣', '매머드', '툰드라의 거대한 털북숭이. 잡으면 매머드 털가죽 → 방한 모자·방한 털옷·방한 털부츠 재료.'],
@@ -11456,6 +11700,15 @@ function updatePlayer(dt) {
       player.head.rotation.y = 0;
       player.armL.rotation.x = 0.22 * arc;
       player.armL.rotation.z = 0.0;
+    } else if (wk === 'sickle') {
+      // 낫 — 허리 높이를 낮게 훑어 베는 쓸기
+      player.armR.rotation.x = -0.92;
+      player.armR.rotation.z = 0.95 - 1.9 * sp;
+      player.armR.rotation.y = -0.30 + 0.9 * sp;
+      player.body.rotation.y = 0.78 - 1.62 * sp;
+      player.head.rotation.y = -0.26 + 0.46 * sp;
+      player.armL.rotation.x = -0.30 * arc;
+      player.armL.rotation.z = -0.18 * arc;
     } else if (wk === 'fist') {
       player.armR.rotation.x = -1.05 * arc;
       player.armR.rotation.z = 0;
@@ -13320,6 +13573,12 @@ function beginSession(slot, isNew, nick) {
   if (!FOAM) buildFoamRing();
   if (!RIVER_WATER) buildRiverWater();
   started = true;
+  // 검수용: URL 해시 #tools 로 열면 기본 도구 세트(도끼·낫·곡괭이·칼·창·활)를 쥐여 준다
+  if (/tools/.test(location.hash)) {
+    var _ts = ['axe', 'stoneSickle', 'stonePick', 'stoneKnife', 'spear', 'bow', 'boneKnife'];
+    for (var _ti = 0; _ti < _ts.length; _ti++) addItem(_ts[_ti], 1);
+    S.equip.weapon = 'axe'; refreshTool(); chipsDirty = true;
+  }
   // v2.3 — 활 카이팅·물걸음·떨림 상태 초기화
   player.bowLock = 0; player.aim = null;
   player.stepPh = 0; player.stepN = 0; player.wade = 0;
@@ -14329,6 +14588,100 @@ window.__game = {
       }
     }
     return this.nestInfo();
+  },
+  /* ================= v2.3b 검수 훅 ================= */
+  /* 🛠 퀵슬롯 — 화면 위치·강조·장착 반영 */
+  quickSlot: function () {
+    renderQuickSlots();
+    var out = [];
+    var r = qslotEl ? qslotEl.getBoundingClientRect() : null;
+    if (qslotEl) {
+      var kids = qslotEl.children;
+      for (var i = 0; i < kids.length; i++) {
+        var bb = kids[i].getBoundingClientRect();
+        out.push({
+          label: kids[i].getAttribute('aria-label'), on: kids[i].classList.contains('on'),
+          x: Math.round(bb.left), y: Math.round(bb.top), w: Math.round(bb.width)
+        });
+      }
+    }
+    return {
+      count: out.length, two: qslotEl ? qslotEl.classList.contains('two') : null,
+      box: r ? { x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height) } : null,
+      screen: [window.innerWidth, window.innerHeight],
+      weapon: S.equip.weapon, weaponKind: weaponKind(), buttons: out,
+      hand: { axe: !!(player.axe && player.axe.visible), sickle: !!(player.sickle && player.sickle.visible), pick: !!(player.pick && player.pick.visible), bow: !!(player.bow && player.bow.visible), knife: !!(player.knife && player.knife.visible) }
+    };
+  },
+  quickTap: function (id) { equipQuick(id || ''); return this.quickSlot(); },
+  /* 🌾 도구 궁합 — 맨손 / 맞는 도구 / 틀린 도구로 같은 노드를 실제로 캐 본다 */
+  toolTest: function (kind) {
+    var node = null;
+    for (var i = 0; i < nodes.length; i++) if (nodes[i].kind === kind && !nodes[i].dead) { node = nodes[i]; break; }
+    if (!node) return 'no node';
+    var need = gatherToolFor(kind), right = '', wrong = '', k;
+    for (k in WEAPONS) { if (WEAPONS[k].kind === need && !right) right = k; if (WEAPONS[k].kind !== need && !wrong) wrong = k; }
+    var was = S.equip.weapon;
+    var tries = [{ label: 'fist', w: '' }, { label: 'right', w: right }, { label: 'wrong', w: wrong }];
+    var out = {};
+    for (var t = 0; t < tries.length; t++) {
+      var wk = tries[t].w;
+      if (wk && (S.inv[wk] || 0) < 1) S.inv[wk] = 1;
+      S.equip.weapon = wk; refreshTool();
+      node.dead = false; node.hp = node.max; node.group.visible = true;
+      var before = {}, k2;
+      for (k2 in S.inv) before[k2] = S.inv[k2];
+      var hp0 = node.hp;
+      gatherNode(node);
+      var diff = {};
+      for (k2 in S.inv) if ((S.inv[k2] || 0) !== (before[k2] || 0)) diff[k2] = (S.inv[k2] || 0) - (before[k2] || 0);
+      out[tries[t].label] = { weapon: wk || '맨손', gain: diff, hpLoss: hp0 - node.hp };
+    }
+    node.dead = false; node.hp = node.max; node.group.visible = true;
+    S.equip.weapon = was; refreshTool();
+    return { kind: kind, need: need, boostRight: right ? 2 : 0, result: out };
+  },
+  /* 🏹 활 거리 감쇠 — 실제 shootArrow + updateArrows 로 데미지를 잰다 */
+  bowShot: function (dist) {
+    var d = null, i;
+    for (i = 0; i < dinos.length; i++) if (dinos[i].kind === 'raptor') { d = dinos[i]; break; }
+    if (!d) return 'no raptor';
+    d.dead = false; d.group.visible = true; d.frozen = true;
+    d.x = player.pos.x + Math.sin(player.facing) * dist;
+    d.z = player.pos.z + Math.cos(player.facing) * dist;
+    d.group.position.set(d.x, terrainH(d.x, d.z), d.z);
+    d.max = 400; d.hp = 400;
+    var was = S.equip.weapon;
+    if ((S.inv.bow || 0) < 1) S.inv.bow = 1;
+    S.equip.weapon = 'bow'; refreshTool();
+    player.arrowCd = 0;
+    var a0 = arrowAtk();
+    shootArrow(d);
+    var f = 0;
+    while (ARROWS.length && f < 300) { updateArrows(1 / 60); f++; }
+    var dmg = 400 - d.hp;
+    var scale = bowRangeScale(dist);
+    d.frozen = false;
+    S.equip.weapon = was; refreshTool();
+    return {
+      dist: dist, base: a0, scale: +scale.toFixed(3), expected: Math.max(1, Math.round(a0 * scale)),
+      dmg: dmg, frames: f, arrowsLeft: ARROWS.length,
+      pct: Math.round(scale * 100)
+    };
+  },
+  bowScale: function (d) { return +bowRangeScale(d).toFixed(3); },
+  /* 🍖 가방 음식 탭 검수 */
+  bagView: function (tab) {
+    bagTab = tab || 'all';
+    openSheet('bag');
+    var out = [], cells = sheetBody.querySelectorAll('.bagCell'), i;
+    for (i = 0; i < cells.length; i++) {
+      var nm = cells[i].querySelector('.nm');
+      out.push(nm ? nm.textContent.replace(/\s+/g, ' ').trim() : '?');
+    }
+    var tabs = sheetBody.querySelectorAll('.tabs .tab'), tabTxt = [];
+    for (i = 0; i < tabs.length; i++) tabTxt.push(tabs[i].textContent);
+    return { tab: bagTab, tabs: tabTxt, cells: out, note: (sheetBody.querySelector('.sheetNote') || {}).textContent || '' };
   },
   /* ================= v2.3 검수 훅 ================= */
   /* 🏹 활 카이팅 — 조이스틱을 잡은 채 사격했을 때 0.15초만 멈추고 곧바로 다시 걷는지 */
