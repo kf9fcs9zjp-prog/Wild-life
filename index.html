@@ -10622,6 +10622,7 @@ function wakeDino(d) {
 }
 
 function killDino(d) {
+  if (!d || d.tamed) return;          // 아군이 죽는 일이 없도록 마지막 안전장치
   d.dead = true; d.deadAt = worldT + 50;
   d.group.visible = false;
   var meta = DINO_META[d.kind] || DINO_META.trike;
@@ -10652,6 +10653,7 @@ function swingFx(kind) {
 
 function attackDino(d) {
   if (!d || d.dead) return;
+  if (d.tamed || d.mounted) return;  // 🐾 길들인 공룡·탈것은 공격 대상이 아니다
   if (player.atkCd > 0) return;      // 쿨다운 중에도 이동은 막지 않는다 (무빙 어택)
   player.atkCd = 0.40;
   var dmg = meleeAtk();
@@ -10780,6 +10782,7 @@ function pokeDino(d, dist) {
 }
 
 function hitDinoByArrow(d, dmg, p, arrow) {
+  if (!d || d.dead || d.tamed || d.mounted) return;     // 아군·탈것은 절대 맞히지 않는다
   // 발사 지점 → 명중 지점 수평 거리로 데미지 배율을 정한다 (근거리 100% · 원거리 57%까지)
   var dist = arrow ? Math.hypot(p.x - arrow.ox, p.z - arrow.oz) : Math.hypot(d.x - player.pos.x, d.z - player.pos.z);
   var scale = bowRangeScale(dist);
@@ -10817,7 +10820,8 @@ function updateArrows(dt) {
       }
       for (var j = 0; j < dinos.length; j++) {
         var d = dinos[j];
-        if (d.dead) continue;
+        /* 🐾 길들인 공룡·타고 있는 탈것은 아군 — 화살이 그냥 지나간다 (v2.3c 오폭 수정) */
+        if (d.dead || d.tamed || d.mounted) continue;
         var rad = (d.parts.radius || 0.8) * (d.scale || 1) + 0.40;
         var ex = p.x - d.x, ez = p.z - d.z;
         if (ex * ex + ez * ez > rad * rad) continue;
@@ -14849,7 +14853,7 @@ window.__game = {
     var out = [];
     for (var i = 0; i < dinos.length; i++) {
       var d = dinos[i];
-      if (d.dead || (kind && d.kind !== kind)) continue;
+      if (d.dead || d.tamed || (kind && d.kind !== kind)) continue;
       d.x = player.pos.x + Math.sin(i) * 2.2; d.z = player.pos.z + Math.cos(i) * 2.2;
       d.group.position.set(d.x, terrainH(d.x, d.z), d.z);
       d.group.visible = true; d.hp = 1;
@@ -16149,6 +16153,36 @@ window.__game = {
     var frontAll = true, minLz = 9;
     for (var q = 0; q < out.length; q++) { if (out[q].lz < 0) frontAll = false; if (out[q].lz < minLz) minLz = out[q].lz; }
     return { weapon: wk, kind: kind, frontAll: frontAll, minFront: +minLz.toFixed(2), tip: out };
+  },
+  /* 🐾 아군(길들인 공룡·탈것) 오폭 확인 — 근접·자동조준·화살 모두 통과해야 한다 */
+  friendlyTest: function () {
+    var d = null;
+    for (var i = 0; i < dinos.length; i++) if (dinos[i].kind === 'raptor' && !dinos[i].dead) { d = dinos[i]; break; }
+    if (!d) return 'no raptor';
+    d.tamed = true; d.hp = d.max; d.dead = false; d.group.visible = true; d.frozen = true;
+    d.x = player.pos.x + 1.8; d.z = player.pos.z + 0.15;
+    d.group.position.set(d.x, terrainH(d.x, d.z), d.z);
+    var hp0 = d.hp;
+    var tgtMelee = nearestHostile(3.9);
+    var tgtBow = bowAutoAim();
+    if ((S.inv.stoneKnife || 0) < 1) S.inv.stoneKnife = 1;
+    S.equip.weapon = 'stoneKnife'; refreshTool();
+    player.atkCd = 0;
+    attackDino(d);
+    var afterMelee = d.hp;
+    if ((S.inv.bow || 0) < 1) S.inv.bow = 1;
+    S.equip.weapon = 'bow'; refreshTool();
+    player.arrowCd = 0;
+    shootArrow(d);
+    var f = 0;
+    while (ARROWS.length && f < 240) { updateArrows(1 / 60); f++; }
+    d.frozen = false;
+    return {
+      meleeTargetIsTamed: !!(tgtMelee && tgtMelee.tamed),
+      bowTargetIsTamed: !!(tgtBow && tgtBow.tamed),
+      hp0: hp0, afterMelee: afterMelee, afterArrow: d.hp, dead: !!d.dead,
+      arrowsLeft: ARROWS.length, frames: f
+    };
   },
   /* 🦖 공격 예고 — 경고 표식·분노 링·먼지·말풍선 텍스트 제거 확인 */
   alertTest: function () {
