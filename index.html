@@ -1146,6 +1146,88 @@
     .slotCell .sic{font-size:24px}
     .slotCell b{font-size:11px}
   }
+
+  /* ================= v2.4 · 레시피 카드(간결 + 탭 펼침) ================= */
+  .rec{flex-wrap:wrap;row-gap:0}
+  .rec .txt{flex:1 1 auto}
+  .rec .nmrow{display:flex;align-items:center;gap:5px;min-width:0;flex-wrap:nowrap}
+  .rec .nmrow b{font-size:13px;font-weight:800;letter-spacing:-.02em}
+  /* 핵심 스탯 — 이름 오른쪽에 조용히 붙는 작은 칩 */
+  .rec .statline{display:flex;align-items:center;gap:4px;margin-left:auto;flex:0 0 auto;overflow:hidden}
+  .rec .statline i{font-style:normal;font-size:9.5px;font-weight:700;letter-spacing:0;
+    color:#C9BE9F;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);
+    border-radius:6px;padding:1px 5px;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .rec .nmrow .tg{font-size:8px;padding:1px 4px}
+  /* 접힌 카드에서는 재료·해금 줄을 감춘다 */
+  .rec .recDetail{display:none;flex:0 0 100%;margin-top:0;padding-top:0;border-top:1px dashed transparent}
+  .rec.open{background:rgba(255,255,255,.075);border-color:rgba(224,177,90,.30)}
+  .rec.open .recDetail{display:block;margin-top:7px;padding-top:7px;border-top-color:rgba(255,255,255,.10)}
+  .rec .recDetail .dMats{display:flex;flex-wrap:wrap;gap:4px 8px}
+  /* 재료 — 아주 작고 차분하게. 모자란 것만 은은한 붉은 톤 */
+  .rec .recDetail .m{font-size:9.5px;font-weight:500;color:#8E9AA0;white-space:nowrap;letter-spacing:-.01em}
+  .rec .recDetail .m b{font-weight:700;color:#AEB9BE;font-variant-numeric:tabular-nums}
+  .rec .recDetail .m.lack{color:#C08A7E}
+  .rec .recDetail .m.lack b{color:#D8A093}
+  .rec .recDetail .m.lockmsg{color:#C9AE7C}
+  .rec .recDetail .dReq{display:flex;flex-wrap:wrap;gap:4px 8px;margin-top:4px}
+  .rec .recDetail .lv{font-size:9px;font-weight:600;color:#8E9AA0}
+  .rec .recDetail .lv.lack{color:#C08A7E}
+  .rec .recDetail .ddesc{font-size:9px;font-weight:500;color:#7B858B;letter-spacing:-.01em}
+  .rec.open .ic{border-color:rgba(224,177,90,.42)}
+  @media (max-width:440px){
+    .rec .statline i{font-size:9px;padding:1px 4px}
+    .rec .nmrow b{font-size:12.5px}
+  }
+
+  /* v2.4 · 염료 구슬 — 차분한 자연 염색 톤 */
+  .sw{display:inline-block;width:11px;height:11px;border-radius:50%;flex:0 0 auto;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.22), 0 1px 2px rgba(0,0,0,.35)}
+  .sw.big{width:20px;height:20px}
+
+  /* ================= v2.4 · 미니맵 · 경험치 바 · 육각 메뉴 ================= */
+  #mmWrap{position:absolute;right:8px;top:calc(env(safe-area-inset-top) + 46px);
+    width:86px;padding:3px 3px 2px;border-radius:9px;pointer-events:auto;cursor:pointer;
+    background:rgba(16,20,18,.62);border:1px solid rgba(226,214,182,.30);
+    box-shadow:0 6px 16px rgba(8,16,12,.38);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+  #mmWrap canvas{display:block;width:80px;height:80px;border-radius:6px;background:#2f3a2a}
+  #mmDn{display:flex;align-items:center;gap:3px;margin-top:3px;height:12px}
+  #mmDn i{font-style:normal;font-size:8px;line-height:1;opacity:.85}
+  #mmDn .trk{position:relative;flex:1 1 auto;height:4px;border-radius:3px;overflow:hidden;
+    background:linear-gradient(90deg,#243a5e 0%,#4d6c92 22%,#d9c089 48%,#f0d9a4 62%,#6d6c9a 82%,#1b2340 100%)}
+  #mmDn .trk b{position:absolute;top:-2px;width:3px;height:8px;border-radius:2px;background:#fff8e0;
+    box-shadow:0 0 4px rgba(255,240,190,.9);transform:translateX(-50%)}
+  @media (max-height:620px){ #mmWrap{width:74px} #mmWrap canvas{width:68px;height:68px} }
+  #expBar{position:absolute;left:0;right:0;bottom:0;height:11px;pointer-events:none;
+    background:rgba(18,14,26,.55);box-shadow:inset 0 1px 0 rgba(255,255,255,.10)}
+  #expBar i{position:absolute;left:0;top:0;bottom:0;width:0%;
+    background:linear-gradient(90deg,#5b3494,#8b58c8 60%,#b07fe0);transition:width .3s ease}
+  #expBar b{position:absolute;right:7px;bottom:1px;font-size:8.5px;font-weight:800;letter-spacing:.02em;
+    color:#f0e6ff;text-shadow:0 1px 2px rgba(20,10,40,.85);font-variant-numeric:tabular-nums}
+  /* 육각 방사형 메뉴 */
+  #hexMenu{position:absolute;left:0;top:0;width:0;height:0;pointer-events:none;z-index:8;
+    opacity:0;transition:opacity .16s ease}
+  #hexMenu.on{opacity:1}
+  .hexBtn{position:absolute;left:0;top:0;width:52px;height:58px;margin:-29px 0 0 -26px;
+    background:none;border:0;padding:0;pointer-events:auto;cursor:pointer;
+    font-family:inherit;color:#F2EEE2;transform:translate(var(--x),var(--y)) scale(.7);
+    opacity:0;transition:transform .18s cubic-bezier(.2,1.5,.4,1), opacity .16s ease}
+  #hexMenu.on .hexBtn{transform:translate(var(--x),var(--y)) scale(1);opacity:1}
+  .hexBtn svg{display:block;width:52px;height:58px;
+    filter:drop-shadow(0 4px 8px rgba(0,0,0,.45))}
+  .hexBtn poly{fill:rgba(20,22,24,.90);stroke:rgba(236,232,220,.34);stroke-width:3}
+  .hexBtn.big svg{width:60px;height:67px}
+  .hexBtn.big{margin:-33px 0 0 -30px}
+  .hexBtn.big poly{fill:rgba(26,26,27,.94);stroke:rgba(250,246,232,.66);stroke-width:3.4}
+  .hexBtn .hi{position:absolute;left:0;right:0;top:15px;text-align:center;font-size:19px;line-height:1}
+  .hexBtn.big .hi{top:17px;font-size:23px}
+  .hexBtn .hl{position:absolute;left:-14px;right:-14px;top:42px;text-align:center;font-size:8.5px;
+    font-weight:800;letter-spacing:-.02em;color:#F4EFE2;text-shadow:0 1px 3px rgba(0,0,0,.9);white-space:nowrap}
+  .hexBtn.big .hl{top:50px;font-size:9.5px}
+  .hexBtn:active{filter:brightness(1.25)}
+  .hexBtn.deny poly{stroke:rgba(214,110,90,.55)}
+  #hexName{position:absolute;left:0;top:0;transform:translate(-50%,-50%);padding:3px 9px;border-radius:8px;
+    background:rgba(18,20,22,.88);border:1px solid rgba(236,232,220,.26);color:#F4EFE2;
+    font-size:10px;font-weight:800;white-space:nowrap;pointer-events:none;letter-spacing:-.01em}
 </style>
 </head>
 <body>
@@ -1173,6 +1255,15 @@
     </div>
   </div>
 
+  <!-- 🗺 v2.4 미니맵 (우측 상단 작은 네모) · 탭하면 전체 지도 -->
+  <div id="mmWrap" role="button" aria-label="미니맵 · 눌러서 전체 지도 열기">
+    <canvas id="mmCanvas" width="180" height="180"></canvas>
+    <div id="mmDn"><i id="mmSun">☀️</i><span class="trk"><b id="mmMark"></b></span><i id="mmMoon">🌙</i></div>
+  </div>
+  <!-- 📈 하단 보라색 경험치 바 -->
+  <div id="expBar"><i id="expFill"></i><b id="expLbl">Lv.1 0.0%</b></div>
+  <!-- 🛠 구조물 육각 방사형 메뉴 -->
+  <div id="hexMenu" aria-hidden="true"></div>
   <div class="chips" id="chips"></div>
   <div class="toasts" id="toasts"></div>
   <div id="zonePill" class="home">🏡 주거 구역</div>
@@ -1243,7 +1334,7 @@
       </div>
       <div class="startSaveLine" id="startSaveLine"><span>저장 없음 · 새로 시작해요</span></div>
     </div>
-    <div class="startFoot" id="startFoot">WILD LIFE · v2.3e &nbsp;|&nbsp; 왼쪽 조이스틱으로 걷고 오른쪽 버튼으로 채집·공격</div>
+    <div class="startFoot" id="startFoot">WILD LIFE · v2.4 &nbsp;|&nbsp; 왼쪽 조이스틱으로 걷고 오른쪽 버튼으로 채집·공격</div>
   </div>
 
   <div class="slotPanel" id="slotPanel">
@@ -1320,7 +1411,7 @@ function $id(s) { return document.getElementById(s); }
    single vertex-colored geometry, so one prop costs one draw call instead of
    dozens. Kept objects (animated limbs etc.) are left untouched. */
 var _tmpM = new THREE.Matrix4(), _tmpC = new THREE.Color();
-function flattenGroup(root, keep, mat, cast) {
+function flattenGroup(root, keep, mat, cast, smooth) {
   if (!root || root.isMesh) return null; // nothing to flatten inside a single mesh
   root.updateMatrixWorld(true);
   var inv = new THREE.Matrix4().copy(root.matrixWorld).invert();
@@ -1357,9 +1448,46 @@ function flattenGroup(root, keep, mat, cast) {
     gg.dispose();
   }
   var out = new THREE.BufferGeometry();
-  out.setAttribute('position', new THREE.BufferAttribute(posA, 3));
-  out.setAttribute('color', new THREE.BufferAttribute(colA, 3));
-  out.computeVertexNormals();
+  if (smooth) {
+    // v2.4 — 캐릭터용: 같은 자리의 점을 하나로 붙여 법선을 평균낸다 → 각진 레고 면이 사라진다
+    var map = {}, uPos = [], uCol = [], uNor = [], index = [];
+    var total = posA.length / 3;
+    for (i = 0; i < total; i++) {
+      var px = posA[i * 3], py = posA[i * 3 + 1], pz = posA[i * 3 + 2];
+      var key = Math.round(px * 500) + '_' + Math.round(py * 500) + '_' + Math.round(pz * 500);
+      var id = map[key];
+      if (id === undefined) {
+        id = uPos.length / 3;
+        map[key] = id;
+        uPos.push(px, py, pz);
+        uCol.push(colA[i * 3], colA[i * 3 + 1], colA[i * 3 + 2]);
+        uNor.push(0, 0, 0);
+      }
+      index.push(id);
+    }
+    // 삼각형별 법선을 정점에 누적
+    for (i = 0; i < index.length; i += 3) {
+      var i0 = index[i], i1 = index[i + 1], i2 = index[i + 2];
+      var ax = uPos[i1 * 3] - uPos[i0 * 3], ay = uPos[i1 * 3 + 1] - uPos[i0 * 3 + 1], az = uPos[i1 * 3 + 2] - uPos[i0 * 3 + 2];
+      var bx = uPos[i2 * 3] - uPos[i0 * 3], by = uPos[i2 * 3 + 1] - uPos[i0 * 3 + 1], bz = uPos[i2 * 3 + 2] - uPos[i0 * 3 + 2];
+      var nx = ay * bz - az * by, ny = az * bx - ax * bz, nz = ax * by - ay * bx;
+      uNor[i0 * 3] += nx; uNor[i0 * 3 + 1] += ny; uNor[i0 * 3 + 2] += nz;
+      uNor[i1 * 3] += nx; uNor[i1 * 3 + 1] += ny; uNor[i1 * 3 + 2] += nz;
+      uNor[i2 * 3] += nx; uNor[i2 * 3 + 1] += ny; uNor[i2 * 3 + 2] += nz;
+    }
+    for (i = 0; i < uNor.length; i += 3) {
+      var ln = Math.sqrt(uNor[i] * uNor[i] + uNor[i + 1] * uNor[i + 1] + uNor[i + 2] * uNor[i + 2]) || 1;
+      uNor[i] /= ln; uNor[i + 1] /= ln; uNor[i + 2] /= ln;
+    }
+    out.setAttribute('position', new THREE.BufferAttribute(new Float32Array(uPos), 3));
+    out.setAttribute('color', new THREE.BufferAttribute(new Float32Array(uCol), 3));
+    out.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(uNor), 3));
+    out.setIndex(index);
+  } else {
+    out.setAttribute('position', new THREE.BufferAttribute(posA, 3));
+    out.setAttribute('color', new THREE.BufferAttribute(colA, 3));
+    out.computeVertexNormals();
+  }
   out.computeBoundingSphere();
   var mesh = new THREE.Mesh(out, mat);
   mesh.castShadow = !!cast;
@@ -1396,7 +1524,7 @@ function defaultState() {
       furHat: 0, furCoat: 0, furBoots: 0,
       leatherBoots: 0, raptorBoots: 0, leatherPack: 0, raptorPack: 0,
       /* v2.3c — 목화·무두질 가죽·꽃잎·꽃 염료·솜옷 */
-      cotton: 0, cottonWool: 0, tanThin: 0, tanThick: 0, tanBeast: 0, tanGiant: 0, tanFur: 0,
+      cotton: 0, cottonWool: 0, clothCotton: 0, clothHemp: 0, tanThin: 0, tanThick: 0, tanBeast: 0, tanGiant: 0, tanFur: 0,
       petalRed: 0, petalYellow: 0, petalBlue: 0, petalPurple: 0, petalWhite: 0,
       dyeRed: 0, dyeYellow: 0, dyeBlue: 0, dyePurple: 0, dyeWhite: 0,
       cottonCoat: 0, cottonLeatherCoat: 0, tanCoat: 0
@@ -1416,6 +1544,8 @@ function defaultState() {
     nests: {},
     /* v2.3d — 📦 내용물을 담은 채 회수(포장)한 상자들 */
     packed: [],
+    /* v2.4 — 📈 탐험 레벨 (채집·사냥·제작으로 쌓인다) */
+    lv: 1, exp: 0,
     /* v2.3d — ⚡ 저사양 모드 (그림자 끄기·시야 축소·픽셀비 1.0) */
     lowSpec: false,
     px: 0, pz: 88,
@@ -1451,6 +1581,7 @@ function packState() {
     tamed: S.tamed,
     nests: S.nests,
     packed: S.packed || [],
+    lv: S.lv || 1, exp: Math.round(S.exp || 0),
     lowSpec: !!S.lowSpec,
     world: { dayT: (typeof DAY !== 'undefined') ? DAY.t : 0.36 },
     muted: !!S.muted,
@@ -1471,6 +1602,9 @@ function applyData(d) {
   for (k in def.inv) S.inv[k] = 0;
   if (d.inv) for (k in d.inv) if (typeof d.inv[k] === 'number' && isFinite(d.inv[k])) S.inv[k] = d.inv[k];
   for (k in def.tools) S.tools[k] = !!(d.tools && d.tools[k]);
+  /* v2.4 — 옛 '옷감(cloth)' 은 사라지고 면/삼베 옷감으로 나뉘었다.
+     기존 세이브의 옷감은 거친 삼베 옷감으로 옮겨 손실 없이 호환한다. */
+  if ((S.inv.cloth | 0) > 0) { S.inv.clothHemp = (S.inv.clothHemp | 0) + (S.inv.cloth | 0); S.inv.cloth = 0; }
   // ── 장비 이관(v8): 예전 세이브는 장비를 '착용 플래그'로만 갖고 있었다.
   //    이제 모든 장비는 가방 안의 개수(items)로 존재하므로, 착용 중이던 장비를
   //    인벤에 1개 넣어 주고 도구(무기)도 개수로 옮긴다.
@@ -1498,6 +1632,21 @@ function applyData(d) {
   S.equip.weapon = eqW;
   S.found = {};
   if (d.found && typeof d.found === 'object') { for (k in d.found) if (d.found[k]) S.found[k] = 1; }
+  /* 📈 v2.4 탐험 레벨 — 예전 세이브에는 없으니, 쌓아 온 진행도로 시작 레벨을 정한다
+     (구조물·도감·길들인 공룡·장비). 새 세이브는 Lv.1 부터. */
+  if (typeof d.lv === 'number' && d.lv >= 1) {
+    S.lv = Math.min(60, Math.floor(d.lv));
+    S.exp = Math.max(0, Math.round(Number(d.exp) || 0));
+  } else {
+    var _made = 0, _fk = 0, _gd = 0;
+    if (d.made && typeof d.made === 'object') for (k in d.made) _made += (d.made[k] | 0);
+    for (k in S.found) _fk++;
+    if (d.equip && typeof d.equip === 'object') for (k in d.equip) if (d.equip[k]) _gd++;
+    var _prog = (d.structures ? d.structures.length : 0) * 0.9 + _made * 0.35 + _fk * 0.18 + _gd * 0.5 +
+      (Array.isArray(d.tamed) ? d.tamed.length : 0) * 1.6;
+    S.lv = Math.max(1, Math.min(24, 1 + Math.floor(_prog)));
+    S.exp = 0;
+  }
   // 이미 만들어 둔 장비·도구는 '획득'으로 쳐서 해금 상태를 복원한다
   for (k in S.inv) if (S.inv[k] > 0 && ITEMS[k]) S.found[k] = 1;
   // 불러온 저장의 해금은 이미 본 것으로 처리 (새로 열린 것만 토스트)
@@ -1510,6 +1659,15 @@ function applyData(d) {
   S.nests = (d.nests && typeof d.nests === 'object') ? d.nests : {};
   // v2.3d — 포장해 둔 상자 · 저사양 설정
   S.packed = Array.isArray(d.packed) ? d.packed.slice(0, 40) : [];
+  /* v2.4 — 상자·포장한 상자 속 옛 '옷감'도 삼베 옷감으로 옮긴다 */
+  (function () {
+    function conv(bag) {
+      if (!bag || typeof bag !== 'object') return;
+      if ((bag.cloth | 0) > 0) { bag.clothHemp = (bag.clothHemp | 0) + (bag.cloth | 0); bag.cloth = 0; }
+    }
+    for (var si = 0; si < S.structures.length; si++) conv(S.structures[si] && S.structures[si].items);
+    for (var pi = 0; pi < S.packed.length; pi++) conv(S.packed[pi] && S.packed[pi].items);
+  })();
   S.lowSpec = !!d.lowSpec;
   S.muted = !!d.muted;
   S.seen = true;
@@ -1705,7 +1863,9 @@ var ITEMS = {
   fiber: { name: '섬유', icon: '🧵' },
   reed: { name: '갈대', icon: '🎋' },
   wheat: { name: '밀', icon: '🌾' },
-  cloth: { name: '옷감', icon: '🧶' },
+  cloth: { name: '옷감(옛)', icon: '🧶' },
+  clothCotton: { name: '목화 포근한 천', icon: '🧶' },
+  clothHemp: { name: '거친 천', icon: '🪢' },
   meat: { name: '생고기', icon: '🥩', food: 9, hp: -3, raw: true },
   fineMeat: { name: '고급 고기', icon: '🍖', food: 13, hp: -2, raw: true },
   bulkMeat: { name: '대용량 고기', icon: '🥓', food: 16, hp: -3, raw: true },
@@ -1742,7 +1902,7 @@ var ITEMS = {
   feather: { name: '깃털', icon: '🪶' },
   /* ── v2.3c 목화밭 · 무두질 · 꽃 염료 ── */
   cotton: { name: '목화솜', icon: '☁️' },
-  cottonWool: { name: '솜', icon: '🫧' },
+  cottonWool: { name: '솜', icon: '☁️' },
   tanThin: { name: '무두질 가죽', icon: '🟫' },
   tanThick: { name: '무두질 두꺼운 가죽', icon: '🟤' },
   tanBeast: { name: '무두질 맹수 가죽', icon: '🐻' },
@@ -1763,12 +1923,14 @@ var ITEMS = {
 /* ---------------- 🎨 염색 색 팔레트 (v2.3c) ----------------
    필드 꽃잎으로 만든 꽃 염료 한 개를 쓰면 옷·신발·오두막 지붕을 그 색으로 물들인다.
    hex 는 3D 의상 메시 색, roof 는 오두막 지붕 정점 색에 곱해지는 색이다. */
+/* v2.4 — 사탕 원색 대신 자연 염색(버건디·오커·인디고·더스티 플럼·오트밀) 톤.
+   icon 은 UI 염료 구슬(●)이고 sw 는 그 구슬 색이다. */
 var DYE_COLORS = {
-  red: { name: '빨강', icon: '🔴', item: 'dyeRed', petal: 'petalRed', hex: 0xd2403a, roof: 0xc8534a },
-  yellow: { name: '노랑', icon: '🟡', item: 'dyeYellow', petal: 'petalYellow', hex: 0xe2b93c, roof: 0xd8a92e },
-  blue: { name: '파랑', icon: '🔵', item: 'dyeBlue', petal: 'petalBlue', hex: 0x4076cc, roof: 0x3f6cb0 },
-  purple: { name: '보라', icon: '🟣', item: 'dyePurple', petal: 'petalPurple', hex: 0x8b5cc8, roof: 0x7a51b8 },
-  white: { name: '하양', icon: '⚪', item: 'dyeWhite', petal: 'petalWhite', hex: 0xefeade, roof: 0xe6e1d6 }
+  red: { name: '빨강', icon: '●', sw: '#8c3d36', item: 'dyeRed', petal: 'petalRed', hex: 0x8f4238, roof: 0x9c4a3f },
+  yellow: { name: '노랑', icon: '●', sw: '#b08e46', item: 'dyeYellow', petal: 'petalYellow', hex: 0xb08e46, roof: 0xbb9a4e },
+  blue: { name: '파랑', icon: '●', sw: '#3f5f83', item: 'dyeBlue', petal: 'petalBlue', hex: 0x40607f, roof: 0x47698d },
+  purple: { name: '보라', icon: '●', sw: '#6d5478', item: 'dyePurple', petal: 'petalPurple', hex: 0x6d5478, roof: 0x7a5d86 },
+  white: { name: '하양', icon: '●', sw: '#cfc5ae', item: 'dyeWhite', petal: 'petalWhite', hex: 0xd3cab4, roof: 0xcfc6b0 }
 };
 var DYE_ORDER = ['red', 'yellow', 'blue', 'purple', 'white'];
 /* 라벤더 염료(기존 dye)는 보라로 친다 */
@@ -1819,9 +1981,9 @@ var GEAR = {
 var WEAPONS = {
   stoneKnife: { name: '돌칼', icon: '🔪', kind: 'knife', atk: 18, desc: '가로로 넓게 베는 칼' },
   boneKnife: { name: '맹수 뼈칼', icon: '⚔️', kind: 'knife', atk: 34, desc: '송곳니를 세운 뼈칼 · 가로 베기' },
-  axe: { name: '돌도끼', icon: '🪓', kind: 'axe', atk: 14, desc: '나무 채집 2배 · 내려찍기' },
-  stoneSickle: { name: '돌낫', icon: '🌾', kind: 'sickle', atk: 12, desc: '풀·덤불·갈대·밀 채집 2배 · 낮게 쓸기' },
-  stonePick: { name: '돌곡괭이', icon: '⛏', kind: 'pick', atk: 13, desc: '바위·철광석·얼음 채집 2배 · 내려찍기' },
+  axe: { name: '돌도끼', icon: '🪓', kind: 'axe', atk: 14, desc: '나무 채집 +1 · 내려찍기' },
+  stoneSickle: { name: '돌낫', icon: '🌾', kind: 'sickle', atk: 12, desc: '풀·덤불·갈대·밀 채집 +1 · 낮게 쓸기' },
+  stonePick: { name: '돌곡괭이', icon: '⛏', kind: 'pick', atk: 13, desc: '바위·철광석·얼음 채집 +1 · 내려찍기' },
   spear: { name: '돌창', icon: '🔱', kind: 'spear', atk: 26, desc: '앞으로 빠르게 찌르기' },
   boneSpear: { name: '맹수 뼈창', icon: '🗡️', kind: 'spear', atk: 40, desc: '송곳니를 박은 창 · 강한 찌르기' },
   bow: { name: '나무 활', icon: '🏹', kind: 'bow', atk: 9, arrow: 30, desc: '화살 30 · 시위 당겨 쏘기' },
@@ -1848,7 +2010,7 @@ var ITEM_ORDER = [
   'herb', 'mushroom', 'iron', 'hideThin', 'hideTough', 'hideThick', 'hideBeast', 'hideGiant', 'fang', 'trikeClaw',
   'cactusFruit', 'frostHerb', 'ice', 'bamboo', 'lavender', 'dye', 'banana', 'pineapple',
   'mammothFur', 'spinoSail', 'tyrantLeather', 'tyrantFang', 'pteroEgg', 'feather',
-  'cotton', 'cottonWool', 'tanThin', 'tanThick', 'tanBeast', 'tanGiant', 'tanFur',
+  'cotton', 'cottonWool', 'clothCotton', 'clothHemp', 'tanThin', 'tanThick', 'tanBeast', 'tanGiant', 'tanFur',
   'petalRed', 'petalYellow', 'petalBlue', 'petalPurple', 'petalWhite',
   'dyeRed', 'dyeYellow', 'dyeBlue', 'dyePurple', 'dyeWhite',
   'stoneKnife', 'axe', 'stoneSickle', 'stonePick', 'spear', 'boneKnife', 'boneSpear', 'bow', 'ironBow', 'bambooSpear', 'tyrantSpear', 'trikeKnife', 'trikeSpear',
@@ -1869,9 +2031,9 @@ var RECIPES = [
      기초 — 혼자서도 바로 만드는 도구·시설물 (간이 작업대 없이도 가능)
      ========================================================= */
   { id: 'stoneKnife', tab: 'basic', out: 'stoneKnife', qty: 1, name: '돌칼', icon: '🔪', desc: '가로로 넓게 베는 칼 · 공격 18', cost: { stone: 3, stick: 1, fiber: 1 } },
-  { id: 'axe', tab: 'basic', out: 'axe', qty: 1, name: '돌도끼', icon: '🪓', desc: '나무 채집 2배 · 내려찍기 · 공격 14', cost: { stone: 3, stick: 2, fiber: 2 } },
-  { id: 'stoneSickle', tab: 'basic', out: 'stoneSickle', qty: 1, name: '돌낫', icon: '🌾', desc: '풀·덤불·갈대·밀·목화 채집 2배 · 공격 12', cost: { stone: 2, stick: 1, fiber: 2 } },
-  { id: 'stonePick', tab: 'basic', out: 'stonePick', qty: 1, name: '돌곡괭이', icon: '⛏', desc: '바위·철광석·얼음 채집 2배 · 공격 13', cost: { stone: 3, stick: 2, fiber: 1 } },
+  { id: 'axe', tab: 'basic', out: 'axe', qty: 1, name: '돌도끼', icon: '🪓', desc: '나무 채집 +1 · 내려찍기 · 공격 14', cost: { stone: 3, stick: 2, fiber: 2 } },
+  { id: 'stoneSickle', tab: 'basic', out: 'stoneSickle', qty: 1, name: '돌낫', icon: '🌾', desc: '풀·덤불·갈대·밀·목화 채집 +1 · 공격 12', cost: { stone: 2, stick: 1, fiber: 2 } },
+  { id: 'stonePick', tab: 'basic', out: 'stonePick', qty: 1, name: '돌곡괭이', icon: '⛏', desc: '바위·철광석·얼음 채집 +1 · 공격 13', cost: { stone: 3, stick: 2, fiber: 1 } },
   { id: 'spear', tab: 'basic', out: 'spear', qty: 1, name: '돌창', icon: '🔱', desc: '앞으로 빠르게 찌르기 · 공격 26', cost: { stone: 4, stick: 3, fiber: 2 } },
   { id: 'bow', tab: 'basic', out: 'bow', qty: 1, name: '나무 활', icon: '🏹', desc: '화살로 원거리 사격 · 화살 30', cost: { stick: 3, fiber: 3 } },
   { id: 'campfire', tab: 'basic', made: true, name: '모닥불', icon: '🔥', desc: '설치 후 근처에서 요리·휴식', cost: { stone: 8, wood: 4 } },
@@ -1900,7 +2062,7 @@ var RECIPES = [
   { id: 'hideVest', tab: 'clothes', station: 'tailorBench', out: 'hideVest', qty: 1, name: '얇은 가죽 옷', icon: '🦺', desc: '방어력 +3', cost: { hideThin: 4, fiber: 2 }, unlock: 'hideThin' },
   { id: 'thickArmor', tab: 'clothes', station: 'tailorBench', out: 'thickArmor', qty: 1, name: '두꺼운 가죽 갑옷', icon: '🥼', desc: '얇은 가죽 옷 + 두꺼운 가죽 x3 → 방어 +7', cost: { hideVest: 1, hideThick: 3, fiber: 3 }, unlock: 'hideThick' },
   { id: 'beastCoat', tab: 'clothes', station: 'tailorBench', out: 'beastCoat', qty: 1, name: '맹수 가죽 코트', icon: '🧥', desc: '두꺼운 갑옷 + 맹수 가죽 x3 → 방어 +12', cost: { thickArmor: 1, hideBeast: 3, fang: 2 }, unlock: 'hideBeast' },
-  { id: 'fineDress', tab: 'clothes', station: 'tailorBench', out: 'fineDress', qty: 1, name: '예쁜 옷', icon: '👗', desc: '방어력 +2 · 옷감으로 지은 옷', cost: { cloth: 3, fiber: 2 }, unlock: 'cloth' },
+  { id: 'fineDress', tab: 'clothes', station: 'tailorBench', out: 'fineDress', qty: 1, name: '예쁜 옷', icon: '👗', desc: '방어력 +2 · 옷감으로 지은 옷', cost: { clothHemp: 3, fiber: 2 }, unlock: 'clothHemp' },
   { id: 'dyedDress', tab: 'clothes', station: 'tailorBench', out: 'dyedDress', qty: 1, name: '물들인 드레스', icon: '👘', desc: '예쁜 옷 + 염료 → 방어 +4', cost: { fineDress: 1, dye: 2, fiber: 2 }, unlock: 'dye' },
   { id: 'leatherBoots', tab: 'clothes', station: 'tailorBench', out: 'leatherBoots', qty: 1, name: '가죽 신발', icon: '🥾', desc: '방어 +2 · 이동 +10%', cost: { hideThin: 2, hideTough: 1, fiber: 2 }, unlock: 'hideThin' },
   { id: 'raptorBoots', tab: 'clothes', station: 'tailorBench', out: 'raptorBoots', qty: 1, name: '랩터 부츠', icon: '👢', desc: '가죽 신발 x2 + 질긴 가죽 x2 → 방어 +4 · 이동 +20%', cost: { leatherBoots: 2, hideTough: 2, fiber: 2 }, unlock: 'hideTough' },
@@ -1913,7 +2075,7 @@ var RECIPES = [
   { id: 'sailCloak', tab: 'clothes', station: 'tailorBench', out: 'sailCloak', qty: 1, name: '돛 망토', icon: '🪂', desc: '맹수 코트 + 스피노 등돛 → 방어 +14', cost: { beastCoat: 1, spinoSail: 2, fiber: 3 }, unlock: 'spinoSail' },
   { id: 'tyrantArmor', tab: 'clothes', station: 'tailorBench', out: 'tyrantArmor', qty: 1, name: '폭군 비늘 갑옷', icon: '🛡️', desc: '맹수 코트 + 폭군 가죽 x4 → 방어 +18', cost: { beastCoat: 1, tyrantLeather: 4, fiber: 4 }, unlock: 'tyrantLeather' },
   /* ── ☁️ 목화 · 무두질 가죽으로 짓는 새 의상 ── */
-  { id: 'cottonCoat', tab: 'clothes', station: 'tailorBench', out: 'cottonCoat', qty: 1, name: '솜옷', icon: '🧶', desc: '목화솜 + 옷감 → 방어 +6 · 목화밭에서 솜을 모아 지어요', cost: { cotton: 2, cloth: 2 } },
+  { id: 'cottonCoat', tab: 'clothes', station: 'tailorBench', out: 'cottonCoat', qty: 1, name: '솜옷', icon: '🧶', desc: '목화솜 + 목화 포근한 천 → 방어 +6 · 보온이 좋아요', cost: { cotton: 2, clothCotton: 2 } },
   { id: 'cottonLeatherCoat', tab: 'clothes', station: 'tailorBench', out: 'cottonLeatherCoat', qty: 1, name: '솜 가죽옷', icon: '🦺', desc: '목화솜 + 무두질 가죽 → 방어 +13 · 몸통 방한(세트 1/3)', cost: { cotton: 3, tanThin: 2, fiber: 2 } },
   { id: 'tanCoat', tab: 'clothes', station: 'tailorBench', out: 'tanCoat', qty: 1, name: '무두질 가죽옷', icon: '🧥', desc: '무두질 가죽 x4 + 무두질 맹수 가죽 x2 → 방어 +16', cost: { tanThin: 4, tanBeast: 2, fiber: 2 } },
   { id: 'leatherRug', tab: 'clothes', station: 'tailorBench', made: true, name: '가죽 러그', icon: '🟫', desc: '오두막 바닥에 까는 무두질 가죽 러그(인테리어)', cost: { tanThin: 2, fiber: 2 } },
@@ -1942,9 +2104,10 @@ var RECIPES = [
   { id: 'tanFur', tab: 'process', station: 'dryingRack', out: 'tanFur', qty: 1, name: '무두질 털가죽', icon: '🦣', desc: '매머드 털가죽 + 섬유 → 무두질 털가죽(방한 재료)', cost: { mammothFur: 1, fiber: 2 }, unlock: 'mammothFur' },
 
   /* 🧵 베틀 — 목화솜을 옷감·솜으로 */
-  { id: 'cottonWool', tab: 'process', station: 'loom', out: 'cottonWool', qty: 1, name: '솜', icon: '🫧', desc: '목화솜 x2 → 폭신한 솜(솜옷 재료)', cost: { cotton: 2 } },
-  { id: 'clothLoom', tab: 'process', station: 'loom', out: 'cloth', qty: 2, name: '옷감(베틀)', icon: '🧶', desc: '목화솜 x2 → 옷감 x2', cost: { cotton: 2 } },
-  { id: 'cloth', tab: 'process', station: 'loom', benchCompat: true, out: 'cloth', qty: 1, name: '옷감(섬유)', icon: '🧶', desc: '섬유와 갈대를 엮어 짠 천 · 재료', cost: { fiber: 3, reed: 2 } },
+  { id: 'cottonWool', tab: 'process', station: 'loom', out: 'cottonWool', qty: 1, name: '솜', icon: '☁️', desc: '목화솜 x2 → 폭신한 솜(솜옷 재료)', cost: { cotton: 2 } },
+  /* v2.4 — 두 옷감을 다른 물건으로: 목화솜 → 포근한 면 옷감 / 섬유+갈대 → 거친 삼베 옷감 */
+  { id: 'clothLoom', tab: 'process', station: 'loom', out: 'clothCotton', qty: 2, name: '목화 포근한 천', icon: '🧶', desc: '목화솜 x2 → 목화 포근한 천 x2 · 보온이 좋아 겨울옷에 써요 (추위저항 +5)', cost: { cotton: 2 } },
+  { id: 'cloth', tab: 'process', station: 'loom', out: 'clothHemp', qty: 1, name: '거친 천', icon: '🪢', desc: '섬유와 갈대를 엮어 짠 거친 천 · 기본 의상·가방에 써요', cost: { fiber: 3, reed: 2 } },
 
   /* 🎨 염색대 — 꽃잎으로 꽃 염료 */
   { id: 'dyeRed', tab: 'process', station: 'dyeVat', out: 'dyeRed', qty: 2, name: '빨강 꽃 염료', icon: '🔴', desc: '빨강 꽃잎 x3 + 섬유 → 빨강 염료 x2', cost: { petalRed: 3, fiber: 1 } },
@@ -2047,7 +2210,7 @@ function bowEquipped() {
 /* ---------------- 채집 도구 궁합 ----------------
    채집 대상마다 잘 맞는 도구가 따로 있다.
      나무·전나무·대나무 → 🪓 도끼 · 풀·덤불·갈대·밀·약초·꽃 → 🌾 낫 · 바위·철광석·얼음 → ⛏ 곡괭이
-   맞는 도구를 들고 캐면 채집량이 2배가 되고, 대상 hp 도 2씩 줄어 두 배로 빨리 캔다.
+   맞는 도구를 들고 캐면 채집량이 +1개가 되고, 대상 hp 도 2씩 줄어 두 배로 빨리 캔다.
    맞지 않는 도구·맨손으로도 캘 수는 있다 (보너스만 없다). */
 var GATHER_TOOL = {
   tree: 'axe', pine: 'axe', bamboo: 'axe',
@@ -2243,19 +2406,21 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, MAX_DPR));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFShadowMap;
+/* v2.4 — 부드러운 접지 그림자 */
 if (renderer.outputEncoding !== undefined) renderer.outputEncoding = THREE.LinearEncoding;
 stageEl.appendChild(renderer.domElement);
 
 scene = new THREE.Scene();
-scene.fog = new THREE.Fog(0xa6d3d6, 108, 240);
+// v2.4 — 먼 산이 따뜻하게 뿌옇게 뜨는 야생 안개
+scene.fog = new THREE.Fog(0xbfc6a9, 96, 235);
 camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.5, 700);
 
-hemi = new THREE.HemisphereLight(0xdcf0ff, 0x6f8c4e, 0.40);
+hemi = new THREE.HemisphereLight(0xd6e4ef, 0x5d5a3c, 0.32);
 scene.add(hemi);
-var amb = new THREE.AmbientLight(0xfff0d8, 0.08);
+var amb = new THREE.AmbientLight(0xffe9c8, 0.07);
 scene.add(amb);
 
-sun = new THREE.DirectionalLight(0xfff0cf, 0.78);
+sun = new THREE.DirectionalLight(0xffe6bd, 1.02);
 var SUN_OFF = new THREE.Vector3(48, 74, 30);
 sun.position.copy(SUN_OFF);
 sun.castShadow = true;
@@ -2267,7 +2432,7 @@ sun.shadow.camera.top = 28; sun.shadow.camera.bottom = -28;
 sun.shadow.camera.near = 1; sun.shadow.camera.far = 210;
 sun.shadow.bias = -0.0012;
 sun.shadow.normalBias = 0.035;
-sun.shadow.radius = 1.0;
+sun.shadow.radius = 2.2;
 sun.shadow.camera.updateProjectionMatrix();
 scene.add(sun);
 scene.add(sun.target);
@@ -2583,30 +2748,32 @@ function biomeMix(x, z, h, out) {
   return out;
 }
 
+/* v2.4 — 듀랑고 레퍼런스 톤: 쨍한 연두 대신 흙·올리브·마른 풀이 섞인 매트 야생 팔레트 */
 var TC = {
-  seabed: new THREE.Color(0x2f7168),
-  seabedDeep: new THREE.Color(0x14495a),
-  wetSand: new THREE.Color(0xa89a72),
-  sand: new THREE.Color(0xdbc9a0),
-  sandLight: new THREE.Color(0xe8dcb8),
-  marsh: new THREE.Color(0x7d9a52),
-  meadowA: new THREE.Color(0x6ea350),
-  meadowB: new THREE.Color(0x8dba58),
-  meadowC: new THREE.Color(0x4f8447),
-  mossy: new THREE.Color(0x5d7f42),
-  dryGrass: new THREE.Color(0x9caf5e),
-  hill: new THREE.Color(0x6d8a45),
-  dirt: new THREE.Color(0x977f5c),
-  rock: new THREE.Color(0x8d918a),
-  rockLight: new THREE.Color(0xa8ab9f),
-  riverPebble: new THREE.Color(0x9d977e),
-  riverBed: new THREE.Color(0x5f6d5d),
-  desertSand: new THREE.Color(0xe3c99a),
-  desertDune: new THREE.Color(0xcfae72),
-  snowTint: new THREE.Color(0xdfeaf6),
-  snow: new THREE.Color(0xf3f8ff),
-  snowShade: new THREE.Color(0xc6dbf2),
-  iceGlint: new THREE.Color(0xb9d7ee)
+  seabed: new THREE.Color(0x2c6b62),
+  seabedDeep: new THREE.Color(0x114450),
+  wetSand: new THREE.Color(0x9c8d68),
+  sand: new THREE.Color(0xcdbb92),
+  sandLight: new THREE.Color(0xdcceaa),
+  marsh: new THREE.Color(0x6f8447),
+  meadowA: new THREE.Color(0x6d7a42),
+  meadowB: new THREE.Color(0x889250),
+  meadowC: new THREE.Color(0x4d5c33),
+  mossy: new THREE.Color(0x4a5f33),
+  dryGrass: new THREE.Color(0x9d955f),
+  hill: new THREE.Color(0x6a7341),
+  dirt: new THREE.Color(0x866e4d),
+  dirtDark: new THREE.Color(0x634f35),
+  rock: new THREE.Color(0x7e8277),
+  rockLight: new THREE.Color(0x9a9a8c),
+  riverPebble: new THREE.Color(0x908a6e),
+  riverBed: new THREE.Color(0x53604d),
+  desertSand: new THREE.Color(0xd8c091),
+  desertDune: new THREE.Color(0xc2a36c),
+  snowTint: new THREE.Color(0xdde8f2),
+  snow: new THREE.Color(0xeff5fb),
+  snowShade: new THREE.Color(0xc3d6ea),
+  iceGlint: new THREE.Color(0xb2cee2)
 };
 function smooth01(t) { t = t < 0 ? 0 : (t > 1 ? 1 : t); return t * t * (3 - 2 * t); }
 
@@ -2623,14 +2790,25 @@ function terrainColor(x, z, h, slope, curv, out) {
     return out;
   }
 
-  // grass base
+  // grass base — 세 가지 초록이 큰 얼룩으로 섞이고, 마른 풀·맨흙이 군데군데 드러난다
   _tc1.copy(TC.meadowA);
   _tc1.lerp(TC.meadowB, micro * 0.55 + patch * 0.45);
   _tc1.lerp(TC.meadowC, (1 - wave) * 0.32 + (1 - patch) * 0.16);
   _tc1.lerp(TC.hill, smooth01((h - 3.0) / 3.6) * 0.60);
   _tc1.lerp(TC.marsh, (1 - smooth01((h - 1.15) / 1.2)) * 0.40);
   _tc1.lerp(TC.mossy, Math.pow(1 - patch, 2.2) * 0.45);
-  _tc1.lerp(TC.dryGrass, Math.pow(patch, 3.2) * 0.40);
+  _tc1.lerp(TC.dryGrass, Math.pow(patch, 3.2) * 0.52);
+  // 🟫 v2.4 — 맨흙 얼룩: 큰 스케일 노이즈가 0.55를 넘는 자리에 흙이 비친다
+  var bare = smooth01((noise2(x * 0.105 - 8.3, z * 0.128 + 2.1) * 0.5 + 0.5 - 0.54) / 0.26);
+  var bite = smooth01((noise2(x * 0.29 + 21.0, z * 0.31 - 7.0) * 0.5 + 0.5 - 0.62) / 0.22);
+  var bareAmt = bare * (0.34 + micro * 0.34) + bite * 0.22;
+  if (bareAmt > 0.002) {
+    _tc3.copy(TC.dirt).lerp(TC.dirtDark, (1 - micro) * 0.55 + patch * 0.2);
+    _tc1.lerp(_tc3, Math.min(0.62, bareAmt));
+  }
+  // 마른 풀 줄기 — 잔물결 방향으로 길게 눕는 결
+  var streak = Math.sin(x * 0.42 + z * 0.63 + noise2(x * 0.2, z * 0.2) * 2.2) * 0.5 + 0.5;
+  _tc1.lerp(TC.dryGrass, Math.pow(streak, 4.0) * 0.20 * (0.4 + micro * 0.6));
 
   // beach
   _tc2.copy(TC.sand).lerp(TC.wetSand, smooth01((0.55 - h) / 0.75) * 0.92);
@@ -2684,34 +2862,57 @@ function terrainColor(x, z, h, slope, curv, out) {
     out.lerp(_tc2, Math.min(1, wTu * 1.14));
   }
 
-  // gentle AO from local curvature + fine dither
+  // gentle AO from local curvature + fine dither (v2.4 — 얼룩 대비를 올려 바닥이 밋밋하지 않게)
   out.multiplyScalar(clamp(1 - curv * 0.34, 0.80, 1.10));
-  out.multiplyScalar(0.93 + micro * 0.085 + patch * 0.085);
+  out.multiplyScalar(0.84 + micro * 0.15 + patch * 0.13);
   return out;
 }
 
-/* fine ground mottling: a tiny tiling canvas texture multiplied over the vertex colours */
+/* fine ground mottling: a tiling canvas texture multiplied over the vertex colours
+   v2.4 — 큰 얼룩 + 잔디 결 + 마른 풀 줄기를 한 장에 담아 바닥이 단색으로 보이지 않게 한다 */
 function makeGroundTex() {
-  var S = 128, cv = document.createElement('canvas');
+  var S = 256, cv = document.createElement('canvas');
   cv.width = cv.height = S;
   var ctx = cv.getContext('2d');
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, S, S);
-  for (var i = 0; i < 1100; i++) {
-    var x = Math.random() * S, y = Math.random() * S, r = 0.8 + Math.random() * 4.2;
-    var v = 214 + Math.floor(Math.random() * 41);
-    ctx.fillStyle = 'rgba(' + v + ',' + v + ',' + v + ',0.16)';
+  // 큰 얼룩 — 흙·그늘 톤이 번지는 자리
+  for (var b0 = 0; b0 < 26; b0++) {
+    var bx = Math.random() * S, by = Math.random() * S, br = 14 + Math.random() * 40;
+    var g0 = ctx.createRadialGradient(bx, by, 0, bx, by, br);
+    var v0 = 176 + Math.floor(Math.random() * 62);
+    g0.addColorStop(0, 'rgba(' + v0 + ',' + v0 + ',' + v0 + ',0.16)');
+    g0.addColorStop(1, 'rgba(' + v0 + ',' + v0 + ',' + v0 + ',0)');
+    ctx.fillStyle = g0;
+    ctx.beginPath(); ctx.arc(bx, by, br, 0, TAU); ctx.fill();
+  }
+  // 잔 알갱이
+  for (var i = 0; i < 2600; i++) {
+    var x = Math.random() * S, y = Math.random() * S, r = 0.6 + Math.random() * 2.6;
+    var v = 206 + Math.floor(Math.random() * 49);
+    ctx.fillStyle = 'rgba(' + v + ',' + v + ',' + v + ',0.17)';
     ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill();
   }
-  for (var j = 0; j < 320; j++) {
-    var x2 = Math.random() * S, y2 = Math.random() * S, r2 = 0.6 + Math.random() * 2.4;
-    var v2 = 150 + Math.floor(Math.random() * 46);
-    ctx.fillStyle = 'rgba(' + v2 + ',' + v2 + ',' + v2 + ',0.12)';
+  for (var j = 0; j < 900; j++) {
+    var x2 = Math.random() * S, y2 = Math.random() * S, r2 = 0.5 + Math.random() * 1.6;
+    var v2 = 132 + Math.floor(Math.random() * 52);
+    ctx.fillStyle = 'rgba(' + v2 + ',' + v2 + ',' + v2 + ',0.20)';
     ctx.beginPath(); ctx.arc(x2, y2, r2, 0, TAU); ctx.fill();
+  }
+  // 마른 풀 줄기 — 짧은 결
+  ctx.lineCap = 'round';
+  for (var s0 = 0; s0 < 640; s0++) {
+    var sx = Math.random() * S, sy = Math.random() * S;
+    var ang = Math.random() * TAU, len = 2 + Math.random() * 7;
+    var vv = Math.random() < 0.5 ? 236 : 196;
+    ctx.strokeStyle = 'rgba(' + vv + ',' + vv + ',' + vv + ',0.20)';
+    ctx.lineWidth = 0.7 + Math.random() * 0.8;
+    ctx.beginPath(); ctx.moveTo(sx, sy);
+    ctx.lineTo(sx + Math.cos(ang) * len, sy + Math.sin(ang) * len); ctx.stroke();
   }
   var tex = new THREE.CanvasTexture(cv);
   tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-  tex.repeat.set(138, 138);
+  tex.repeat.set(165, 165);
   if (renderer.capabilities && renderer.capabilities.getMaxAnisotropy) {
     tex.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy());
   }
@@ -2719,6 +2920,20 @@ function makeGroundTex() {
 }
 
 var terrain, TERRAIN_FLAT = false;
+/* v2.4 — 실제로 그려진 지형 메시의 높이를 그리드로 기억한다.
+   흙 바닥 자국(pad)을 terrainH() 기준으로 깔면 메시 보간과 어긋나 땅속으로 숨는다. */
+var TG = { cells: 0, step: 0, x0: 0, z0: 0, h: null };
+function meshGroundY(x, z) {
+  if (!TG.h) return terrainH(x, z);
+  var fx = (x - TG.x0) / TG.step, fz = (z - TG.z0) / TG.step;
+  var ix = Math.floor(fx), iz = Math.floor(fz);
+  if (ix < 0 || iz < 0 || ix >= TG.cells - 1 || iz >= TG.cells - 1) return terrainH(x, z);
+  var tx = fx - ix, tz = fz - iz;
+  var i00 = iz * TG.cells + ix, i10 = i00 + 1, i01 = i00 + TG.cells, i11 = i01 + 1;
+  var a = TG.h[i00] + (TG.h[i10] - TG.h[i00]) * tx;
+  var b = TG.h[i01] + (TG.h[i11] - TG.h[i01]) * tx;
+  return a + (b - a) * tz;
+}
 (function buildTerrain() {
   var SIZE = 380, seg = 190;
   var geo = new THREE.PlaneGeometry(SIZE, SIZE, seg, seg);
@@ -2750,6 +2965,9 @@ var terrain, TERRAIN_FLAT = false;
   }
   geo.setAttribute('color', new THREE.BufferAttribute(cols, 3));
   geo.computeVertexNormals();
+  TG.cells = cells; TG.step = step;
+  TG.x0 = pos.getX(0); TG.z0 = pos.getZ(0);
+  TG.h = hs;
   var mat = new THREE.MeshLambertMaterial({
     vertexColors: true, flatShading: TERRAIN_FLAT, map: makeGroundTex()
   });
@@ -2928,7 +3146,9 @@ var MAT = {
   rug: new THREE.MeshLambertMaterial({ color: 0xb8563f, flatShading: true }),
   rugB: new THREE.MeshLambertMaterial({ color: 0xd9a06a, flatShading: true }),
   // one shared vertex-colored material for every baked prop / creature / structure
-  prop: new THREE.MeshLambertMaterial({ color: 0xffffff, vertexColors: true, flatShading: true })
+  prop: new THREE.MeshLambertMaterial({ color: 0xffffff, vertexColors: true, flatShading: true }),
+  // v2.4 — 주인공 몸: 정점을 붙여 법선을 부드럽게 만든 베이크용 재질
+  charBody: new THREE.MeshLambertMaterial({ color: 0xffffff, vertexColors: true, flatShading: false })
 };
 
 /* ---------------- prop factories ----------------
@@ -3923,10 +4143,13 @@ var GRASS = { mesh: null, mat: null, time: { value: 0 } };
 
 function grassTuftGeo() {
   var pos = [], nor = [], col = [], idx = [];
+  /* v2.4 — 잔디를 더 길고 가늘게, 바람에 눕는 결이 보이도록 */
   var blades = [
-    { a: 0.0, len: 0.56, w: 0.050, lean: 0.16, ox: 0.0, oz: 0.0 },
-    { a: 2.15, len: 0.46, w: 0.044, lean: 0.22, ox: 0.055, oz: -0.03 },
-    { a: 4.30, len: 0.50, w: 0.042, lean: 0.19, ox: -0.05, oz: 0.035 }
+    { a: 0.0, len: 0.78, w: 0.042, lean: 0.24, ox: 0.0, oz: 0.0 },
+    { a: 2.15, len: 0.62, w: 0.038, lean: 0.30, ox: 0.055, oz: -0.03 },
+    { a: 4.30, len: 0.70, w: 0.036, lean: 0.27, ox: -0.05, oz: 0.035 },
+    { a: 1.05, len: 0.52, w: 0.030, lean: 0.34, ox: 0.02, oz: 0.05 },
+    { a: 5.25, len: 0.58, w: 0.032, lean: 0.32, ox: -0.06, oz: -0.02 }
   ];
   for (var b = 0; b < blades.length; b++) {
     var B = blades[b];
@@ -4012,11 +4235,12 @@ function buildGrassField() {
     if (nearRiver(gx, gz, 2.0)) continue;
     dummy.position.set(gx, gh - 0.02, gz);
     dummy.rotation.set(sr(-0.10, 0.10), Math.random() * TAU, sr(-0.10, 0.10));
-    var sc = sr(0.68, 1.45);
-    dummy.scale.set(sc, sr(0.80, 1.95), sc);
+    var sc = sr(0.62, 1.40);
+    dummy.scale.set(sc, sr(0.78, 2.05), sc);
     dummy.updateMatrix();
     inst.setMatrixAt(placed, dummy.matrix);
-    color.setHSL(0.224 + Math.random() * 0.080, 0.34 + Math.random() * 0.18, 0.50 + Math.random() * 0.16);
+    // v2.4 — 올리브·마른 풀 톤 (예전엔 형광 연두에 가까웠다)
+    color.setHSL(0.180 + Math.random() * 0.062, 0.20 + Math.random() * 0.16, 0.34 + Math.random() * 0.16);
     inst.setColorAt(placed, color);
     placed++;
   }
@@ -4307,62 +4531,126 @@ var player = {
   atkCd: 0, arrowCd: 0, kx: 0, kz: 0, knockT: 0
 };
 
+/* =========================================================
+   🧍 v2.4 — 주인공 재설계 (듀랑고풍 자연스러운 인체)
+   ---------------------------------------------------------
+   · 도형 블록 대신 목·어꺠·가슴·허리·골반이 이어지고, 팔꿈치·무릎 관절이 따로 논다.
+   · 손(손바닥·엄지)·발(발등·끄트머리)이 있고, 머리는 작고 턱·코·귀가 잡혔으며
+     머리칼은 앞머리·사이드·묶은 꼬리로 실루엣을 만든다.
+   · 염색(옷·신발)·장비(모자·무기·도구·배낭) 부탁은 그대로 유지 — 장비 세트는
+     예전과 같은 부모(몸통·머리·다리)와 높이 규격을 쓴다.
+   ========================================================= */
 function makePlayer() {
   var root = new THREE.Group();
+  var BASE = 0.80;                       // 골반 높이 = 발목에서 다리 길이
 
-  // legs
-  var legGeo = new THREE.CylinderGeometry(0.10, 0.12, 0.58, 6);
+  // ── 다리: 허벅지 → 무릎 → 정강이 → 발
   function leg(sx) {
-    var p = new THREE.Group();
-    p.position.set(sx * 0.135, 0.62, 0);
-    var m = new THREE.Mesh(legGeo, MAT.pants);
-    m.position.y = -0.29;
-    p.add(m);
-    var boot = new THREE.Mesh(new THREE.BoxGeometry(0.19, 0.13, 0.26), MAT.boot);
-    boot.position.set(0, -0.58, 0.04);
-    p.add(boot);
-    return p;
+    var thigh = new THREE.Group();
+    thigh.position.set(sx * 0.098, BASE, 0);
+    var tm = new THREE.Mesh(new THREE.CylinderGeometry(0.098, 0.082, 0.40, 12), MAT.pants);
+    tm.position.y = -0.20;
+    thigh.add(tm);
+    var knee = new THREE.Group();
+    knee.position.y = -0.40;
+    thigh.add(knee);
+    var km = new THREE.Mesh(new THREE.SphereGeometry(0.077, 12, 8), MAT.pants);
+    knee.add(km);
+    var shin = new THREE.Mesh(new THREE.CylinderGeometry(0.070, 0.050, 0.32, 12), MAT.pants);
+    shin.position.y = -0.16;
+    knee.add(shin);
+    var cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.080, 0.074, 0.075, 12), MAT.pants);
+    cuff.position.y = -0.295;
+    knee.add(cuff);
+    var ankle = new THREE.Group();
+    ankle.position.y = -0.32;
+    knee.add(ankle);
+    // 발 — 발등은 둥글고 뒤꿈치는 납작한 가족 신발
+    var shoe = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 8), MAT.boot);
+    shoe.scale.set(0.074, 0.058, 0.135);
+    shoe.position.set(0, -0.022, 0.045);
+    ankle.add(shoe);
+    var heel = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 7), MAT.boot);
+    heel.scale.set(0.062, 0.050, 0.062);
+    heel.position.set(0, -0.020, -0.030);
+    ankle.add(heel);
+    return { thigh: thigh, knee: knee, ankle: ankle };
   }
-  var legL = leg(-1), legR = leg(1);
+  var LA = leg(-1), LB = leg(1);
+  var legL = LA.thigh, legR = LB.thigh;
   root.add(legL); root.add(legR);
 
-  // torso
+  // ── 몸통: 골반 → 허리 → 가슴 → 어깨
   var torso = new THREE.Group();
-  torso.position.y = 0.62;
-  var chest = new THREE.Mesh(new THREE.CylinderGeometry(0.245, 0.285, 0.56, 8), MAT.shirt);
-  chest.position.y = 0.3;
-  torso.add(chest);
-  var shoulder = new THREE.Mesh(GEO.ico1, MAT.shirt);
-  shoulder.scale.set(0.28, 0.17, 0.22);
-  shoulder.position.y = 0.58;
-  torso.add(shoulder);
-  var belt = new THREE.Mesh(new THREE.CylinderGeometry(0.268, 0.268, 0.08, 8), MAT.boot);
-  belt.position.y = 0.05;
+  torso.position.y = BASE;
+  var hipsM = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 9), MAT.pants);
+  hipsM.scale.set(0.168, 0.115, 0.135);
+  hipsM.position.y = 0.03;
+  torso.add(hipsM);
+  var waistM = new THREE.Mesh(new THREE.CylinderGeometry(0.152, 0.172, 0.18, 12), MAT.shirt);
+  waistM.position.y = 0.19;
+  torso.add(waistM);
+  var chestM = new THREE.Mesh(new THREE.CylinderGeometry(0.223, 0.158, 0.30, 12), MAT.shirt);
+  chestM.position.y = 0.42;
+  torso.add(chestM);
+  var chestTop = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 8), MAT.shirt);
+  chestTop.scale.set(0.223, 0.115, 0.155);
+  chestTop.position.y = 0.555;
+  torso.add(chestTop);
+  // 어깨 솔기 (옷깃)
+  var collar = new THREE.Mesh(new THREE.CylinderGeometry(0.088, 0.115, 0.06, 12), MAT.shirt);
+  collar.position.y = 0.60;
+  torso.add(collar);
+  // 허리띠
+  var belt = new THREE.Mesh(new THREE.CylinderGeometry(0.166, 0.170, 0.07, 12), MAT.boot);
+  belt.position.y = 0.11;
   torso.add(belt);
+  var buckle = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.045, 0.02), MAT.knob);
+  buckle.position.set(0, 0.11, 0.168);
+  torso.add(buckle);
 
-  // backpack
-  var pack = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.36, 0.18), MAT.barkP);
-  pack.position.set(0, 0.36, -0.24);
+  // 배낭
+  var pack = new THREE.Mesh(new THREE.BoxGeometry(0.30, 0.33, 0.16), MAT.barkP);
+  pack.position.set(0, 0.36, -0.215);
   torso.add(pack);
-  var packTop = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.32, 5), MAT.cream || MAT.boot);
+  var packTop = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.28, 6), MAT.cream || MAT.boot);
   packTop.rotation.z = Math.PI / 2;
-  packTop.position.set(0, 0.56, -0.24);
+  packTop.position.set(0, 0.545, -0.215);
   torso.add(packTop);
 
-  // arms
+  // ── 팔: 어깨 → 팔꿈치 → 손 (도구는 오른손 그룹에 그대로 붙는다)
   function arm(sx) {
     var p = new THREE.Group();
-    p.position.set(sx * 0.28, 0.52, 0);
-    var m = new THREE.Mesh(new THREE.CylinderGeometry(0.072, 0.085, 0.5, 6), MAT.shirt);
-    m.position.y = -0.24;
-    p.add(m);
-    var hand = new THREE.Mesh(GEO.ico0, MAT.skin);
-    hand.scale.setScalar(0.085);
-    hand.position.y = -0.5;
-    p.add(hand);
-    return p;
+    p.position.set(sx * 0.243, 0.50, 0);
+    var del = new THREE.Mesh(new THREE.SphereGeometry(0.078, 12, 9), MAT.shirt);
+    del.scale.set(1, 0.92, 0.96);
+    p.add(del);
+    var up = new THREE.Mesh(new THREE.CylinderGeometry(0.061, 0.050, 0.26, 10), MAT.shirt);
+    up.position.y = -0.13;
+    p.add(up);
+    var elbow = new THREE.Group();
+    elbow.position.y = -0.255;
+    p.add(elbow);
+    var em = new THREE.Mesh(new THREE.SphereGeometry(0.050, 10, 7), MAT.skin);
+    elbow.add(em);
+    var fore = new THREE.Mesh(new THREE.CylinderGeometry(0.046, 0.038, 0.225, 10), MAT.skin);
+    fore.position.y = -0.118;
+    elbow.add(fore);
+    var wrist = new THREE.Group();
+    wrist.position.y = -0.232;
+    elbow.add(wrist);
+    var palm = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 7), MAT.skin);
+    palm.scale.set(0.042, 0.055, 0.030);
+    palm.position.y = -0.035;
+    wrist.add(palm);
+    var thumb = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 6), MAT.skin);
+    thumb.scale.set(0.016, 0.030, 0.016);
+    thumb.position.set(sx * -0.036, -0.028, 0.012);
+    wrist.add(thumb);
+    return { arm: p, elbow: elbow, wrist: wrist };
   }
-  var armL = arm(-1), armR = arm(1);
+  var AL = arm(-1), AR = arm(1);
+  var armL = AL.arm, armR = AR.arm;
   torso.add(armL); torso.add(armR);
 
   // tools in right hand
@@ -4523,52 +4811,102 @@ function makePlayer() {
   armL.add(ironBowG);
   ironBowG.visible = false;
 
-  // head
+  // ── 목
+  var neck = new THREE.Mesh(new THREE.CylinderGeometry(0.062, 0.075, 0.12, 10), MAT.skin);
+  neck.position.y = 0.635;
+  torso.add(neck);
+
+  // ── 머리 (작은 두상 · 턱 · 코 · 귀)
   var head = new THREE.Group();
-  head.position.y = 1.06;   // 목 없이 어깨에 바로 앉는 머리 (1.32는 어깨와 떠 보였다)
+  head.position.y = 0.745;
   var skull = new THREE.Mesh(GEO.ico1, MAT.skin);
-  skull.scale.set(0.245, 0.26, 0.245);
+  skull.scale.set(0.132, 0.152, 0.138);
   head.add(skull);
-  var hair = new THREE.Mesh(GEO.ico1, MAT.hair);
-  hair.scale.set(0.258, 0.245, 0.262);
-  hair.position.set(0, 0.035, -0.035);
-  head.add(hair);
-  // bangs
-  var bang = new THREE.Mesh(GEO.ico0, MAT.hair);
-  bang.scale.set(0.24, 0.11, 0.14);
-  bang.position.set(0, 0.13, 0.13);
-  head.add(bang);
-  // low ponytail
-  var tail = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.13, 0.55, 6), MAT.hair);
-  tail.position.set(0, -0.1, -0.27);
-  tail.rotation.x = -0.5;
-  head.add(tail);
-  // face
-  var eyeGeo = new THREE.SphereGeometry(0.048, 8, 6);
-  var pupGeo = new THREE.SphereGeometry(0.026, 8, 6);
+  var jaw = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 8), MAT.skin);
+  jaw.scale.set(0.099, 0.083, 0.104);
+  jaw.position.set(0, -0.062, 0.020);
+  head.add(jaw);
+  var chin = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 6), MAT.skin);
+  chin.scale.set(0.045, 0.035, 0.045);
+  chin.position.set(0, -0.118, 0.058);
+  head.add(chin);
+  var nose = new THREE.Mesh(new THREE.ConeGeometry(0.024, 0.062, 6), MAT.skin);
+  nose.position.set(0, -0.028, 0.125);
+  nose.rotation.x = Math.PI / 2;
+  head.add(nose);
   for (var s = -1; s <= 1; s += 2) {
+    var ear = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 6), MAT.skin);
+    ear.scale.set(0.022, 0.040, 0.028);
+    ear.position.set(s * 0.128, -0.010, 0.005);
+    head.add(ear);
+  }
+  // ── 머리칼: 두피 → 앞머리 → 옆 가닥 → 묶은 꼬리
+  var hair = new THREE.Mesh(GEO.ico1, MAT.hair);
+  hair.scale.set(0.142, 0.156, 0.146);
+  hair.position.set(0, 0.028, -0.012);
+  head.add(hair);
+  var bang = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 7), MAT.hair);
+  bang.scale.set(0.126, 0.058, 0.075);
+  bang.position.set(0, 0.088, 0.092);
+  head.add(bang);
+  for (var hb = -1; hb <= 1; hb += 2) {
+    var lock = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 6), MAT.hair);
+    lock.scale.set(0.038, 0.115, 0.055);
+    lock.position.set(hb * 0.118, -0.012, 0.045);
+    lock.rotation.z = hb * 0.10;
+    head.add(lock);
+    var strand = new THREE.Mesh(new THREE.ConeGeometry(0.028, 0.17, 5), MAT.hair);
+    strand.position.set(hb * 0.112, -0.115, 0.028);
+    strand.rotation.z = hb * 0.14;
+    head.add(strand);
+  }
+  // 낮게 묶은 꼬리 — 목덜미에서 등 쪽으로 흐른다
+  var tailTie = new THREE.Mesh(new THREE.CylinderGeometry(0.036, 0.036, 0.040, 8), MAT.boot);
+  tailTie.position.set(0, 0.015, -0.142);
+  head.add(tailTie);
+  var tailA = new THREE.Mesh(new THREE.CylinderGeometry(0.062, 0.036, 0.16, 8), MAT.hair);
+  tailA.position.set(0, -0.062, -0.170);
+  tailA.rotation.x = -0.30;
+  head.add(tailA);
+  var tailB = new THREE.Mesh(new THREE.ConeGeometry(0.052, 0.26, 7), MAT.hair);
+  tailB.position.set(0, -0.215, -0.208);
+  tailB.rotation.x = -0.16;
+  head.add(tailB);
+  // ── 얼굴
+  var eyeGeo = new THREE.SphereGeometry(0.026, 9, 7);
+  var pupGeo = new THREE.SphereGeometry(0.015, 8, 6);
+  for (var s2 = -1; s2 <= 1; s2 += 2) {
     var eye = new THREE.Mesh(eyeGeo, MAT.white);
-    eye.position.set(s * 0.088, 0.02, 0.216);
+    eye.scale.set(0.95, 1.05, 0.7);
+    eye.position.set(s2 * 0.053, 0.010, 0.113);
     head.add(eye);
     var pup = new THREE.Mesh(pupGeo, MAT.black);
-    pup.position.set(s * 0.088, 0.015, 0.252);
+    pup.position.set(s2 * 0.053, 0.006, 0.128);
     head.add(pup);
-    var cheek = new THREE.Mesh(GEO.ico0, new THREE.MeshLambertMaterial({ color: 0xf4a08c }));
-    cheek.scale.set(0.045, 0.026, 0.02);
-    cheek.position.set(s * 0.15, -0.055, 0.2);
+    var brow = new THREE.Mesh(new THREE.BoxGeometry(0.048, 0.011, 0.012), MAT.hair);
+    brow.position.set(s2 * 0.055, 0.056, 0.112);
+    brow.rotation.z = s2 * -0.10;
+    head.add(brow);
+    var cheek = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 6), new THREE.MeshLambertMaterial({ color: 0xf4a08c }));
+    cheek.scale.set(0.030, 0.018, 0.012);
+    cheek.position.set(s2 * 0.083, -0.040, 0.098);
     head.add(cheek);
   }
-  // explorer hat
+  // 탐험가 모자 — 작아진 두상에 맞춰 축소
   var hatG = new THREE.Group();
-  var brim = new THREE.Mesh(new THREE.CylinderGeometry(0.37, 0.38, 0.035, 10), new THREE.MeshLambertMaterial({ color: 0xd9b877, flatShading: true }));
+  var brim = new THREE.Mesh(new THREE.CylinderGeometry(0.215, 0.222, 0.022, 14), new THREE.MeshLambertMaterial({ color: 0xd9b877 }));
   hatG.add(brim);
-  var crown = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.235, 0.19, 9), new THREE.MeshLambertMaterial({ color: 0xe2c184, flatShading: true }));
-  crown.position.y = 0.11;
+  var crown = new THREE.Mesh(new THREE.CylinderGeometry(0.118, 0.140, 0.115, 12), new THREE.MeshLambertMaterial({ color: 0xe2c184 }));
+  crown.position.y = 0.066;
   hatG.add(crown);
-  var band = new THREE.Mesh(new THREE.CylinderGeometry(0.238, 0.242, 0.05, 9), new THREE.MeshLambertMaterial({ color: 0xa8743f }));
-  band.position.y = 0.045;
+  var crownTop = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 8), new THREE.MeshLambertMaterial({ color: 0xe8c98f }));
+  crownTop.scale.set(0.118, 0.030, 0.118);
+  crownTop.position.y = 0.122;
+  hatG.add(crownTop);
+  var band = new THREE.Mesh(new THREE.CylinderGeometry(0.141, 0.144, 0.026, 12), new THREE.MeshLambertMaterial({ color: 0xa8743f }));
+  band.position.y = 0.022;
   hatG.add(band);
-  hatG.position.y = 0.2;
+  hatG.position.y = 0.108;
   hatG.rotation.z = 0.04;
   head.add(hatG);
 
@@ -4578,11 +4916,14 @@ function makePlayer() {
   addShadows(root);
   root.traverse(function (o) { if (o.isMesh && o.material === MAT.glass) o.castShadow = false; });
   /* bake the static body parts (one mesh instead of ~20) */
-  flattenGroup(torso, [armL, armR, head], MAT.prop, true);
-  flattenGroup(head, null, MAT.prop, true);
-  flattenGroup(armL, null, MAT.prop, true);
-  flattenGroup(armR, [axeG, spearG, boneSpearG, knifeG, boneKnifeG, sickleG, pickG], MAT.prop, true);
-  flattenGroup(armL, [bowG, ironBowG], MAT.prop, true);
+  flattenGroup(torso, [armL, armR, head], MAT.charBody, true, true);
+  flattenGroup(head, null, MAT.charBody, true, true);
+  flattenGroup(armL, [AL.elbow], MAT.charBody, true, true);
+  flattenGroup(AL.elbow, [AL.wrist], MAT.charBody, true, true);
+  flattenGroup(AL.wrist, null, MAT.charBody, true, true);
+  flattenGroup(armR, [AR.elbow, axeG, spearG, boneSpearG, knifeG, boneKnifeG, sickleG, pickG], MAT.charBody, true, true);
+  flattenGroup(AR.elbow, [AR.wrist], MAT.charBody, true, true);
+  flattenGroup(AR.wrist, null, MAT.charBody, true, true);
   flattenGroup(axeG, null, MAT.prop, true);
   flattenGroup(spearG, null, MAT.prop, true);
   flattenGroup(bowG, null, MAT.prop, true);
@@ -4592,12 +4933,20 @@ function makePlayer() {
   flattenGroup(sickleG, null, MAT.prop, true);
   flattenGroup(pickG, null, MAT.prop, true);
   flattenGroup(ironBowG, null, MAT.prop, true);
-  flattenGroup(legL, null, MAT.prop, true);
-  flattenGroup(legR, null, MAT.prop, true);
+  flattenGroup(legL, [LA.knee], MAT.charBody, true, true);
+  flattenGroup(legR, [LB.knee], MAT.charBody, true, true);
+  flattenGroup(LA.knee, [LA.ankle], MAT.charBody, true, true);
+  flattenGroup(LB.knee, [LB.ankle], MAT.charBody, true, true);
+  flattenGroup(LA.ankle, null, MAT.charBody, true, true);
+  flattenGroup(LB.ankle, null, MAT.charBody, true, true);
 
   player.group = root;
   player.legL = legL; player.legR = legR;
   player.armL = armL; player.armR = armR;
+  player.kneeL = LA.knee; player.kneeR = LB.knee;
+  player.ankleL = LA.ankle; player.ankleR = LB.ankle;
+  player.elbowL = AL.elbow; player.elbowR = AR.elbow;
+  player.bodyBaseY = BASE;
   player.body = torso; player.head = head;
   player.axe = axeG; player.spear = spearG; player.hat = hatG; player.bow = bowG;
   player.boneSpear = boneSpearG; player.ironBow = ironBowG;
@@ -4605,7 +4954,10 @@ function makePlayer() {
   player.sickle = sickleG; player.pick = pickG;
   player.armorSets = buildArmorSets(torso);
   player.hatSets = buildHatSets(head);
-  player.bootSets = buildBootSets(legL, legR);
+  // 신발은 발목 그룹에 붙는다 — 부츠 메시의 y(-0.575)를 발 높이로 되돌리는 앵커
+  var bootAnchorL = new THREE.Group(); bootAnchorL.position.y = 0.52; LA.ankle.add(bootAnchorL);
+  var bootAnchorR = new THREE.Group(); bootAnchorR.position.y = 0.52; LB.ankle.add(bootAnchorR);
+  player.bootSets = buildBootSets(bootAnchorL, bootAnchorR);
   player.packSets = buildPackSets(torso);
   scene.add(root);
 }
@@ -4790,6 +5142,8 @@ function buildArmorSets(torso) {
 
   for (var k in sets) {
     sets[k].visible = false;
+    // v2.4 — 슬림해진 몸에 맞춰 가로 폭만 0.84배 (높이는 그대로)
+    sets[k].scale.set(0.84, 1, 0.84);
     sets[k].traverse(function (o) { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
     torso.add(sets[k]);
   }
@@ -4830,6 +5184,8 @@ function buildHatSets(head) {
   pom.scale.setScalar(0.10);
   pom.position.y = 0.50;
   g.add(pom);
+  g.scale.setScalar(0.64);       // v2.4 — 작아진 두상에 맞춤
+  g.position.y = 0.028;
   g.visible = false;
   g.traverse(function (o) { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
   head.add(g);
@@ -9131,16 +9487,174 @@ function makeCampfire() {
     g.add(fm);
     flames.push(fm);
   }
-  var light = new THREE.PointLight(0xffa858, 1.5, 16, 2);
+  var light = new THREE.PointLight(0xffa858, 0.55, 11, 2);
   light.position.set(0, 1.1, 0);
   g.add(light);
 
-  g.userData = { flames: flames, light: light, ash: ash, type: 'campfire', smokeT: 0 };
+  g.userData = { flames: flames, light: light, ash: ash, type: 'campfire', smokeT: 0, lightBase: 0.55 };
   addShadows(g);
   ash.castShadow = false; ash.receiveShadow = false;
   g.traverse(function (o) { if (o.isMesh && o.material && o.material.transparent) o.castShadow = false; });
   flattenGroup(g, [flames[0], flames[1], flames[2], ash], MAT.prop, true);
   return g;
+}
+
+/* =========================================================
+   ⛺ v2.4 — 거친 가죽 지붕
+   ---------------------------------------------------------
+   레고 사각뿔 대신, 위로 삐죽 묶인 기둥 두 쌍에 얹힌 원시 천막/박공 지붕.
+   천은 기둥 사이로 축 처지고, 처마 끝은 너덜너덜하게 찢어져 있다.
+   텍스처는 캔버스로 그린 가죽(섬유 노이즈 + 주름 + 이음선 + 얼룩)이고,
+   염색은 이 재질의 color 를 눌러 스며든 톤으로 바꾼다.
+   ========================================================= */
+var ROOF_LEATHER_TEX = null;
+function roofLeatherTex() {
+  if (ROOF_LEATHER_TEX) return ROOF_LEATHER_TEX;
+  var S = 512, cv = document.createElement('canvas');
+  cv.width = cv.height = S;
+  var c = cv.getContext('2d');
+  var g = c.createLinearGradient(0, 0, S, S);
+  g.addColorStop(0, '#9a7550');
+  g.addColorStop(0.35, '#7d5c3d');
+  g.addColorStop(0.62, '#8b6844');
+  g.addColorStop(0.82, '#6f5135');
+  g.addColorStop(1, '#7a5a3c');
+  c.fillStyle = g; c.fillRect(0, 0, S, S);
+  // 가죽 섬유 — 짧은 결 수천 개
+  c.lineCap = 'round';
+  for (var i = 0; i < 5200; i++) {
+    var x = Math.random() * S, y = Math.random() * S;
+    var a = Math.random() * TAU, len = 1.5 + Math.random() * 7;
+    var v = Math.random() < 0.5 ? 190 : 96;
+    c.strokeStyle = 'rgba(' + v + ',' + Math.round(v * 0.92) + ',' + Math.round(v * 0.78) + ',' + (0.10 + Math.random() * 0.16).toFixed(3) + ')';
+    c.lineWidth = 0.7 + Math.random() * 1.4;
+    c.beginPath(); c.moveTo(x, y);
+    c.lineTo(x + Math.cos(a) * len, y + Math.sin(a) * len); c.stroke();
+  }
+  // 큰 얼룩 — 물든 자리·햇볕에 바랜 자리
+  for (var b = 0; b < 30; b++) {
+    var bx = Math.random() * S, by = Math.random() * S, br = 40 + Math.random() * 150;
+    var rg = c.createRadialGradient(bx, by, 0, bx, by, br);
+    var light = Math.random() < 0.55;
+    rg.addColorStop(0, light ? 'rgba(198,168,124,0.40)' : 'rgba(54,38,24,0.46)');
+    rg.addColorStop(1, 'rgba(120,96,70,0)');
+    c.fillStyle = rg;
+    c.beginPath(); c.arc(bx, by, br, 0, TAU); c.fill();
+  }
+  // 주름 — 힘줄처럼 갈라진 가는 선
+  for (var w = 0; w < 90; w++) {
+    var sx = Math.random() * S, sy = Math.random() * S;
+    var dx = (Math.random() - 0.5) * 120, dy = (Math.random() - 0.5) * 90;
+    c.strokeStyle = 'rgba(48,32,20,' + (0.26 + Math.random() * 0.26).toFixed(3) + ')';
+    c.lineWidth = 2 + Math.random() * 9;
+    c.beginPath(); c.moveTo(sx, sy);
+    c.bezierCurveTo(sx + dx * 0.3, sy + dy * 0.4, sx + dx * 0.7, sy + dy * 0.7, sx + dx, sy + dy);
+    c.stroke();
+    c.strokeStyle = 'rgba(206,178,140,0.10)';
+    c.lineWidth = 0.8;
+    c.beginPath(); c.moveTo(sx + 1.4, sy + 1.4);
+    c.bezierCurveTo(sx + dx * 0.3 + 1.4, sy + dy * 0.4 + 1.4, sx + dx * 0.7 + 1.4, sy + dy * 0.7 + 1.4, sx + dx + 1.4, sy + dy + 1.4);
+    c.stroke();
+  }
+  // 이음선 — 여러 장을 꿰매 붙인 자리 (실땀 + 접힌 그늘)
+  for (var s2 = 0; s2 < 4; s2++) {
+    var yy = 70 + s2 * 118 + Math.random() * 22;
+    c.strokeStyle = 'rgba(44,30,18,0.52)';
+    c.lineWidth = 3.0;
+    c.beginPath(); c.moveTo(0, yy);
+    c.bezierCurveTo(S * 0.3, yy + 6, S * 0.65, yy - 5, S, yy + 2);
+    c.stroke();
+    c.strokeStyle = 'rgba(226,202,160,0.42)';
+    c.lineWidth = 1.4;
+    c.setLineDash([5, 9]);
+    c.beginPath(); c.moveTo(0, yy - 3);
+    c.bezierCurveTo(S * 0.3, yy + 3, S * 0.65, yy - 8, S, yy - 1);
+    c.stroke();
+    c.setLineDash([]);
+  }
+  var tex = new THREE.CanvasTexture(cv);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.anisotropy = 2;
+  ROOF_LEATHER_TEX = tex;
+  return tex;
+}
+
+/* 가죽 천 한 장 — 용마루(0, apex)에서 처마까지 축 처지고 끝이 찢어진 격자 */
+function hideRoofSheetGeo(halfW, reach, apexY, eaveY, side, seed) {
+  var NU = 18, NV = 10;
+  var pos = [], uvs = [], col = [], idx = [];
+  function rr(n) { var v = Math.sin((n * 12.9898 + seed * 78.233)) * 43758.5453; return v - Math.floor(v); }
+  for (var j = 0; j <= NV; j++) {
+    var t = j / NV;
+    for (var i = 0; i <= NU; i++) {
+      var u = i / NU;
+      var x = (u - 0.5) * 2 * halfW;
+      var z = side * reach * t;
+      var y = apexY + (eaveY - apexY) * Math.pow(t, 0.94);
+      // 천이 기둥 사이로 축 처진다 (가운데가 가장 깊다) + 잔물결
+      var sag = Math.sin(Math.PI * u);
+      y -= (0.08 + 0.20 * t) * sag;
+      // 큰 주름 두 겹 — 천이 기둥 사이로 접혀 내려앉은 결
+      y += Math.sin(u * Math.PI * 2.0 + side * 1.1) * 0.11 * t;
+      y += Math.sin(u * Math.PI * 5.0 + side * 1.7) * 0.055 * Math.sin(Math.PI * Math.min(1, t * 1.15));
+      y += Math.sin(u * Math.PI * 13.0) * 0.016 * t;
+      if (j === NV) {
+        // 너덜한 처마 — 칸마다 다르게 찢어져 늘어진다
+        var rag = rr(i + 1);
+        var rag2 = rr(i + 37);
+        z += side * (rag2 * 0.42);
+        y -= 0.08 + rag * 0.46;
+        x += (rag2 - 0.5) * 0.20;
+      }
+      pos.push(x, y, z);
+      uvs.push(u * 4.0, t * 3.4);
+      // 정점 음영: 용마루는 밝고 처마로 갈수록 짙게 그늘, 좌우 끝은 살짝 어둡게
+      var sh = 0.72 + 0.46 * Math.pow(1 - t, 0.7) - 0.20 * Math.abs(u - 0.5) * 2;
+      sh += (rr(i * 3 + j * 11) - 0.5) * 0.09;
+      // 용마루 바로 옆은 접힌 그늘
+      if (t < 0.10) sh *= 0.90;
+      col.push(sh, sh * 0.965, sh * 0.90);
+    }
+  }
+  for (var jj = 0; jj < NV; jj++) {
+    for (var ii = 0; ii < NU; ii++) {
+      var a = jj * (NU + 1) + ii, b = a + 1, c2 = a + NU + 1, d = c2 + 1;
+      if (side > 0) idx.push(a, c2, b, b, c2, d);
+      else idx.push(a, b, c2, b, d, c2);
+    }
+  }
+  var geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(pos), 3));
+  geo.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(uvs), 2));
+  geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(col), 3));
+  geo.setIndex(idx);
+  geo.computeVertexNormals();
+  return geo;
+}
+
+/* 박공 삼각벽 — 용마루가 놓이는 양쪽 끝(x=±)을 가죽으로 막는다
+   (용마루는 x 축 → 지붕 단면이 보이는 면은 x=±W/2 의 YZ 평면) */
+function gableGeo(D, H, apexY, xPos) {
+  var pos = [], uvs = [], col = [], idx = [];
+  var N = 8;
+  for (var i = 0; i <= N; i++) {
+    var u = i / N;                       // 0..1 → z -D/2 .. +D/2
+    var z = (u - 0.5) * D;
+    var top = apexY - Math.abs(u - 0.5) * 2 * (apexY - (H - 0.10)) * 0.96;
+    pos.push(xPos, H - 0.12, z); uvs.push(u * 1.6, 1); col.push(0.60, 0.57, 0.52);
+    pos.push(xPos, top, z); uvs.push(u * 1.6, 0); col.push(0.80, 0.77, 0.71);
+  }
+  for (var j = 0; j < N; j++) {
+    var a = j * 2, b = a + 1, c = a + 2, d = a + 3;
+    idx.push(a, b, c, b, d, c);
+  }
+  var geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(pos), 3));
+  geo.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(uvs), 2));
+  geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(col), 3));
+  geo.setIndex(idx);
+  geo.computeVertexNormals();
+  return geo;
 }
 
 /* 오두막 — 정면(+Z)에 문을 뚫어 걸어 들어갈 수 있게 만들고,
@@ -9206,14 +9720,74 @@ function makeCabin() {
   var chim = new THREE.Mesh(new THREE.BoxGeometry(0.5, 1.35, 0.5), MAT.rock);
   chim.position.set(0.92, H + 0.82, -0.72);
   shell.add(chim);
-  // 지붕
-  var roof = new THREE.Mesh(new THREE.ConeGeometry(3.25, 1.6, 4), MAT.roof);
-  roof.position.y = H + 0.70;
-  roof.rotation.y = Math.PI / 4;
-  roofG.add(roof);
-  var ridge = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 1.3, 5), MAT.cabinDark);
-  ridge.position.y = H + 1.42;
-  roofG.add(ridge);
+  // ⛺ v2.4 — 가죽 지붕: 두 장의 천 + 용마루 기둥 + 너덜한 처마
+  var apexY = H + 1.95, eaveY = H + 0.62;
+  var halfW = W / 2 + 0.40, reach = D / 2 + 0.42;
+  var roofMat = new THREE.MeshLambertMaterial({
+    color: 0xffffff, map: roofLeatherTex(), vertexColors: true,
+    flatShading: false, transparent: true, opacity: 1, side: THREE.DoubleSide
+  });
+  var roofTrimMat = new THREE.MeshLambertMaterial({ color: 0xffffff, vertexColors: true, transparent: true, opacity: 1 });
+  for (var sh = -1; sh <= 1; sh += 2) {
+    var sheet = new THREE.Mesh(hideRoofSheetGeo(halfW, reach, apexY, eaveY, sh, sh > 0 ? 3 : 9), roofMat);
+    roofG.add(sheet);
+  }
+  // 박공 삼각벽 (앞·뒤) — 가죽 조각으로 막아 안이 안 비친다
+  var gL = new THREE.Mesh(gableGeo(D + 0.5, H, apexY - 0.02, W / 2 - 0.02), roofMat);
+  var gR = new THREE.Mesh(gableGeo(D + 0.5, H, apexY - 0.02, -W / 2 + 0.02), roofMat);
+  roofG.add(gL); roofG.add(gR);
+  // 용마루에 위로 삐죽 묶인 기둥 두 쌍 (X자로 교차)
+  var trimG = new THREE.Group();
+  for (var px = -1; px <= 1; px += 2) {
+    for (var pz = -1; pz <= 1; pz += 2) {
+      var pole = new THREE.Mesh(new THREE.CylinderGeometry(0.072, 0.10, apexY + 0.95, 6), MAT.barkD);
+      pole.position.set(px * (W / 2 + 0.20), (apexY + 0.95) / 2 - 0.05, pz * (D / 2 + 0.26));
+      pole.rotation.z = -px * 0.10;
+      pole.rotation.x = pz * 0.085;
+      trimG.add(pole);
+    }
+  }
+  // 용마루 빔 + 묶은 밧줄
+  var ridgeBeam = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.085, 2 * halfW + 0.3, 6), MAT.barkP);
+  ridgeBeam.position.set(0, apexY + 0.10, 0);
+  ridgeBeam.rotation.z = Math.PI / 2;
+  trimG.add(ridgeBeam);
+  for (var rp = -1; rp <= 1; rp += 2) {
+    var tie = new THREE.Mesh(new THREE.TorusGeometry(0.17, 0.038, 4, 10), MAT.drift);
+    tie.position.set(rp * halfW * 0.42, apexY + 0.06, 0);
+    tie.rotation.y = Math.PI / 2;
+    trimG.add(tie);
+  }
+  // 덧댄 가죽 조각 — 이음선이 보이는 너덜한 패치
+  var ang = Math.atan2(apexY - eaveY, reach);
+  for (var pz2 = -1; pz2 <= 1; pz2 += 2) {
+    for (var pt = 0; pt < 3; pt++) {
+      var pw2 = 0.62 + Math.random() * 0.5;
+      var ph2 = 0.46 + Math.random() * 0.4;
+      var dfrac = 0.30 + pt * 0.26 + Math.random() * 0.06;
+      var pxx = -halfW * 0.62 + Math.random() * halfW * 1.1;
+      var pyy = apexY + (eaveY - apexY) * Math.pow(dfrac, 0.94) + 0.035;
+      var pzz = pz2 * reach * dfrac;
+      var patch = new THREE.Mesh(new THREE.BoxGeometry(pw2, 0.018, ph2), pt % 2 ? MAT.furD : MAT.fur);
+      patch.position.set(pxx, pyy, pzz);
+      patch.rotation.x = -pz2 * ang;
+      patch.rotation.y = (Math.random() - 0.5) * 0.20;
+      trimG.add(patch);
+    }
+  }
+  // 처마 아래로 늘어진 가죽 조각 몇 개
+  for (var f = 0; f < 5; f++) {
+    var fx0 = -halfW * 0.78 + f * (halfW * 1.56 / 4) + Math.sin(f * 2.1) * 0.12;
+    var fs = f % 2 ? 1 : -1;
+    var flap = new THREE.Mesh(new THREE.BoxGeometry(0.34 + Math.random() * 0.18, 0.03, 0.46 + Math.random() * 0.2), MAT.furD);
+    flap.position.set(fx0, eaveY - 0.16 - Math.random() * 0.12, fs * (reach - 0.10));
+    flap.rotation.x = fs * 0.55;
+    flap.rotation.z = (Math.random() - 0.5) * 0.2;
+    trimG.add(flap);
+  }
+  addShadows(trimG);
+  flattenGroup(trimG, null, roofTrimMat, true);
+  roofG.add(trimG);
 
   // 여닫힌 문짝 — 바깥으로 활짝 열어 둔다
   var hinge = new THREE.Group();
@@ -9264,24 +9838,20 @@ function makeCabin() {
   g.add(shell); g.add(front); g.add(roofG); g.add(inter); g.add(doorG);
   addShadows(g);
 
-  var roofMat = new THREE.MeshLambertMaterial({ color: 0xffffff, vertexColors: true, flatShading: true, transparent: true, opacity: 1 });
   var frontMat = new THREE.MeshLambertMaterial({ color: 0xffffff, vertexColors: true, flatShading: true, transparent: true, opacity: 1 });
   flattenGroup(shell, null, MAT.prop, true);
   flattenGroup(front, null, frontMat, true);
-  flattenGroup(roofG, null, roofMat, true);
   flattenGroup(inter, null, MAT.prop, true);
   flattenGroup(doorG, null, MAT.prop, true);
 
-  // 🎨 지붕 염색용 — 지붕 베이크 메시의 원래 정점 색을 보관해 두고,
-  //    염색하면 정점 색만 다시 칠해 오두막 하나만 색이 바뀐다
-  var roofMesh0 = roofG.children[0];
-  var roofGeo0 = (roofMesh0 && roofMesh0.geometry) ? roofMesh0.geometry : null;
-  var roofCols0 = (roofGeo0 && roofGeo0.attributes.color) ? new Float32Array(roofGeo0.attributes.color.array) : null;
+  // 🎨 지붕 염색용 — 가죽 재질의 color 를 눌러 칠한다 (텍스처가 그대로 비쳐 스며든 톤)
+  var roofMeshes = [];
+  roofG.traverse(function (o) { if (o.isMesh) roofMeshes.push(o); });
 
   g.userData = {
-    type: 'cabin', roofMat: roofMat, frontMat: frontMat,
-    roofMesh: roofMesh0, frontMesh: front.children[0],
-    roofGeo: roofGeo0, roofCols0: roofCols0,
+    type: 'cabin', roofMat: roofMat, roofTrimMat: roofTrimMat, frontMat: frontMat,
+    roofMats: [roofMat, roofTrimMat], roofMeshes: roofMeshes,
+    roofMesh: roofMeshes[0], frontMesh: front.children[0],
     roofT: 1, frontT: 1
   };
   return g;
@@ -9415,7 +9985,7 @@ function makeDyeVat() {
     g.add(band);
   }
   // 물든 물
-  var liquid = new THREE.Mesh(new THREE.CylinderGeometry(0.50, 0.50, 0.05, 12), new THREE.MeshLambertMaterial({ color: 0x6a4fae, flatShading: true }));
+  var liquid = new THREE.Mesh(new THREE.CylinderGeometry(0.50, 0.50, 0.05, 12), new THREE.MeshLambertMaterial({ color: 0x5a4763, flatShading: true }));
   liquid.position.y = 0.70;
   g.add(liquid);
   // 젓는 막대
@@ -9438,9 +10008,9 @@ function makeDyeVat() {
     g.add(post);
   }
   var dyes = [
-    { x: -0.52, m: new THREE.MeshLambertMaterial({ color: 0xc8534a, flatShading: true }) },
-    { x: 0.02, m: new THREE.MeshLambertMaterial({ color: 0x3f6cb0, flatShading: true }) },
-    { x: 0.56, m: new THREE.MeshLambertMaterial({ color: 0xd8a92e, flatShading: true }) }
+    { x: -0.52, m: new THREE.MeshLambertMaterial({ color: 0x8d4238, flatShading: true }) },
+    { x: 0.02, m: new THREE.MeshLambertMaterial({ color: 0x3f5f83, flatShading: true }) },
+    { x: 0.56, m: new THREE.MeshLambertMaterial({ color: 0xa8894a, flatShading: true }) }
   ];
   for (var i = 0; i < dyes.length; i++) {
     var cloth = new THREE.Mesh(new THREE.BoxGeometry(0.40, 0.78, 0.02), dyes[i].m);
@@ -9657,10 +10227,24 @@ function makeLeatherCanopy() {
   return g;
 }
 
-/* 🎨 오두막 지붕 염색 — 지붕 메시의 정점 색만 다시 칠한다 */
+/* 🎨 v2.4 오두막 가죽 지붕 염색 — 염료를 가죽 갈색 쪽으로 눌러 섞어
+   플라스틱처럼 쨍하지 않고 가죽에 스며든 묵직한 색이 되게 한다 */
+var _roofDyeC = new THREE.Color(), _roofLeather = new THREE.Color(0x6b5036);
 function dyeRoofMesh(g, key) {
   var u = g && g.userData;
-  if (!u || !u.roofGeo || !u.roofCols0) return false;
+  if (!u) return false;
+  var mat = u.roofMat;
+  if (mat) {
+    if (!key || !DYE_COLORS[key]) { mat.color.setHex(0xffffff); }
+    else {
+      _roofDyeC.setHex(DYE_COLORS[key].roof).lerp(_roofLeather, 0.40).multiplyScalar(1.22);
+      mat.color.copy(_roofDyeC);
+    }
+    mat.needsUpdate = true;
+    return true;
+  }
+  // (구버전 호환) 정점 색으로 칠하던 지붕
+  if (!u.roofGeo || !u.roofCols0) return false;
   var attr = u.roofGeo.attributes.color;
   if (!attr) return false;
   var arr = attr.array, base = u.roofCols0;
@@ -9682,6 +10266,124 @@ function applyAllRoofDye() {
     if (structures[i].type !== 'cabin') continue;
     dyeRoofMesh(structures[i].group, (S.dye && S.dye.roof) || '');
   }
+}
+
+/* =========================================================
+   🟫 v2.4 — 시설·모닥불·집 밑의 둥근 흙 바닥 자국
+   ---------------------------------------------------------
+   잔디 위에 구조물이 붕 떠 보이지 않게, 발밑 지형을 따라 눌린 흙/재 패드를 깐다.
+   구조물마다 메시를 만들지 않고 전부 한 지오메트리로 합쳐 드로우콜 1회.
+   ========================================================= */
+var PAD_TEX = null;
+function groundPadTex() {
+  if (PAD_TEX) return PAD_TEX;
+  var S = 128, cv = document.createElement('canvas');
+  cv.width = cv.height = S;
+  var c = cv.getContext('2d');
+  c.clearRect(0, 0, S, S);
+  var cx = S / 2, cy = S / 2;
+  var g = c.createRadialGradient(cx, cy, 0, cx, cy, S / 2);
+  g.addColorStop(0.00, 'rgba(84,66,44,0.97)');
+  g.addColorStop(0.34, 'rgba(90,72,48,0.95)');
+  g.addColorStop(0.58, 'rgba(78,62,42,0.88)');
+  g.addColorStop(0.78, 'rgba(62,50,34,0.62)');
+  g.addColorStop(0.92, 'rgba(52,42,29,0.24)');
+  g.addColorStop(1.00, 'rgba(46,38,26,0)');
+  c.fillStyle = g;
+  c.beginPath(); c.arc(cx, cy, S / 2, 0, TAU); c.fill();
+  // 흙 알갱이·마른 풀·재 부스러기
+  for (var i = 0; i < 900; i++) {
+    var a = Math.random() * TAU, r = Math.sqrt(Math.random()) * S * 0.46;
+    var x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r;
+    var rad = 0.5 + Math.random() * 1.7;
+    var dark = Math.random() < 0.55;
+    c.fillStyle = dark ? 'rgba(58,44,30,' + (0.18 + Math.random() * 0.22).toFixed(2) + ')'
+      : 'rgba(186,160,120,' + (0.12 + Math.random() * 0.20).toFixed(2) + ')';
+    c.beginPath(); c.arc(x, y, rad, 0, TAU); c.fill();
+  }
+  c.lineCap = 'round';
+  for (var s2 = 0; s2 < 130; s2++) {
+    var a2 = Math.random() * TAU, r2 = Math.sqrt(Math.random()) * S * 0.44;
+    var x2 = cx + Math.cos(a2) * r2, y2 = cy + Math.sin(a2) * r2;
+    var ang = Math.random() * TAU, len = 2 + Math.random() * 6;
+    c.strokeStyle = 'rgba(206,184,142,' + (0.10 + Math.random() * 0.14).toFixed(2) + ')';
+    c.lineWidth = 0.8;
+    c.beginPath(); c.moveTo(x2, y2);
+    c.lineTo(x2 + Math.cos(ang) * len, y2 + Math.sin(ang) * len); c.stroke();
+  }
+  var tex = new THREE.CanvasTexture(cv);
+  tex.anisotropy = 2;
+  PAD_TEX = tex;
+  return tex;
+}
+var PAD = { mesh: null, dirty: true };
+function padRadiusOf(st) {
+  var def = STRUCT_DEF[st.type];
+  var base = def ? def.r : 1.0;
+  if (st.type === 'cabin') return 3.0;
+  if (st.type === 'campfire') return 1.28;
+  return base + 0.58;
+}
+function rebuildPads() {
+  PAD.dirty = false;
+  var pos = [], uv = [], col = [], idx = [];
+  var SEG = 20, RINGS = [0.30, 0.62, 0.85, 1.0];
+  for (var i = 0; i < structures.length; i++) {
+    var st = structures[i];
+    if (!STRUCT_DEF[st.type]) continue;
+    if (st.type === 'leatherRug') continue;          // 러그는 자체 가죽이 바닥이다
+    var rad = padRadiusOf(st);
+    var base = pos.length / 3;
+    var y0 = meshGroundY(st.x, st.z);
+    pos.push(st.x, y0 + 0.020, st.z); uv.push(0.5, 0.5); col.push(1, 1, 1);
+    for (var r = 0; r < RINGS.length; r++) {
+      var rr = RINGS[r] * rad;
+      for (var s = 0; s < SEG; s++) {
+        var a = (s / SEG) * TAU;
+        var wx = st.x + Math.cos(a) * rr, wz = st.z + Math.sin(a) * rr;
+        var edge = r === RINGS.length - 1 ? 0.86 : 1;    // 바깥 테두리는 살짝 어둡게
+        pos.push(wx, meshGroundY(wx, wz) + 0.020, wz);
+        uv.push(0.5 + Math.cos(a) * 0.5 * RINGS[r], 0.5 + Math.sin(a) * 0.5 * RINGS[r]);
+        col.push(edge, edge, edge);
+      }
+    }
+    // 중심 팬 (위쪽을 향하는 감기 순서)
+    for (var s0 = 0; s0 < SEG; s0++) {
+      var a0 = base + 1 + s0, b0 = base + 1 + ((s0 + 1) % SEG);
+      idx.push(base, b0, a0);
+    }
+    // 링 사이
+    for (var r2 = 0; r2 < RINGS.length - 1; r2++) {
+      var o1 = base + 1 + r2 * SEG, o2 = base + 1 + (r2 + 1) * SEG;
+      for (var s1 = 0; s1 < SEG; s1++) {
+        var a1 = o1 + s1, b1 = o1 + ((s1 + 1) % SEG);
+        var c1 = o2 + s1, d1 = o2 + ((s1 + 1) % SEG);
+        idx.push(a1, b1, c1, b1, d1, c1);
+      }
+    }
+  }
+  if (PAD.mesh) {
+    scene.remove(PAD.mesh);
+    PAD.mesh.geometry.dispose();
+    PAD.mesh = null;
+  }
+  if (!pos.length) return;
+  var geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(pos), 3));
+  geo.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(uv), 2));
+  geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(col), 3));
+  geo.setIndex(idx);
+  geo.computeVertexNormals();
+  geo.computeBoundingSphere();
+  var mat = new THREE.MeshLambertMaterial({
+    map: groundPadTex(), vertexColors: true, transparent: true, opacity: 0.96,
+    depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4
+  });
+  var mesh = new THREE.Mesh(geo, mat);
+  mesh.receiveShadow = false; mesh.castShadow = false;
+  mesh.renderOrder = 1;
+  scene.add(mesh);
+  PAD.mesh = mesh;
 }
 
 /* 작업대 — 나무 상판 + 톱·망치·가죽 걸이 */
@@ -10156,6 +10858,7 @@ function placeStructure(type, x, z, rot) {
   if (type === 'cabin' && S.dye && S.dye.roof) dyeRoofMesh(g, S.dye.roof);
   structures.push(st);
   S.structures.push(rec);
+  PAD.dirty = true;
   return st;
 }
 
@@ -10189,6 +10892,7 @@ function restoreStructures() {
     if (s.type === 'cabin' && S.dye && S.dye.roof) dyeRoofMesh(g, S.dye.roof);
     structures.push(st2);
   }
+  PAD.dirty = true;
 }
 
 /* 런타임 구조물의 살아 있는 값(연료·꺼짐·상자 내용물)을 저장 레코드에 맞춘다 */
@@ -10221,6 +10925,7 @@ function removeStructure(st) {
     var j = S.structures.indexOf(st.rec);
     if (j >= 0) S.structures.splice(j, 1);
   }
+  PAD.dirty = true;
   return true;
 }
 
@@ -10339,11 +11044,17 @@ function updateCabinFade(dt) {
     u.roofMat.opacity = u.roofT;
     u.frontMat.opacity = u.frontT;
     var roofClear = u.roofT < 0.985, frontClear = u.frontT < 0.985;
-    u.roofMat.depthWrite = !roofClear;
+    var rms = u.roofMats || [u.roofMat];
+    for (var m2 = 0; m2 < rms.length; m2++) {
+      var mm = rms[m2];
+      if (!mm) continue;
+      mm.depthWrite = !roofClear;
+      if (mm.transparent !== roofClear) { mm.transparent = roofClear; mm.needsUpdate = true; }
+    }
     u.frontMat.depthWrite = !frontClear;
-    if (u.roofMat.transparent !== roofClear) { u.roofMat.transparent = roofClear; u.roofMat.needsUpdate = true; }
     if (u.frontMat.transparent !== frontClear) { u.frontMat.transparent = frontClear; u.frontMat.needsUpdate = true; }
-    if (u.roofMesh) u.roofMesh.castShadow = !roofClear;
+    var rmv = u.roofMeshes || (u.roofMesh ? [u.roofMesh] : []);
+    for (var m3 = 0; m3 < rmv.length; m3++) rmv[m3].castShadow = !roofClear;
     if (u.frontMesh) u.frontMesh.castShadow = !frontClear;
   }
 }
@@ -10994,95 +11705,98 @@ function gatherNode(n) {
   // 맞는 도구를 들고 있으면 채집량 2배 (b=2) — 아래 수량에 모두 곱한다
   var b = gatherBoostFor(n.kind);
   var w, pw;
+  /* v2.4 — 채집 수량 밸런스: 한 번에 1~2개, 맞는 도구를 들면 +1개(최대 3개)
+     (예전엔 도구 보너스가 ×2 라 돌이 한 번에 4개씩 쏟아졌다) */
+  var bonus = b > 1 ? 1 : 0;
   if (n.kind === 'tree') {
-    w = 1 * b;
+    w = 1 + bonus;
     addItem('wood', w); got.push('통나무 +' + w);
-    if (Math.random() < 0.55) { addItem('stick', 1); got.push('나뭇가지 +1'); }
+    if (Math.random() < 0.35) { addItem('stick', 1); got.push('나뭇가지 +1'); }
     sfx('hitwood');
     spawnBurst(n.x, y + 2.4, n.z, 0x8a5d3a, 9, 1);
   } else if (n.kind === 'rock') {
-    w = 2 * b;
+    w = 2 + bonus;
     addItem('stone', w); got.push('돌 +' + w);
+    if (Math.random() < 0.18) { addItem('stone', 1); got.push('돌 +1'); }
     sfx('hitrock');
     spawnBurst(n.x, y + 0.7, n.z, 0x9aa19a, 9, 1);
   } else if (n.kind === 'ore') {
-    addItem('iron', 1 * b); addItem('stone', 2 * b);
-    got.push('철광석 +' + (1 * b), '돌 +' + (2 * b));
+    addItem('iron', 1 + bonus); addItem('stone', 1);
+    got.push('철광석 +' + (1 + bonus), '돌 +1');
     sfx('hitrock');
     spawnBurst(n.x, y + 0.6, n.z, 0x9fb3c4, 10, 1.1);
   } else if (n.kind === 'herb') {
-    addItem('herb', 2 * b); got.push('약초 +' + (2 * b));
+    addItem('herb', 1 + bonus); got.push('약초 +' + (1 + bonus));
     sfx('pick');
     spawnBurst(n.x, y + 0.45, n.z, 0x9fd47a, 7, 0.6);
   } else if (n.kind === 'reed') {
-    addItem('fiber', 3 * b); addItem('reed', 2 * b);
-    got.push('섬유 +' + (3 * b), '갈대 +' + (2 * b));
-    if (Math.random() < 0.35) { addItem('stick', 1); got.push('나뭇가지 +1'); }
+    addItem('fiber', 1 + bonus); addItem('reed', 1 + bonus);
+    got.push('섬유 +' + (1 + bonus), '갈대 +' + (1 + bonus));
     sfx('hit');
     spawnBurst(n.x, y + 1.0, n.z, 0xc9b68a, 7, 0.7);
   } else if (n.kind === 'wheat') {
-    addItem('wheat', 2 * b); got.push('밀 +' + (2 * b));
-    if (Math.random() < 0.5) { addItem('fiber', 1); got.push('섬유 +1'); }
+    addItem('wheat', 1 + bonus); got.push('밀 +' + (1 + bonus));
+    if (Math.random() < 0.3) { addItem('fiber', 1); got.push('섬유 +1'); }
     sfx('pick');
     spawnBurst(n.x, y + 0.7, n.z, 0xe0cf8a, 7, 0.6);
   } else if (n.kind === 'mushroom') {
-    addItem('mushroom', 2); got.push('버섯 +2');
+    addItem('mushroom', 1 + bonus); got.push('버섯 +' + (1 + bonus));
     sfx('pick');
     spawnBurst(n.x, y + 0.3, n.z, 0xd9b978, 6, 0.5);
   } else if (n.kind === 'cactus') {
-    addItem('cactusFruit', 2); got.push('선인장 열매 +2');
+    addItem('cactusFruit', 1 + bonus); got.push('선인장 열매 +' + (1 + bonus));
     sfx('pick');
     spawnBurst(n.x, y + 1.4, n.z, 0xd0432f, 7, 0.7);
   } else if (n.kind === 'dryBush') {
-    addItem('stick', 2 * b); addItem('fiber', 1 * b);
-    got.push('나뭇가지 +' + (2 * b), '섬유 +' + (1 * b));
+    addItem('stick', 1 + bonus); addItem('fiber', 1);
+    got.push('나뭇가지 +' + (1 + bonus), '섬유 +1');
     sfx('hitwood');
     spawnBurst(n.x, y + 0.6, n.z, 0xa8916a, 7, 0.6);
   } else if (n.kind === 'pine') {
-    pw = 2 * b;
+    pw = 2 + bonus;
     addItem('wood', pw); got.push('통나무 +' + pw);
-    if (Math.random() < 0.5) { addItem('stick', 1); got.push('나뭇가지 +1'); }
+    if (Math.random() < 0.3) { addItem('stick', 1); got.push('나뭇가지 +1'); }
     sfx('hitwood');
     spawnBurst(n.x, y + 2.0, n.z, 0xdfeaf6, 9, 0.9);
   } else if (n.kind === 'frostHerb') {
-    addItem('frostHerb', 2 * b); got.push('서리 약초 +' + (2 * b));
+    addItem('frostHerb', 1 + bonus); got.push('서리 약초 +' + (1 + bonus));
     sfx('pick');
     spawnBurst(n.x, y + 0.5, n.z, 0xd8f2ff, 8, 0.6);
   } else if (n.kind === 'ice') {
-    addItem('ice', 2 * b); addItem('stone', 1 * b);
-    got.push('얼음 결정 +' + (2 * b), '돌 +' + (1 * b));
+    addItem('ice', 2 + bonus); addItem('stone', 1);
+    got.push('얼음 결정 +' + (2 + bonus), '돌 +1');
     sfx('hitrock');
     spawnBurst(n.x, y + 0.7, n.z, 0xcdeaff, 9, 1.0);
   } else if (n.kind === 'bamboo') {
-    addItem('bamboo', 2 * b); addItem('fiber', 2 * b);
-    got.push('대나무 +' + (2 * b), '섬유 +' + (2 * b));
+    addItem('bamboo', 1 + bonus); addItem('fiber', 1 + bonus);
+    got.push('대나무 +' + (1 + bonus), '섬유 +' + (1 + bonus));
     sfx('hitwood');
     spawnBurst(n.x, y + 1.8, n.z, 0x8fbf5c, 8, 0.8);
   } else if (n.kind === 'fern') {
-    addItem('fiber', 2 * b); addItem('herb', 1 * b);
-    got.push('섬유 +' + (2 * b), '약초 +' + (1 * b));
+    addItem('fiber', 1 + bonus); addItem('herb', 1);
+    got.push('섬유 +' + (1 + bonus), '약초 +1');
     sfx('pick');
     spawnBurst(n.x, y + 0.5, n.z, 0x8dc471, 6, 0.5);
   } else if (n.kind === 'lavender') {
-    addItem('lavender', 2 * b); got.push('라벤더 +' + (2 * b));
+    addItem('lavender', 1 + bonus); got.push('라벤더 +' + (1 + bonus));
     sfx('pick');
     spawnBurst(n.x, y + 0.7, n.z, 0x9b7bd0, 7, 0.6);
   } else if (n.kind === 'cotton') {
-    addItem('cotton', 2 * b); got.push('☁️ 목화솜 +' + (2 * b));
-    if (Math.random() < 0.45) { addItem('fiber', 1); got.push('섬유 +1'); }
+    addItem('cotton', 1 + bonus); got.push('☁️ 목화솜 +' + (1 + bonus));
+    if (Math.random() < 0.35) { addItem('fiber', 1); got.push('섬유 +1'); }
     sfx('pick');
     spawnBurst(n.x, y + 0.7, n.z, 0xfdfbf2, 8, 0.6);
   } else if (n.kind === 'flower') {
     var fcol = n.petal || 'petalRed';
-    addItem(fcol, 2 * b); got.push((ITEMS[fcol] ? ITEMS[fcol].icon + ' ' + ITEMS[fcol].name : '꽃잎') + ' +' + (2 * b));
+    addItem(fcol, 1 + bonus); got.push((ITEMS[fcol] ? ITEMS[fcol].icon + ' ' + ITEMS[fcol].name : '꽃잎') + ' +' + (1 + bonus));
     sfx('pick');
     spawnBurst(n.x, y + 0.5, n.z, n.tint || 0xf2a1b8, 7, 0.55);
   } else if (n.kind === 'banana') {
-    addItem('banana', 2); got.push('바나나 +2');
+    addItem('banana', 1 + bonus); got.push('바나나 +' + (1 + bonus));
     sfx('pick');
     spawnBurst(n.x, y + 2.0, n.z, 0xe8cf4a, 7, 0.7);
   } else if (n.kind === 'pineapple') {
-    addItem('pineapple', 2); got.push('파인애플 +2');
+    addItem('pineapple', 1 + bonus); got.push('파인애플 +' + (1 + bonus));
     sfx('pick');
     spawnBurst(n.x, y + 0.6, n.z, 0xd9a437, 6, 0.6);
   } else if (n.kind === 'nest') {
@@ -11117,13 +11831,15 @@ function gatherNode(n) {
   if (n.kind !== 'nest') toast(got.join(' · '), 'good');
   if (b > 1) {
     var tw = equippedWeapon();
-    hint('🔨 +도구 보너스! ' + ITEMS[tw].icon + ' ' + ITEMS[tw].name + ' — 채집량 2배 · 두 배로 빨라요', 1900);
+    hint('🔨 ' + ITEMS[tw].icon + ' ' + ITEMS[tw].name + ' 보너스 — 채집 +1개 · 두 배로 빨라요', 1900);
   }
   chipsDirty = true;
+  addExp(n.kind === 'nest' ? 6 : 3);
   if (n.hp <= 0) {
     n.dead = true;
     n.group.visible = false;
     n.respawnAt = worldT + (n.kind === 'nest' ? 115 : 42);
+    addExp(4);
   }
 }
 
@@ -11151,7 +11867,7 @@ function finishCook() { }
 /* 재료 획득처 안내 (제작칩 title·토스트용) */
 var ITEM_SOURCE = {
   wood: '나무·전나무 베기', stick: '나무·마른 관목', stone: '바위·얼음 결정', fiber: '갈대·고사리·대나무',
-  reed: '강가·해안 갈대', wheat: '초원·들판 밀', cloth: '작업대 옷감', berry: '덤불',
+  reed: '강가·해안 갈대', wheat: '초원·들판 밀', cloth: '베틀 옷감', clothCotton: '베틀(목화솜)', clothHemp: '베틀(섬유·갈대)', berry: '덤불',
   meat: '콤프·랩터 사냥', fineMeat: '알로·카르노 사냥', bulkMeat: '브라키오·매머드',
   herb: '숲·초원 약초', frostHerb: '툰드라 서리 약초', mushroom: '숲 버섯', iron: '고원 철광석',
   ice: '툰드라 얼음 결정', bamboo: '숲 대나무', lavender: '초원 라벤더', dye: '작업대 염료',
@@ -11216,8 +11932,13 @@ function craft(id) {
   }
   if (!stationOk(r)) {
     sfx('deny');
-    var _tailorish = (r.station === 'tailorBench' || r.station === 'smithBench');
-    toast(stationNeedLabel(r) + (_tailorish ? ' — 전용 작업대나 간이 작업대(🪚) 가까이에서' : ' — 가까이 서면 만들 수 있어요'), 'warn');
+    toast(stationNeedLabel(r) + ' 앞에서 만들 수 있어요', 'warn');
+    return;
+  }
+  /* 📈 v2.4 — 탐험 레벨 조건 */
+  if (!lvOk(r)) {
+    sfx('deny');
+    toast('📈 탐험 Lv.' + recipeLv(r) + ' 부터 만들 수 있어요 (지금 Lv.' + (S.lv || 1) + ')', 'warn');
     return;
   }
   if (!canCraft(r)) {
@@ -11252,6 +11973,7 @@ function craft(id) {
     toast(r.name + ' 제작 완료!', 'good');
   }
   chipsDirty = true;
+  addExp(r.made ? 14 : 9);
   sfx('craft');
   spawnBurst(player.pos.x, terrainH(player.pos.x, player.pos.z) + 1.8, player.pos.z, 0xffe0a0, 10, 1.1);
   renderSheet();
@@ -11753,15 +12475,35 @@ function confirmPlace() {
     var pr = placingPacked;
     placingPacked = null;
     var pst = placeStructure(pr.type, gx, gz, rot);
-    pst.name = pr.name || '';
-    pst.items = pr.items || {};
-    if (pst.rec) { pst.rec.name = pst.name; pst.rec.items = pst.items; }
-    ensureChestTag(pst);
+    var _restored = '';
+    if (pr.name) { pst.name = pr.name; if (pst.rec) pst.rec.name = pr.name; }
+    if (isChestType(pr.type)) {
+      pst.items = pr.items || {};
+      if (pst.rec) pst.rec.items = pst.items;
+      ensureChestTag(pst);
+      if (chestUsed(pst)) _restored = ' · 물건 ' + chestUsed(pst) + '칸 복원';
+    }
+    if (pr.type === 'campfire') {
+      pst.fuel = (typeof pr.fuel === 'number') ? pr.fuel : FIRE_LIFE;
+      pst.queue = Array.isArray(pr.queue) ? pr.queue : [];
+      pst.done = pr.done || {};
+      pst.lit = (pr.lit === 1 || pr.lit === true) && pst.fuel > 0;
+      setFireLit(pst, pst.lit, true);
+      if (pst.rec) { pst.rec.fuel = Math.round(pst.fuel); pst.rec.lit = pst.lit ? 1 : 0; pst.rec.queue = pst.queue; pst.rec.done = pst.done; }
+      _restored = pst.lit ? ' · 불씨 그대로' : ' · 꺼진 채로';
+    }
+    if (pr.type === 'hatchNest' && pr.egg) {
+      pst.egg = pr.egg;
+      S.nests[nestKey(gx, gz)] = pr.egg;
+      _restored = pr.egg.done ? ' · 부화한 알' : ' · 품던 알 ' + Math.round(clamp((pr.egg.p || 0) / HATCH_DAYS, 0, 1) * 100) + '%';
+    }
+    if (pr.type === 'cabin') applyAllRoofDye();
     var pi = S.packed ? S.packed.indexOf(pr) : -1;
     if (pi >= 0) S.packed.splice(pi, 1);
     sfx('place');
     spawnBurst(gx, terrainH(gx, gz) + 0.6, gz, 0xc9b58a, 10, 0.8);
-    toast('📦 ' + chestName(pst) + '을(를) 그대로 다시 놓았어요' + (chestUsed(pst) ? ' · 물건 ' + chestUsed(pst) + '칸 복원' : ''), 'good');
+    addExp(6);
+    toast('📦 ' + chestName(pst) + '을(를) 그대로 다시 놓았어요' + _restored, 'good');
     saveState();
     chipsDirty = true;
     return;
@@ -12014,6 +12756,46 @@ function doPackChest(st) {
   hint('「🏕 설치」 맨 위에 포장한 상자가 있어요 · 다른 자리에 그대로 다시 놓을 수 있어요', 4600);
 }
 
+/* 📦 v2.4 — 모든 설치물 포장: 집·상자·모닥불·시설·가구 전부
+   이름·내용물·연료·굽던 음식·품던 알까지 그대로 담아 가방(설치 목록)으로 회수한다. */
+function doPackStruct(st) {
+  if (!st || !st.type) return;
+  var def = STRUCT_DEF[st.type];
+  if (!def) return;
+  if (st.type === 'cabin' && insideCabin(st, player.pos.x, player.pos.z, 0.1)) {
+    sfx('deny'); toast('🏚️ 오두막 밖으로 나온 뒤 포장할 수 있어요', 'warn'); return;
+  }
+  if (!structInReach(st)) { sfx('deny'); toast('조금 더 가까이 가 주세요', 'warn'); return; }
+  S.packed = S.packed || [];
+  if (S.packed.length >= 40) { sfx('deny'); toast('가방의 포장 목록이 가득 찼어요 — 먼저 다시 놓아 주세요', 'warn'); return; }
+  var nm = chestName(st);
+  var rec = {
+    id: 'pk' + Date.now().toString(36) + Math.floor(Math.random() * 1296).toString(36),
+    type: st.type, name: st.name || '', rot: st.rot || 0
+  };
+  if (isChestType(st.type)) rec.items = st.items || {};
+  if (st.type === 'campfire') {
+    rec.fuel = Math.round(st.fuel || 0);
+    rec.lit = st.lit === false ? 0 : 1;
+    rec.queue = (st.queue || []).slice(0, 24);
+    rec.done = st.done || {};
+  }
+  if (st.type === 'hatchNest' && st.egg) rec.egg = { p: st.egg.p || 0, done: !!st.egg.done };
+  var extra = '';
+  if (isChestType(st.type) && chestUsed(st) > 0) extra = ' · 물건 ' + chestUsed(st) + '칸 담김';
+  S.packed.push(rec);
+  if (st.tag && st.group) { st.group.remove(st.tag); st.tag = null; }
+  removeStructure(st);
+  if (chestSt === st) chestSt = null;
+  if (fireSt === st) fireSt = null;
+  closeSheet();
+  sfx('chestClose');
+  syncStructData();
+  saveState();
+  toast('📦 ' + nm + '을(를) 통째로 포장했어요' + extra, 'good');
+  hint('「🏕 설치」 맨 위 「포장한 구조물」에서 원하는 자리에 그대로 다시 놓을 수 있어요', 4400);
+}
+
 /* 포장한 상자를 다시 설치 — 고스트 표시까지 동일 */
 var placingPacked = null;
 function startPlacingPacked(rec) {
@@ -12104,6 +12886,7 @@ function openSheet(mode) {
   else if (mode === 'demolish') { sheetTitle.textContent = '🔨 철거'; sheetSub.textContent = '구조물을 없애고 재료를 일부 회수해요'; }
   else if (mode === 'dye') { sheetTitle.textContent = '🎨 염색대'; sheetSub.textContent = '꽃 염료로 옷·신발·오두막 지붕을 물들여요'; }
   else { sheetTitle.textContent = '설정'; sheetSub.textContent = ''; }
+  closeHexMenu();
   renderSheet();
   sheet.classList.add('on');
 }
@@ -12138,57 +12921,156 @@ function recipeOwned(r) {
   var out = r.out || r.id;
   return S.inv[out] || 0;
 }
+/* =========================================================
+   🧾 v2.4 레시피 카드 — 기본은 아이콘·이름·핵심 스탯·제작 버튼만.
+   카드를 탭하면 재료(보유/필요)·해금 조건·설명이 그 아래로 펼쳐진다.
+   ========================================================= */
+var REC_OPEN = {};                       /* 펼쳐 둔 카드 기억 (id → true) */
+
+/* 아이템별 탐험 레벨 조건 — 제작/착용의 기준 */
+var ITEM_LV = {
+  stoneKnife: 1, axe: 1, stoneSickle: 1, stonePick: 1, spear: 2, bow: 2,
+  bambooSpear: 6, boneKnife: 5, boneSpear: 6, ironBow: 8,
+  trikeKnife: 10, trikeSpear: 11, tyrantSpear: 14,
+  hideVest: 2, fineDress: 3, cottonCoat: 4, leatherBoots: 2, leatherPack: 3,
+  dyedDress: 5, thickArmor: 6, raptorBoots: 6, raptorPack: 7, cottonLeatherCoat: 8,
+  furHat: 8, furCoat: 9, furBoots: 8, beastCoat: 9, sailCloak: 11, tanCoat: 11, tyrantArmor: 14
+};
+function itemLv(id) { return ITEM_LV[id] || 1; }
+/* 방한 장비의 추위 저항 — 세 부위(모자·옷·신발)를 모두 갖추면 30 = 냉기 면역 */
+var GEAR_WARM = { furHat: 10, furCoat: 10, furBoots: 10, cottonLeatherCoat: 8 };
+function recipeLv(r) { return r.made ? 1 : itemLv(r.out || r.id); }
+function lvOk(r) { return (S.lv || 1) >= recipeLv(r); }
+
+/* 카드에 보여 줄 핵심 스탯 (⚔ +18 · 🛡 +12 · ⚡ 나무×2 …) */
+function itemStatChips(outId) {
+  var chips = [], w = WEAPONS[outId], g = GEAR[outId], it = ITEMS[outId];
+  if (w) {
+    if (w.kind === 'bow') chips.push('🏹 화살 ' + w.arrow);
+    else chips.push('⚔ ' + w.atk);
+    if (outId === 'axe') chips.push('⚡ 나무 +1');
+    if (outId === 'stoneSickle') chips.push('⚡ 풀·밀 +1');
+    if (outId === 'stonePick') chips.push('⚡ 바위·철 +1');
+  }
+  if (g) {
+    if (g.def) chips.push('🛡 방어 +' + g.def);
+    if (g.warm) chips.push('❄️ 추위저항 +' + (GEAR_WARM[outId] || 10));
+    if (g.spd) chips.push('🏃 이동 +' + Math.round(g.spd * 100) + '%');
+    if (g.slots) chips.push('🎒 가방 +' + g.slots + '칸');
+  }
+  if (outId === 'clothCotton') chips.push('❄️ 추위저항 +5');
+  if (outId === 'cottonWool') chips.push('❄️ 추위저항 +3');
+  if (it && it.food) chips.push('🍖 허기 +' + it.food);
+  return chips;
+}
+
+/* 재료 한 줄 — 아이콘 + 이름 + 보유/필요 (그림만 보고 헷갈리지 않게 글씨를 꼭 붙인다) */
+function materialChipsHtml(r) {
+  var mats = '';
+  for (var k in r.cost) {
+    var have = S.inv[k] || 0;
+    var cnm = ITEMS[k] ? ITEMS[k].name : k;
+    var csrc = ITEM_SOURCE[k] ? ' · 획득: ' + ITEM_SOURCE[k] : '';
+    mats += '<span class="m' + (have < r.cost[k] ? ' lack' : '') + '" title="' + cnm + csrc + '">' +
+      (ITEMS[k] ? ITEMS[k].icon : '') + ' ' + cnm + ' <b>' + have + '</b>/' + r.cost[k] + '</span>';
+  }
+  return mats;
+}
+
 function recipeRow(r) {
   var unlocked = recipeUnlocked(r);
   var benchOk = stationOk(r);
+  var lvNeed = recipeLv(r);
+  var lvEnough = (S.lv || 1) >= lvNeed;
   var own = recipeOwned(r);
   var outId = r.out || r.id;
   var equipped = !!(r.out && GEAR[r.out] && S.equip[GEAR[r.out].slot] === r.out);
   var held = !!(r.out && WEAPONS[r.out] && S.equip.weapon === r.out);
   var el = document.createElement('div');
+  var isOpen = !!REC_OPEN[r.id];
   el.className = 'rec' + (unlocked ? '' : ' locked') + (benchOk ? '' : ' blocked') +
-    ((equipped || held) ? ' done' : '');
+    ((equipped || held) ? ' done' : '') + (isOpen ? ' open' : '');
   el.title = r.name + ' — ' + (r.desc || '');
-  // 태그 — 아이콘·이름 옆에 짧게
+
+  // 아이콘·이름 옆 짧은 태그 — 보유 수량/착용/잠금만 아주 작게
   var tags = '';
   if (own > 0) tags += '<em class="tg own">' + own + '</em>';
   if (equipped || held) tags += '<em class="tg worn">' + (equipped ? '착용' : '장착') + '</em>';
   if (!unlocked) tags += '<em class="tg lock">🔒</em>';
-  else if (r.unlock && own === 0) tags += '<em class="tg unlock">해금</em>';
-  // 필요 재료 뱃지 — 아이콘 + 보유/필요
-  var costHtml = '';
+  // 핵심 스탯 — 눈에 들어오는 한 줄
+  var chips = itemStatChips(outId);
+  var statHtml = chips.length ? '<span class="statline">' + chips.map(function (c) {
+    return '<i>' + c + '</i>';
+  }).join('') + '</span>' : '';
+
+  // 상세 — 재료·레벨·해금·설명 (탭하면 펼쳐진다)
+  var mats = '';
   if (unlocked) {
-    for (var k in r.cost) {
-      var have = S.inv[k] || 0;
-      var cnm = ITEMS[k] ? ITEMS[k].name : k;
-      var csrc = ITEM_SOURCE[k] ? ' · 획득: ' + ITEM_SOURCE[k] : '';
-      costHtml += '<span class="' + (have < r.cost[k] ? 'lack' : '') + '" title="' + cnm + ' ' + have + '/' + r.cost[k] + csrc + '">' +
-        (ITEMS[k] ? ITEMS[k].icon : '') + ' <b>' + have + '</b>/' + r.cost[k] + '</span>';
-    }
-    if (!benchOk) costHtml += '<span class="lack" title="' + stationNeedLabel(r) + ' 앞에서 만들 수 있어요">🏭 ' + stationNeedLabel(r) + '</span>';
+    mats = materialChipsHtml(r);
+    if (!benchOk) mats += '<span class="m lack">🏭 ' + stationNeedLabel(r) + ' 필요</span>';
   } else {
-    costHtml = '<span class="lockmsg" title="' + unlockItemName(r) + '을 한 번 얻으면 열려요">🔒 ' + unlockItemName(r) + ' 획득 시 해금</span>';
+    mats = '<span class="m lockmsg">🔒 ' + unlockItemName(r) + '을(를) 한 번 얻으면 열려요</span>';
   }
+  var reqBits = [];
+  reqBits.push('<span class="lv' + (lvEnough ? '' : ' lack') + '">📈 Lv.' + lvNeed + '</span>');
+  if (!benchOk) reqBits.push('<span class="lv lack">🏭 ' + stationNeedLabel(r) + '</span>');
+  if (r.desc) reqBits.push('<span class="ddesc">' + r.desc + '</span>');
+  var detail = '<div class="recDetail"><div class="dMats">' + mats + '</div>' +
+    '<div class="dReq">' + reqBits.join('') + '</div></div>';
 
   var btnLabel = '제작', btnOff = false;
   if (!unlocked) { btnLabel = '잠금'; btnOff = true; }
-  else if (!benchOk) { btnOff = true; }
+  else if (!benchOk) { btnLabel = '시설 필요'; btnOff = true; }
+  else if (!lvEnough) { btnLabel = 'Lv.' + lvNeed; btnOff = true; }
   else if (!canCraft(r)) {
     btnOff = true;
     if (!bagCanAdd(r.out || r.id, r.qty || 1)) btnLabel = '칸 가득';
     else if (!costAllOk(r)) btnLabel = '재료 부족';
   }
+
   el.innerHTML = '<div class="ic">' + r.icon + '</div>' +
-    '<div class="txt"><div class="nmrow"><b>' + r.name + '</b>' + tags + '</div>' +
-    '<div class="cost">' + costHtml + '</div></div>' +
-    '<button' + (btnOff ? ' disabled' : '') + '>' + btnLabel + '</button>';
-  el.querySelector('button').addEventListener('click', function () { if (!btnOff) craft(r.id); });
+    '<div class="txt"><div class="nmrow"><b>' + r.name + '</b>' + tags + statHtml + '</div></div>' +
+    '<button' + (btnOff ? ' disabled' : '') + '>' + btnLabel + '</button>' + detail;
+  // 카드를 탭하면 상세가 펼쳐진다 (제작 버튼은 바로 제작)
+  el.addEventListener('click', function (e) {
+    if (e.target && e.target.closest && e.target.closest('button')) return;
+    REC_OPEN[r.id] = !el.classList.contains('open');
+    el.classList.toggle('open', !!REC_OPEN[r.id]);
+  });
+  el.querySelector('button').addEventListener('click', function (e) {
+    e.stopPropagation();
+    if (!btnOff) craft(r.id);
+  });
   return el;
 }
 /* 재료가 개수만 모자라는지 (버튼 라벨용) */
 function costAllOk(r) {
   for (var k in r.cost) { if ((S.inv[k] || 0) < r.cost[k]) return false; }
   return true;
+}
+
+/* =========================================================
+   📈 v2.4 탐험 레벨 — 채집·사냥·제작·설치로 경험치가 쌓인다
+   하단 보라색 EXP 바(Lv.N XX.X%)에 그대로 보인다.
+   ========================================================= */
+function expNeed(lv) { return 70 + (Math.max(1, lv) - 1) * 65; }
+function expPercent() { return clamp((S.exp || 0) / expNeed(S.lv || 1), 0, 1); }
+function addExp(n, why) {
+  if (!(n > 0) || !started) return;
+  S.exp = (S.exp || 0) + n;
+  var up = false, guard = 0;
+  while (S.exp >= expNeed(S.lv || 1) && guard++ < 40) {
+    S.exp -= expNeed(S.lv || 1);
+    S.lv = (S.lv || 1) + 1;
+    up = true;
+  }
+  if (up) {
+    sfx('craft');
+    toast('📈 탐험 Lv.' + S.lv + ' 달성!', 'good');
+    spawnBurst(player.pos.x, terrainH(player.pos.x, player.pos.z) + 1.4, player.pos.z, 0xc9a0ff, 14, 1.2);
+    chipsDirty = true;
+    saveState();
+  }
 }
 
 /* ---------------- 가방 시트 ---------------- */
@@ -12790,10 +13672,10 @@ function dyeChip(key, target) {
   b.type = 'button';
   var on = !!(S.dye && S.dye[target] === key);
   b.className = 'dyeChip' + (on ? ' on' : '');
-  b.style.cssText = 'display:inline-flex;align-items:center;gap:4px;margin:3px 4px 0 0;padding:7px 9px;border-radius:10px;' +
-    'border:2px solid ' + (on ? '#E8BE74' : 'rgba(224,177,90,.18)') + ';background:' + (n ? 'rgba(255,255,255,.08)' : 'rgba(255,255,255,.02)') +
-    ';font-weight:900;font-size:12px;color:' + (n ? '#F2E8D3' : '#79828A') + ';cursor:' + (n ? 'pointer' : 'default');
-  b.innerHTML = c.icon + ' ' + c.name + ' <small>×' + n + '</small>';
+  b.style.cssText = 'display:inline-flex;align-items:center;gap:5px;margin:3px 4px 0 0;padding:5px 8px;border-radius:8px;' +
+    'border:1px solid ' + (on ? '#D9B678' : 'rgba(255,255,255,.10)') + ';background:' + (n ? 'rgba(255,255,255,.05)' : 'rgba(255,255,255,.02)') +
+    ';font-weight:600;font-size:11px;color:' + (n ? '#CFD6D9' : '#6F797F') + ';cursor:' + (n ? 'pointer' : 'default');
+  b.innerHTML = '<i class="sw" style="background:' + c.sw + '"></i>' + c.name + ' <small>×' + n + '</small>';
   b.disabled = n <= 0;
   b.title = c.name + ' 염료 ' + n + '개' + (on ? ' · 지금 이 색' : '');
   b.addEventListener('click', function () { dyeApply(target, key); });
@@ -12847,16 +13729,21 @@ function renderDye() {
       var have = S.inv[c.petal] || 0, fib = S.inv.fiber || 0;
       var el = document.createElement('div');
       el.className = 'rec' + (have >= 3 && fib >= 1 ? '' : ' done');
-      el.innerHTML = '<div class="ic">' + c.icon + '</div><div class="txt"><b>' + c.name + ' 꽃 염료</b>' +
-        '<span class="own' + (dyeCount(key) ? '' : ' zero') + '">보유중 ' + dyeCount(key) + '개</span>' +
-        '<div class="cost"><span class="' + (have < 3 ? 'lack' : '') + '" title="' + ITEMS[c.petal].name + '">' +
-        ITEMS[c.petal].icon + ' ' + ITEMS[c.petal].name + ' <b>' + have + '/3</b></span>' +
-        '<span class="' + (fib < 1 ? 'lack' : '') + '">🧵 섬유 <b>' + fib + '/1</b></span></div></div>';
-      var btn = document.createElement('button');
-      btn.textContent = '만들기';
+      var _dt = '<div class="recDetail"><div class="dMats">' +
+        '<span class="m' + (have < 3 ? ' lack' : '') + '">' + ITEMS[c.petal].icon + ' ' + ITEMS[c.petal].name + ' <b>' + have + '</b>/3</span>' +
+        '<span class="m' + (fib < 1 ? ' lack' : '') + '">🧵 섬유 <b>' + fib + '</b>/1</span>' +
+        '</div><div class="dReq"><span class="lv">🧪 꽃잎 3 + 섬유 1 → 염료 2개</span></div></div>';
+      el.innerHTML = '<div class="ic"><span class="sw big" style="background:' + c.sw + '"></span></div>' +
+        '<div class="txt"><div class="nmrow"><b>' + c.name + ' 꽃 염료</b>' +
+        '<span class="tg own">' + dyeCount(key) + '개</span></div></div>' +
+        '<button>만들기</button>' + _dt;
+      var btn = el.querySelector('button');
       btn.disabled = !(have >= 3 && fib >= 1) || !rec || !stationOk(rec);
-      btn.addEventListener('click', function () { if (rec) craft(rec.id); });
-      el.appendChild(btn);
+      btn.addEventListener('click', function (e) { e.stopPropagation(); if (rec) craft(rec.id); });
+      el.addEventListener('click', function (e) {
+        if (e.target && e.target.closest && e.target.closest('button')) return;
+        el.classList.toggle('open');
+      });
       sheetBody.appendChild(el);
     })(DYE_ORDER[i]);
   }
@@ -12978,12 +13865,6 @@ function renderSheet() {
         sList.appendChild(sEmpty);
       }
       sheetBody.appendChild(sList);
-      var sBack = document.createElement('button');
-      sBack.type = 'button';
-      sBack.textContent = '← 전체 제작창';
-      sBack.style.cssText = 'width:100%;margin:10px 0 0;padding:10px;border-radius:12px;border:2px dashed rgba(224,177,90,.35);background:rgba(255,255,255,.04);color:#E5D9C0;font-weight:900;font-size:12px;cursor:pointer';
-      sBack.addEventListener('click', function () { openCraftHome(); });
-      sheetBody.appendChild(sBack);
       var sNote = document.createElement('div');
       sNote.className = 'sheetNote tight';
       sNote.textContent = '이 창은 ' + _sdOnly.name + ' 하나만 보여 줘요 · 다른 시설은 그 시설 앞에서 · 가방 ' + bagUsed() + '/' + bagSlots() + '칸';
@@ -12991,75 +13872,25 @@ function renderSheet() {
       return;
     }
 
-    // 탭: 기초 / 의상 / 무기·대장간 / 시설 가공
-    if (craftTab === 'process') craftTab = 'station';
-    var tabs = document.createElement('div');
-    tabs.className = 'tabs';
+    /* v2.4 — 탭을 없앴다: 일반 작업대·상단 🛠 는 '기초'만.
+       옷은 의상 작업대, 무기·화살은 대장간, 무두질은 건조대, 솜·옷감은 베틀,
+       염료·염색은 염색대 — 각 시설 앞에서만 그 레시피가 보인다. */
+    craftTab = 'basic';
     var _bench = nearWorkbench();
-    var defs = [
-      ['basic', '기초', '🧰', ''],
-      ['clothes', '의상', '🧥', (_bench || nearStationId('tailorBench')) ? '' : '🔒'],
-      ['weapon', '무기·대장', '⚒️', (_bench || nearStationId('smithBench')) ? '' : '🔒'],
-      ['station', '시설 가공', '🏭', '']
-    ];
-    for (var ti = 0; ti < defs.length; ti++) {
-      (function (d) {
-        var b = document.createElement('button');
-        b.className = 'tab' + (craftTab === d[0] ? ' on' : '');
-        b.innerHTML = '<span>' + d[2] + '</span>' + d[1] + (d[3] ? ' <span class="lock">' + d[3] + '</span>' : '');
-        b.addEventListener('click', function () { craftTab = d[0]; renderSheet(); });
-        tabs.appendChild(b);
-      })(defs[ti]);
-    }
-    sheetBody.appendChild(tabs);
-
-    // 지금 앞에 있는 시설을 알려 준다 — 한 줄로 짧게
     var _nearSt = nearestStationId(3.4);
     var _head = document.createElement('div');
     _head.className = 'sheetNote tight';
-    _head.innerHTML = (craftTab === 'basic' ? '🧰 <b>기초</b> · 시설 없이 바로'
-      : craftTab === 'clothes' ? '🧥 <b>의상</b> · 의상 작업대 / 간이 작업대'
-        : craftTab === 'weapon' ? '⚒️ <b>무기·대장</b> · 대장간 / 간이 작업대'
-          : '🏭 <b>시설 가공</b> · 시설마다 전용 창') +
+    _head.innerHTML = '🧰 <b>기초</b> · 도구 · 시설 · 가구' +
       (_bench ? ' <span class="nearOk">🪚 작업대 OK</span>' : '') +
       (_nearSt ? ' <span class="nearOk">지금 앞: ' + (STATIONS[_nearSt.type] ? STATIONS[_nearSt.type].icon + ' ' + STATIONS[_nearSt.type].name : _nearSt.type) + '</span>' : '');
     sheetBody.appendChild(_head);
-
-    /* 🏭 시설 가공 탭 — 건조대·베틀·염색대를 한 줄로 섞지 않고 시설 카드 3장으로 */
-    if (craftTab === 'station') {
-      var fList = document.createElement('div');
-      fList.className = 'recList';
-      for (var fi = 0; fi < STATION_ORDER.length; fi++) {
-        (function (fid) {
-          if (fid === 'tailorBench' || fid === 'smithBench') return;
-          var sd = STATIONS[fid];
-          var near = nearStationId(fid, 7.5);
-          var el = document.createElement('div');
-          el.className = 'rec' + (near ? '' : ' blocked');
-          el.title = sd.name + ' — ' + sd.desc;
-          el.innerHTML = '<div class="ic">' + sd.icon + '</div>' +
-            '<div class="txt"><div class="nmrow"><b>' + sd.name + '</b>' +
-            (near ? '<em class="tg own">앞에 있음</em>' : '<em class="tg lock">시설 필요</em>') + '</div>' +
-            '<div class="cost"><span class="short">' + (STATION_SHORT[fid] || sd.desc) + '</span></div></div>' +
-            '<button>열기</button>';
-          el.querySelector('button').addEventListener('click', function () { openStationCraft(fid); });
-          fList.appendChild(el);
-        })(STATION_ORDER[fi]);
-      }
-      sheetBody.appendChild(fList);
-      var fNote = document.createElement('div');
-      fNote.className = 'sheetNote tight';
-      fNote.innerHTML = '🏭 시설마다 창이 따로예요 — 앞에 서면 오른쪽 큰 버튼이 그 시설 전용 창으로 바뀌고, 여기서는 시설을 하나씩 열어 볼 수 있어요. 옷·무기는 의상 작업대·대장간 창에서 만들어요.';
-      sheetBody.appendChild(fNote);
-      return;
-    }
 
     var warmHdr = false;
     var listEl = document.createElement('div');
     listEl.className = 'recList';
     for (var i = 0; i < RECIPES.length; i++) {
       var rec = RECIPES[i];
-      if (rec.tab !== craftTab) continue;
+      if (rec.tab !== 'basic') continue;          // 옷·무기·가공은 각 시설 창에서만
       if (rec.warmSet && !warmHdr) {
         warmHdr = true;
         var wh = document.createElement('div');
@@ -13072,9 +13903,8 @@ function renderSheet() {
     sheetBody.appendChild(listEl);
     var note = document.createElement('div');
     note.className = 'sheetNote tight';
-    note.textContent = (craftTab === 'clothes' ? '의상 작업대 / 간이 작업대 가까이에서 만들 수 있어요' :
-      craftTab === 'weapon' ? '대장간 / 간이 작업대 가까이에서 만들 수 있어요' :
-        '기초는 시설 없이 바로 만들 수 있어요') + ' · 새 재료를 얻으면 🔓 해금 · 가방 ' + bagUsed() + '/' + bagSlots() + '칸';
+    note.textContent = '기초는 시설 없이 바로 만들 수 있어요 · 옷은 의상 작업대, 무기·화살은 대장간, 가공은 각 시설 앞에서' +
+      ' · 새 재료를 얻으면 🔓 해금 · 가방 ' + bagUsed() + '/' + bagSlots() + '칸';
     sheetBody.appendChild(note);
   } else if (sheetMode === 'book') {
     var stats = document.createElement('div');
@@ -13156,26 +13986,36 @@ function renderSheet() {
       table: '오두막 앞에 놓는 소품',
       planter: '꽃을 심은 돌 화분'
     };
-    // 📦 포장해 둔 상자 — 내용물·이름을 그대로 다시 놓는다
+    // 📦 v2.4 — 포장해 둔 구조물 (상자·모닥불·시설·집 전부)
     if (S.packed && S.packed.length) {
       var ph = document.createElement('div');
       ph.className = 'gridHead';
       ph.style.marginBottom = '8px';
-      ph.innerHTML = '<b>📦 포장한 상자</b><span>' + S.packed.length + '개</span><em>내용물째 다시 놓을 수 있어요</em>';
+      ph.innerHTML = '<b>📦 포장한 구조물</b><span>' + S.packed.length + '개</span><em>그대로 다시 놓을 수 있어요</em>';
       sheetBody.appendChild(ph);
       for (var pk = 0; pk < S.packed.length; pk++) {
         (function (pr) {
-          var tier = CHEST_TIERS[pr.type] || CHEST_TIERS.chest;
+          var def2 = STRUCT_DEF[pr.type] || { icon: '📦', name: pr.type };
           var n = 0, items = pr.items || {};
           for (var kk in items) if ((items[kk] | 0) > 0) n += Math.ceil(items[kk] / STACK_MAX);
+          var extra = n ? ' · 물건 ' + n + '칸' : '';
+          if (pr.type === 'campfire') extra = (pr.lit ? ' · 불씨 있음' : ' · 꺼짐') + (pr.queue && pr.queue.length ? ' · 굽던 음식 ' + pr.queue.length : '');
+          if (pr.type === 'hatchNest' && pr.egg) extra = ' · 품던 알 ' + Math.round(clamp((pr.egg.p || 0) / HATCH_DAYS, 0, 1) * 100) + '%';
           var el = document.createElement('div');
           el.className = 'rec';
-          el.innerHTML = '<div class="ic">' + tier.icon + '</div><div class="txt"><b>' + escHtml(chestName({ type: pr.type, name: pr.name })) + '</b>' +
-            '<small>' + tier.name + ' · 물건 ' + n + '칸 담김</small></div>';
+          el.innerHTML = '<div class="ic">' + def2.icon + '</div>' +
+            '<div class="txt"><div class="nmrow"><b>' + escHtml(pr.name || def2.name) + '</b>' +
+            '<span class="statline"><i>' + def2.name + '</i></span></div></div>' +
+            '<div class="recDetail"><div class="dReq"><span class="ddesc">' + (STRUCT_DESC[pr.type] || '') + '</span>' +
+            '<span class="lv">📦' + extra + '</span></div></div>';
           var b = document.createElement('button');
           b.textContent = '놓기';
-          b.addEventListener('click', function () { startPlacingPacked(pr); });
+          b.addEventListener('click', function (e) { e.stopPropagation(); startPlacingPacked(pr); });
           el.appendChild(b);
+          el.addEventListener('click', function (e) {
+            if (e.target && e.target.closest && e.target.closest('button')) return;
+            el.classList.toggle('open');
+          });
           sheetBody.appendChild(el);
         })(S.packed[pk]);
       }
@@ -13191,11 +14031,24 @@ function renderSheet() {
         el.title = def.name + ' — ' + (STRUCT_DESC[key] || '');
         var badges = def.slots ? '<em class="tg own">' + def.slots + '칸</em>' : '';
         badges += cnt ? '<em class="tg own">×' + cnt + '</em>' : '<em class="tg lock">없음</em>';
+        /* v2.4 — 설치 목록도 같은 카드 규칙: 기본은 이름·한 줄 소개·놓기 버튼만, 탭하면 재료·설명 */
+        var _r = findRecipe(key);
+        var _detail = '<div class="recDetail">' +
+          (_r ? '<div class="dMats">' + materialChipsHtml(_r) + '</div>' : '') +
+          '<div class="dReq"><span class="ddesc">' + (STRUCT_DESC[key] || '') + '</span>' +
+          '<span class="lv">📦 보관 ×' + cnt + '</span></div></div>';
         el.innerHTML = '<div class="ic">' + def.icon + '</div>' +
-          '<div class="txt"><div class="nmrow"><b>' + def.name + '</b>' + badges + '</div>' +
-          '<div class="cost"><span class="short">' + (STRUCT_SHORT[key] || '') + '</span></div></div>' +
-          '<button' + (cnt ? '' : ' disabled') + '>놓기</button>';
-        el.querySelector('button').addEventListener('click', function () { if (cnt) startPlacing(key); });
+          '<div class="txt"><div class="nmrow"><b>' + def.name + '</b>' + badges +
+          '<span class="statline"><i>' + (STRUCT_SHORT[key] || '') + '</i></span></div></div>' +
+          '<button' + (cnt ? '' : ' disabled') + '>놓기</button>' + _detail;
+        el.addEventListener('click', function (e) {
+          if (e.target && e.target.closest && e.target.closest('button')) return;
+          el.classList.toggle('open');
+        });
+        el.querySelector('button').addEventListener('click', function (e) {
+          e.stopPropagation();
+          if (cnt) startPlacing(key);
+        });
         listEl2.appendChild(el);
       })(keys[j]);
     }
@@ -13819,7 +14672,7 @@ btnBuild.addEventListener('pointerdown', function (e) {
   if (placing) { cancelPlacing(); toast('설치 취소'); return; }
   var total = 0;
   for (var k in S.made) total += S.made[k] || 0;
-  if (total <= 0) {
+  if (total <= 0 && (!S.packed || !S.packed.length)) {
     openCraftHome();
     hint('먼저 모닥불·오두막·작업대를 제작해 보세요', 3000);
     return;
@@ -14060,11 +14913,21 @@ function updatePlayer(dt) {
   // ── 애니메이션: 걷기 / 근접 스윙 / 활 당기기
   if (POSE_LOCK) { player.swingKind = POSE_LOCK.kind; player.swing = 0.4 * (1 - POSE_LOCK.sp); }
   var target = player.moving ? 1 : 0;
-  player.walk += (target - player.walk) * Math.min(1, dt * 8);
+  // v2.4 — 출발은 천천히, 멈춤도 살짝 늦게 (딱딱한 로봇 가속 제거)
+  player.walk += (target - player.walk) * Math.min(1, dt * (target > player.walk ? 6.2 : 9.5));
   var t = performance.now() / 1000;
-  var ph = t * 9.5;
-  player.legL.rotation.x = Math.sin(ph) * 0.72 * player.walk;
-  player.legR.rotation.x = -Math.sin(ph) * 0.72 * player.walk;
+  var ph = t * 8.6;
+  var stride = Math.sin(ph) * 0.60 * player.walk;
+  player.legL.rotation.x = stride;
+  player.legR.rotation.x = -stride;
+  // 무릎: 다리가 앞으로 나갈 때 접히고, 디딜 때 펴진다
+  var kneeL = Math.max(0, Math.sin(ph + 0.85)) * 0.92 * player.walk + 0.04;
+  var kneeR = Math.max(0, Math.sin(ph + 0.85 + Math.PI)) * 0.92 * player.walk + 0.04;
+  if (player.kneeL) player.kneeL.rotation.x = kneeL;
+  if (player.kneeR) player.kneeR.rotation.x = kneeR;
+  // 발목: 발바닥이 땅에 붙도록 무릎·허벅지를 상쇄
+  if (player.ankleL) player.ankleL.rotation.x = -(player.legL.rotation.x + kneeL) * 0.72 + 0.10 * player.walk;
+  if (player.ankleR) player.ankleR.rotation.x = -(player.legR.rotation.x + kneeR) * 0.72 + 0.10 * player.walk;
   if (player.swing > 0) player.swing = Math.max(0, player.swing - dt * 2.2);
 
   if (player.bowT > 0) {
@@ -14127,18 +14990,31 @@ function updatePlayer(dt) {
       player.head.rotation.y = 0;
     }
   } else {
-    player.armL.rotation.x = -Math.sin(ph) * 0.58 * player.walk;
-    player.armR.rotation.x = Math.sin(ph) * 0.4 * player.walk;
-    player.armL.rotation.z += (0 - player.armL.rotation.z) * Math.min(1, dt * 10);
-    player.armR.rotation.z += (0 - player.armR.rotation.z) * Math.min(1, dt * 10);
+    // v2.4 — 팔은 어깨에서 흔들리고 팔꿈치가 살짝 접혀 따라온다
+    var swingL = -Math.sin(ph) * 0.52 * player.walk;
+    var swingR = Math.sin(ph) * 0.52 * player.walk;
+    player.armL.rotation.x = swingL;
+    player.armR.rotation.x = swingR;
+    if (player.elbowL) player.elbowL.rotation.x = -0.18 - Math.max(0, -swingL) * 0.55;
+    if (player.elbowR) player.elbowR.rotation.x = -0.18 - Math.max(0, -swingR) * 0.55;
+    player.armL.rotation.z += (-0.045 - player.armL.rotation.z) * Math.min(1, dt * 10);
+    player.armR.rotation.z += (0.045 - player.armR.rotation.z) * Math.min(1, dt * 10);
     player.armR.rotation.y += (0 - player.armR.rotation.y) * Math.min(1, dt * 10);
-    player.body.rotation.y += (0 - player.body.rotation.y) * Math.min(1, dt * 9);
+    // 어깨·골반 스웨이
+    player.body.rotation.y += (Math.sin(ph) * 0.055 * player.walk - player.body.rotation.y) * Math.min(1, dt * 9);
     player.head.rotation.y += (0 - player.head.rotation.y) * Math.min(1, dt * 9);
+    player.body.rotation.z += (Math.sin(ph) * 0.030 * player.walk - player.body.rotation.z) * Math.min(1, dt * 8);
   }
-  player.body.position.y = 0.62 + Math.abs(Math.sin(ph)) * 0.045 * player.walk + Math.sin(t * 1.7) * 0.008;
-  player.head.rotation.z = Math.sin(t * 1.3) * 0.02;
+  player.body.position.y = (player.bodyBaseY || 0.62) + Math.abs(Math.sin(ph)) * 0.038 * player.walk + Math.sin(t * 1.7) * 0.007;
+  // 걸을 땐 살짝 앞으로 기울고, 고개는 반대로 살짝 흔들린다
+  player.body.rotation.x += (0.055 * player.walk - player.body.rotation.x) * Math.min(1, dt * 6);
+  player.head.rotation.z = Math.sin(ph * 0.5 + 0.6) * 0.022 * player.walk + Math.sin(t * 1.3) * 0.014;
   if (rideDino) {
     player.legL.rotation.x = 0.75; player.legR.rotation.x = 0.75;
+    if (player.kneeL) player.kneeL.rotation.x = 0.95;
+    if (player.kneeR) player.kneeR.rotation.x = 0.95;
+    if (player.ankleL) player.ankleL.rotation.x = -0.25;
+    if (player.ankleR) player.ankleR.rotation.x = -0.25;
     player.armL.rotation.x = -0.3;
   } else {
     // 넉백/미끄럼으로 바뀐 좌표를 모델에 항상 반영한다
@@ -15080,6 +15956,8 @@ function updateStructures(dt, t) {
       }
     }
     if (s.lit) {
+      // 🔥 불빛은 밤에만 또렷하게 — 낮에는 지글거리는 정도로 약하게 (바닥이 하얗게 타지 않게)
+      if (u.light) u.light.intensity = (u.lightBase || 0.55) * (0.45 + 1.35 * (typeof DAY !== 'undefined' ? DAY.night : 0));
       if (u.flames) {
         for (var f = 0; f < u.flames.length; f++) {
           var fm = u.flames[f];
@@ -15489,6 +16367,262 @@ function initWorld() {
 }
 
 /* ---------------- hud ---------------- */
+/* =========================================================
+   🗺 v2.4 미니맵 · 📈 경험치 바 · 🛠 육각 방사형 메뉴
+   ========================================================= */
+var mmCanvas = $id('mmCanvas'), mmCtx = mmCanvas ? mmCanvas.getContext('2d') : null;
+var mmWrapEl = $id('mmWrap'), mmMarkEl = $id('mmMark'), mmSunEl = $id('mmSun'), mmMoonEl = $id('mmMoon');
+var expFillEl = $id('expFill'), expLblEl = $id('expLbl');
+var MM_RANGE = 40;                       // 미니맵에 보이는 반경(m)
+if (mmWrapEl) mmWrapEl.addEventListener('click', function () { if (MAP.open) closeMap(); else openMap(); });
+
+function drawMiniMap() {
+  if (!mmCtx || !started) return;
+  var W = mmCanvas.width, H = mmCanvas.height;
+  if (!MAP.base) MAP.base = buildMapBase();
+  var half = MAP.half, base = 360;
+  var srcK = base / (2 * half);                  // 기본 지도 px/m
+  var srcW = 2 * MM_RANGE * srcK;
+  var sx = (player.pos.x + half) * srcK - srcW / 2;
+  var sy = (player.pos.z + half) * srcK - srcW / 2;
+  var k = W / (2 * MM_RANGE);                    // 화면 px/m
+  mmCtx.clearRect(0, 0, W, H);
+  mmCtx.drawImage(MAP.base, sx, sy, srcW, srcW, 0, 0, W, H);
+  // 밤에는 어둡게
+  if (DAY.night > 0.05) {
+    mmCtx.fillStyle = 'rgba(12,18,34,' + (0.55 * DAY.night).toFixed(2) + ')';
+    mmCtx.fillRect(0, 0, W, H);
+  }
+  function px(wx, wz) { return [W / 2 + (wx - player.pos.x) * k, H / 2 + (wz - player.pos.z) * k]; }
+  // 구조물
+  for (var i = 0; i < structures.length; i++) {
+    var st = structures[i];
+    var p = px(st.x, st.z);
+    if (p[0] < -4 || p[0] > W + 4 || p[1] < -4 || p[1] > H + 4) continue;
+    if (st.type === 'cabin') {
+      mmCtx.fillStyle = '#f3e2b6'; mmCtx.strokeStyle = 'rgba(30,24,14,.85)'; mmCtx.lineWidth = 1.6;
+      mmCtx.beginPath(); mmCtx.rect(p[0] - 4.5, p[1] - 4.5, 9, 9); mmCtx.fill(); mmCtx.stroke();
+      mmCtx.fillStyle = '#8a5a2b'; mmCtx.fillRect(p[0] - 1.6, p[1] - 1.6, 3.2, 3.2);
+    } else if (st.type === 'campfire') {
+      mmCtx.fillStyle = st.lit === false ? '#6d6a60' : '#ff9a3c';
+      mmCtx.beginPath(); mmCtx.arc(p[0], p[1], 3.2, 0, TAU); mmCtx.fill();
+    } else {
+      mmCtx.fillStyle = 'rgba(232,222,190,.86)';
+      mmCtx.beginPath(); mmCtx.arc(p[0], p[1], 2.2, 0, TAU); mmCtx.fill();
+    }
+  }
+  // 공룡 — 야생은 붉게, 길들인 것은 노랗게
+  for (var d = 0; d < dinos.length; d++) {
+    var dd = dinos[d];
+    if (dd.dead) continue;
+    var dp = px(dd.x, dd.z);
+    if (dp[0] < 0 || dp[0] > W || dp[1] < 0 || dp[1] > H) continue;
+    mmCtx.fillStyle = dd.tamed ? '#ffd166' : (dd.hostile ? '#d9564a' : '#9aa79a');
+    mmCtx.beginPath(); mmCtx.arc(dp[0], dp[1], dd.tamed ? 2.6 : 2.0, 0, TAU); mmCtx.fill();
+  }
+  // 내 위치 — 방향 화살표
+  mmCtx.save();
+  mmCtx.translate(W / 2, H / 2);
+  mmCtx.rotate(Math.PI - player.facing);
+  mmCtx.beginPath();
+  mmCtx.moveTo(0, -8); mmCtx.lineTo(5.5, 6); mmCtx.lineTo(0, 3); mmCtx.lineTo(-5.5, 6);
+  mmCtx.closePath();
+  mmCtx.fillStyle = '#ffb43d'; mmCtx.fill();
+  mmCtx.lineWidth = 1.6; mmCtx.strokeStyle = 'rgba(30,24,10,.9)'; mmCtx.stroke();
+  mmCtx.restore();
+  // 테두리
+  mmCtx.strokeStyle = 'rgba(236,226,198,.35)'; mmCtx.lineWidth = 2;
+  mmCtx.strokeRect(1, 1, W - 2, H - 2);
+}
+
+function updateExpBar() {
+  if (!expFillEl) return;
+  var pct = expPercent();
+  expFillEl.style.width = (pct * 100).toFixed(1) + '%';
+  setText(expLblEl, 'Lv.' + (S.lv || 1) + ' ' + (pct * 100).toFixed(1) + '%');
+}
+
+/* ── 🛠 육각 방사형 메뉴 ── */
+var hexEl = $id('hexMenu');
+var HEX = { st: null, on: false, ids: '', nameEl: null, btns: [] };
+var HEX_POLY = '50,2 96,28 96,84 50,110 4,84 4,28';
+function hexActionsFor(st) {
+  var t = st.type;
+  var acts = [];
+  if (t === 'workbench' || t === 'dryingRack' || t === 'loom' || t === 'dyeVat' || t === 'tailorBench' || t === 'smithBench') {
+    acts.push({ a: 'craft', icon: t === 'dyeVat' ? '🎨' : '🛠', label: t === 'dyeVat' ? '염색' : '제작', big: true });
+  } else if (isChestType(t)) {
+    acts.push({ a: 'open', icon: '📦', label: '열기', big: true });
+  } else if (t === 'campfire') {
+    acts.push({ a: 'fire', icon: '🔥', label: st.lit === false ? '불 피우기' : '요리', big: true });
+  } else if (t === 'cabin') {
+    acts.push({ a: 'enter', icon: '🚪', label: '들어가기', big: true });
+  } else if (t === 'hatchNest') {
+    acts.push({ a: 'use', icon: '🥚', label: '둥지', big: true });
+  } else if (t === 'leatherRug') {
+    acts.push({ a: 'use', icon: '🟫', label: '가죽 러그', big: true });
+  } else if (t === 'leatherCanopy') {
+    acts.push({ a: 'use', icon: '⛺', label: '가죽 지붕', big: true });
+  } else {
+    acts.push({ a: 'use', icon: '✅', label: '사용', big: true });
+  }
+  acts.push({ a: 'pack', icon: '📦', label: '포장' });
+  acts.push({ a: 'demolish', icon: '💥', label: '제거' });
+  return acts;
+}
+function hexSignature(st) {
+  var a = hexActionsFor(st);
+  return st.type + '|' + (st.lit === false ? 0 : 1) + '|' + st.x.toFixed(1) + ',' + st.z.toFixed(1) + '|' + a.length;
+}
+function buildHexMenu(st) {
+  hexEl.innerHTML = '';
+  var acts = hexActionsFor(st);
+  var nameEl = document.createElement('div');
+  nameEl.id = 'hexName';
+  nameEl.textContent = (STRUCT_DEF[st.type] ? STRUCT_DEF[st.type].icon + ' ' : '') + chestName(st);
+  hexEl.appendChild(nameEl);
+  HEX.nameEl = nameEl;
+  HEX.btns = [];
+  var angles = acts.length >= 3 ? [-158, -90, -22] : [-140, -40];
+  for (var i = 0; i < acts.length; i++) {
+    var act = acts[i];
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'hexBtn' + (act.big ? ' big' : '');
+    var rad = act.big ? 74 : 62;
+    var ang = angles[i] * Math.PI / 180;
+    var bx = Math.cos(ang) * rad, by = Math.sin(ang) * rad - 14;
+    b.style.setProperty('--x', bx.toFixed(1) + 'px');
+    b.style.setProperty('--y', by.toFixed(1) + 'px');
+    b.innerHTML = '<svg viewBox="0 0 100 112"><polygon points="' + HEX_POLY + '"></polygon></svg>' +
+      '<span class="hi">' + act.icon + '</span><span class="hl">' + act.label + '</span>';
+    b.setAttribute('aria-label', act.label);
+    (function (a2) {
+      b.addEventListener('click', function (e) { e.stopPropagation(); doHexAction(st, a2); });
+    })(act.a);
+    hexEl.appendChild(b);
+    HEX.btns.push(b);
+  }
+  HEX.st = st;
+  HEX.ids = hexSignature(st);
+}
+function openHexMenu(st) {
+  if (!hexEl || !st) return;
+  var sig = hexSignature(st);
+  if (!HEX.on || sig !== HEX.ids) buildHexMenu(st);
+  HEX.on = true;
+  hexEl.classList.add('on');
+  hexEl.setAttribute('aria-hidden', 'false');
+  positionHexMenu();
+}
+function closeHexMenu() {
+  if (!hexEl) return;
+  HEX.on = false;
+  HEX.st = null;
+  HEX.ids = '';
+  hexEl.classList.remove('on');
+  hexEl.setAttribute('aria-hidden', 'true');
+}
+var _hexV = null;
+function positionHexMenu() {
+  if (!HEX.on || !HEX.st) return;
+  if (!_hexV) _hexV = new THREE.Vector3();
+  var st = HEX.st;
+  _hexV.set(st.x, terrainH(st.x, st.z) + (st.type === 'cabin' ? 1.9 : 1.15), st.z).project(camera);
+  if (_hexV.z > 1) { hexEl.style.opacity = '0'; return; }
+  hexEl.style.opacity = '';
+  var sx = (_hexV.x * 0.5 + 0.5) * window.innerWidth;
+  var sy = (-_hexV.y * 0.5 + 0.5) * window.innerHeight;
+  // 화면 밖으로 나가면 가장자리로 붙인다
+  var _mg = HEX.st && HEX.st.type === 'cabin' ? 112 : 100;
+  sx = clamp(sx, _mg, window.innerWidth - _mg);
+  sy = clamp(sy, 118, window.innerHeight - 130);
+  hexEl.style.transform = 'translate(' + sx.toFixed(1) + 'px,' + sy.toFixed(1) + 'px)';
+}
+function structInReach(st) {
+  if (!st) return false;
+  var dx = st.x - player.pos.x, dz = st.z - player.pos.z;
+  return Math.sqrt(dx * dx + dz * dz) <= structReach(st) + 0.6;
+}
+function doHexAction(st, act) {
+  if (!st) return;
+  audioInit();
+  if (act === 'pack') { doPackStruct(st); closeHexMenu(); return; }
+  if (act === 'demolish') {
+    if (!structInReach(st)) { sfx('deny'); toast('조금 더 가까이 가 주세요', 'warn'); return; }
+    demolishSt = st; openSheet('demolish'); closeHexMenu(); return;
+  }
+  if (!structInReach(st)) {
+    sfx('deny');
+    var nm = STRUCT_DEF[st.type] ? STRUCT_DEF[st.type].name : '구조물';
+    toast('🚶 ' + nm + ' 가까이 걸어가면 쓸 수 있어요', 'warn');
+    return;
+  }
+  if (act === 'craft') {
+    if (st.type === 'workbench') { openCraftHome(); }
+    else openStationCraft(st.type);
+    closeHexMenu();
+  } else if (act === 'open') {
+    openChest(st); closeHexMenu();
+  } else if (act === 'fire') {
+    if (st.lit === false) relightFire(st); else { fireSt = st; openSheet('fire'); }
+    closeHexMenu();
+  } else if (act === 'enter') {
+    closeHexMenu();
+    hint('🚪 오두막 문 앞으로 걸어 들어가면 안으로 들어가요', 2600);
+  } else if (act === 'use') {
+    if (st.type === 'hatchNest') {
+      if (st.egg && !st.egg.done) { toast('🥚 알을 품는 중이에요 · ' + Math.round(clamp(st.egg.p / HATCH_DAYS, 0, 1) * 100) + '%', undefined); }
+      else if ((S.inv.pteroEgg || 0) > 0) putEggInNest(st);
+      else { toast('🪺 둥지가 비어 있어요 · 익룡 알을 찾아보세요', 'warn'); }
+    } else {
+      var dn = STRUCT_DEF[st.type] ? STRUCT_DEF[st.type].name : '구조물';
+      toast(dn + ' — ' + (st.name ? '「' + st.name + '」' : '잘 놓여 있어요'), undefined);
+    }
+    closeHexMenu();
+  }
+}
+
+/* 화면 속 구조물을 탭하면 그 구조물의 육각 메뉴가 열린다 */
+var _tap = { x: 0, y: 0, t: 0, moved: false };
+var _ray = new THREE.Raycaster(), _ndc = new THREE.Vector2();
+function pickStructureAt(clientX, clientY) {
+  if (!renderer) return null;
+  _ndc.x = (clientX / window.innerWidth) * 2 - 1;
+  _ndc.y = -(clientY / window.innerHeight) * 2 + 1;
+  _ray.setFromCamera(_ndc, camera);
+  var groups = [];
+  for (var i = 0; i < structures.length; i++) if (structures[i].group) groups.push(structures[i].group);
+  var hits = _ray.intersectObjects(groups, true);
+  if (!hits.length) return null;
+  var obj = hits[0].object;
+  while (obj) {
+    for (var j = 0; j < structures.length; j++) if (structures[j].group === obj) return structures[j];
+    obj = obj.parent;
+  }
+  return null;
+}
+(function bindStageTap() {
+  var stage = $id('stage');
+  if (!stage) return;
+  stage.addEventListener('pointerdown', function (e) {
+    _tap.x = e.clientX; _tap.y = e.clientY; _tap.t = performance.now(); _tap.moved = false;
+  });
+  stage.addEventListener('pointermove', function (e) {
+    if (Math.abs(e.clientX - _tap.x) + Math.abs(e.clientY - _tap.y) > 14) _tap.moved = true;
+  });
+  stage.addEventListener('pointerup', function (e) {
+    if (!started || placing || cooking) return;
+    if (_tap.moved || performance.now() - _tap.t > 700) return;
+    var st = pickStructureAt(e.clientX, e.clientY);
+    if (!st) return;
+    var dx = st.x - player.pos.x, dz = st.z - player.pos.z;
+    if (Math.sqrt(dx * dx + dz * dz) > 16) { hint('🚶 너무 멀어요 · ' + (STRUCT_DEF[st.type] ? STRUCT_DEF[st.type].name : '구조물') + ' 가까이 가 주세요', 1800); return; }
+    openHexMenu(st);
+    sfx('pop');
+  });
+})();
+
 var hudT = 0, zoneT = 0;
 var _HOME_FWD = new THREE.Vector3(0, 0, -1);
 function updateHUD(dt) {
@@ -15501,6 +16635,20 @@ function updateHUD(dt) {
   hgTxt.textContent = '🍖 ' + Math.round(S.hunger);
   setText(atkTxt, String(meleeAtk()));
   setText(defTxt, String(gearDef()));
+  updateExpBar();
+  drawMiniMap();
+  if (mmMarkEl && mmMarkEl.style) mmMarkEl.style.left = (clamp(DAY.t, 0, 0.999) * 100).toFixed(1) + '%';
+  // 가까이 있는 구조물은 자동으로 육각 메뉴를 띄운다 (시트·설치 중에는 숨김)
+  if (!sheet.classList.contains('on') && !placing && !cooking) {
+    var _ns = nearestStructure(4.2);
+    if (_ns && structInReach(_ns)) {
+      if (!HEX.on || HEX.st !== _ns) openHexMenu(_ns);
+    } else if (HEX.on && !HEX.st) { closeHexMenu(); }
+    else if (HEX.on && HEX.st) {
+      var _hx = HEX.st.x - player.pos.x, _hz = HEX.st.z - player.pos.z;
+      if (Math.sqrt(_hx * _hx + _hz * _hz) > structReach(HEX.st) + 1.2) closeHexMenu();
+    }
+  } else if (HEX.on) closeHexMenu();
   var dph = dayPhase();
   setText(dayIconEl, dph[0]);
   setText(dayLblEl, dph[1]);
@@ -15757,9 +16905,9 @@ var SKY_KEYS = [
   { t: 0.00, sun: 0x93aee8, si: 0.34, hs: 0x33456a, hg: 0x18231f, hi: 0.44, ai: 0.09, fog: 0x16233a, fn: 48, ff: 180, top: 0x070d1c, bot: 0x1b2a44, glow: 0.32, gc: 0x8eadff, star: 1.00, cloud: 0x46567a, water: 0x93aac8, night: 1.00 },
   { t: 0.20, sun: 0xa3b6e2, si: 0.36, hs: 0x3f4e70, hg: 0x202b26, hi: 0.44, ai: 0.09, fog: 0x26354e, fn: 50, ff: 186, top: 0x1a2740, bot: 0x3d4b6a, glow: 0.38, gc: 0xb0b6ff, star: 0.72, cloud: 0x5b6a8a, water: 0x97add0, night: 0.82 },
   { t: 0.275, sun: 0xffc48f, si: 0.56, hs: 0x93a8c8, hg: 0x6a5a42, hi: 0.44, ai: 0.07, fog: 0xdcb1a0, fn: 54, ff: 192, top: 0x7aa4cf, bot: 0xffc79a, glow: 0.90, gc: 0xffb877, star: 0.06, cloud: 0xffd0b0, water: 0xbfccd2, night: 0.22 },
-  { t: 0.40, sun: 0xfff0d2, si: 0.78, hs: 0xd6ecff, hg: 0x6f8c4e, hi: 0.42, ai: 0.08, fog: 0xa8d6d6, fn: 54, ff: 190, top: 0x4fb6d8, bot: 0xd6efdc, glow: 0.52, gc: 0xffd9a0, star: 0.00, cloud: 0xffffff, water: 0xffffff, night: 0.00 },
-  { t: 0.50, sun: 0xfff6e4, si: 0.86, hs: 0xe2f2ff, hg: 0x738f50, hi: 0.44, ai: 0.08, fog: 0xa6d3d6, fn: 56, ff: 192, top: 0x46b2d6, bot: 0xd8eed6, glow: 0.44, gc: 0xffe3b0, star: 0.00, cloud: 0xffffff, water: 0xffffff, night: 0.00 },
-  { t: 0.66, sun: 0xffe2b4, si: 0.80, hs: 0xe6e2d2, hg: 0x77894e, hi: 0.42, ai: 0.08, fog: 0xb6d5c9, fn: 54, ff: 190, top: 0x53b0cc, bot: 0xe4eecb, glow: 0.56, gc: 0xffd090, star: 0.00, cloud: 0xffeedd, water: 0xfff4e4, night: 0.00 },
+  { t: 0.40, sun: 0xffeccb, si: 0.92, hs: 0xcfdfec, hg: 0x6a6744, hi: 0.40, ai: 0.10, fog: 0xc3c8ae, fn: 62, ff: 208, top: 0x58aec9, bot: 0xd8e2c8, glow: 0.52, gc: 0xffd9a0, star: 0.00, cloud: 0xfbf7ea, water: 0xffffff, night: 0.00 },
+  { t: 0.50, sun: 0xfff2da, si: 0.98, hs: 0xdceaf6, hg: 0x6f6f48, hi: 0.42, ai: 0.10, fog: 0xc0c5aa, fn: 64, ff: 212, top: 0x50aac6, bot: 0xdae4c6, glow: 0.46, gc: 0xffe8b8, star: 0.00, cloud: 0xfdf8ec, water: 0xffffff, night: 0.00 },
+  { t: 0.66, sun: 0xffddaa, si: 0.90, hs: 0xe0dccb, hg: 0x73713f, hi: 0.40, ai: 0.09, fog: 0xc8c2a0, fn: 60, ff: 205, top: 0x5aa8bd, bot: 0xe0e1bd, glow: 0.58, gc: 0xffcc8a, star: 0.00, cloud: 0xffeedd, water: 0xfff4e4, night: 0.00 },
   { t: 0.745, sun: 0xff9a52, si: 0.62, hs: 0xb9a6c4, hg: 0x6b5a44, hi: 0.42, ai: 0.07, fog: 0xe0a07c, fn: 54, ff: 192, top: 0x5c76ad, bot: 0xffab6e, glow: 1.00, gc: 0xff9a4a, star: 0.08, cloud: 0xffc3a0, water: 0xe8cbb8, night: 0.16 },
   { t: 0.805, sun: 0xc08aa8, si: 0.36, hs: 0x5b5a86, hg: 0x3a3242, hi: 0.38, ai: 0.06, fog: 0x7d6f92, fn: 50, ff: 182, top: 0x2a3160, bot: 0x8a5f7c, glow: 0.70, gc: 0xd58aa8, star: 0.44, cloud: 0xb08aa0, water: 0xa9a4bc, night: 0.48 },
   { t: 0.885, sun: 0x97ace0, si: 0.34, hs: 0x36486c, hg: 0x1c2626, hi: 0.42, ai: 0.08, fog: 0x1f2c43, fn: 48, ff: 178, top: 0x0c1526, bot: 0x243450, glow: 0.36, gc: 0x9fb4ff, star: 0.92, cloud: 0x4d5c7c, water: 0x97abca, night: 0.96 },
@@ -15853,6 +17001,7 @@ function loop(now) {
     SAVE.playTime += dt;
   }
   updateStructures(dt, t);
+  if (PAD.dirty) rebuildPads();
   updateFx(dt);
   updateDayNight(dt);
   if (MAP.open && started && frameNo % 20 === 0) drawMap();
@@ -15902,6 +17051,7 @@ function loop(now) {
   }
 
   if (started) updateHUD(dt);
+  if (HEX.on) positionHexMenu();
   updateCamera(dt);
   updateOcclusion(dt);
 
