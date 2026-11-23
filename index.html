@@ -1456,7 +1456,7 @@
       </div>
       <div class="startSaveLine" id="startSaveLine"><span>저장 없음 · 새로 시작해요</span></div>
     </div>
-    <div class="startFoot" id="startFoot">WILD LIFE · v2.6 &nbsp;|&nbsp; 왼쪽 조이스틱으로 걷고 오른쪽 버튼으로 채집·공격</div>
+    <div class="startFoot" id="startFoot">WILD LIFE · v2.7 &nbsp;|&nbsp; 왼쪽 조이스틱으로 걷고 오른쪽 버튼으로 채집·공격</div>
   </div>
 
   <div class="slotPanel" id="slotPanel">
@@ -1563,8 +1563,11 @@ function $id(s) { return document.getElementById(s); }
    single vertex-colored geometry, so one prop costs one draw call instead of
    dozens. Kept objects (animated limbs etc.) are left untouched. */
 var _tmpM = new THREE.Matrix4(), _tmpC = new THREE.Color();
-function flattenGroup(root, keep, mat, cast, smooth) {
+function flattenGroup(root, keep, mat, cast, smooth, uvScale) {
   if (!root || root.isMesh) return null; // nothing to flatten inside a single mesh
+  /* v2.7 — 재질에 텍스처(map)가 있으면 위치 기반 UV를 자동 생성한다
+     (모든 소품·구조물·공룡 베이크가 따로 손대지 않아도 결이 입혀진다) */
+  if (!uvScale && mat && (mat.map || mat.bumpMap) && mat.userData && mat.userData.uvScale) uvScale = mat.userData.uvScale;
   root.updateMatrixWorld(true);
   var inv = new THREE.Matrix4().copy(root.matrixWorld).invert();
   var parts = [];
@@ -1600,9 +1603,14 @@ function flattenGroup(root, keep, mat, cast, smooth) {
     gg.dispose();
   }
   var out = new THREE.BufferGeometry();
+  /* v2.7 — 텍스처용 연속 UV: 위치에서 바로 뽑아 이음매가 없다(원단·비늘 결 공용) */
+  function uvOf(px, py, pz, arr, o) {
+    arr[o * 2] = px * uvScale + pz * uvScale * 0.6;
+    arr[o * 2 + 1] = py * uvScale - pz * uvScale * 0.25;
+  }
   if (smooth) {
     // v2.4 — 캐릭터용: 같은 자리의 점을 하나로 붙여 법선을 평균낸다 → 각진 레고 면이 사라진다
-    var map = {}, uPos = [], uCol = [], uNor = [], index = [];
+    var map = {}, uPos = [], uCol = [], uNor = [], uUv = [], index = [];
     var total = posA.length / 3;
     for (i = 0; i < total; i++) {
       var px = posA[i * 3], py = posA[i * 3 + 1], pz = posA[i * 3 + 2];
@@ -1614,6 +1622,11 @@ function flattenGroup(root, keep, mat, cast, smooth) {
         uPos.push(px, py, pz);
         uCol.push(colA[i * 3], colA[i * 3 + 1], colA[i * 3 + 2]);
         uNor.push(0, 0, 0);
+        if (uvScale) {
+          var uvTmp = [0, 0];
+          uvOf(px, py, pz, uvTmp, 0);
+          uUv.push(uvTmp[0], uvTmp[1]);
+        }
       }
       index.push(id);
     }
@@ -1634,10 +1647,16 @@ function flattenGroup(root, keep, mat, cast, smooth) {
     out.setAttribute('position', new THREE.BufferAttribute(new Float32Array(uPos), 3));
     out.setAttribute('color', new THREE.BufferAttribute(new Float32Array(uCol), 3));
     out.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(uNor), 3));
+    if (uvScale) out.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(uUv), 2));
     out.setIndex(index);
   } else {
     out.setAttribute('position', new THREE.BufferAttribute(posA, 3));
     out.setAttribute('color', new THREE.BufferAttribute(colA, 3));
+    if (uvScale) {
+      var uvA = new Float32Array(count * 2);
+      for (i = 0; i < count; i++) uvOf(posA[i * 3], posA[i * 3 + 1], posA[i * 3 + 2], uvA, i);
+      out.setAttribute('uv', new THREE.BufferAttribute(uvA, 2));
+    }
     out.computeVertexNormals();
   }
   out.computeBoundingSphere();
@@ -3312,9 +3331,10 @@ var water, waterAttr, waterX, waterZ, waterAmp, waterMat, sparkle, sparkleMat;
   waterZ = new Float32Array(n);
   waterAmp = new Float32Array(n);
   var cols = new Float32Array(n * 3);
-  var nrm = new Float32Array(n * 3);
+  var alphas = new Float32Array(n);
   var c = new THREE.Color();
-  var cSh = new THREE.Color(0x8fdfd4), cMd = new THREE.Color(0x2b9aa9), cDp = new THREE.Color(0x115b7c);
+  /* v2.7 — 깊은 청보라 ~ 얕은 청록 (바다 레퍼런스) */
+  var cSh = new THREE.Color(0x5bbcbc), cMd = new THREE.Color(0x2a5f92), cDp = new THREE.Color(0x1a2450);
   for (var i = 0; i < n; i++) {
     var x = pos.getX(i), z = pos.getZ(i);
     waterX[i] = x; waterZ[i] = z;
@@ -3328,18 +3348,85 @@ var water, waterAttr, waterX, waterZ, waterAmp, waterMat, sparkle, sparkleMat;
     var mot = noise2(x * 0.07 + 3, z * 0.09 - 2) * 0.5 + 0.5;
     c.multiplyScalar(0.965 + mot * 0.07);
     cols[i * 3] = c.r; cols[i * 3 + 1] = c.g; cols[i * 3 + 2] = c.b;
-    nrm[i * 3 + 1] = 1;
+    alphas[i] = d;
     waterAmp[i] = 0.30 + clamp(d, 0, 1) * 1.35;
   }
-  g.setAttribute('color', new THREE.BufferAttribute(cols, 3));
-  g.setAttribute('normal', new THREE.BufferAttribute(nrm, 3));
-  waterMat = new THREE.MeshPhongMaterial({
-    color: 0xffffff, vertexColors: true, transparent: true, opacity: 0.90,
-    shininess: 120, specular: 0xdffaff, flatShading: true
+  g.setAttribute('aCol', new THREE.BufferAttribute(cols, 3));
+  g.setAttribute('aDepth', new THREE.BufferAttribute(alphas, 1));
+  /* 두 겹의 잔물결 + 포말 + 햇빛 반사 — 한 draw call 셰이더 */
+  waterMat = new THREE.ShaderMaterial({
+    transparent: true, depthWrite: false, fog: false, side: THREE.DoubleSide,
+    uniforms: {
+      uTime: { value: 0 },
+      uSunDir: { value: new THREE.Vector3(0.45, 0.72, 0.35).normalize() },
+      uSunCol: { value: new THREE.Color(0xfff0cf) },
+      uFoamCol: { value: new THREE.Color(0xf2fbfb) },
+      uNight: { value: 0 },
+      fogColor: { value: new THREE.Color(0xbfc6a9) },
+      fogNear: { value: 90 }, fogFar: { value: 235 }
+    },
+    vertexShader: [
+      'attribute vec3 aCol; attribute float aDepth;',
+      'uniform float uTime;',
+      'varying vec3 vCol; varying float vDep; varying vec3 vWPos; varying float vViewDepth;',
+      'void main(){',
+      '  vec3 p = position;',
+      '  p.y += sin(p.x * 0.62 + uTime * 1.15) * 0.018 + cos(p.z * 0.51 + uTime * 0.92) * 0.018;',
+      '  vec4 wp = modelMatrix * vec4(p, 1.0);',
+      '  vWPos = wp.xyz; vCol = aCol; vDep = aDepth;',
+      '  vec4 mv = viewMatrix * wp;',
+      '  vViewDepth = -mv.z;',
+      '  gl_Position = projectionMatrix * mv;',
+      '}'
+    ].join('\n'),
+    fragmentShader: [
+      'uniform float uTime; uniform vec3 uSunDir; uniform vec3 uSunCol; uniform vec3 uFoamCol; uniform float uNight;',
+      'uniform vec3 fogColor; uniform float fogNear; uniform float fogFar;',
+      'varying vec3 vCol; varying float vDep; varying vec3 vWPos; varying float vViewDepth;',
+      'float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }',
+      'float vnoise(vec2 p){',
+      '  vec2 i = floor(p), f = fract(p);',
+      '  f = f * f * (3.0 - 2.0 * f);',
+      '  float a = hash(i), b = hash(i + vec2(1.0, 0.0)), c = hash(i + vec2(0.0, 1.0)), d = hash(i + vec2(1.0, 1.0));',
+      '  return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);',
+      '}',
+      'float fbm(vec2 p){',
+      '  float v = 0.0, a = 0.5;',
+      '  for (int i = 0; i < 4; i++) { v += a * vnoise(p); p *= 2.03; a *= 0.5; }',
+      '  return v;',
+      '}',
+      'void main(){',
+      '  vec2 uv = vWPos.xz;',
+      /* 두 겹의 물결이 서로 반대 방향으로 느리게 흐른다 */
+      '  float w1 = fbm(uv * 0.55 + vec2(uTime * 0.050, uTime * 0.022));',
+      '  float w2 = fbm(uv * 1.05 - vec2(uTime * 0.032, -uTime * 0.058));',
+      '  float ripple = w1 * 0.62 + w2 * 0.38;',
+      /* 포말 — 큰 덩어리 + 잔 레이스 */
+      '  float foamMask = smoothstep(0.50, 0.72, w1 * 0.66 + w2 * 0.52);',
+      '  float lace = smoothstep(0.68, 0.95, fbm(uv * 1.15 + vec2(uTime * 0.06, -uTime * 0.045)));',
+      '  float foam = clamp(foamMask * 0.92 + lace * 0.30, 0.0, 1.0);',
+      '  foam *= mix(0.60, 1.0, vDep);',
+      /* 법선을 흔들어 햇빛 반사(스펙큘러)가 부딪히며 반짝이게 */
+      '  vec3 nrm = normalize(vec3((w1 - w2) * 1.35, 1.0, (w2 - w1) * 1.35));',
+      '  vec3 V = normalize(cameraPosition - vWPos);',
+      '  vec3 H = normalize(normalize(uSunDir) + V);',
+      '  float spec = pow(max(dot(nrm, H), 0.0), 140.0);',
+      '  float glint = pow(max(dot(nrm, H), 0.0), 26.0) * 0.22;',
+      '  vec3 base = vCol;',
+      '  base = mix(base, base * vec3(1.02, 1.10, 1.42), 0.42);',       /* 깊은 쪽 청보라 기운 */
+      '  base *= 0.90 + ripple * 0.26;',
+      '  base = mix(base, uFoamCol, foam * 0.86);',
+      '  base += uSunCol * (spec * 2.4 + glint) * (1.0 - uNight * 0.85);',
+      '  float f = clamp((vViewDepth - fogNear) / (fogFar - fogNear), 0.0, 1.0);',
+      '  gl_FragColor = vec4(mix(base, fogColor, f * 0.94), 0.94);',
+      '}'
+    ].join('\n')
   });
   water = new THREE.Mesh(g, waterMat);
   water.position.y = WATER_Y - 0.04;
   water.receiveShadow = false;
+  water.frustumCulled = false;
+  water.renderOrder = 1;
   scene.add(water);
 
   // sparkles over the open sea
@@ -3386,6 +3473,360 @@ var cloudMat;
     clouds.push({ g: g, sp: rnd(0.6, 1.4), ph: Math.random() * TAU });
   }
 })();
+
+/* =========================================================
+   🧵 v2.7 — 프로시저럴 원단/가죽/털 텍스처 공장
+   ---------------------------------------------------------
+   · 실제로 짠 직조(날실·씨실), 가죽 결(큰 얼룩 + 잔금 + 모공),
+     털(짧은 털가닥 결), 짚(모자), 피부 모공의 '색 지도 + 범프 지도'를
+     캔버스로 한 번만 그려 모든 캐릭터·장비가 공유한다.
+   · 색 지도는 흰색에 가까운 회색 결이라 정점 색(염색·아이템 색)에
+     곱해져도 색이 죽지 않고, 범프 지도만으로 요철이 살아난다.
+   ========================================================= */
+var TEXLIB = (function () {
+  var seed = 20261124;
+  function rr() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
+  function newCv(sz) {
+    var c = document.createElement('canvas');
+    c.width = sz; c.height = sz;
+    return c;
+  }
+  function wrapDraw(S, x, y, fn) {
+    fn(x, y);
+    if (x < S * 0.08) fn(x + S, y); else if (x > S * 0.92) fn(x - S, y);
+    if (y < S * 0.08) fn(x, y + S); else if (y > S * 0.92) fn(x, y - S);
+    if (x < S * 0.08 && y < S * 0.08) fn(x + S, y + S);
+    if (x > S * 0.92 && y < S * 0.08) fn(x - S, y + S);
+    if (x < S * 0.08 && y > S * 0.92) fn(x + S, y - S);
+    if (x > S * 0.92 && y > S * 0.92) fn(x - S, y - S);
+  }
+  function texPair(cv, bcv, rep) {
+    var map = new THREE.CanvasTexture(cv);
+    map.wrapS = map.wrapT = THREE.RepeatWrapping;
+    map.repeat.set(rep, rep);
+    var bump = new THREE.CanvasTexture(bcv);
+    bump.wrapS = bump.wrapT = THREE.RepeatWrapping;
+    bump.repeat.set(rep, rep);
+    if (renderer && renderer.capabilities && renderer.capabilities.getMaxAnisotropy) {
+      var an = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+      map.anisotropy = an; bump.anisotropy = Math.min(6, an);
+    }
+    return { map: map, bump: bump, cv: cv, bcv: bcv };
+  }
+
+  /* ── ① 평직(平織) 천 — 날실·씨실이 교차하는 가장 기본적인 직조 ── */
+  function weave(S, step, tint, slub) {
+    S = S || 256; step = step || 5; tint = tint || [255, 253, 247];
+    var cv = newCv(S), cc = cv.getContext('2d');
+    var bcv = newCv(S), bc = bcv.getContext('2d');
+    cc.fillStyle = 'rgb(' + tint[0] + ',' + tint[1] + ',' + tint[2] + ')';
+    cc.fillRect(0, 0, S, S);
+    bc.fillStyle = 'rgb(128,128,128)'; bc.fillRect(0, 0, S, S);
+    var x, y, t, a;
+    // 날실(세로) — 밝은 실 오름 + 양옆 그늘
+    for (x = 0; x < S; x += step) {
+      var v = 0.90 + rr() * 0.10;
+      cc.fillStyle = 'rgba(255,255,255,' + (0.05 + rr() * 0.04).toFixed(3) + ')';
+      cc.fillRect(x + 1, 0, step - 2, S);
+      cc.fillStyle = 'rgba(64,58,48,' + (0.07 * (1.08 - v)).toFixed(3) + ')';
+      cc.fillRect(x, 0, 1, S);
+      var bv = 146 + Math.floor(rr() * 28);
+      bc.fillStyle = 'rgb(' + bv + ',' + bv + ',' + bv + ')';
+      bc.fillRect(x + 1, 0, step - 2, S);
+      bc.fillStyle = 'rgb(112,112,112)';
+      bc.fillRect(x, 0, 1, S);
+    }
+    // 씨실(가로) — 날실 사이를 지나며 살짝 눌린 그늘
+    for (y = 0; y < S; y += step) {
+      cc.fillStyle = 'rgba(58,50,40,' + (0.05 + rr() * 0.04).toFixed(3) + ')';
+      cc.fillRect(0, y, S, 1);
+      cc.fillStyle = 'rgba(255,255,255,' + (0.03 + rr() * 0.03).toFixed(3) + ')';
+      cc.fillRect(0, y + 1, S, 1);
+      bc.fillStyle = 'rgb(118,118,118)'; bc.fillRect(0, y, S, 1);
+      bc.fillStyle = 'rgb(162,162,162)'; bc.fillRect(0, y + 1, S, 1);
+    }
+    // 실뭉치(slub) — 굵은 실이 불규칙하게 섞인 결
+    for (var s0 = 0; s0 < (slub || 90); s0++) {
+      x = rr() * S; y = rr() * S;
+      var horiz = rr() < 0.5, len = step * (1.6 + rr() * 3.2);
+      var al = 0.05 + rr() * 0.06;
+      wrapDraw(S, x, y, function (px, py) {
+        cc.fillStyle = 'rgba(255,255,255,' + al.toFixed(3) + ')';
+        cc.fillRect(px, py, horiz ? len : step - 1, horiz ? step - 1 : len);
+        bc.fillStyle = 'rgb(' + (170 + Math.floor(rr() * 26)) + ',170,170)';
+        bc.fillRect(px, py, horiz ? len : step - 1, horiz ? step - 1 : len);
+      });
+    }
+    // 미세 섬유 잡티
+    for (var f0 = 0; f0 < S * 9; f0++) {
+      x = rr() * S; y = rr() * S;
+      cc.fillStyle = 'rgba(' + (rr() < 0.5 ? '40,36,30' : '255,255,255') + ',' + (0.03 + rr() * 0.06).toFixed(3) + ')';
+      cc.fillRect(x, y, 1, 1);
+    }
+    return texPair(cv, bcv, 1);
+  }
+
+  /* ── ② 무두질 가죽 — 큰 얼룩 + 잔금(크랙) + 모공 ── */
+  function leather(S) {
+    S = S || 256;
+    var cv = newCv(S), cc = cv.getContext('2d');
+    var bcv = newCv(S), bc = bcv.getContext('2d');
+    cc.fillStyle = 'rgb(246,243,236)'; cc.fillRect(0, 0, S, S);
+    bc.fillStyle = 'rgb(140,140,140)'; bc.fillRect(0, 0, S, S);
+    var i, x, y;
+    for (i = 0; i < 46; i++) {
+      x = rr() * S; y = rr() * S;
+      var r = 14 + rr() * 46;
+      var dark = rr() < 0.55;
+      wrapDraw(S, x, y, function (px, py) {
+        var g1 = cc.createRadialGradient(px, py, 1, px, py, r);
+        g1.addColorStop(0, dark ? 'rgba(96,80,64,0.15)' : 'rgba(255,255,252,0.16)');
+        g1.addColorStop(1, 'rgba(0,0,0,0)');
+        cc.fillStyle = g1;
+        cc.beginPath(); cc.arc(px, py, r, 0, TAU); cc.fill();
+        var g2 = bc.createRadialGradient(px, py, 1, px, py, r);
+        g2.addColorStop(0, dark ? 'rgba(70,70,70,0.55)' : 'rgba(214,214,214,0.5)');
+        g2.addColorStop(1, 'rgba(128,128,128,0)');
+        bc.fillStyle = g2;
+        bc.beginPath(); bc.arc(px, py, r, 0, TAU); bc.fill();
+      });
+    }
+    // 잔금 — 가죽이 접히며 생기는 가는 균열
+    for (i = 0; i < 120; i++) {
+      x = rr() * S; y = rr() * S;
+      var ang = rr() * TAU, len = 8 + rr() * 26, curve = (rr() - 0.5) * 0.9;
+      var w = 0.7 + rr() * 1.1, al2 = 0.10 + rr() * 0.14;
+      var up = new Uint8Array(4);
+      up[0] = up[1] = up[2] = 0;
+      wrapDraw(S, x, y, function (px, py) {
+        cc.strokeStyle = 'rgba(74,58,42,' + al2.toFixed(3) + ')';
+        cc.lineWidth = w; cc.beginPath(); cc.moveTo(px, py);
+        cc.quadraticCurveTo(px + Math.cos(ang) * len * 0.5 - Math.sin(ang) * curve * 8,
+          py + Math.sin(ang) * len * 0.5 + Math.cos(ang) * curve * 8,
+          px + Math.cos(ang) * len, py + Math.sin(ang) * len);
+        cc.stroke();
+        bc.strokeStyle = 'rgba(52,52,52,0.55)'; bc.lineWidth = w;
+        bc.beginPath(); bc.moveTo(px, py);
+        bc.quadraticCurveTo(px + Math.cos(ang) * len * 0.5 - Math.sin(ang) * curve * 8,
+          py + Math.sin(ang) * len * 0.5 + Math.cos(ang) * curve * 8,
+          px + Math.cos(ang) * len, py + Math.sin(ang) * len);
+        bc.stroke();
+      });
+    }
+    // 모공
+    for (i = 0; i < 2200; i++) {
+      x = rr() * S; y = rr() * S;
+      var a3 = 0.05 + rr() * 0.10;
+      cc.fillStyle = 'rgba(70,56,42,' + a3.toFixed(3) + ')';
+      cc.fillRect(x, y, 1, 1);
+      bc.fillStyle = 'rgba(48,48,48,' + (a3 * 1.4).toFixed(3) + ')';
+      bc.fillRect(x, y, 1, 1);
+    }
+    // 문지른 자국(스커프)
+    for (i = 0; i < 26; i++) {
+      x = rr() * S; y = rr() * S;
+      var lw = 1 + rr() * 3, ll = 10 + rr() * 30, ang2 = rr() * TAU;
+      cc.strokeStyle = 'rgba(255,255,250,' + (0.06 + rr() * 0.08).toFixed(3) + ')';
+      cc.lineWidth = lw; cc.lineCap = 'round';
+      cc.beginPath(); cc.moveTo(x, y); cc.lineTo(x + Math.cos(ang2) * ll, y + Math.sin(ang2) * ll); cc.stroke();
+    }
+    return texPair(cv, bcv, 1);
+  }
+
+  /* ── ③ 털 — 짧은 털가닥이 겹겹이 흐르는 결 ── */
+  function fur(S) {
+    S = S || 256;
+    var cv = newCv(S), cc = cv.getContext('2d');
+    var bcv = newCv(S), bc = bcv.getContext('2d');
+    cc.fillStyle = 'rgb(232,226,212)'; cc.fillRect(0, 0, S, S);
+    bc.fillStyle = 'rgb(104,104,104)'; bc.fillRect(0, 0, S, S);
+    var i, x, y;
+    for (i = 0; i < 2600; i++) {
+      x = rr() * S; y = rr() * S;
+      var len = 4 + rr() * 13;
+      var ang = Math.PI * 0.5 + (rr() - 0.5) * 0.85;
+      var pale = rr();
+      var r0 = 168 + Math.floor(pale * 82);
+      var g0 = 160 + Math.floor(pale * 80);
+      var b0 = 146 + Math.floor(pale * 78);
+      var al = 0.16 + rr() * 0.34;
+      var w = 0.6 + rr() * 1.0;
+      wrapDraw(S, x, y, function (px, py) {
+        cc.strokeStyle = 'rgba(' + r0 + ',' + g0 + ',' + b0 + ',' + al.toFixed(3) + ')';
+        cc.lineWidth = w; cc.lineCap = 'round';
+        cc.beginPath(); cc.moveTo(px, py);
+        cc.quadraticCurveTo(px + Math.cos(ang) * len * 0.5 + (rr() - 0.5) * 3, py + Math.sin(ang) * len * 0.5,
+          px + Math.cos(ang) * len, py + Math.sin(ang) * len);
+        cc.stroke();
+        bc.strokeStyle = 'rgba(' + (170 + Math.floor(rr() * 70)) + ',170,170,0.55)';
+        bc.lineWidth = w + 0.3;
+        bc.beginPath(); bc.moveTo(px, py);
+        bc.quadraticCurveTo(px + Math.cos(ang) * len * 0.5, py + Math.sin(ang) * len * 0.5,
+          px + Math.cos(ang) * len, py + Math.sin(ang) * len);
+        bc.stroke();
+      });
+    }
+    // 털 밑동 그늘
+    for (i = 0; i < 700; i++) {
+      x = rr() * S; y = rr() * S;
+      cc.fillStyle = 'rgba(96,84,66,' + (0.05 + rr() * 0.09).toFixed(3) + ')';
+      cc.fillRect(x, y, 1, 1);
+    }
+    return texPair(cv, bcv, 1);
+  }
+
+  /* ── ④ 짚(밀짚모자) — 누런 짚을 엮은 결 ── */
+  function straw(S) {
+    S = S || 192;
+    var cv = newCv(S), cc = cv.getContext('2d');
+    var bcv = newCv(S), bc = bcv.getContext('2d');
+    cc.fillStyle = 'rgb(250,240,214)'; cc.fillRect(0, 0, S, S);
+    bc.fillStyle = 'rgb(120,120,120)'; bc.fillRect(0, 0, S, S);
+    var row = 6, i, x, y;
+    for (y = 0; y < S; y += row) {
+      var shade = 0.86 + rr() * 0.14;
+      cc.fillStyle = 'rgba(120,92,48,' + (0.10 + (1 - shade) * 0.5).toFixed(3) + ')';
+      cc.fillRect(0, y, S, 1);
+      for (x = 0; x < S; x += 9 + rr() * 5) {
+        var len = 5 + rr() * 9;
+        cc.fillStyle = 'rgba(255,250,232,' + (0.10 + rr() * 0.18).toFixed(3) + ')';
+        cc.fillRect(x, y + 1, len, row - 2);
+        bc.fillStyle = 'rgb(' + (170 + Math.floor(rr() * 60)) + ',170,170)';
+        bc.fillRect(x, y + 1, len, row - 2);
+      }
+      bc.fillStyle = 'rgb(70,70,70)'; bc.fillRect(0, y, S, 1);
+    }
+    return texPair(cv, bcv, 1);
+  }
+
+  /* ── ⑤ 피부·소품 미세 결 — 아주 고운 요철만 ── */
+  function micro(S) {
+    S = S || 128;
+    var cv = newCv(S), cc = cv.getContext('2d');
+    var bcv = newCv(S), bc = bcv.getContext('2d');
+    cc.fillStyle = 'rgb(248,246,243)'; cc.fillRect(0, 0, S, S);
+    bc.fillStyle = 'rgb(128,128,128)'; bc.fillRect(0, 0, S, S);
+    for (var i = 0; i < 4200; i++) {
+      var x = rr() * S, y = rr() * S;
+      var v = rr() < 0.5 ? '255,255,255' : '176,168,158';
+      cc.fillStyle = 'rgba(' + v + ',' + (0.02 + rr() * 0.05).toFixed(3) + ')';
+      cc.fillRect(x, y, 1, 1);
+      var bv = 118 + Math.floor(rr() * 42);
+      bc.fillStyle = 'rgb(' + bv + ',' + bv + ',' + bv + ')';
+      bc.fillRect(x, y, 1, 1);
+    }
+    // 가느다란 결 몇 줄 — 피부결/나뭇결 공용
+    for (var s0 = 0; s0 < 22; s0++) {
+      var sy = rr() * S, amp = 2 + rr() * 4, ph0 = rr() * TAU;
+      cc.strokeStyle = 'rgba(120,110,96,0.03)'; cc.lineWidth = 0.8;
+      bc.strokeStyle = 'rgba(112,112,112,0.30)'; bc.lineWidth = 0.8;
+      cc.beginPath(); bc.beginPath();
+      for (var xx = 0; xx <= S; xx += 4) {
+        var yy = sy + Math.sin(xx * 0.06 + ph0) * amp;
+        if (xx === 0) { cc.moveTo(xx, yy); bc.moveTo(xx, yy); }
+        else { cc.lineTo(xx, yy); bc.lineTo(xx, yy); }
+      }
+      cc.stroke(); bc.stroke();
+    }
+    return texPair(cv, bcv, 1);
+  }
+
+  /* ── ⑥ 공룡 비늘 범프 — 바둑판 비늘의 볼록함 ── */
+  function scales(S) {
+    S = S || 128;
+    var bcv = newCv(S), bc = bcv.getContext('2d');
+    bc.fillStyle = 'rgb(118,118,118)'; bc.fillRect(0, 0, S, S);
+    var rows = 11, cols = 11, cw = S / cols, ch = S / rows;
+    for (var r = 0; r < rows; r++) {
+      for (var c = 0; c < cols; c++) {
+        var cx = (c + (r % 2 ? 0.5 : 0)) * cw, cy = r * ch;
+        var rx = cw * 0.66, ry = ch * 0.70;
+        var g1 = bc.createRadialGradient(cx - rx * 0.25, cy - ry * 0.3, 0.4, cx, cy, rx);
+        g1.addColorStop(0, 'rgb(232,232,232)');
+        g1.addColorStop(0.7, 'rgb(150,150,150)');
+        g1.addColorStop(1, 'rgb(62,62,62)');
+        bc.fillStyle = g1;
+        bc.beginPath();
+        if (bc.ellipse) bc.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+        else bc.arc(cx, cy, rx, 0, Math.PI * 2);
+        bc.fill();
+      }
+    }
+    var bump = new THREE.CanvasTexture(bcv);
+    bump.wrapS = bump.wrapT = THREE.RepeatWrapping;
+    if (renderer && renderer.capabilities && renderer.capabilities.getMaxAnisotropy) {
+      bump.anisotropy = Math.min(6, renderer.capabilities.getMaxAnisotropy());
+    }
+    return bump;
+  }
+
+  /* ── ⑦ 소품 미세 결 — 돌·나무·가죽·뼈 공용의 거친 표면 ── */
+  function grit(S) {
+    S = S || 128;
+    var cv = newCv(S), cc = cv.getContext('2d');
+    var bcv = newCv(S), bc = bcv.getContext('2d');
+    cc.fillStyle = 'rgb(240,238,232)'; cc.fillRect(0, 0, S, S);
+    bc.fillStyle = 'rgb(128,128,128)'; bc.fillRect(0, 0, S, S);
+    var i, x, y;
+    // 고운 알갱이
+    for (i = 0; i < 5200; i++) {
+      x = rr() * S; y = rr() * S;
+      var dark = rr() < 0.5;
+      cc.fillStyle = dark ? 'rgba(118,110,98,' + (0.05 + rr() * 0.10).toFixed(3) + ')' : 'rgba(255,255,252,' + (0.05 + rr() * 0.11).toFixed(3) + ')';
+      cc.fillRect(x, y, 1 + (rr() < 0.15 ? 1 : 0), 1);
+      var g = 84 + Math.floor(rr() * 108);
+      bc.fillStyle = 'rgb(' + g + ',' + g + ',' + g + ')';
+      bc.fillRect(x, y, 1 + (rr() < 0.15 ? 1 : 0), 1);
+    }
+    // 얼룩·마모 반점
+    for (i = 0; i < 90; i++) {
+      x = rr() * S; y = rr() * S;
+      var r = 3 + rr() * 12;
+      wrapDraw(S, x, y, function (px, py) {
+        var grd = cc.createRadialGradient(px, py, 0.5, px, py, r);
+        var a0 = 0.05 + rr() * 0.09;
+        grd.addColorStop(0, 'rgba(96,88,76,' + a0.toFixed(3) + ')');
+        grd.addColorStop(1, 'rgba(96,88,76,0)');
+        cc.fillStyle = grd;
+        cc.beginPath(); cc.arc(px, py, r, 0, TAU); cc.fill();
+        var grd2 = bc.createRadialGradient(px, py, 0.5, px, py, r);
+        grd2.addColorStop(0, 'rgba(60,60,60,0.45)');
+        grd2.addColorStop(1, 'rgba(128,128,128,0)');
+        bc.fillStyle = grd2;
+        bc.beginPath(); bc.arc(px, py, r, 0, TAU); bc.fill();
+      });
+    }
+    // 짧은 균열·긁힘
+    for (i = 0; i < 70; i++) {
+      x = rr() * S; y = rr() * S;
+      var ang = rr() * TAU, len = 4 + rr() * 16, lw = 0.6 + rr() * 1.0;
+      wrapDraw(S, x, y, function (px, py) {
+        cc.strokeStyle = 'rgba(92,84,72,' + (0.06 + rr() * 0.10).toFixed(3) + ')';
+        cc.lineWidth = lw;
+        cc.beginPath(); cc.moveTo(px, py); cc.lineTo(px + Math.cos(ang) * len, py + Math.sin(ang) * len); cc.stroke();
+        bc.strokeStyle = 'rgba(56,56,56,0.5)'; bc.lineWidth = lw;
+        bc.beginPath(); bc.moveTo(px, py); bc.lineTo(px + Math.cos(ang) * len, py + Math.sin(ang) * len); bc.stroke();
+      });
+    }
+    return texPair(cv, bcv, 1);
+  }
+
+  return {
+    weave: weave, weaveFine: function () { return weave(256, 4, [255, 253, 246], 70); },
+    weaveCoarse: function () { return weave(256, 8, [250, 248, 238], 140); },
+    leather: leather, fur: fur, straw: straw, micro: micro, scales: scales, grit: grit
+  };
+})();
+var TEX = {
+  cloth: TEXLIB.weaveFine(),
+  hemp: TEXLIB.weaveCoarse(),
+  leather: TEXLIB.leather(),
+  fur: TEXLIB.fur(),
+  straw: TEXLIB.straw(),
+  micro: TEXLIB.micro(),
+  scale: TEXLIB.scales(),
+  grit: TEXLIB.grit()
+};
 
 /* ---------------- materials ---------------- */
 var MAT = {
@@ -3468,11 +3909,84 @@ var MAT = {
   rug: new THREE.MeshLambertMaterial({ color: 0xb8563f, flatShading: true }),
   rugB: new THREE.MeshLambertMaterial({ color: 0xd9a06a, flatShading: true }),
   // one shared vertex-colored material for every baked prop / creature / structure
-  prop: new THREE.MeshLambertMaterial({ color: 0xffffff, vertexColors: true, flatShading: true }),
+  // v2.7 — 결이 있는 표면: 돌·나무·가죽·뼈 모두에 고운 알갱이 + 범프
+  prop: (function () {
+    var m = new THREE.MeshPhongMaterial({
+      color: 0xffffff, vertexColors: true, flatShading: true,
+      map: TEX.grit.map, bumpMap: TEX.grit.bump, bumpScale: 0.012,
+      specular: 0x0a0908, shininess: 2
+    });
+    m.userData.uvScale = 3.4;
+    return m;
+  })(),
   // v2.6 — 나무 잎: 부드러운 법선 + 양면(잎 카드) 베이크용
   leafBake: new THREE.MeshLambertMaterial({ color: 0xffffff, vertexColors: true, flatShading: false, side: THREE.DoubleSide }),
   // v2.4 — 주인공 몸: 정점을 붙여 법선을 부드럽게 만든 베이크용 재질
-  charBody: new THREE.MeshLambertMaterial({ color: 0xffffff, vertexColors: true, flatShading: false })
+  /* v2.7 — 주인공 몸: 정점 색 + 피부/옷 미세 결(색·범프) */
+  charBody: new THREE.MeshPhongMaterial({
+    color: 0xffffff, vertexColors: true, flatShading: false,
+    map: TEX.micro.map, bumpMap: TEX.micro.bump, bumpScale: 0.0012,
+    specular: 0x0a0806, shininess: 4
+  }),
+  /* v2.7 — 기본 튜닉: 실제 직조 결 + 바느질 자국 */
+  clothTunic: new THREE.MeshPhongMaterial({
+    color: 0xffffff, vertexColors: true, flatShading: false,
+    map: TEX.cloth.map, bumpMap: TEX.cloth.bump, bumpScale: 0.0035,
+    specular: 0x000000, shininess: 1
+  }),
+  /* v2.7 — 장비 세트별 질감: 얇은/두꺼운 가죽 · 털 · 천 · 비늘 · 돛 */
+  gearLeather: new THREE.MeshPhongMaterial({
+    color: 0xffffff, vertexColors: true, flatShading: false,
+    map: TEX.leather.map, bumpMap: TEX.leather.bump, bumpScale: 0.010,
+    specular: 0x2b241c, shininess: 9
+  }),
+  gearFur: new THREE.MeshPhongMaterial({
+    color: 0xffffff, vertexColors: true, flatShading: false,
+    map: TEX.fur.map, bumpMap: TEX.fur.bump, bumpScale: 0.016,
+    specular: 0x000000, shininess: 1
+  }),
+  gearCloth: new THREE.MeshPhongMaterial({
+    color: 0xffffff, vertexColors: true, flatShading: false,
+    map: TEX.cloth.map, bumpMap: TEX.cloth.bump, bumpScale: 0.008,
+    specular: 0x000000, shininess: 1
+  }),
+  gearHemp: new THREE.MeshPhongMaterial({
+    color: 0xffffff, vertexColors: true, flatShading: false, side: THREE.DoubleSide,
+    map: TEX.hemp.map, bumpMap: TEX.hemp.bump, bumpScale: 0.012,
+    specular: 0x000000, shininess: 1
+  }),
+  gearScale: new THREE.MeshPhongMaterial({
+    color: 0xffffff, vertexColors: true, flatShading: false,
+    bumpMap: TEX.scale, bumpScale: 0.020,
+    specular: 0x3a3f33, shininess: 14
+  }),
+  /* v2.7 — 밀짚모자 */
+  strawHat: new THREE.MeshPhongMaterial({
+    color: 0xffffff, vertexColors: true, flatShading: false,
+    map: TEX.straw.map, bumpMap: TEX.straw.bump, bumpScale: 0.010,
+    specular: 0x000000, shininess: 1
+  }),
+  /* v2.7 — 눈: 젖은 듯한 광택 */
+  eye: new THREE.MeshPhongMaterial({
+    color: 0xffffff, vertexColors: true, flatShading: false,
+    specular: 0xffffff, shininess: 64
+  }),
+  /* v2.7 — 손에 든 도구: 나무결·돌 결 */
+  toolBake: new THREE.MeshPhongMaterial({
+    color: 0xffffff, vertexColors: true, flatShading: false,
+    map: TEX.micro.map, bumpMap: TEX.micro.bump, bumpScale: 0.006,
+    specular: 0x141210, shininess: 3
+  }),
+  /* v2.7 — 공룡 몸: 부드러운 법선 + 비늘 범프 */
+  dinoBake: (function () {
+    var m = new THREE.MeshPhongMaterial({
+      color: 0xffffff, vertexColors: true, flatShading: false,
+      bumpMap: TEX.scale, bumpScale: 0.016,
+      specular: 0x0d0f0a, shininess: 5
+    });
+    m.userData.uvScale = 5.0;
+    return m;
+  })()
 };
 
 /* ---------------- prop factories ----------------
@@ -4714,16 +5228,20 @@ function buildGrassField() {
   GRASS.mesh = inst;
   GRASS.mat = gMat;
   buildTallGrassField();
+  buildUndergrowth();
 }
 
 /* v2.6 — 키 큰 풀·갈대·수풀 포기: 강가와 숲 가장자리를 따라 촘촘히 (한 draw call) */
 function tallGrassGeo() {
   var pos = [], nor = [], col = [], idx = [];
   var blades = [
-    { a: 0.0, len: 1.85, w: 0.055, lean: 0.46, ox: 0.0, oz: 0.0 },
-    { a: 1.55, len: 1.42, w: 0.048, lean: 0.54, ox: 0.07, oz: -0.03 },
-    { a: 3.30, len: 1.60, w: 0.044, lean: 0.50, ox: -0.06, oz: 0.06 },
-    { a: 4.85, len: 1.15, w: 0.038, lean: 0.62, ox: 0.03, oz: 0.07 }
+    { a: 0.0, len: 1.55, w: 0.075, lean: 0.52, ox: 0.0, oz: 0.0 },
+    { a: 0.9, len: 1.22, w: 0.066, lean: 0.60, ox: 0.05, oz: 0.03 },
+    { a: 1.55, len: 1.38, w: 0.062, lean: 0.56, ox: 0.07, oz: -0.03 },
+    { a: 2.35, len: 1.05, w: 0.058, lean: 0.66, ox: -0.04, oz: 0.05 },
+    { a: 3.30, len: 1.46, w: 0.064, lean: 0.54, ox: -0.06, oz: 0.06 },
+    { a: 4.85, len: 1.10, w: 0.055, lean: 0.68, ox: 0.03, oz: 0.07 },
+    { a: 5.60, len: 0.92, w: 0.050, lean: 0.72, ox: -0.02, oz: -0.05 }
   ];
   for (var b = 0; b < blades.length; b++) {
     var B = blades[b];
@@ -4799,6 +5317,140 @@ function buildTallGrassField() {
   if (inst.instanceColor) inst.instanceColor.needsUpdate = true;
   scene.add(inst);
   GRASS.tall = inst;
+}
+
+/* =========================================================
+   🌿 v2.7 — 열대 덤불(고사리 + 넓은 잎) 군락
+   ---------------------------------------------------------
+   · 고사리 잎 6장 + 넓은 잎 4장 + 곧은 풀 3장을 한 지오메트리로 묶어
+     InstancedMesh 한 번(1 draw call)에 1,600포기까지 그린다.
+   · 바람 셰이더(grassSway)를 그대로 공유해 잔디와 같은 결로 흔들린다.
+   ========================================================= */
+function undergrowthGeo() {
+  var pos = [], nor = [], col = [], idx = [];
+
+  function pushTri(p0, p1, p2, shade, nx, ny, nz) {
+    var base = pos.length / 3;
+    var pts = [p0, p1, p2];
+    for (var i = 0; i < 3; i++) {
+      pos.push(pts[i][0], pts[i][1], pts[i][2]);
+      nor.push(nx, ny, nz);
+      col.push(shade, shade, shade);
+    }
+    idx.push(base, base + 1, base + 2);
+  }
+
+  /* ── 고사리 잎: 줄기를 따라 좌우로 잔잎이 붙는 깃꼴 ── */
+  function frond(ang, len, droop, shade) {
+    var dx = Math.cos(ang), dz = Math.sin(ang);
+    var px = -dz, pz = dx;
+    var seg = 7;
+    for (var s = 0; s < seg; s++) {
+      var t0 = s / seg, t1 = (s + 1) / seg;
+      var h0 = len * (t0 - droop * t0 * t0), h1 = len * (t1 - droop * t1 * t1);
+      var r0 = 0.10 + len * 0.42 * t0, r1 = 0.10 + len * 0.42 * t1;
+      var sh0 = shade * (0.72 + 0.34 * t0), sh1 = shade * (0.72 + 0.34 * t1);
+      // 좌우 잔잎 — 끝으로 갈수록 길고 얇다
+      for (var sgn = -1; sgn <= 1; sgn += 2) {
+        var leafLen = (0.075 + 0.10 * (1 - Math.abs(t0 - 0.45) * 1.6)) * (1 - t0 * 0.35);
+        var w = 0.030 + 0.020 * (1 - t0);
+        var cxp = dx * r0, czp = dz * r0;
+        pushTri(
+          [px * sgn * w * 0.5 + dx * r0 * 0.2, h0, pz * sgn * w * 0.5 + dz * r0 * 0.2],
+          [px * sgn * (w + leafLen) + dx * (r0 + 0.05), h0 + leafLen * 0.55, pz * sgn * (w + leafLen) + dz * (r0 + 0.05)],
+          [px * sgn * w * 0.5 - dx * 0.05 + dx * r1 * 0.2, h1, pz * sgn * w * 0.5 - dz * 0.05 + dz * r1 * 0.2],
+          sh1, 0.25, 0.94, 0.22
+        );
+      }
+      // 가운데 줄기
+      pushTri(
+        [-px * 0.012 + dx * r0, h0, -pz * 0.012 + dz * r0],
+        [px * 0.012 + dx * r0, h0, pz * 0.012 + dz * r0],
+        [dx * r1, h1, dz * r1],
+        sh0 * 0.92, 0.2, 0.96, 0.2
+      );
+    }
+  }
+
+  /* ── 넓은 잎: 크고 둥근 잎몸이 바깥으로 젖혀진다 ── */
+  function broadLeaf(ang, len, wide, shade) {
+    var dx = Math.cos(ang), dz = Math.sin(ang);
+    var px = -dz, pz = dx;
+    var seg = 4;
+    for (var s = 0; s < seg; s++) {
+      var t0 = s / seg, t1 = (s + 1) / seg;
+      var r0 = 0.06 + len * t0 * 0.9, r1 = 0.06 + len * t1 * 0.9;
+      var h0 = 0.42 + Math.sin(t0 * Math.PI * 0.8) * 0.26 - t0 * t0 * 0.10;
+      var h1 = 0.42 + Math.sin(t1 * Math.PI * 0.8) * 0.26 - t1 * t1 * 0.10;
+      var w0 = wide * Math.sin(Math.min(1, t0 * 1.15) * Math.PI * 0.92) + 0.02;
+      var w1 = wide * Math.sin(Math.min(1, t1 * 1.15) * Math.PI * 0.92) + 0.02;
+      var sh0 = shade * (0.66 + 0.42 * t0), sh1 = shade * (0.66 + 0.42 * t1);
+      var cx0 = dx * r0, cz0 = dz * r0, cx1 = dx * r1, cz1 = dz * r1;
+      var a0 = [cx0 - px * w0, h0, cz0 - pz * w0], a1 = [cx0 + px * w0, h0, cz0 + pz * w0];
+      var b0 = [cx1 - px * w1, h1, cz1 - pz * w1], b1 = [cx1 + px * w1, h1, cz1 + pz * w1];
+      pushTri(a0, a1, b1, sh0, 0.18, 0.95, 0.18);
+      pushTri(a0, b1, b0, sh1, 0.18, 0.95, 0.18);
+    }
+  }
+
+  frond(0.30, 0.95, 0.50, 0.99);
+  frond(1.35, 0.80, 0.55, 0.94);
+  frond(2.40, 0.90, 0.48, 0.97);
+  frond(3.45, 0.74, 0.58, 0.90);
+  frond(4.55, 0.88, 0.52, 0.95);
+  frond(5.50, 0.70, 0.60, 0.86);
+  broadLeaf(0.9, 0.50, 0.17, 0.92);
+  broadLeaf(2.7, 0.44, 0.14, 0.86);
+  broadLeaf(4.2, 0.54, 0.19, 0.95);
+  broadLeaf(5.9, 0.40, 0.13, 0.82);
+
+  var g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(pos), 3));
+  g.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(nor), 3));
+  g.setAttribute('color', new THREE.BufferAttribute(new Float32Array(col), 3));
+  g.setIndex(idx);
+  g.computeBoundingSphere();
+  return g;
+}
+
+function buildUndergrowth() {
+  var geo = undergrowthGeo();
+  var mat = grassSway(new THREE.MeshPhongMaterial({
+    color: 0xffffff, vertexColors: true, side: THREE.DoubleSide,
+    shininess: 0, specular: 0x000000, flatShading: false
+  }));
+  var COUNT = 1700;
+  var inst = new THREE.InstancedMesh(geo, mat, COUNT);
+  inst.castShadow = false; inst.receiveShadow = false;
+  var dummy = new THREE.Object3D(), placed = 0, guard = 0;
+  var color = new THREE.Color();
+  while (placed < COUNT && guard < COUNT * 30) {
+    guard++;
+    var a = Math.random() * TAU, r = Math.sqrt(Math.random()) * 150;
+    var x = Math.cos(a) * r, z = Math.sin(a) * r;
+    var h = terrainH(x, z);
+    if (h < 1.15 || h > 6.9) continue;
+    if (desertW(x, z) > 0.26 || tundraW(x, z) > 0.26) continue;
+    var bio = biomeAt(x, z, h);
+    var nearWater = nearRiver(x, z, 8.0);
+    // 숲·강가에 몰아 심고, 들판엔 드물게
+    if (!nearWater && bio !== 'forest' && Math.random() > 0.30) continue;
+    dummy.position.set(x, h - 0.05, z);
+    dummy.rotation.set(sr(-0.06, 0.06), Math.random() * TAU, sr(-0.06, 0.06));
+    var sc = sr(0.75, 1.65);
+    dummy.scale.set(sc, sr(0.80, 1.45), sc);
+    dummy.updateMatrix();
+    inst.setMatrixAt(placed, dummy.matrix);
+    // 이끼 낀 짙은 초록 ~ 햇살 든 연둣빛
+    color.setHSL(0.232 + Math.random() * 0.060, 0.34 + Math.random() * 0.26, 0.26 + Math.random() * 0.20);
+    inst.setColorAt(placed, color);
+    placed++;
+  }
+  inst.count = placed;
+  inst.instanceMatrix.needsUpdate = true;
+  if (inst.instanceColor) inst.instanceColor.needsUpdate = true;
+  scene.add(inst);
+  GRASS.under = inst;
 }
 
 /* ---------------- seashells / pebbles on the sand (one baked mesh) ---------------- */
@@ -5093,138 +5745,332 @@ function makePlayer() {
   var root = new THREE.Group();
   var BASE = 0.80;                       // 골반 높이 = 발목에서 다리 길이
 
-  // ── 다리: 허벅지 → 무릎 → 정강이 → 발
+  /* =========================================================
+     🧍 v2.7 — 살아 있는 3D 생존자
+     ---------------------------------------------------------
+     · 얼굴: 두개골·광대·턱·코(콧구멍)·입술·귀(안쪽 컵)·눈꺼풀·속눈썹
+       ·눈썹까지 잡고, 눈은 광택 재질의 별도 메시(홍채·동공·하이라이트)로
+       분리해 반짝임과 깜빡임을 준다.
+     · 기본 옷(튜닉)은 실제 직조 텍스처를 가진 별도 메시로 분리하고
+       밑단·옷깃·옆선 바느질, V넥 끈, 허리 주름, 어깨 요크를 넣는다.
+       벨트·파우치·어깨끈은 가죽 결 텍스처 메시로 따로 굽는다.
+     · 도구는 나무결·돌 결 텍스처로 굽고 손잡이 감기·쐐기·날 끝을 보강.
+     ========================================================= */
+  var C = {
+    skin: 0xf6d2b0, skinD: 0xe2b18f, skinSh: 0xd29a78,
+    hair: 0x4a3327, hairL: 0x6d4d36, hairD: 0x33231a,
+    shirt: 0xd9744f, shirtD: 0xb85a3c, stitch: 0xf3d2a8,
+    pants: 0x4c6a86, pantsD: 0x3c5468,
+    boot: 0x5c4530, bootD: 0x422f1f, sole: 0x2f2418,
+    leather: 0x7a5334, leatherD: 0x513620, metal: 0xd7b25c,
+    eyeW: 0xf8f4ec, iris: 0x5d3f2a, pupil: 0x181008, glint: 0xffffff,
+    lip: 0xcf8175, lipD: 0xa85f58, blush: 0xef9f8b,
+    straw: 0xd9b877, strawL: 0xe8c98f, strawD: 0xb7934f
+  };
+  function M(hex) { return lam(hex); }
+
+  /* ───────────────────────── 다리 ───────────────────────── */
   function leg(sx) {
     var thigh = new THREE.Group();
     thigh.position.set(sx * 0.098, BASE, 0);
-    var tm = new THREE.Mesh(new THREE.CylinderGeometry(0.098, 0.082, 0.40, 12), MAT.pants);
+    var tm = new THREE.Mesh(new THREE.CylinderGeometry(0.098, 0.082, 0.40, 12), M(C.pants));
     tm.position.y = -0.20;
     thigh.add(tm);
+    // 바지 옆 솔기 (바느질 선)
+    var seam = new THREE.Mesh(new THREE.BoxGeometry(0.010, 0.34, 0.010), M(C.pantsD));
+    seam.position.set(sx * 0.096, -0.20, 0);
+    thigh.add(seam);
+    // 허벅지 천 주름 — 살짝 접힌 결
+    var fold = new THREE.Mesh(new THREE.BoxGeometry(0.085, 0.018, 0.055), M(C.pantsD));
+    fold.position.set(0, -0.10, 0.062);
+    fold.rotation.z = sx * 0.12;
+    thigh.add(fold);
     var knee = new THREE.Group();
     knee.position.y = -0.40;
     thigh.add(knee);
-    var km = new THREE.Mesh(new THREE.SphereGeometry(0.077, 12, 8), MAT.pants);
+    var km = new THREE.Mesh(new THREE.SphereGeometry(0.077, 12, 8), M(C.pants));
     knee.add(km);
-    var shin = new THREE.Mesh(new THREE.CylinderGeometry(0.070, 0.050, 0.32, 12), MAT.pants);
+    // 무릎 헝겊 패치(스티치 포함)
+    var patch = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 7), M(C.pantsD));
+    patch.scale.set(0.058, 0.052, 0.026);
+    patch.position.set(0, -0.018, 0.058);
+    knee.add(patch);
+    for (var ps = -1; ps <= 1; ps += 2) {
+      var pst = new THREE.Mesh(new THREE.BoxGeometry(0.038, 0.0028, 0.0028), M(C.pantsD));
+      pst.position.set(0, -0.018 + ps * 0.038, 0.0725);
+      knee.add(pst);
+    }
+    var shin = new THREE.Mesh(new THREE.CylinderGeometry(0.070, 0.050, 0.32, 12), M(C.pants));
     shin.position.y = -0.16;
     knee.add(shin);
-    var cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.080, 0.074, 0.075, 12), MAT.pants);
+    // 발목 감싸는 천/가죽끈
+    var cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.080, 0.074, 0.075, 12), M(C.pants));
     cuff.position.y = -0.295;
     knee.add(cuff);
+    var lace = new THREE.Mesh(new THREE.CylinderGeometry(0.082, 0.080, 0.020, 10), M(C.leatherD));
+    lace.position.y = -0.268;
+    knee.add(lace);
     var ankle = new THREE.Group();
     ankle.position.y = -0.32;
     knee.add(ankle);
-    // 발 — 발등은 둥글고 뒤꿈치는 납작한 가족 신발
-    var shoe = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 8), MAT.boot);
+    // 발 — 발등은 둥글고 뒤꿈치는 납작한 가죽 신발
+    var shoe = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 8), M(C.boot));
     shoe.scale.set(0.074, 0.058, 0.135);
     shoe.position.set(0, -0.022, 0.045);
     ankle.add(shoe);
-    var heel = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 7), MAT.boot);
+    var heel = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 7), M(C.boot));
     heel.scale.set(0.062, 0.050, 0.062);
     heel.position.set(0, -0.020, -0.030);
     ankle.add(heel);
+    var sole = new THREE.Mesh(new THREE.BoxGeometry(0.135, 0.020, 0.25), M(C.sole));
+    sole.position.set(0, -0.052, 0.038);
+    ankle.add(sole);
+    // 발등 가죽끈
+    var strap = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.014, 0.03), M(C.leatherD));
+    strap.position.set(0, -0.020, 0.075);
+    strap.rotation.x = 0.30;
+    ankle.add(strap);
     return { thigh: thigh, knee: knee, ankle: ankle };
   }
-  var LA = leg(-1), LB = leg(1);
+  var LB = leg(1), LA = leg(-1);
   var legL = LA.thigh, legR = LB.thigh;
   root.add(legL); root.add(legR);
 
-  // ── 몸통: 골반 → 허리 → 가슴 → 어깨
+  /* ───────────────────── 몸통 (뼈대) ───────────────────── */
   var torso = new THREE.Group();
   torso.position.y = BASE;
-  var hipsM = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 9), MAT.pants);
-  hipsM.scale.set(0.168, 0.115, 0.135);
-  hipsM.position.y = 0.03;
-  torso.add(hipsM);
-  var waistM = new THREE.Mesh(new THREE.CylinderGeometry(0.152, 0.172, 0.18, 12), MAT.shirt);
-  waistM.position.y = 0.19;
-  torso.add(waistM);
-  var chestM = new THREE.Mesh(new THREE.CylinderGeometry(0.223, 0.158, 0.30, 12), MAT.shirt);
-  chestM.position.y = 0.42;
-  torso.add(chestM);
-  var chestTop = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 8), MAT.shirt);
-  chestTop.scale.set(0.223, 0.115, 0.155);
-  chestTop.position.y = 0.555;
-  torso.add(chestTop);
-  // 어깨 솔기 (옷깃)
-  var collar = new THREE.Mesh(new THREE.CylinderGeometry(0.088, 0.115, 0.06, 12), MAT.shirt);
-  collar.position.y = 0.60;
-  torso.add(collar);
-  // 허리띠
-  var belt = new THREE.Mesh(new THREE.CylinderGeometry(0.166, 0.170, 0.07, 12), MAT.boot);
-  belt.position.y = 0.11;
-  torso.add(belt);
-  var buckle = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.045, 0.02), MAT.knob);
-  buckle.position.set(0, 0.11, 0.168);
-  torso.add(buckle);
 
-  // 배낭
-  var pack = new THREE.Mesh(new THREE.BoxGeometry(0.30, 0.33, 0.16), MAT.barkP);
+  // 목 (피부)
+  var neck = new THREE.Mesh(new THREE.CylinderGeometry(0.062, 0.078, 0.13, 10), M(C.skin));
+  neck.position.y = 0.635;
+  torso.add(neck);
+  var clav = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 7), M(C.skin));
+  clav.scale.set(0.085, 0.022, 0.045);
+  clav.position.set(0, 0.585, 0.055);
+  torso.add(clav);
+  var throat = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 6), M(C.skin));
+  throat.scale.set(0.026, 0.034, 0.020);
+  throat.position.set(0, 0.612, 0.062);
+  torso.add(throat);
+
+  /* ───────────────── 기본 튜닉 (직조 텍스처) ─────────────────
+     · 통짜 메시 하나로 굽는다 → draw call 1
+     · 밑단/옷깃 스티치, 옆선, 허리 주름, V넥 끈, 어깨 요크 */
+  var tunic = new THREE.Group();
+  torso.add(tunic);
+  var hipsM = new THREE.Mesh(new THREE.SphereGeometry(1, 14, 10), M(C.pants));
+  hipsM.scale.set(0.166, 0.120, 0.136);
+  hipsM.position.y = 0.03;
+  tunic.add(hipsM);
+  var waistM = new THREE.Mesh(new THREE.CylinderGeometry(0.150, 0.172, 0.20, 14), M(C.shirt));
+  waistM.position.y = 0.19;
+  tunic.add(waistM);
+  var chestM = new THREE.Mesh(new THREE.CylinderGeometry(0.222, 0.156, 0.30, 14), M(C.shirt));
+  chestM.position.y = 0.42;
+  tunic.add(chestM);
+  var chestTop = new THREE.Mesh(new THREE.SphereGeometry(1, 14, 9), M(C.shirt));
+  chestTop.scale.set(0.222, 0.118, 0.152);
+  chestTop.position.y = 0.556;
+  tunic.add(chestTop);
+  // 옷깃 (목 둘레)
+  var collar = new THREE.Mesh(new THREE.CylinderGeometry(0.086, 0.118, 0.062, 14), M(C.shirt));
+  collar.position.y = 0.605;
+  tunic.add(collar);
+  // 가슴 V넥 — 안쪽 살색 + 끈 3개
+  for (var vv = -1; vv <= 1; vv += 2) {
+    var vStrip = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.080, 0.010), M(C.shirtD));
+    vStrip.position.set(vv * 0.026, 0.552, 0.1285);
+    vStrip.rotation.z = vv * 0.30;
+    tunic.add(vStrip);
+  }
+  // 어깨 요크 (어깨를 덮는 한 겹)
+  var yoke = new THREE.Mesh(new THREE.CylinderGeometry(0.219, 0.206, 0.055, 14), M(C.shirtD));
+  yoke.position.y = 0.556;
+  yoke.scale.z = 0.775;
+  tunic.add(yoke);
+  // 옷깃·밑단 스티치 — 작은 실땀
+  function stitchRing(y, r, n, col) {
+    for (var i = 0; i < n; i++) {
+      var a = (i / n) * TAU;
+      var st = new THREE.Mesh(new THREE.BoxGeometry(0.0062, 0.0026, 0.0026), M(col));
+      st.position.set(Math.cos(a) * r, y, Math.sin(a) * r * 0.82);
+      st.rotation.y = -a;
+      tunic.add(st);
+    }
+  }
+  stitchRing(0.596, 0.100, 16, 0xd8a074);
+  stitchRing(0.088, 0.170, 20, 0xd8a074);
+  // 허리 주름 — 천이 접혀 만든 세로 결
+  for (var wf = 0; wf < 7; wf++) {
+    var wa = (wf / 7) * TAU + 0.4;
+    var fr = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.009, 0.115, 4), M(C.shirtD));
+    fr.position.set(Math.cos(wa) * 0.157, 0.185, Math.sin(wa) * 0.146);
+    fr.rotation.z = Math.cos(wa) * 0.16;
+    fr.rotation.x = -Math.sin(wa) * 0.16;
+    tunic.add(fr);
+  }
+  // 옆선
+  for (var ss = -1; ss <= 1; ss += 2) {
+    var sideSeam = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.42, 0.008), M(C.shirtD));
+    sideSeam.position.set(ss * 0.196, 0.33, 0.0);
+    tunic.add(sideSeam);
+  }
+  // 등 가운데 솔기
+  var backSeam = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.40, 0.008), M(C.shirtD));
+  backSeam.position.set(0, 0.32, -0.150);
+  tunic.add(backSeam);
+
+  /* ───────── 벨트·파우치·어깨끈 (가죽 텍스처) ───────── */
+  var beltG = new THREE.Group();
+  torso.add(beltG);
+  var belt = new THREE.Mesh(new THREE.CylinderGeometry(0.168, 0.174, 0.075, 16), M(C.leather));
+  belt.position.y = 0.105;
+  beltG.add(belt);
+  var beltD = new THREE.Mesh(new THREE.CylinderGeometry(0.170, 0.170, 0.012, 16), M(C.leatherD));
+  beltD.position.y = 0.068;
+  beltG.add(beltD);
+  var buckle = new THREE.Mesh(new THREE.BoxGeometry(0.058, 0.048, 0.020), M(C.metal));
+  buckle.position.set(0, 0.106, 0.170);
+  beltG.add(buckle);
+  var buckleHole = new THREE.Mesh(new THREE.BoxGeometry(0.024, 0.020, 0.010), M(C.leatherD));
+  buckleHole.position.set(0, 0.106, 0.182);
+  beltG.add(buckleHole);
+  // 벨트 리벳
+  for (var rv = 0; rv < 8; rv++) {
+    var ra = (rv / 8) * TAU;
+    var rivet = new THREE.Mesh(new THREE.SphereGeometry(0.008, 6, 5), M(C.metal));
+    rivet.position.set(Math.cos(ra) * 0.170, 0.105, Math.sin(ra) * 0.170);
+    beltG.add(rivet);
+  }
+  // 벨트 끝자락
+  var beltEnd = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.115, 0.014), M(C.leather));
+  beltEnd.position.set(0.040, 0.045, 0.168);
+  beltEnd.rotation.z = 0.10;
+  beltG.add(beltEnd);
+  // 허리 파우치 (가죽 주머니)
+  var pouch = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 8), M(C.leather));
+  pouch.scale.set(0.070, 0.078, 0.050);
+  pouch.position.set(-0.150, 0.058, 0.108);
+  beltG.add(pouch);
+  var pouchFlap = new THREE.Mesh(new THREE.BoxGeometry(0.130, 0.040, 0.090), M(C.leatherD));
+  pouchFlap.position.set(-0.150, 0.098, 0.108);
+  pouchFlap.rotation.z = 0.16;
+  beltG.add(pouchFlap);
+  // 어깨끈 (배낭 스트랩) + 가슴 가로끈
+  for (var bs = -1; bs <= 1; bs += 2) {
+    var strap2 = new THREE.Mesh(new THREE.BoxGeometry(0.048, 0.46, 0.026), M(C.leatherD));
+    strap2.position.set(bs * 0.115, 0.360, 0.118);
+    strap2.rotation.x = -0.10;
+    strap2.rotation.z = bs * 0.08;
+    beltG.add(strap2);
+    var strapBk = new THREE.Mesh(new THREE.BoxGeometry(0.048, 0.46, 0.026), M(C.leatherD));
+    strapBk.position.set(bs * 0.100, 0.360, -0.128);
+    strapBk.rotation.x = 0.10;
+    beltG.add(strapBk);
+    var clasp = new THREE.Mesh(new THREE.BoxGeometry(0.040, 0.030, 0.016), M(C.metal));
+    clasp.position.set(bs * 0.112, 0.300, 0.133);
+    beltG.add(clasp);
+  }
+  var chestStrap = new THREE.Mesh(new THREE.BoxGeometry(0.245, 0.036, 0.020), M(C.leatherD));
+  chestStrap.position.set(0, 0.455, 0.140);
+  beltG.add(chestStrap);
+
+  /* ───────────────── 기본 배낭 (등) ───────────────── */
+  var pack = new THREE.Mesh(new THREE.BoxGeometry(0.30, 0.33, 0.16), M(0xa87c4f));
   pack.position.set(0, 0.36, -0.215);
   torso.add(pack);
-  var packTop = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.28, 6), MAT.cream || MAT.boot);
+  var packTop = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.28, 7), M(0xe8dcc0));
   packTop.rotation.z = Math.PI / 2;
   packTop.position.set(0, 0.545, -0.215);
   torso.add(packTop);
 
-  // ── 팔: 어깨 → 팔꿈치 → 손 (도구는 오른손 그룹에 그대로 붙는다)
+  /* ───────────────────────── 팔 ───────────────────────── */
   function arm(sx) {
     var p = new THREE.Group();
-    p.position.set(sx * 0.243, 0.50, 0);
-    var del = new THREE.Mesh(new THREE.SphereGeometry(0.078, 12, 9), MAT.shirt);
-    del.scale.set(1, 0.92, 0.96);
+    p.position.set(sx * 0.232, 0.50, 0);
+    // 어깨 덮개
+    var del = new THREE.Mesh(new THREE.SphereGeometry(0.070, 12, 9), M(C.shirt));
+    del.scale.set(1.02, 0.94, 0.96);
     p.add(del);
-    var up = new THREE.Mesh(new THREE.CylinderGeometry(0.061, 0.050, 0.26, 10), MAT.shirt);
+    var up = new THREE.Mesh(new THREE.CylinderGeometry(0.058, 0.049, 0.26, 10), M(C.shirt));
     up.position.y = -0.13;
     p.add(up);
+    // 소매 끝 롤업 + 실땀
+    var cuff2 = new THREE.Mesh(new THREE.CylinderGeometry(0.057, 0.053, 0.042, 10), M(C.shirtD));
+    cuff2.position.y = -0.246;
+    p.add(cuff2);
+    for (var csi = 0; csi < 6; csi++) {
+      var ca = (csi / 6) * TAU;
+      var sdot = new THREE.Mesh(new THREE.BoxGeometry(0.010, 0.004, 0.004), M(C.stitch));
+      sdot.position.set(Math.cos(ca) * 0.055, -0.230, Math.sin(ca) * 0.055);
+      sdot.rotation.y = -ca;
+      p.add(sdot);
+    }
     var elbow = new THREE.Group();
     elbow.position.y = -0.255;
     p.add(elbow);
-    var em = new THREE.Mesh(new THREE.SphereGeometry(0.050, 10, 7), MAT.skin);
+    var em = new THREE.Mesh(new THREE.SphereGeometry(0.050, 10, 7), M(C.skin));
     elbow.add(em);
-    var fore = new THREE.Mesh(new THREE.CylinderGeometry(0.046, 0.038, 0.225, 10), MAT.skin);
+    var fore = new THREE.Mesh(new THREE.CylinderGeometry(0.046, 0.038, 0.225, 10), M(C.skin));
     fore.position.y = -0.118;
     elbow.add(fore);
     var wrist = new THREE.Group();
     wrist.position.y = -0.232;
     elbow.add(wrist);
-    var palm = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 7), MAT.skin);
+    var palm = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 7), M(C.skin));
     palm.scale.set(0.042, 0.055, 0.030);
     palm.position.y = -0.035;
     wrist.add(palm);
-    var thumb = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 6), MAT.skin);
+    var thumb = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 6), M(C.skin));
     thumb.scale.set(0.016, 0.030, 0.016);
     thumb.position.set(sx * -0.036, -0.028, 0.012);
     wrist.add(thumb);
+    // 손가락 3가닥 (살짝 굽힌 손)
+    for (var fg = -1; fg <= 1; fg++) {
+      var finger = new THREE.Mesh(new THREE.CylinderGeometry(0.0085, 0.0075, 0.048, 5), M(C.skinD));
+      finger.position.set(fg * 0.016, -0.070, 0.004);
+      finger.rotation.x = 0.22;
+      wrist.add(finger);
+    }
     return { arm: p, elbow: elbow, wrist: wrist };
   }
-  var AL = arm(-1), AR = arm(1);
+  var AR = arm(1), AL = arm(-1);
   var armL = AL.arm, armR = AR.arm;
   torso.add(armL); torso.add(armR);
 
-  // tools in right hand
+  /* ---------------- tools in right hand ---------------- */
   var axeG = new THREE.Group();
-  var axHandle = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.036, 0.72, 5), MAT.woodTool);
+  var axHandle = new THREE.Mesh(new THREE.CylinderGeometry(0.030, 0.036, 0.72, 7), MAT.woodTool);
   axHandle.position.y = -0.3;
   axeG.add(axHandle);
-  var axHead = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.3, 0.18), MAT.stoneTool);
+  var axHead = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.30, 0.18), MAT.stoneTool);
   axHead.position.set(0, -0.6, 0.06);
   axHead.rotation.z = 0.12;
   axeG.add(axHead);
+  // 날 끝 하이라이트 + 쐐기 + 손잡이 감기
+  var axEdge = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.27, 0.045), MAT.white);
+  axEdge.position.set(0.052, -0.6, 0.10);
+  axEdge.rotation.z = 0.12;
+  axeG.add(axEdge);
+  var axLash = new THREE.Mesh(new THREE.CylinderGeometry(0.042, 0.042, 0.075, 6), MAT.furD);
+  axLash.position.set(0, -0.44, 0.02);
+  axeG.add(axLash);
   axeG.position.set(0, -0.46, 0.08);
   axeG.rotation.x = -0.25;
   armR.add(axeG);
   axeG.visible = false;
 
   var spearG = new THREE.Group();
-  var spShaft = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.03, 1.5, 5), MAT.woodTool);
+  var spShaft = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.03, 1.5, 6), MAT.woodTool);
   spearG.add(spShaft);
-  var spTip = new THREE.Mesh(new THREE.ConeGeometry(0.075, 0.34, 4), MAT.stoneTool);
+  var spTip = new THREE.Mesh(new THREE.ConeGeometry(0.075, 0.34, 5), MAT.stoneTool);
   spTip.position.y = 0.88;
   spearG.add(spTip);
-  var spWrap = new THREE.Mesh(new THREE.CylinderGeometry(0.042, 0.042, 0.1, 5), MAT.boot);
-  spWrap.position.y = 0.66;
-  spearG.add(spWrap);
+  for (var spw = 0; spw < 3; spw++) {
+    var spWrap = new THREE.Mesh(new THREE.CylinderGeometry(0.040, 0.040, 0.070, 6), spw ? MAT.boot : MAT.furD);
+    spWrap.position.y = 0.60 + spw * 0.075;
+    spearG.add(spWrap);
+  }
   spearG.position.set(0, -0.52, 0.1);
   spearG.rotation.x = 1.35;
   armR.add(spearG);
@@ -5232,13 +6078,16 @@ function makePlayer() {
 
   // bow in the left hand — appears once the bow is crafted
   var bowG = new THREE.Group();
-  var bowArc = new THREE.Mesh(new THREE.TorusGeometry(0.46, 0.026, 4, 14, Math.PI), MAT.woodTool);
+  var bowArc = new THREE.Mesh(new THREE.TorusGeometry(0.46, 0.026, 4, 16, Math.PI), MAT.woodTool);
   bowArc.rotation.z = -Math.PI / 2;
   bowG.add(bowArc);
   var bowString = new THREE.Mesh(new THREE.CylinderGeometry(0.007, 0.007, 0.92, 3), MAT.white);
   bowG.add(bowString);
-  var bowGrip = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.16, 5), MAT.boot);
+  var bowGrip = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.16, 6), MAT.boot);
   bowG.add(bowGrip);
+  var bowWrap = new THREE.Mesh(new THREE.CylinderGeometry(0.040, 0.040, 0.045, 6), MAT.furD);
+  bowWrap.position.y = 0.10;
+  bowG.add(bowWrap);
   bowG.position.set(0, -0.5, 0.04);
   bowG.rotation.x = 0.12;
   armL.add(bowG);
@@ -5246,7 +6095,7 @@ function makePlayer() {
 
   // 맹수 뼈창 — 송곳니를 박은 긴 창
   var boneSpearG = new THREE.Group();
-  var bsShaft = new THREE.Mesh(new THREE.CylinderGeometry(0.030, 0.034, 1.62, 5), MAT.bone);
+  var bsShaft = new THREE.Mesh(new THREE.CylinderGeometry(0.030, 0.034, 1.62, 6), MAT.bone);
   boneSpearG.add(bsShaft);
   var bsTip = new THREE.Mesh(new THREE.ConeGeometry(0.088, 0.42, 5), MAT.bone);
   bsTip.position.y = 0.96;
@@ -5267,14 +6116,22 @@ function makePlayer() {
 
   // 돌칼 — 짧은 손칼, 가로로 넓게 벤다
   var knifeG = new THREE.Group();
-  var knHandle = new THREE.Mesh(new THREE.CylinderGeometry(0.036, 0.042, 0.20, 5), MAT.boot);
+  var knHandle = new THREE.Mesh(new THREE.CylinderGeometry(0.036, 0.042, 0.20, 6), MAT.boot);
   knifeG.add(knHandle);
+  for (var kh = 0; kh < 3; kh++) {
+    var khWrap = new THREE.Mesh(new THREE.CylinderGeometry(0.041, 0.041, 0.020, 6), MAT.furD);
+    khWrap.position.y = -0.06 + kh * 0.055;
+    knifeG.add(khWrap);
+  }
   var knGuard = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.035, 0.05), MAT.boot);
   knGuard.position.y = 0.11;
   knifeG.add(knGuard);
   var knBlade = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.44, 0.095), MAT.stoneTool);
   knBlade.position.set(0, 0.34, 0.012);
   knifeG.add(knBlade);
+  var knEdge = new THREE.Mesh(new THREE.BoxGeometry(0.010, 0.40, 0.030), MAT.white);
+  knEdge.position.set(0, 0.34, -0.040);
+  knifeG.add(knEdge);
   var knTip = new THREE.Mesh(new THREE.ConeGeometry(0.058, 0.18, 3), MAT.stoneTool);
   knTip.position.y = 0.63;
   knTip.rotation.z = 0.18;
@@ -5286,14 +6143,14 @@ function makePlayer() {
 
   // 돌낫 — 휘어진 낫날을 세운 풀베기 도구
   var sickleG = new THREE.Group();
-  var scHandle = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.036, 0.54, 5), MAT.woodTool);
+  var scHandle = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.036, 0.54, 6), MAT.woodTool);
   scHandle.position.y = -0.16;
   sickleG.add(scHandle);
-  var scBlade = new THREE.Mesh(new THREE.TorusGeometry(0.25, 0.022, 4, 10, Math.PI * 0.9), MAT.stoneTool);
+  var scBlade = new THREE.Mesh(new THREE.TorusGeometry(0.25, 0.022, 4, 12, Math.PI * 0.9), MAT.stoneTool);
   scBlade.position.set(0.07, 0.10, 0);
   scBlade.rotation.z = -0.45;
   sickleG.add(scBlade);
-  var scBand = new THREE.Mesh(new THREE.CylinderGeometry(0.042, 0.042, 0.09, 5), MAT.boot);
+  var scBand = new THREE.Mesh(new THREE.CylinderGeometry(0.042, 0.042, 0.09, 6), MAT.boot);
   scBand.position.y = 0.05;
   sickleG.add(scBand);
   sickleG.position.set(0, -0.44, 0.08);
@@ -5303,7 +6160,7 @@ function makePlayer() {
 
   // 돌곡괭이 — T자로 뻗은 곡괭이 머리
   var pickG = new THREE.Group();
-  var pkHandle = new THREE.Mesh(new THREE.CylinderGeometry(0.030, 0.034, 0.80, 5), MAT.woodTool);
+  var pkHandle = new THREE.Mesh(new THREE.CylinderGeometry(0.030, 0.034, 0.80, 6), MAT.woodTool);
   pkHandle.position.y = -0.30;
   pickG.add(pkHandle);
   var pkHead = new THREE.Mesh(new THREE.BoxGeometry(0.40, 0.072, 0.072), MAT.stoneTool);
@@ -5315,7 +6172,7 @@ function makePlayer() {
     pkTip.rotation.z = pks * -Math.PI / 2;
     pickG.add(pkTip);
   }
-  var pkBand = new THREE.Mesh(new THREE.CylinderGeometry(0.040, 0.040, 0.10, 5), MAT.boot);
+  var pkBand = new THREE.Mesh(new THREE.CylinderGeometry(0.040, 0.040, 0.10, 6), MAT.boot);
   pkBand.position.y = 0.04;
   pickG.add(pkBand);
   pickG.position.set(0, -0.46, 0.08);
@@ -5343,7 +6200,7 @@ function makePlayer() {
 
   // 철제 활 — 어두운 금속 활촉
   var ironBowG = new THREE.Group();
-  var ibArc = new THREE.Mesh(new THREE.TorusGeometry(0.50, 0.032, 4, 16, Math.PI), GEAR_MAT.iron);
+  var ibArc = new THREE.Mesh(new THREE.TorusGeometry(0.50, 0.032, 4, 18, Math.PI), GEAR_MAT.iron);
   ibArc.rotation.z = -Math.PI / 2;
   ironBowG.add(ibArc);
   var ibString = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.98, 3), MAT.white);
@@ -5360,134 +6217,255 @@ function makePlayer() {
   armL.add(ironBowG);
   ironBowG.visible = false;
 
-  // ── 목
-  var neck = new THREE.Mesh(new THREE.CylinderGeometry(0.062, 0.075, 0.12, 10), MAT.skin);
-  neck.position.y = 0.635;
-  torso.add(neck);
-
-  // ── 머리 (작은 두상 · 턱 · 코 · 귀)
+  /* ───────────────────────── 머리 ───────────────────────── */
   var head = new THREE.Group();
   head.position.y = 0.745;
-  var skull = new THREE.Mesh(GEO.ico1, MAT.skin);
-  skull.scale.set(0.132, 0.152, 0.138);
+
+  // 두개골 (부드러운 타원) — 이마는 살짝 넓고 턱으로 갈수록 좁아진다
+  var skull = new THREE.Mesh(GEO.ico1, M(C.skin));
+  skull.scale.set(0.124, 0.150, 0.136);
   head.add(skull);
-  var jaw = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 8), MAT.skin);
-  jaw.scale.set(0.099, 0.083, 0.104);
-  jaw.position.set(0, -0.062, 0.020);
+  var brow2 = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 7), M(C.skin));
+  brow2.scale.set(0.114, 0.040, 0.116);
+  brow2.position.set(0, 0.048, 0.022);
+  head.add(brow2);
+  var jaw = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 9), M(C.skin));
+  jaw.scale.set(0.094, 0.086, 0.104);
+  jaw.position.set(0, -0.064, 0.018);
   head.add(jaw);
-  var chin = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 6), MAT.skin);
-  chin.scale.set(0.045, 0.035, 0.045);
-  chin.position.set(0, -0.118, 0.058);
+  var chin = new THREE.Mesh(new THREE.SphereGeometry(1, 9, 7), M(C.skin));
+  chin.scale.set(0.040, 0.034, 0.044);
+  chin.position.set(0, -0.114, 0.062);
   head.add(chin);
-  var nose = new THREE.Mesh(new THREE.ConeGeometry(0.024, 0.062, 6), MAT.skin);
-  nose.position.set(0, -0.028, 0.125);
-  nose.rotation.x = Math.PI / 2;
-  head.add(nose);
-  for (var s = -1; s <= 1; s += 2) {
-    var ear = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 6), MAT.skin);
-    ear.scale.set(0.022, 0.040, 0.028);
-    ear.position.set(s * 0.128, -0.010, 0.005);
-    head.add(ear);
-  }
-  // ── 머리칼: 두피 → 앞머리 → 옆 가닥 → 묶은 꼬리
-  var hair = new THREE.Mesh(GEO.ico1, MAT.hair);
-  hair.scale.set(0.142, 0.156, 0.146);
-  hair.position.set(0, 0.028, -0.012);
-  head.add(hair);
-  var bang = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 7), MAT.hair);
-  bang.scale.set(0.126, 0.058, 0.075);
-  bang.position.set(0, 0.088, 0.092);
-  head.add(bang);
-  for (var hb = -1; hb <= 1; hb += 2) {
-    var lock = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 6), MAT.hair);
-    lock.scale.set(0.038, 0.115, 0.055);
-    lock.position.set(hb * 0.118, -0.012, 0.045);
-    lock.rotation.z = hb * 0.10;
-    head.add(lock);
-    var strand = new THREE.Mesh(new THREE.ConeGeometry(0.028, 0.17, 5), MAT.hair);
-    strand.position.set(hb * 0.112, -0.115, 0.028);
-    strand.rotation.z = hb * 0.14;
-    head.add(strand);
-  }
-  // 낮게 묶은 꼬리 — 목덜미에서 등 쪽으로 흐른다
-  var tailTie = new THREE.Mesh(new THREE.CylinderGeometry(0.036, 0.036, 0.040, 8), MAT.boot);
-  tailTie.position.set(0, 0.015, -0.142);
-  head.add(tailTie);
-  var tailA = new THREE.Mesh(new THREE.CylinderGeometry(0.062, 0.036, 0.16, 8), MAT.hair);
-  tailA.position.set(0, -0.062, -0.170);
-  tailA.rotation.x = -0.30;
-  head.add(tailA);
-  var tailB = new THREE.Mesh(new THREE.ConeGeometry(0.052, 0.26, 7), MAT.hair);
-  tailB.position.set(0, -0.215, -0.208);
-  tailB.rotation.x = -0.16;
-  head.add(tailB);
-  // ── 얼굴
-  var eyeGeo = new THREE.SphereGeometry(0.026, 9, 7);
-  var pupGeo = new THREE.SphereGeometry(0.015, 8, 6);
-  for (var s2 = -1; s2 <= 1; s2 += 2) {
-    var eye = new THREE.Mesh(eyeGeo, MAT.white);
-    eye.scale.set(0.95, 1.05, 0.7);
-    eye.position.set(s2 * 0.053, 0.010, 0.113);
-    head.add(eye);
-    var pup = new THREE.Mesh(pupGeo, MAT.black);
-    pup.position.set(s2 * 0.053, 0.006, 0.128);
-    head.add(pup);
-    var brow = new THREE.Mesh(new THREE.BoxGeometry(0.048, 0.011, 0.012), MAT.hair);
-    brow.position.set(s2 * 0.055, 0.056, 0.112);
-    brow.rotation.z = s2 * -0.10;
-    head.add(brow);
-    var cheek = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 6), new THREE.MeshLambertMaterial({ color: 0xf4a08c }));
-    cheek.scale.set(0.030, 0.018, 0.012);
-    cheek.position.set(s2 * 0.083, -0.040, 0.098);
+  // 광대뼈 — 얼굴 입체감
+  for (var ck2 = -1; ck2 <= 1; ck2 += 2) {
+    var cheek = new THREE.Mesh(new THREE.SphereGeometry(1, 9, 7), M(C.skin));
+    cheek.scale.set(0.038, 0.032, 0.034);
+    cheek.position.set(ck2 * 0.074, -0.022, 0.074);
     head.add(cheek);
   }
-  // 탐험가 모자 — 작아진 두상에 맞춰 축소
+  // 코 — 콧대 + 코끝 + 콧구멍
+  var noseBridge = new THREE.Mesh(new THREE.BoxGeometry(0.021, 0.070, 0.028), M(C.skin));
+  noseBridge.position.set(0, -0.002, 0.128);
+  noseBridge.rotation.x = 0.18;
+  head.add(noseBridge);
+  var noseTip = new THREE.Mesh(new THREE.SphereGeometry(1, 9, 7), M(C.skin));
+  noseTip.scale.set(0.021, 0.018, 0.022);
+  noseTip.position.set(0, -0.040, 0.1335);
+  head.add(noseTip);
+  for (var ns = -1; ns <= 1; ns += 2) {
+    var nostril = new THREE.Mesh(new THREE.SphereGeometry(0.0055, 6, 5), M(C.skinSh));
+    nostril.scale.set(1, 0.75, 0.7);
+    nostril.position.set(ns * 0.012, -0.047, 0.1315);
+    head.add(nostril);
+  }
+  // 입 — 윗입술·아랫입술·입꼬리
+  var lipUp = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 7), new THREE.MeshLambertMaterial({ color: C.lip, flatShading: true }));
+  lipUp.scale.set(0.026, 0.0075, 0.011);
+  lipUp.position.set(0, -0.080, 0.1185);
+  head.add(lipUp);
+  var lipLo = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 7), new THREE.MeshLambertMaterial({ color: C.lipD, flatShading: true }));
+  lipLo.scale.set(0.024, 0.010, 0.012);
+  lipLo.position.set(0, -0.091, 0.1165);
+  head.add(lipLo);
+  var mouthLine = new THREE.Mesh(new THREE.BoxGeometry(0.040, 0.0030, 0.009), new THREE.MeshLambertMaterial({ color: 0xa87066, flatShading: true }));
+  mouthLine.position.set(0, -0.0855, 0.1225);
+  head.add(mouthLine);
+  // 귀 — 바깥 귓바퀴 + 안쪽 컵
+  for (var er = -1; er <= 1; er += 2) {
+    var ear2 = new THREE.Mesh(new THREE.SphereGeometry(1, 9, 7), M(C.skin));
+    ear2.scale.set(0.020, 0.040, 0.028);
+    ear2.position.set(er * 0.129, -0.006, 0.002);
+    head.add(ear2);
+    var earIn = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 6), M(C.skinSh));
+    earIn.scale.set(0.010, 0.024, 0.016);
+    earIn.position.set(er * 0.136, -0.008, 0.006);
+    head.add(earIn);
+  }
+  /* ───────────── 눈 (광택 메시 · 깜빡임용) ───────────── */
+  var eyeG = new THREE.Group();
+  eyeG.position.set(0, 0.004, 0);
+  head.add(eyeG);
+  for (var ey = -1; ey <= 1; ey += 2) {
+    var sclera = new THREE.Mesh(new THREE.SphereGeometry(0.0182, 12, 9), M(C.eyeW));
+    sclera.scale.set(1.0, 0.92, 0.78);
+    sclera.position.set(ey * 0.049, 0.009, 0.1268);
+    eyeG.add(sclera);
+    var iris = new THREE.Mesh(new THREE.SphereGeometry(0.0112, 10, 8), M(C.iris));
+    iris.scale.set(1, 1, 0.62);
+    iris.position.set(ey * 0.0495, 0.008, 0.1376);
+    eyeG.add(iris);
+    var pupil = new THREE.Mesh(new THREE.SphereGeometry(0.0058, 8, 6), M(C.pupil));
+    pupil.scale.set(1, 1, 0.6);
+    pupil.position.set(ey * 0.0496, 0.008, 0.1416);
+    eyeG.add(pupil);
+    var glint = new THREE.Mesh(new THREE.SphereGeometry(0.0026, 6, 5), M(C.glint));
+    glint.position.set(ey * 0.0452, 0.0145, 0.1430);
+    eyeG.add(glint);
+  }
+  // 눈꺼풀 선 · 속눈썹 (106 얼굴이 부풀지 않게 얇은 띠만)
+  for (var sd = -1; sd <= 1; sd += 2) {
+    var lidLine = new THREE.Mesh(new THREE.BoxGeometry(0.036, 0.0032, 0.006), M(C.skinD));
+    lidLine.position.set(sd * 0.0510, 0.0225, 0.1275);
+    lidLine.rotation.z = sd * -0.10;
+    head.add(lidLine);
+    var lash = new THREE.Mesh(new THREE.BoxGeometry(0.038, 0.0030, 0.006), M(C.hairD));
+    lash.position.set(sd * 0.0515, 0.0252, 0.1318);
+    lash.rotation.z = sd * -0.13;
+    head.add(lash);
+    // 눈썹 — 안쪽 두껍고 바깥은 얇은 아치
+    var browIn = new THREE.Mesh(new THREE.BoxGeometry(0.026, 0.0080, 0.010), M(C.hair));
+    browIn.position.set(sd * 0.038, 0.0495, 0.1275);
+    browIn.rotation.z = sd * 0.18;
+    head.add(browIn);
+    var browOut = new THREE.Mesh(new THREE.BoxGeometry(0.024, 0.0062, 0.009), M(C.hair));
+    browOut.position.set(sd * 0.062, 0.0545, 0.1245);
+    browOut.rotation.z = sd * -0.05;
+    head.add(browOut);
+  }
+
+  /* ─────────────────── 머리칼 ─────────────────── */
+  var hairG = new THREE.Group();
+  head.add(hairG);
+  var cap = new THREE.Mesh(GEO.ico1, M(C.hair));
+  cap.scale.set(0.142, 0.156, 0.148);
+  cap.position.set(0, 0.028, -0.012);
+  hairG.add(cap);
+  // 뒤통수 머리 볼륨
+  var backHair = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 9), M(C.hair));
+  backHair.scale.set(0.128, 0.140, 0.116);
+  backHair.position.set(0, -0.040, -0.062);
+  hairG.add(backHair);
+  // 앞머리 — 이마를 덮는 한 장의 앞머리 + 결을 만드는 얇은 가닥
+  var fringe = new THREE.Mesh(new THREE.SphereGeometry(1, 14, 10), M(C.hair));
+  fringe.scale.set(0.128, 0.072, 0.070);
+  fringe.position.set(0, 0.098, 0.070);
+  fringe.rotation.x = -0.22;
+  hairG.add(fringe);
+  var fringeSide = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 9), M(C.hair));
+  fringeSide.scale.set(0.132, 0.086, 0.062);
+  fringeSide.position.set(0, 0.078, 0.036);
+  hairG.add(fringeSide);
+  for (var bg = 0; bg < 6; bg++) {
+    var bx = (-1 + bg * 0.4) * 0.062;
+    var lock2 = new THREE.Mesh(new THREE.ConeGeometry(0.020, 0.070, 5), M(bg % 2 ? C.hair : C.hairL));
+    lock2.position.set(bx, 0.070, 0.104 - Math.abs(bx) * 0.30);
+    lock2.rotation.x = 0.42;
+    lock2.rotation.z = -bx * 2.2;
+    hairG.add(lock2);
+  }
+  // 옆머리 + 턱선으로 흐르는 잔가닥
+  for (var hb = -1; hb <= 1; hb += 2) {
+    var sideLock = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 8), M(C.hair));
+    sideLock.scale.set(0.030, 0.108, 0.050);
+    sideLock.position.set(hb * 0.118, 0.000, 0.010);
+    sideLock.rotation.z = hb * 0.08;
+    hairG.add(sideLock);
+    var strand = new THREE.Mesh(new THREE.ConeGeometry(0.020, 0.150, 6), M(C.hair));
+    strand.position.set(hb * 0.113, -0.112, 0.004);
+    strand.rotation.z = hb * 0.12;
+    hairG.add(strand);
+    // 광택이 도는 잔결
+    var sheen = new THREE.Mesh(new THREE.ConeGeometry(0.010, 0.095, 4), M(C.hairL));
+    sheen.position.set(hb * 0.086, 0.108, 0.076);
+    sheen.rotation.z = hb * 0.42;
+    sheen.rotation.x = -0.35;
+    hairG.add(sheen);
+  }
+  // 낮게 묶은 꼬리 — 목덜미에서 등 쪽으로 흐른다
+  var tailTie = new THREE.Mesh(new THREE.CylinderGeometry(0.036, 0.036, 0.040, 10), M(C.boot));
+  tailTie.position.set(0, 0.012, -0.146);
+  hairG.add(tailTie);
+  var tailA = new THREE.Mesh(new THREE.CylinderGeometry(0.062, 0.036, 0.16, 9), M(C.hair));
+  tailA.position.set(0, -0.066, -0.172);
+  tailA.rotation.x = -0.30;
+  hairG.add(tailA);
+  var tailB = new THREE.Mesh(new THREE.ConeGeometry(0.052, 0.27, 8), M(C.hair));
+  tailB.position.set(0, -0.220, -0.208);
+  tailB.rotation.x = -0.16;
+  hairG.add(tailB);
+
+  /* ───────────── 밀짚모자 (짚 텍스처 메시) ───────────── */
   var hatG = new THREE.Group();
-  var brim = new THREE.Mesh(new THREE.CylinderGeometry(0.215, 0.222, 0.022, 14), new THREE.MeshLambertMaterial({ color: 0xd9b877 }));
+  var brim = new THREE.Mesh(new THREE.CylinderGeometry(0.216, 0.224, 0.020, 18), M(C.straw));
   hatG.add(brim);
-  var crown = new THREE.Mesh(new THREE.CylinderGeometry(0.118, 0.140, 0.115, 12), new THREE.MeshLambertMaterial({ color: 0xe2c184 }));
+  var brimUnder = new THREE.Mesh(new THREE.CylinderGeometry(0.214, 0.220, 0.008, 18), M(C.strawD));
+  brimUnder.position.y = -0.013;
+  hatG.add(brimUnder);
+  var brimEdge = new THREE.Mesh(new THREE.TorusGeometry(0.221, 0.008, 4, 20), M(C.strawD));
+  brimEdge.rotation.x = Math.PI / 2;
+  brimEdge.position.y = -0.004;
+  hatG.add(brimEdge);
+  var crown = new THREE.Mesh(new THREE.CylinderGeometry(0.118, 0.142, 0.118, 14), M(C.strawL));
   crown.position.y = 0.066;
   hatG.add(crown);
-  var crownTop = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 8), new THREE.MeshLambertMaterial({ color: 0xe8c98f }));
-  crownTop.scale.set(0.118, 0.030, 0.118);
-  crownTop.position.y = 0.122;
+  var crownTop = new THREE.Mesh(new THREE.SphereGeometry(1, 14, 9), M(C.straw));
+  crownTop.scale.set(0.118, 0.042, 0.118);
+  crownTop.position.y = 0.124;
   hatG.add(crownTop);
-  var band = new THREE.Mesh(new THREE.CylinderGeometry(0.141, 0.144, 0.026, 12), new THREE.MeshLambertMaterial({ color: 0xa8743f }));
-  band.position.y = 0.022;
+  var band = new THREE.Mesh(new THREE.CylinderGeometry(0.144, 0.147, 0.028, 14), M(C.strawD));
+  band.position.y = 0.024;
   hatG.add(band);
-  hatG.position.y = 0.108;
-  hatG.rotation.z = 0.04;
+  // 짚 매듭 장식
+  var knot = new THREE.Mesh(new THREE.SphereGeometry(0.020, 7, 6), M(C.leather));
+  knot.position.set(0.128, 0.024, 0.062);
+  hatG.add(knot);
+  // 처진 밀짚 올 — 테두리 결
+  for (var st2 = 0; st2 < 12; st2++) {
+    var sa = (st2 / 12) * TAU;
+    var strawBit = new THREE.Mesh(new THREE.BoxGeometry(0.030, 0.004, 0.012), M(C.strawD));
+    strawBit.position.set(Math.cos(sa) * 0.214, -0.012, Math.sin(sa) * 0.214);
+    strawBit.rotation.set(0, -sa, 0);
+    hatG.add(strawBit);
+  }
+  // 턱끈
+  for (var cc2 = -1; cc2 <= 1; cc2 += 2) {
+    var cordLine = new THREE.Mesh(new THREE.CylinderGeometry(0.0045, 0.0045, 0.20, 4), M(C.leatherD));
+    cordLine.position.set(cc2 * 0.132, -0.10, 0.035);
+    cordLine.rotation.z = cc2 * 0.16;
+    hatG.add(cordLine);
+  }
+  hatG.position.y = 0.098;
+  hatG.scale.setScalar(0.94);
+  hatG.rotation.z = 0.030;
+  hatG.rotation.x = -0.050;
   head.add(hatG);
 
   torso.add(head);
 
+  /* ─────────────────── 굽기 (bake) ─────────────────── */
   root.add(torso);
   addShadows(root);
-  root.traverse(function (o) { if (o.isMesh && o.material === MAT.glass) o.castShadow = false; });
-  /* bake the static body parts (one mesh instead of ~20) */
-  flattenGroup(torso, [armL, armR, head], MAT.charBody, true, true);
-  flattenGroup(head, null, MAT.charBody, true, true);
-  flattenGroup(armL, [AL.elbow], MAT.charBody, true, true);
-  flattenGroup(AL.elbow, [AL.wrist], MAT.charBody, true, true);
-  flattenGroup(AL.wrist, null, MAT.charBody, true, true);
-  flattenGroup(armR, [AR.elbow, axeG, spearG, boneSpearG, knifeG, boneKnifeG, sickleG, pickG], MAT.charBody, true, true);
-  flattenGroup(AR.elbow, [AR.wrist], MAT.charBody, true, true);
-  flattenGroup(AR.wrist, null, MAT.charBody, true, true);
-  flattenGroup(axeG, null, MAT.prop, true);
-  flattenGroup(spearG, null, MAT.prop, true);
-  flattenGroup(bowG, null, MAT.prop, true);
-  flattenGroup(boneSpearG, null, MAT.prop, true);
-  flattenGroup(knifeG, null, MAT.prop, true);
-  flattenGroup(boneKnifeG, null, MAT.prop, true);
-  flattenGroup(sickleG, null, MAT.prop, true);
-  flattenGroup(pickG, null, MAT.prop, true);
-  flattenGroup(ironBowG, null, MAT.prop, true);
-  flattenGroup(legL, [LA.knee], MAT.charBody, true, true);
-  flattenGroup(legR, [LB.knee], MAT.charBody, true, true);
-  flattenGroup(LA.knee, [LA.ankle], MAT.charBody, true, true);
-  flattenGroup(LB.knee, [LB.ankle], MAT.charBody, true, true);
-  flattenGroup(LA.ankle, null, MAT.charBody, true, true);
-  flattenGroup(LB.ankle, null, MAT.charBody, true, true);
+  /* 정적 파츠를 하나의 메시로 — 몸(피부/기본천/배낭) · 얼굴 */
+  flattenGroup(torso, [armL, armR, head, tunic], MAT.charBody, true, true, 9);
+  flattenGroup(head, [eyeG, hatG], MAT.charBody, true, true, 9);
+  flattenGroup(armL, [AL.elbow], MAT.charBody, true, true, 9);
+  flattenGroup(AL.elbow, [AL.wrist], MAT.charBody, true, true, 9);
+  flattenGroup(AL.wrist, null, MAT.charBody, true, true, 9);
+  flattenGroup(armR, [AR.elbow, axeG, spearG, boneSpearG, knifeG, boneKnifeG, sickleG, pickG], MAT.charBody, true, true, 9);
+  flattenGroup(AR.elbow, [AR.wrist], MAT.charBody, true, true, 9);
+  flattenGroup(AR.wrist, null, MAT.charBody, true, true, 9);
+  /* 원단·가죽·짚·눈 — 질감 메시 */
+  flattenGroup(tunic, null, MAT.clothTunic, true, true, 19);
+  var eyeMesh = flattenGroup(eyeG, null, MAT.eye, false, false);
+  if (eyeMesh) eyeMesh.castShadow = false;
+  flattenGroup(hatG, null, MAT.strawHat, true, true, 15);
+  /* 도구 — 나무결/돌 결 */
+  flattenGroup(axeG, null, MAT.toolBake, true, true, 14);
+  flattenGroup(spearG, null, MAT.toolBake, true, true, 14);
+  flattenGroup(bowG, null, MAT.toolBake, true, true, 14);
+  flattenGroup(boneSpearG, null, MAT.toolBake, true, true, 14);
+  flattenGroup(knifeG, null, MAT.toolBake, true, true, 14);
+  flattenGroup(boneKnifeG, null, MAT.toolBake, true, true, 14);
+  flattenGroup(sickleG, null, MAT.toolBake, true, true, 14);
+  flattenGroup(pickG, null, MAT.toolBake, true, true, 14);
+  flattenGroup(ironBowG, null, MAT.toolBake, true, true, 14);
+  flattenGroup(legL, [LA.knee], MAT.charBody, true, true, 9);
+  flattenGroup(legR, [LB.knee], MAT.charBody, true, true, 9);
+  flattenGroup(LA.knee, [LA.ankle], MAT.charBody, true, true, 9);
+  flattenGroup(LB.knee, [LB.ankle], MAT.charBody, true, true, 9);
+  flattenGroup(LA.ankle, null, MAT.charBody, true, true, 9);
+  flattenGroup(LB.ankle, null, MAT.charBody, true, true, 9);
 
   player.group = root;
   player.legL = legL; player.legR = legR;
@@ -5501,6 +6479,7 @@ function makePlayer() {
   player.boneSpear = boneSpearG; player.ironBow = ironBowG;
   player.knife = knifeG; player.boneKnife = boneKnifeG;
   player.sickle = sickleG; player.pick = pickG;
+  player.tunic = tunic; player.belt = beltG; player.eyes = eyeG;
   player.armorSets = buildArmorSets(torso);
   player.hatSets = buildHatSets(head);
   // 신발은 발목 그룹에 붙는다 — 부츠 메시의 y(-0.575)를 발 높이로 되돌리는 앵커
@@ -5548,148 +6527,239 @@ var GEAR_MAT = {
 function buildArmorSets(torso) {
   var sets = {};
 
-  // 얇은 가죽 옷 — 얇게 붙는 조끼
+  /* v2.7 — 세트별 질감 재질 (원단·가죽·털·비늘) + 세트당 1 draw call */
+  var SET_MAT = {
+    hideVest: MAT.gearLeather, thickArmor: MAT.gearLeather,
+    beastCoat: MAT.gearFur, furCoat: MAT.gearFur,
+    dyedDress: MAT.gearCloth, fineDress: MAT.gearCloth,
+    sailCloak: MAT.gearHemp, tyrantArmor: MAT.gearScale
+  };
+  var SET_UV = {
+    hideVest: 13, thickArmor: 12, beastCoat: 10, furCoat: 10,
+    dyedDress: 10, fineDress: 10, sailCloak: 7, tyrantArmor: 14
+  };
+  function stitchRing(g, y, r, n, col, squash) {
+    for (var i = 0; i < n; i++) {
+      var a = (i / n) * TAU;
+      var st = new THREE.Mesh(new THREE.BoxGeometry(0.011, 0.0045, 0.0045), lam(col));
+      st.position.set(Math.cos(a) * r, y, Math.sin(a) * r * (squash || 0.94));
+      st.rotation.y = -a;
+      g.add(st);
+    }
+  }
+
+  // 얇은 가죽 옷 — 얇게 붙는 조끼 (옆 허리끈 + 밑단 실땀)
   var vest = new THREE.Group();
-  var v1 = new THREE.Mesh(new THREE.CylinderGeometry(0.300, 0.312, 0.40, 9), GEAR_MAT.thin);
+  var v1 = new THREE.Mesh(new THREE.CylinderGeometry(0.298, 0.310, 0.40, 14), GEAR_MAT.thin);
   v1.position.y = 0.33;
   vest.add(v1);
-  var v2 = new THREE.Mesh(new THREE.CylinderGeometry(0.262, 0.262, 0.07, 9), GEAR_MAT.thinD);
+  var v2 = new THREE.Mesh(new THREE.CylinderGeometry(0.262, 0.262, 0.07, 14), GEAR_MAT.thinD);
   v2.position.y = 0.10;
   vest.add(v2);
+  var vCollar = new THREE.Mesh(new THREE.CylinderGeometry(0.108, 0.130, 0.065, 14), GEAR_MAT.thinD);
+  vCollar.position.y = 0.545;
+  vest.add(vCollar);
+  for (var vl = 0; vl < 4; vl++) {
+    var laceH = new THREE.Mesh(new THREE.BoxGeometry(0.115, 0.014, 0.014), GEAR_MAT.thinD);
+    laceH.position.set(0, 0.16 + vl * 0.085, 0.290);
+    vest.add(laceH);
+  }
+  stitchRing(vest, 0.128, 0.305, 16, 0xd8b489);
+  stitchRing(vest, 0.525, 0.300, 16, 0xd8b489);
   sets.hideVest = vest;
 
-  // 두꺼운 가죽 갑옷 — 두껍게 덧댄 갑옷 + 어깨 받이
+  // 두꺼운 가죽 갑옷 — 두껍게 덧댄 갑옷 + 어깨 받이 + 리벳
   var thick = new THREE.Group();
-  var t1 = new THREE.Mesh(new THREE.CylinderGeometry(0.325, 0.345, 0.52, 9), GEAR_MAT.thick);
+  var t1 = new THREE.Mesh(new THREE.CylinderGeometry(0.322, 0.342, 0.52, 14), GEAR_MAT.thick);
   t1.position.y = 0.31;
   thick.add(t1);
   for (var s = -1; s <= 1; s += 2) {
     var pad = new THREE.Mesh(GEO.ico1, GEAR_MAT.thickD);
-    pad.scale.set(0.17, 0.11, 0.15);
-    pad.position.set(s * 0.30, 0.56, 0);
+    pad.scale.set(0.175, 0.115, 0.155);
+    pad.position.set(s * 0.30, 0.555, 0);
     thick.add(pad);
+    var padRim = new THREE.Mesh(new THREE.TorusGeometry(0.135, 0.014, 4, 12), GEAR_MAT.thinD);
+    padRim.position.set(s * 0.30, 0.585, 0);
+    padRim.rotation.x = Math.PI / 2;
+    padRim.scale.set(1, 0.85, 1);
+    thick.add(padRim);
   }
   for (var r = 0; r < 3; r++) {
-    var lace = new THREE.Mesh(new THREE.CylinderGeometry(0.335, 0.345, 0.035, 9), GEAR_MAT.thinD);
+    var lace = new THREE.Mesh(new THREE.CylinderGeometry(0.332, 0.344, 0.034, 14), GEAR_MAT.thinD);
     lace.position.y = 0.14 + r * 0.16;
     thick.add(lace);
+    for (var rd = 0; rd < 10; rd++) {
+      var ra = (rd / 10) * TAU + r * 0.3;
+      var stud = new THREE.Mesh(new THREE.SphereGeometry(0.009, 6, 5), MAT.knob);
+      stud.position.set(Math.cos(ra) * 0.336, 0.14 + r * 0.16, Math.sin(ra) * 0.336);
+      thick.add(stud);
+    }
   }
+  var thickBelt = new THREE.Mesh(new THREE.CylinderGeometry(0.345, 0.352, 0.075, 14), GEAR_MAT.bootD);
+  thickBelt.position.y = 0.075;
+  thick.add(thickBelt);
   sets.thickArmor = thick;
 
-  // 맹수 가죽 코트 — 털 깃과 긴 자락
+  // 맹수 가죽 코트 — 털 깃과 긴 자락 + 찢긴 밑단
   var coat = new THREE.Group();
-  var c1 = new THREE.Mesh(new THREE.CylinderGeometry(0.330, 0.375, 0.66, 10), GEAR_MAT.beast);
+  var c1 = new THREE.Mesh(new THREE.CylinderGeometry(0.328, 0.372, 0.66, 14), GEAR_MAT.beast);
   c1.position.y = 0.28;
   coat.add(c1);
-  for (var f = 0; f < 12; f++) {
-    var a = (f / 12) * Math.PI * 2;
+  for (var f = 0; f < 14; f++) {
+    var a = (f / 14) * Math.PI * 2;
     var tuft = new THREE.Mesh(GEO.ico0, GEAR_MAT.beastFur);
-    tuft.scale.set(0.075, 0.055, 0.075);
-    tuft.position.set(Math.cos(a) * 0.30, 0.59 + Math.sin(f) * 0.01, Math.sin(a) * 0.30);
+    tuft.scale.set(0.078, 0.058, 0.078);
+    tuft.position.set(Math.cos(a) * 0.30, 0.588 + Math.sin(f) * 0.012, Math.sin(a) * 0.30);
     coat.add(tuft);
   }
-  var c2 = new THREE.Mesh(new THREE.CylinderGeometry(0.375, 0.40, 0.10, 10), GEAR_MAT.beastFur);
+  var c2 = new THREE.Mesh(new THREE.CylinderGeometry(0.372, 0.398, 0.10, 14), GEAR_MAT.beastFur);
   c2.position.y = -0.05;
   coat.add(c2);
+  // 찢긴 가죽 자락
+  for (var tg = 0; tg < 7; tg++) {
+    var tga = (tg / 7) * TAU + 0.2;
+    var tTail = new THREE.Mesh(new THREE.ConeGeometry(0.048, 0.16, 4), GEAR_MAT.beast);
+    tTail.position.set(Math.cos(tga) * 0.363, -0.145, Math.sin(tga) * 0.363);
+    tTail.rotation.set(Math.PI, tga, 0);
+    coat.add(tTail);
+  }
+  // 가죽끈 크로스 벨트
+  var cb1 = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.44, 0.030), GEAR_MAT.thickD);
+  cb1.position.set(-0.05, 0.36, 0.300);
+  cb1.rotation.z = 0.42;
+  coat.add(cb1);
   sets.beastCoat = coat;
 
-  // 물들인 드레스 — 보라 염료를 입힌 원피스
+  // 물들인 드레스 — 보라 염료를 입힌 원피스 (허리 띠 + 밑단 자락)
   var dyed = new THREE.Group();
-  var dd1 = new THREE.Mesh(new THREE.CylinderGeometry(0.300, 0.330, 0.46, 10), new THREE.MeshLambertMaterial({ color: 0x9b7bd0, flatShading: true }));
+  var DYE_P = 0x9b7bd0, DYE_PL = 0xc3b0e8, DYE_PD = 0x7f63c0;
+  var dd1 = new THREE.Mesh(new THREE.CylinderGeometry(0.296, 0.326, 0.46, 14), lam(DYE_P));
   dd1.position.y = 0.33;
   dyed.add(dd1);
-  var dd2 = new THREE.Mesh(new THREE.CylinderGeometry(0.345, 0.52, 0.30, 10), new THREE.MeshLambertMaterial({ color: 0xc3b0e8, flatShading: true }));
+  var dd2 = new THREE.Mesh(new THREE.CylinderGeometry(0.341, 0.516, 0.30, 14), lam(DYE_PL));
   dd2.position.y = 0.04;
   dyed.add(dd2);
-  var dd3 = new THREE.Mesh(new THREE.CylinderGeometry(0.335, 0.335, 0.05, 10), new THREE.MeshLambertMaterial({ color: 0x7f63c0, flatShading: true }));
+  var dd3 = new THREE.Mesh(new THREE.CylinderGeometry(0.330, 0.330, 0.055, 14), lam(DYE_PD));
   dd3.position.y = 0.18;
   dyed.add(dd3);
+  for (var dp = 0; dp < 12; dp++) {
+    var dpa = (dp / 12) * TAU;
+    var pleat = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.26, 0.020), lam(DYE_PD));
+    pleat.position.set(Math.cos(dpa) * 0.42, 0.02, Math.sin(dpa) * 0.42);
+    pleat.rotation.y = -dpa;
+    dyed.add(pleat);
+  }
+  stitchRing(dyed, 0.205, 0.334, 16, DYE_PL);
   sets.dyedDress = dyed;
 
   // 방한 털옷 — 후드 달린 두꺼운 털 코트
   var fur = new THREE.Group();
-  var fc1 = new THREE.Mesh(new THREE.CylinderGeometry(0.345, 0.395, 0.70, 10), new THREE.MeshLambertMaterial({ color: 0x8d6f52, flatShading: true }));
+  var FUR_BASE = 0x8d6f52, FUR_TRIM = 0xe4d7bf, FUR_SLV = 0x9a7a59;
+  var fc1 = new THREE.Mesh(new THREE.CylinderGeometry(0.342, 0.392, 0.70, 14), lam(FUR_BASE));
   fc1.position.y = 0.28;
   fur.add(fc1);
-  var fcFurMat = new THREE.MeshLambertMaterial({ color: 0xe4d7bf, flatShading: true });
-  for (var fu = 0; fu < 16; fu++) {
-    var fua = (fu / 16) * TAU;
-    var ft = new THREE.Mesh(GEO.ico0, fcFurMat);
-    ft.scale.set(0.085, 0.06, 0.085);
-    ft.position.set(Math.cos(fua) * 0.36, 0.62 + Math.sin(fu * 1.7) * 0.02, Math.sin(fua) * 0.36);
+  for (var fu = 0; fu < 18; fu++) {
+    var fua = (fu / 18) * TAU;
+    var ft = new THREE.Mesh(GEO.ico0, lam(FUR_TRIM));
+    ft.scale.set(0.088, 0.062, 0.088);
+    ft.position.set(Math.cos(fua) * 0.358, 0.618 + Math.sin(fu * 1.7) * 0.020, Math.sin(fua) * 0.358);
     fur.add(ft);
   }
-  var hood = new THREE.Mesh(new THREE.SphereGeometry(0.20, 8, 6, 0, TAU, 0, Math.PI * 0.62), fcFurMat);
+  var hood = new THREE.Mesh(new THREE.SphereGeometry(0.20, 12, 8, 0, TAU, 0, Math.PI * 0.62), lam(FUR_TRIM));
   hood.position.set(0, 0.60, -0.20);
   hood.rotation.x = -0.35;
   fur.add(hood);
-  var fc2 = new THREE.Mesh(new THREE.CylinderGeometry(0.395, 0.415, 0.12, 10), fcFurMat);
+  var hoodIn = new THREE.Mesh(new THREE.SphereGeometry(0.155, 10, 7, 0, TAU, 0, Math.PI * 0.6), lam(0x5f4a36));
+  hoodIn.position.set(0, 0.62, -0.185);
+  hoodIn.rotation.x = -0.35;
+  fur.add(hoodIn);
+  var fc2 = new THREE.Mesh(new THREE.CylinderGeometry(0.392, 0.412, 0.12, 14), lam(FUR_TRIM));
   fc2.position.y = -0.05;
   fur.add(fc2);
   for (var fs = -1; fs <= 1; fs += 2) {
-    var slv = new THREE.Mesh(new THREE.CylinderGeometry(0.10, 0.115, 0.42, 7), new THREE.MeshLambertMaterial({ color: 0x9a7a59, flatShading: true }));
+    var slv = new THREE.Mesh(new THREE.CylinderGeometry(0.100, 0.116, 0.42, 9), lam(FUR_SLV));
     slv.position.set(fs * 0.30, 0.36, 0);
     slv.rotation.z = fs * 0.10;
     fur.add(slv);
+    var slvCuff = new THREE.Mesh(new THREE.CylinderGeometry(0.112, 0.118, 0.055, 9), lam(FUR_TRIM));
+    slvCuff.position.set(fs * 0.312, 0.160, 0);
+    slvCuff.rotation.z = fs * 0.10;
+    fur.add(slvCuff);
   }
   sets.furCoat = fur;
 
-  // 돛 망토 — 등 뒤로 펼쳐지는 돛
+  // 돛 망토 — 등 뒤로 펼쳐지는 돛 (밧줄 테두리)
   var cloak = new THREE.Group();
-  var cl1 = new THREE.Mesh(new THREE.CylinderGeometry(0.315, 0.345, 0.50, 10), new THREE.MeshLambertMaterial({ color: 0x6f7f8c, flatShading: true }));
+  var cl1 = new THREE.Mesh(new THREE.CylinderGeometry(0.312, 0.342, 0.50, 14), lam(0x6f7f8c));
   cl1.position.y = 0.34;
   cloak.add(cl1);
-  var sail = new THREE.Mesh(new THREE.ConeGeometry(0.52, 0.95, 4, 1, true), new THREE.MeshLambertMaterial({ color: 0x8fa4b4, flatShading: true, side: THREE.DoubleSide }));
+  var sail = new THREE.Mesh(new THREE.ConeGeometry(0.52, 0.95, 4, 1, true), lam(0x8fa4b4, false));
   sail.position.set(0, 0.30, -0.30);
   sail.rotation.x = 0.16;
   sail.rotation.y = Math.PI / 4;
   cloak.add(sail);
   for (var ck = -1; ck <= 1; ck += 2) {
-    var spine = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.9, 4), new THREE.MeshLambertMaterial({ color: 0x4f5d68 }));
+    var spine = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.9, 5), lam(0x4f5d68));
     spine.position.set(ck * 0.16, 0.42, -0.42);
     spine.rotation.x = 0.30;
     spine.rotation.z = ck * 0.22;
     cloak.add(spine);
   }
+  var sailRope = new THREE.Mesh(new THREE.TorusGeometry(0.44, 0.012, 4, 18), lam(0xc9b27c));
+  sailRope.position.set(0, 0.10, -0.32);
+  sailRope.rotation.x = 1.35;
+  cloak.add(sailRope);
   sets.sailCloak = cloak;
 
   // 폭군 비늘 갑옷 — 짙은 비늘판 + 송곳니 장식
   var tyr = new THREE.Group();
-  var ty1 = new THREE.Mesh(new THREE.CylinderGeometry(0.345, 0.365, 0.56, 9), new THREE.MeshLambertMaterial({ color: 0x3f4a3a, flatShading: true }));
+  var ty1 = new THREE.Mesh(new THREE.CylinderGeometry(0.342, 0.362, 0.56, 14), lam(0x3f4a3a));
   ty1.position.y = 0.31;
   tyr.add(ty1);
-  var ty2 = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.30, 0.20, 9), new THREE.MeshLambertMaterial({ color: 0x2c352a, flatShading: true }));
+  var ty2 = new THREE.Mesh(new THREE.CylinderGeometry(0.238, 0.300, 0.20, 14), lam(0x2c352a));
   ty2.position.y = 0.58;
   tyr.add(ty2);
-  for (var ts = 0; ts < 10; ts++) {
-    var tsa = (ts / 10) * TAU;
-    var plate = new THREE.Mesh(new THREE.ConeGeometry(0.075, 0.16, 4), new THREE.MeshLambertMaterial({ color: 0x59684f, flatShading: true }));
-    plate.position.set(Math.cos(tsa) * 0.35, 0.14 + (ts % 2) * 0.18, Math.sin(tsa) * 0.35);
+  for (var ts = 0; ts < 12; ts++) {
+    var tsa = (ts / 12) * TAU;
+    var plate = new THREE.Mesh(new THREE.ConeGeometry(0.075, 0.16, 4), lam(0x59684f));
+    plate.position.set(Math.cos(tsa) * 0.348, 0.14 + (ts % 2) * 0.18, Math.sin(tsa) * 0.348);
     plate.rotation.set(Math.PI / 2, tsa, 0);
     tyr.add(plate);
   }
   for (var tf2 = -1; tf2 <= 1; tf2 += 2) {
-    var tfang = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.20, 4), new THREE.MeshLambertMaterial({ color: 0xece2c4, flatShading: true }));
+    var tfang = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.20, 4), lam(0xece2c4));
     tfang.position.set(tf2 * 0.16, 0.62, 0.22);
     tfang.rotation.x = -0.4;
     tyr.add(tfang);
   }
   sets.tyrantArmor = tyr;
 
-  // 예쁜 옷 — 옷감으로 지은 파스텔 원피스
+  // 예쁜 옷 — 옷감으로 지은 파스텔 원피스 (허리 리본 + 밑단 레이스)
   var dress = new THREE.Group();
-  var d1 = new THREE.Mesh(new THREE.CylinderGeometry(0.300, 0.330, 0.46, 10), GEAR_MAT.dress);
+  var d1 = new THREE.Mesh(new THREE.CylinderGeometry(0.296, 0.326, 0.46, 14), GEAR_MAT.dress);
   d1.position.y = 0.33;
   dress.add(d1);
-  var d2 = new THREE.Mesh(new THREE.CylinderGeometry(0.345, 0.52, 0.30, 10), GEAR_MAT.dressB);
+  var d2 = new THREE.Mesh(new THREE.CylinderGeometry(0.341, 0.516, 0.30, 14), GEAR_MAT.dressB);
   d2.position.y = 0.04;
   dress.add(d2);
-  var sash = new THREE.Mesh(new THREE.CylinderGeometry(0.335, 0.335, 0.05, 10), GEAR_MAT.dress);
+  var sash = new THREE.Mesh(new THREE.CylinderGeometry(0.330, 0.330, 0.055, 14), GEAR_MAT.dress);
   sash.position.y = 0.18;
   dress.add(sash);
+  var bow = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 6), GEAR_MAT.dress);
+  bow.scale.set(0.055, 0.034, 0.026);
+  bow.position.set(0, 0.185, 0.330);
+  dress.add(bow);
+  for (var lf = 0; lf < 16; lf++) {
+    var lfa = (lf / 16) * TAU;
+    var fril = new THREE.Mesh(new THREE.SphereGeometry(0.032, 7, 5), GEAR_MAT.dressB);
+    fril.position.set(Math.cos(lfa) * 0.505, -0.078, Math.sin(lfa) * 0.505);
+    dress.add(fril);
+  }
   sets.fineDress = dress;
 
   for (var k in sets) {
+    // 세트 하나를 메시 한 장으로 굽는다 (질감 UV 포함)
+    flattenGroup(sets[k], null, SET_MAT[k] || MAT.gearCloth, true, true, SET_UV[k] || 11);
     sets[k].visible = false;
     // v2.4 — 슬림해진 몸에 맞춰 가로 폭만 0.84배 (높이는 그대로)
     sets[k].scale.set(0.84, 1, 0.84);
@@ -5704,30 +6774,33 @@ function buildHatSets(head) {
 
   // 방한 모자 — 귀마개가 달린 두꺼운 털모자 (기본 탐험가 모자 위를 덮는다)
   var g = new THREE.Group();
-  var capMat = new THREE.MeshLambertMaterial({ color: 0x8d6f52, flatShading: true });
-  var furMat = new THREE.MeshLambertMaterial({ color: 0xe8dcc4, flatShading: true });
-  var dome = new THREE.Mesh(new THREE.SphereGeometry(0.315, 10, 7, 0, TAU, 0, Math.PI * 0.56), capMat);
+  var capMat = lam(0x8d6f52), furMat = lam(0xe8dcc4);
+  var dome = new THREE.Mesh(new THREE.SphereGeometry(0.315, 12, 8, 0, TAU, 0, Math.PI * 0.56), capMat);
   dome.position.y = 0.185;
   g.add(dome);
-  var brim = new THREE.Mesh(new THREE.CylinderGeometry(0.405, 0.415, 0.065, 12), furMat);
+  var brim = new THREE.Mesh(new THREE.CylinderGeometry(0.405, 0.415, 0.065, 14), furMat);
   brim.position.y = 0.195;
   g.add(brim);
-  for (var i = 0; i < 14; i++) {
-    var a = (i / 14) * TAU;
+  for (var i = 0; i < 16; i++) {
+    var a = (i / 16) * TAU;
     var tuft = new THREE.Mesh(GEO.ico0, furMat);
-    tuft.scale.set(0.075, 0.05, 0.075);
+    tuft.scale.set(0.078, 0.052, 0.078);
     tuft.position.set(Math.cos(a) * 0.40, 0.235 + Math.sin(i * 1.7) * 0.012, Math.sin(a) * 0.40);
     g.add(tuft);
   }
   for (var s = -1; s <= 1; s += 2) {
     var flap = new THREE.Mesh(GEO.ico0, furMat);
-    flap.scale.set(0.105, 0.145, 0.075);
+    flap.scale.set(0.108, 0.148, 0.078);
     flap.position.set(s * 0.285, 0.055, -0.01);
     g.add(flap);
     var tie = new THREE.Mesh(GEO.ico0, capMat);
     tie.scale.setScalar(0.045);
     tie.position.set(s * 0.30, -0.10, 0.0);
     g.add(tie);
+    var tassel = new THREE.Mesh(new THREE.ConeGeometry(0.022, 0.075, 5), furMat);
+    tassel.position.set(s * 0.30, -0.145, 0.0);
+    tassel.rotation.z = s * 0.22;
+    g.add(tassel);
   }
   var pom = new THREE.Mesh(GEO.ico0, furMat);
   pom.scale.setScalar(0.10);
@@ -5736,6 +6809,7 @@ function buildHatSets(head) {
   g.scale.setScalar(0.64);       // v2.4 — 작아진 두상에 맞춤
   g.position.y = 0.028;
   g.visible = false;
+  flattenGroup(g, null, MAT.gearFur, true, true, 13);
   g.traverse(function (o) { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
   head.add(g);
   sets.furHat = g;
@@ -5746,47 +6820,60 @@ function buildHatSets(head) {
 function buildBootSets(legL, legR) {
   var sets = {};
 
-  function pair(builder) {
+  function pair(builder, mat, uv) {
     var a = new THREE.Group(), b = new THREE.Group();
     builder(a); builder(b);
     a.visible = false; b.visible = false;
+    flattenGroup(a, null, mat || MAT.gearLeather, true, true, uv || 16);
+    flattenGroup(b, null, mat || MAT.gearLeather, true, true, uv || 16);
     legL.add(a); legR.add(b);
     return { a: a, b: b, set: function (v) { a.visible = v; b.visible = v; } };
   }
 
-  // 가죽 신발 — 발목까지 오는 짧은 부츠
+  // 가죽 신발 — 발목까지 오는 짧은 부츠 (밑창 + 끈)
   sets.leatherBoots = pair(function (g) {
     var b = new THREE.Mesh(new THREE.BoxGeometry(0.215, 0.185, 0.30), GEAR_MAT.boot);
     b.position.set(0, -0.575, 0.045);
     g.add(b);
-    var cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.115, 0.105, 0.09, 8), GEAR_MAT.bootD);
+    var cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.115, 0.105, 0.09, 10), GEAR_MAT.bootD);
     cuff.position.set(0, -0.49, 0.01);
     g.add(cuff);
-  });
+    var sole = new THREE.Mesh(new THREE.BoxGeometry(0.225, 0.035, 0.315), lam(0x2f2418));
+    sole.position.set(0, -0.668, 0.05);
+    g.add(sole);
+    for (var l2 = 0; l2 < 3; l2++) {
+      var laceB = new THREE.Mesh(new THREE.BoxGeometry(0.145, 0.014, 0.014), lam(0xc9b27c));
+      laceB.position.set(0, -0.520 + l2 * 0.032, 0.150);
+      g.add(laceB);
+    }
+  }, MAT.gearLeather, 18);
 
   // 털부츠 — 발목을 감싸는 두꺼운 모피
   sets.furBoots = pair(function (g) {
-    var b = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.22, 0.33), new THREE.MeshLambertMaterial({ color: 0x8d6f52, flatShading: true }));
+    var b = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.22, 0.33), lam(0x8d6f52));
     b.position.set(0, -0.56, 0.05);
     g.add(b);
-    var cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.135, 0.125, 0.20, 8), new THREE.MeshLambertMaterial({ color: 0xe4d7bf, flatShading: true }));
+    var cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.135, 0.125, 0.20, 10), lam(0xe4d7bf));
     cuff.position.set(0, -0.42, 0.01);
     g.add(cuff);
-    for (var tu = 0; tu < 5; tu++) {
-      var ta = (tu / 5) * TAU;
-      var tf = new THREE.Mesh(GEO.ico0, new THREE.MeshLambertMaterial({ color: 0xf1e7d2, flatShading: true }));
-      tf.scale.set(0.05, 0.035, 0.05);
-      tf.position.set(Math.cos(ta) * 0.12, -0.33, Math.sin(ta) * 0.10);
+    for (var tu = 0; tu < 6; tu++) {
+      var ta = (tu / 6) * TAU;
+      var tf = new THREE.Mesh(GEO.ico0, lam(0xf1e7d2));
+      tf.scale.set(0.052, 0.036, 0.052);
+      tf.position.set(Math.cos(ta) * 0.125, -0.330, Math.sin(ta) * 0.105);
       g.add(tf);
     }
-  });
+    var soleF = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.038, 0.345), lam(0x33281c));
+    soleF.position.set(0, -0.665, 0.055);
+    g.add(soleF);
+  }, MAT.gearFur, 15);
 
   // 랩터 부츠 — 발톱 장식 + 깃 장식의 긴 부츠
   sets.raptorBoots = pair(function (g) {
     var b = new THREE.Mesh(new THREE.BoxGeometry(0.225, 0.20, 0.315), GEAR_MAT.bootD);
     b.position.set(0, -0.565, 0.05);
     g.add(b);
-    var shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.118, 0.108, 0.26, 8), GEAR_MAT.bootD);
+    var shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.118, 0.108, 0.26, 10), GEAR_MAT.bootD);
     shaft.position.set(0, -0.42, 0.01);
     g.add(shaft);
     for (var i = -1; i <= 1; i += 2) {
@@ -5795,14 +6882,17 @@ function buildBootSets(legL, legR) {
       claw.position.set(i * 0.055, -0.60, 0.21);
       g.add(claw);
     }
-    for (var f = 0; f < 3; f++) {
+    for (var f = 0; f < 4; f++) {
       var ft = new THREE.Mesh(GEO.ico0, GEAR_MAT.feather);
       ft.scale.set(0.045, 0.022, 0.075);
       ft.position.set(0, -0.31 + f * 0.01, -0.06 - f * 0.02);
       ft.rotation.z = (f - 1) * 0.3;
       g.add(ft);
     }
-  });
+    var soleR = new THREE.Mesh(new THREE.BoxGeometry(0.235, 0.035, 0.33), lam(0x2b2118));
+    soleR.position.set(0, -0.668, 0.052);
+    g.add(soleR);
+  }, MAT.gearLeather, 18);
   return sets;
 }
 
@@ -5814,10 +6904,13 @@ function buildPackSets(torso) {
   var s1 = new THREE.Mesh(new THREE.BoxGeometry(0.40, 0.42, 0.22), GEAR_MAT.thin);
   s1.position.set(0, 0.38, -0.28);
   small.add(s1);
+  var s1b = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.30, 0.06), GEAR_MAT.thinD);
+  s1b.position.set(0, 0.36, -0.398);
+  small.add(s1b);
   var s2 = new THREE.Mesh(new THREE.BoxGeometry(0.30, 0.12, 0.16), GEAR_MAT.thinD);
   s2.position.set(0, 0.60, -0.30);
   small.add(s2);
-  var s3 = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.38, 5), GEAR_MAT.bootD);
+  var s3 = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.38, 6), GEAR_MAT.bootD);
   s3.rotation.z = Math.PI / 2;
   s3.position.set(0, 0.60, -0.26);
   small.add(s3);
@@ -5825,7 +6918,11 @@ function buildPackSets(torso) {
     var strap = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.40, 0.05), GEAR_MAT.bootD);
     strap.position.set(st * 0.14, 0.42, -0.17);
     small.add(strap);
+    var buckle2 = new THREE.Mesh(new THREE.BoxGeometry(0.052, 0.030, 0.020), MAT.knob);
+    buckle2.position.set(st * 0.14, 0.30, -0.152);
+    small.add(buckle2);
   }
+  flattenGroup(small, null, MAT.gearLeather, true, true, 13);
   sets.leatherPack = small;
 
   var big = new THREE.Group();
@@ -5835,8 +6932,8 @@ function buildPackSets(torso) {
   var b2 = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.16, 0.20), GEAR_MAT.beastFur);
   b2.position.set(0, 0.68, -0.34);
   big.add(b2);
-  for (var ff = 0; ff < 6; ff++) {
-    var a = (ff / 6) * Math.PI * 2;
+  for (var ff = 0; ff < 8; ff++) {
+    var a = (ff / 8) * Math.PI * 2;
     var tuft = new THREE.Mesh(GEO.ico0, GEAR_MAT.feather);
     tuft.scale.set(0.05, 0.03, 0.09);
     tuft.position.set(Math.cos(a) * 0.22, 0.66 + (ff % 2) * 0.03, -0.36 + Math.sin(a) * 0.10);
@@ -5850,6 +6947,7 @@ function buildPackSets(torso) {
     clawP.position.set(st2 * 0.16, 0.64, -0.20);
     big.add(clawP);
   }
+  flattenGroup(big, null, MAT.gearFur, true, true, 11);
   sets.raptorPack = big;
 
   for (var k in sets) {
@@ -5860,9 +6958,12 @@ function buildPackSets(torso) {
   return sets;
 }
 
+
 function updateOutfit() {
   if (!player.armorSets) return;
   for (var k in player.armorSets) player.armorSets[k].visible = (S.equip.armor === k);
+  // v2.7 — 방한모자를 쓰면 밀짚모자는 벗는다 (겹쳐 쓰지 않는다)
+  if (player.hat) player.hat.visible = (S.equip.hat !== 'furHat');
   if (player.hatSets) {
     for (var h in player.hatSets) player.hatSets[h].visible = (S.equip.hat === h);
   }
@@ -5959,10 +7060,11 @@ function dinoLegs(g, mat, footMat, xs, zs, topY, len, rad) {
 function bakeDino(g, head, tail, legs) {
   addShadows(g);
   var keep = [head, tail].concat(legs);
-  var body = flattenGroup(g, keep, MAT.prop, true);
-  for (var i = 0; i < legs.length; i++) flattenGroup(legs[i], null, MAT.prop, true);
-  if (head) flattenGroup(head, null, MAT.prop, true);
-  if (tail) flattenGroup(tail, null, MAT.prop, true);
+  /* v2.7 — 부드러운 법선(각진 레고 면 제거) + 비늘 범프 */
+  var body = flattenGroup(g, keep, MAT.dinoBake, true, true, 5);
+  for (var i = 0; i < legs.length; i++) flattenGroup(legs[i], null, MAT.dinoBake, true, true, 5);
+  if (head) flattenGroup(head, null, MAT.dinoBake, true, true, 6);
+  if (tail) flattenGroup(tail, null, MAT.dinoBake, true, true, 4);
   if (body) body.userData.baseY = 0;
   return body;
 }
@@ -9542,6 +10644,22 @@ function animateCreature(d, dt, t) {
     if (ft) ft.rotation.x = (T.ankle || 0.2) * Math.max(0, Math.sin(ph + 2.8)) * amp;
   }
 
+  /* v2.7 — 무게감: 걸을 때 몸통이 좌우로 실리고 목·꼬리가 반대로 균형을 잡는다 */
+  var rollAmt = Math.sin(a.ph) * 0.055 * Math.min(1.2, amp / 0.26);
+  if (B.spine) B.spine.rotation.z = rollAmt;
+  if (B.chest) B.chest.rotation.z = rollAmt * 0.55;
+  if (B.hip) B.hip.rotation.z = -rollAmt * 0.70;
+  if (nb.length && B[nb[0]]) B[nb[0]].rotation.z = (B[nb[0]].rotation.z || 0) - rollAmt * 0.45;
+  // 피격 움찔 — 맞은 쪽으로 몸이 접히고 목이 젖혀진다
+  if (d.hurt > 0) {
+    var hk = Math.min(1, d.hurt / 0.35);
+    if (B.spine) B.spine.rotation.x = a.s - 0.14 * hk;
+    if (B.hip) B.hip.rotation.z = -rollAmt * 0.7 + 0.08 * hk;
+    if (nb.length && B[nb[0]]) B[nb[0]].rotation.x += 0.22 * hk;
+    if (B.head) B.head.rotation.x = a.h - 0.10 * hk;
+    if (B.jaw) B.jaw.rotation.x = a.jaw * 0.6 + 0.25 * hk;
+  }
+
   /* ---- 날개(프테라노돈) ---- */
   var wl = B['wingL'], wr = B['wingR'];
   if (wl && wr) {
@@ -9761,10 +10879,12 @@ function buildFoamRing() {
       'uniform vec3 fogColor; uniform float fogNear; uniform float fogFar;',
       'varying float vA; varying float vAng; varying float vDepth;',
       'void main(){',
-      '  float w = 0.52 + 0.48 * sin(uPhase + vAng * 7.0);',
-      '  float a = vA * uOp * w;',
+      '  float w1 = 0.52 + 0.48 * sin(uPhase + vAng * 7.0);',
+      '  float w2 = 0.50 + 0.50 * sin(uPhase * 1.37 - vAng * 12.0 + 1.7);',
+      '  float lace = pow(max(0.0, sin(vAng * 46.0 + uPhase * 2.1)), 6.0) * 0.35;',
+      '  float a = vA * uOp * (w1 * 0.62 + w2 * 0.38 + lace);',
       '  float f = clamp((vDepth - fogNear) / (fogFar - fogNear), 0.0, 1.0);',
-      '  gl_FragColor = vec4(mix(uCol, fogColor, f), a);',
+      '  gl_FragColor = vec4(mix(uCol, fogColor, f), clamp(a, 0.0, 0.95));',
       '}'
     ].join('\n')
   });
@@ -11905,6 +13025,7 @@ function netApplyEquip(p) {
   if (!av) return;
   var eq = p.eq || {}, dy = p.dy || {}, k, s, on;
   if (av.armorSets) for (k in av.armorSets) av.armorSets[k].visible = (eq.a === k);
+  if (av.hat) av.hat.visible = (eq.h !== 'furHat');
   if (av.hatSets) for (k in av.hatSets) av.hatSets[k].visible = (eq.h === k);
   if (av.bootSets) for (k in av.bootSets) { s = av.bootSets[k]; on = (eq.b === k); if (s.set) s.set(on); else s.visible = on; }
   if (av.packSets) for (k in av.packSets) av.packSets[k].visible = (eq.p === k);
@@ -12999,9 +14120,8 @@ function doAction() {
   if (c.type === 'mount') { mountDino(c.d); return; }
   if (bowEquipped()) { shootArrow(null); return; }
   var wk0 = weaponKind();
-  player.swing = 0.4;
-  player.swingKind = (wk0 === 'bow' ? 'fist' : wk0);
-  swingFx(wk0);
+  var cb0 = startSwing(wk0 === 'bow' ? 'fist' : wk0, 0.40);
+  swingFx(wk0, cb0);
   sfx('pop');
   hint('가까이 가면 채집할 수 있어요', 1500);
 }
@@ -13142,7 +14262,7 @@ function gatherNode(n) {
   n.hp -= (b > 1 ? 2 : 1);
   n.shake = 0.4;
   var wkNow = weaponKind();
-  player.swing = 0.35; player.swingKind = (wkNow === 'bow' ? 'axe' : wkNow);
+  startSwing(wkNow === 'bow' ? 'axe' : wkNow, 0.35);
   if (n.kind !== 'nest') sfx('pick');
   if (n.kind !== 'nest') toast(got.join(' · '), 'good');
   if (b > 1) {
@@ -13348,7 +14468,10 @@ function wakeDino(d) {
 function killDino(d) {
   if (!d || d.tamed) return;          // 아군이 죽는 일이 없도록 마지막 안전장치
   d.dead = true; d.deadAt = worldT + 50;
-  d.group.visible = false;
+  /* v2.7 — 바로 사라지지 않고 옆으로 무겁게 쓰러진 뒤 사라진다 */
+  d.dying = 1.25; d.dyingMax = 1.25;
+  d.deathDir = Math.random() < 0.5 ? -1 : 1;
+  d.group.visible = true;
   var meta = DINO_META[d.kind] || DINO_META.trike;
   var drops = meta.drops || [['meat', meta.drop || 2]];
   var names = [];
@@ -13366,13 +14489,40 @@ function killDino(d) {
 }
 
 /* 무기 종류에 맞는 궤적 FX — 칼은 가로 호, 창은 앞으로 뻗는 잔상, 도끼는 생략(먼지) */
-function swingFx(kind) {
+/* v2.7 — 타격 모션 시작: 0.8초 안에 다시 치면 3단 콤보(내려찍기·가로베기·찌르기) */
+function startSwing(kind, dur) {
+  var now = worldT;
+  if (player.lastSwingAt !== undefined && (now - player.lastSwingAt) < 0.80 && player.comboT > 0) {
+    player.combo = ((player.combo || 0) + 1) % 3;
+  } else {
+    player.combo = 0;
+  }
+  player.lastSwingAt = now;
+  player.comboT = 0.80;
+  player.swingMax = dur || 0.40;
+  player.swing = dur || 0.40;
+  player.swingKind = kind;
+  return player.combo;
+}
+
+function swingFx(kind, combo) {
   var fx2 = Math.sin(player.facing), fz2 = Math.cos(player.facing);
   var px = player.pos.x + fx2 * 0.35, pz = player.pos.z + fz2 * 0.35;
   var py = groundY(player.pos.x, player.pos.z) + 1.05;
-  if (kind === 'knife' || kind === 'boneKnife' || kind === 'stoneKnife') spawnSlashArc(px, py, pz, player.facing, 'knife');
-  else if (kind === 'spear') spawnSlashArc(px, py - 0.05, pz, player.facing, 'spear');
-  else if (kind === 'sickle') spawnSlashArc(px, py - 0.28, pz, player.facing, 'knife');
+  var cb = combo || 0;
+  if (kind === 'knife' || kind === 'boneKnife' || kind === 'stoneKnife') {
+    spawnSlashArc(px, py, pz, player.facing, 'knife');
+    if (cb === 1) spawnSlashArc(px, py + 0.10, pz, player.facing + 0.35, 'knife');
+  } else if (kind === 'spear') {
+    spawnSlashArc(px, py - 0.05, pz, player.facing, 'spear');
+    if (cb === 2) spawnSlashArc(px + fx2 * 0.25, py + 0.16, pz + fz2 * 0.25, player.facing, 'spear');
+  } else if (kind === 'sickle') {
+    spawnSlashArc(px, py - 0.28, pz, player.facing, 'knife');
+    if (cb === 1) spawnSlashArc(px, py - 0.10, pz, player.facing - 0.30, 'knife');
+  } else if (kind === 'axe' && cb === 2) {
+    // 큰 내려찍기 — 넓고 옅은 호를 하나 더
+    spawnSlashArc(px, py + 0.08, pz, player.facing + 0.22, 'knife');
+  }
 }
 
 function attackDino(d) {
@@ -13383,10 +14533,14 @@ function attackDino(d) {
   player.atkCd = 0.40;
   var dmg = meleeAtk();
   player.facing = Math.atan2(d.x - player.pos.x, d.z - player.pos.z);
-  player.swing = 0.4;
   var wk = weaponKind();
-  player.swingKind = (wk === 'bow' ? 'fist' : wk);
-  swingFx(wk);
+  var cbA = startSwing(wk === 'bow' ? 'fist' : wk, 0.42);
+  swingFx(wk, cbA);
+  if (cbA === 2) {
+    // 콤보 마무리 — 발밑 먼지와 함께 살짝 내려찍는 무게감
+    spawnBurst(player.pos.x + Math.sin(player.facing) * 0.5, groundY(player.pos.x, player.pos.z) + 0.08,
+      player.pos.z + Math.cos(player.facing) * 0.5, 0xd8c7a6, 6, 0.5);
+  }
   d.hp -= dmg;
   d.hurt = 0.35;
   d.atkT = 0.62; d.atkDur = 0.62;
@@ -16270,57 +17424,146 @@ function updatePlayer(dt) {
     player.body.rotation.y = 0.26;
     player.head.rotation.y = -0.16;
   } else if (player.swing > 0) {
-    /* 무기별 모션 — 모든 동작이 캐릭터가 보는 정면(+Z) 앞에서 끝난다 (v2.3c 수정)
+    /* 무기별 3단 콤보 (v2.7)
        armR.rotation.x:  음수 = 팔을 앞으로 들기 · 양수 = 뒤로 젖히기
-       (예전엔 도끼 후딜이 +0.70, 칼은 몸통 역회전이 겹쳐 팔이 등 뒤로 넘어갔다) */
-    var sp = clamp(1 - player.swing / 0.4, 0, 1);
+       · 상체(어깨 회전 → 허리 비틀기 → 앞으로 실리는 무게중심)를 함께 돌린다
+       · 1타 내려찍기/지르기 · 2타 가로베기/백핸드 · 3타 큰 마무리(디딤) */
+    var sp = clamp(1 - player.swing / (player.swingMax || 0.4), 0, 1);
     var arc = Math.sin(sp * Math.PI);
     var wk = player.swingKind || 'axe';
+    var cb = player.combo || 0;
+    var wind = Math.sin(Math.min(1, sp * 2.2) * Math.PI * 0.5);   // 예비 동작(0→1)
+    var hit = Math.max(0, Math.min(1, (sp - 0.30) / 0.45));        // 내려치는 순간
     player.armR.rotation.y = 0;
+    // 공통 상체 무게 — 어깨가 열리고 허리가 비틀린다
+    var bodyY = 0, bodyX = 0, bodyZ = 0, step = 0, headY = 0, armLx = 0, armLz = 0;
+
     if (wk === 'knife') {
-      // 칼 — 오른 어깨 위로 들어 올려 정면을 가로질러 왼쪽 아래로 베어 내린다
-      player.armR.rotation.x = -1.75 + 0.95 * sp;      // 위·앞 → 앞·아래
-      player.armR.rotation.z = 0.95 - 1.75 * sp;       // 오른쪽 → 왼쪽
-      player.body.rotation.y = -0.34 + 0.60 * sp;      // 어깨를 열었다가 정면으로
-      player.head.rotation.y = 0.14 - 0.26 * sp;
-      player.armL.rotation.x = -0.35 * arc;
-      player.armL.rotation.z = -0.20 * arc;
+      if (cb === 1) {
+        // 2타 · 백핸드 — 왼쪽에서 오른쪽으로 반대로 쓸어 벤다
+        player.armR.rotation.x = -1.30 + 0.62 * sp;
+        player.armR.rotation.z = -0.85 + 1.70 * sp;
+        bodyY = 0.34 - 0.62 * sp; bodyZ = -0.05 + 0.09 * sp;
+        headY = -0.16 + 0.30 * sp;
+        armLx = -0.30 * arc; armLz = 0.20 * arc;
+      } else if (cb === 2) {
+        // 3타 · 파고들며 찌르기
+        player.armR.rotation.x = -0.20 - 1.55 * Math.pow(hit, 0.7);
+        player.armR.rotation.z = 0.06;
+        bodyY = -0.26 + 0.42 * hit; bodyX = 0.10 * hit; step = 0.10 * hit;
+        headY = 0.06 * (1 - hit);
+        armLx = 0.28 * hit; armLz = 0.10;
+      } else {
+        // 1타 · 어깨 위로 들어 정면을 가로질러 벤다
+        player.armR.rotation.x = -1.75 + 0.95 * sp;
+        player.armR.rotation.z = 0.95 - 1.75 * sp;
+        bodyY = -0.34 + 0.60 * sp; bodyZ = 0.04 * arc;
+        headY = 0.14 - 0.26 * sp;
+        armLx = -0.35 * arc; armLz = -0.20 * arc;
+      }
     } else if (wk === 'spear') {
-      // 창 — 팔을 살짝 뒤로 당겼다가 정면으로 쭉 찌른다
-      player.armR.rotation.x = 0.18 - 1.95 * sp;       // 뒤·아래 → 앞·수평
-      player.armR.rotation.z = 0.10 - 0.16 * sp;
-      player.body.rotation.y = -0.24 + 0.42 * sp;      // 오른 어깨가 앞으로 실린다
-      player.head.rotation.y = 0;
-      player.armL.rotation.x = 0.20 * arc;
-      player.armL.rotation.z = 0.0;
+      if (cb === 1) {
+        // 2타 · 낮게 쓸어 베기
+        player.armR.rotation.x = -0.70 + 0.34 * sp;
+        player.armR.rotation.z = 0.95 - 1.80 * sp;
+        bodyY = -0.32 + 0.58 * sp; bodyZ = 0.06 * arc;
+        headY = 0.16 - 0.30 * sp;
+        armLx = -0.24 * arc; armLz = -0.14 * arc;
+      } else if (cb === 2) {
+        // 3타 · 들어 올려 내리찍는 묵직한 찌르기
+        player.armR.rotation.x = -1.95 + 1.55 * sp;
+        player.armR.rotation.z = 0.14 - 0.20 * sp;
+        bodyY = -0.20 + 0.34 * sp;
+        bodyX = -0.10 + 0.30 * sp;
+        step = 0.09 * hit;
+        armLx = -0.40 * arc; armLz = 0.10 * arc;
+      } else {
+        // 1타 · 정면 찌르기
+        player.armR.rotation.x = 0.18 - 1.95 * sp;
+        player.armR.rotation.z = 0.10 - 0.16 * sp;
+        bodyY = -0.24 + 0.42 * sp; step = 0.06 * hit;
+        armLx = 0.20 * arc;
+      }
     } else if (wk === 'sickle') {
-      // 낫 — 허리 높이에서 정면을 낮게 쓸어 베기
-      player.armR.rotation.x = -1.15 + 0.30 * sp;
-      player.armR.rotation.z = 1.00 - 1.85 * sp;
-      player.body.rotation.y = -0.30 + 0.54 * sp;
-      player.head.rotation.y = 0.12 - 0.24 * sp;
-      player.armL.rotation.x = -0.28 * arc;
-      player.armL.rotation.z = -0.16 * arc;
+      if (cb === 1) {
+        player.armR.rotation.x = -1.00 + 0.34 * sp;
+        player.armR.rotation.z = -0.85 + 1.70 * sp;
+        bodyY = 0.30 - 0.56 * sp; bodyZ = -0.06 + 0.10 * sp;
+        headY = -0.14 + 0.26 * sp;
+        armLx = -0.22 * arc;
+      } else {
+        player.armR.rotation.x = -1.15 + 0.30 * sp;
+        player.armR.rotation.z = 1.00 - 1.85 * sp;
+        bodyY = -0.30 + 0.54 * sp;
+        headY = 0.12 - 0.24 * sp;
+        armLx = -0.28 * arc; armLz = -0.16 * arc;
+      }
     } else if (wk === 'fist') {
-      // 맨손 — 정면으로 곧게 지르기
-      player.armR.rotation.x = -0.10 - 1.45 * arc;
-      player.armR.rotation.z = -0.04;
-      player.body.rotation.y = -0.20 + 0.34 * sp;
-      player.head.rotation.y = 0;
-      player.armL.rotation.x = -0.22 * arc;
+      if (cb === 1) {
+        // 2타 · 반대손 훅
+        player.armR.rotation.x = -0.30 - 1.15 * hit;
+        player.armR.rotation.z = -0.55 + 0.90 * sp;
+        bodyY = 0.34 - 0.60 * sp;
+        headY = -0.18 + 0.30 * sp;
+        armLx = -0.35 * arc;
+      } else if (cb === 2) {
+        // 3타 · 몸을 실은 강타
+        player.armR.rotation.x = -0.20 - 1.65 * hit;
+        player.armR.rotation.z = 0.10;
+        bodyY = -0.32 + 0.55 * sp; bodyX = 0.12 * hit; step = 0.08 * hit;
+        armLx = 0.30 * hit;
+      } else {
+        player.armR.rotation.x = -0.10 - 1.45 * arc;
+        player.armR.rotation.z = -0.04;
+        bodyY = -0.20 + 0.34 * sp;
+        armLx = -0.22 * arc;
+      }
     } else {
-      // 도끼 — 머리 위로 크게 들어 올렸다가 정면 아래로 내려찍는다
-      player.armR.rotation.x = -2.30 + 1.72 * sp;      // -2.30(위로 젖힘) → -0.58(정면 아래)
-      player.armR.rotation.z = 0.16 - 0.26 * sp;
-      player.armL.rotation.x = -0.42 * arc;
-      player.armL.rotation.z = 0.12 * arc;
-      player.body.rotation.y = -0.28 + 0.48 * sp;
-      player.head.rotation.y = 0;
+      // 도끼
+      if (cb === 1) {
+        // 2타 · 어깨에서 허리로 비스듬히 내려 긋기
+        player.armR.rotation.x = -1.70 + 1.05 * sp;
+        player.armR.rotation.z = 0.95 - 1.80 * sp;
+        bodyY = -0.44 + 0.76 * sp;
+        bodyZ = 0.10 * arc;
+        headY = 0.20 - 0.34 * sp;
+        armLx = -0.52 * arc; armLz = -0.28 * arc;
+      } else if (cb === 2) {
+        // 3타 · 한 발 내딛고 머리 위에서 무겁게 내려찍기
+        player.armR.rotation.x = -2.55 + 1.95 * sp;
+        player.armR.rotation.z = 0.22 - 0.34 * sp;
+        bodyY = -0.36 + 0.62 * sp;
+        bodyX = -0.16 + 0.42 * sp;
+        bodyZ = 0.08 - 0.14 * sp;
+        step = 0.10 * hit;
+        armLx = -0.60 * wind + 0.20 * hit; armLz = 0.16;
+      } else {
+        // 1타 · 머리 위로 들어 정면 아래로 내려찍기
+        player.armR.rotation.x = -2.30 + 1.72 * sp;
+        player.armR.rotation.z = 0.16 - 0.26 * sp;
+        bodyY = -0.28 + 0.48 * sp;
+        bodyX = -0.08 + 0.20 * sp;
+        armLx = -0.42 * arc; armLz = 0.12 * arc;
+      }
     }
+    player.body.rotation.y = bodyY;
+    player.body.rotation.x = bodyX;
+    player.body.rotation.z = bodyZ;
+    player.body.position.z = step;
+    player.head.rotation.y = headY;
+    player.head.rotation.x = -bodyX * 0.5 + 0.10 * hit;
+    player.armL.rotation.x = armLx;
+    player.armL.rotation.z = armLz;
+    if (player.elbowR) player.elbowR.rotation.x = -0.25 - 0.35 * arc;
+    if (player.elbowL) player.elbowL.rotation.x = -0.20 - 0.25 * arc;
+    if (player.kneeL) player.kneeL.rotation.x = 0.06 * hit;
+    if (player.kneeR) player.kneeR.rotation.x = 0.09 * hit;
+
   } else {
     // v2.4 — 팔은 어깨에서 흔들리고 팔꿈치가 살짝 접혀 따라온다
     var swingL = -Math.sin(ph) * 0.52 * player.walk;
     var swingR = Math.sin(ph) * 0.52 * player.walk;
+    player.body.position.z += (0 - player.body.position.z) * Math.min(1, dt * 12);
     player.armL.rotation.x = swingL;
     player.armR.rotation.x = swingR;
     if (player.elbowL) player.elbowL.rotation.x = -0.18 - Math.max(0, -swingL) * 0.55;
@@ -16334,6 +17577,17 @@ function updatePlayer(dt) {
     player.body.rotation.z += (Math.sin(ph) * 0.030 * player.walk - player.body.rotation.z) * Math.min(1, dt * 8);
   }
   player.body.position.y = (player.bodyBaseY || 0.62) + Math.abs(Math.sin(ph)) * 0.038 * player.walk + Math.sin(t * 1.7) * 0.007;
+  /* v2.7 — 숨쉬기: 가슴이 천천히 오르내리고, 눈을 가끔 깜빡인다 */
+  if (player.eyes) {
+    player.blinkT = (player.blinkT || 0) + dt;
+    var bk = player.blinkT % 4.4, eyeOpen = 1;
+    if (bk > 4.20) { var bq = Math.min(1, (4.4 - bk) / 0.07); eyeOpen = 1 - bq * 0.86; }
+    else if (bk > 4.06) { var bq2 = Math.min(1, (bk - 4.06) / 0.07); eyeOpen = 0.14 + bq2 * 0.86; }
+    player.eyes.scale.y += (eyeOpen - player.eyes.scale.y) * Math.min(1, dt * 34);
+  }
+  if (player.chestBreath) {
+    player.chestBreath.scale.set(1 + Math.sin(t * 1.9) * 0.012, 1 + Math.sin(t * 1.9) * 0.016, 1 + Math.sin(t * 1.9) * 0.012);
+  }
   // 걸을 땐 살짝 앞으로 기울고, 고개는 반대로 살짝 흔들린다
   player.body.rotation.x += (0.055 * player.walk - player.body.rotation.x) * Math.min(1, dt * 6);
   player.head.rotation.z = Math.sin(ph * 0.5 + 0.6) * 0.022 * player.walk + Math.sin(t * 1.3) * 0.014;
@@ -17125,9 +18379,20 @@ function updateCreatureAI(d, dt, t, dp) {
 function updateDinos(dt, t) {
   for (var i = 0; i < dinos.length; i++) {
     var d = dinos[i];
+    if (d.dead && d.dying > 0) {
+      // 쓰러지는 동안은 그룹을 남겨 두고 기울인다
+      d.dying = Math.max(0, d.dying - dt);
+      var fk = 1 - d.dying / (d.dyingMax || 1.25);
+      var fall = fk * fk * (3 - 2 * fk);
+      d.group.rotation.z = (d.deathDir || 1) * fall * 1.42;
+      d.group.position.y = terrainH(d.x, d.z) - fall * 0.08;
+      if (d.dying <= 0) d.group.visible = false;
+      continue;
+    }
     if (d.dead) {
       if (worldT > d.deadAt) {
         d.dead = false; d.hp = d.max; d.group.visible = true;
+        d.group.rotation.z = 0; d.dying = 0;   // 쓰러진 자세 초기화
         d.aggro = 0; d.provoked = 0;
         var a = Math.random() * TAU, r = rnd(24, 144);
         d.x = Math.cos(a) * r; d.z = Math.sin(a) * r;
@@ -18276,11 +19541,11 @@ var DAY = { t: 0.36, len: 480, night: 0, acc: 0, pause: false };
 var SKY_KEYS = [
   { t: 0.00, sun: 0x93aee8, si: 0.34, hs: 0x33456a, hg: 0x18231f, hi: 0.44, ai: 0.09, fog: 0x16233a, fn: 48, ff: 180, top: 0x070d1c, bot: 0x1b2a44, glow: 0.32, gc: 0x8eadff, star: 1.00, cloud: 0x46567a, water: 0x93aac8, night: 1.00 },
   { t: 0.20, sun: 0xa3b6e2, si: 0.36, hs: 0x3f4e70, hg: 0x202b26, hi: 0.44, ai: 0.09, fog: 0x26354e, fn: 50, ff: 186, top: 0x1a2740, bot: 0x3d4b6a, glow: 0.38, gc: 0xb0b6ff, star: 0.72, cloud: 0x5b6a8a, water: 0x97add0, night: 0.82 },
-  { t: 0.275, sun: 0xffc48f, si: 0.56, hs: 0x93a8c8, hg: 0x6a5a42, hi: 0.44, ai: 0.07, fog: 0xdcb1a0, fn: 54, ff: 192, top: 0x7aa4cf, bot: 0xffc79a, glow: 0.90, gc: 0xffb877, star: 0.06, cloud: 0xffd0b0, water: 0xbfccd2, night: 0.22 },
+  { t: 0.275, sun: 0xffb87c, si: 0.58, hs: 0x9db2ce, hg: 0x6b5a40, hi: 0.43, ai: 0.07, fog: 0xdca894, fn: 52, ff: 190, top: 0x6f9ccb, bot: 0xffbd8c, glow: 0.96, gc: 0xffae6c, star: 0.05, cloud: 0xffc9a6, water: 0xbfccd2, night: 0.20 },
   { t: 0.40, sun: 0xffeccb, si: 0.92, hs: 0xcfdfec, hg: 0x6a6744, hi: 0.40, ai: 0.10, fog: 0xc3c8ae, fn: 62, ff: 208, top: 0x58aec9, bot: 0xd8e2c8, glow: 0.52, gc: 0xffd9a0, star: 0.00, cloud: 0xfbf7ea, water: 0xffffff, night: 0.00 },
-  { t: 0.50, sun: 0xfff2da, si: 0.98, hs: 0xdceaf6, hg: 0x6f6f48, hi: 0.42, ai: 0.10, fog: 0xc0c5aa, fn: 64, ff: 212, top: 0x50aac6, bot: 0xdae4c6, glow: 0.46, gc: 0xffe8b8, star: 0.00, cloud: 0xfdf8ec, water: 0xffffff, night: 0.00 },
+  { t: 0.50, sun: 0xfff3dd, si: 1.02, hs: 0xdcebf7, hg: 0x736f45, hi: 0.40, ai: 0.10, fog: 0xc4c9ac, fn: 68, ff: 222, top: 0x50aac6, bot: 0xdae4c6, glow: 0.46, gc: 0xffe8b8, star: 0.00, cloud: 0xfdf8ec, water: 0xffffff, night: 0.00 },
   { t: 0.66, sun: 0xffddaa, si: 0.90, hs: 0xe0dccb, hg: 0x73713f, hi: 0.40, ai: 0.09, fog: 0xc8c2a0, fn: 60, ff: 205, top: 0x5aa8bd, bot: 0xe0e1bd, glow: 0.58, gc: 0xffcc8a, star: 0.00, cloud: 0xffeedd, water: 0xfff4e4, night: 0.00 },
-  { t: 0.745, sun: 0xff9a52, si: 0.62, hs: 0xb9a6c4, hg: 0x6b5a44, hi: 0.42, ai: 0.07, fog: 0xe0a07c, fn: 54, ff: 192, top: 0x5c76ad, bot: 0xffab6e, glow: 1.00, gc: 0xff9a4a, star: 0.08, cloud: 0xffc3a0, water: 0xe8cbb8, night: 0.16 },
+  { t: 0.745, sun: 0xff8b45, si: 0.66, hs: 0xc4a6b8, hg: 0x6f5540, hi: 0.40, ai: 0.07, fog: 0xe89a72, fn: 52, ff: 188, top: 0x4a6aa8, bot: 0xff9a5e, glow: 1.10, gc: 0xff8a3e, star: 0.06, cloud: 0xffb98c, water: 0xe8cbb8, night: 0.14 },
   { t: 0.805, sun: 0xc08aa8, si: 0.36, hs: 0x5b5a86, hg: 0x3a3242, hi: 0.38, ai: 0.06, fog: 0x7d6f92, fn: 50, ff: 182, top: 0x2a3160, bot: 0x8a5f7c, glow: 0.70, gc: 0xd58aa8, star: 0.44, cloud: 0xb08aa0, water: 0xa9a4bc, night: 0.48 },
   { t: 0.885, sun: 0x97ace0, si: 0.34, hs: 0x36486c, hg: 0x1c2626, hi: 0.42, ai: 0.08, fog: 0x1f2c43, fn: 48, ff: 178, top: 0x0c1526, bot: 0x243450, glow: 0.36, gc: 0x9fb4ff, star: 0.92, cloud: 0x4d5c7c, water: 0x97abca, night: 0.96 },
   { t: 1.00, sun: 0x93aee8, si: 0.34, hs: 0x33456a, hg: 0x18231f, hi: 0.44, ai: 0.09, fog: 0x16233a, fn: 48, ff: 180, top: 0x070d1c, bot: 0x1b2a44, glow: 0.32, gc: 0x8eadff, star: 1.00, cloud: 0x46567a, water: 0x93aac8, night: 1.00 }
@@ -18316,7 +19581,11 @@ function applySky() {
   starMat.opacity = L(k0.star, k1.star);
   starField.visible = starMat.opacity > 0.02;
   cloudMat.color.copy(LC('cloud', _kC));
-  if (waterMat) waterMat.color.copy(LC('water', _kC));
+  if (waterMat && waterMat.uniforms) {
+    if (waterMat.uniforms.uNight) waterMat.uniforms.uNight.value = L(k0.night, k1.night);
+    if (waterMat.uniforms.uSunCol) waterMat.uniforms.uSunCol.value.copy(sun.color).lerp(new THREE.Color(0xffffff), 0.35);
+    if (waterMat.uniforms.uSunDir) waterMat.uniforms.uSunDir.value.copy(SUN_OFF).normalize();
+  }
   DAY.night = L(k0.night, k1.night);
   var el = Math.sin((t - 0.25) * TAU);
   var up = Math.max(0, el), dn = Math.max(0, -el);
@@ -18389,6 +19658,15 @@ function loop(now) {
     waterAttr.needsUpdate = true;
   }
   if (sparkleMat) sparkleMat.opacity = (0.35 + Math.abs(Math.sin(t * 1.4)) * 0.4) * (1 - DAY.night * 0.7);
+  /* v2.7 — 바다 셰이더: 흐르는 물결 시간 + 안개 연동 */
+  if (waterMat && waterMat.uniforms) {
+    waterMat.uniforms.uTime.value = t;
+    if (scene.fog) {
+      waterMat.uniforms.fogColor.value.copy(scene.fog.color);
+      waterMat.uniforms.fogNear.value = scene.fog.near;
+      waterMat.uniforms.fogFar.value = scene.fog.far;
+    }
+  }
   if (frameNo % 2 === 0) updateFoam(t);
   updateRiverWater(t);
   if (GRASS.mesh) GRASS.time.value = t;
@@ -18785,6 +20063,13 @@ window.__game = {
   bagInfo: function () { return { base: BAG_SLOTS, bonus: bagSlotBonus(), cap: bagSlots(), used: bagUsed(), stack: STACK_MAX, pack: S.equip.backpack || '' }; },
   eat: eatOrInfo,
   setZoom: function (v) { camZoom = v; },
+  /* v2.7 검수용 — 하루 시간대를 바로 맞춘다 (0=자정 · 0.5=정오 · 0.745=노을) */
+  setDay: function (t, pause) {
+    DAY.t = ((t % 1) + 1) % 1;
+    DAY.pause = (pause === undefined) ? true : !!pause;
+    applySky();
+    return { t: +DAY.t.toFixed(3), pause: DAY.pause, night: +DAY.night.toFixed(2) };
+  },
   fps: function () { return Math.round(fpsVal); },
   camera: function () { return camera; },
   renderer: renderer,
