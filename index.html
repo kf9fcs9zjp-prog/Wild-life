@@ -512,6 +512,11 @@
     transition:transform .1s, background .2s, opacity .2s;
   }
   .mb:active{transform:scale(.975)}
+  .mb.multi{
+    background:linear-gradient(180deg,rgba(140,206,255,.30),rgba(56,128,196,.42));
+    border-color:rgba(190,232,255,.55);color:#eaf7ff;font-size:13.5px;
+    box-shadow:0 8px 22px rgba(20,60,90,.34), inset 0 -2px 0 rgba(10,40,70,.22);
+  }
   .mb.primary{
     background:linear-gradient(180deg,#a6d97f,#5fa14e);
     border-color:rgba(255,255,255,.55);color:#17300f;
@@ -1228,6 +1233,102 @@
   #hexName{position:absolute;left:0;top:0;transform:translate(-50%,-50%);padding:3px 9px;border-radius:8px;
     background:rgba(18,20,22,.88);border:1px solid rgba(236,232,220,.26);color:#F4EFE2;
     font-size:10px;font-weight:800;white-space:nowrap;pointer-events:none;letter-spacing:-.01em}
+
+  /* ================= v2.5 · 실시간 멀티 (방 코드 · 채팅) ================= */
+  #mpChat{
+    position:fixed;left:12px;bottom:calc(env(safe-area-inset-bottom) + 138px);
+    z-index:26;width:min(234px,62vw);display:none;flex-direction:column;gap:4px;
+    pointer-events:none;
+  }
+  #mpChat.on{display:flex}
+  #mpChatTop{
+    display:flex;align-items:center;gap:5px;height:22px;padding:0 6px 0 8px;border-radius:11px;
+    background:rgba(12,22,19,.62);border:1px solid rgba(226,214,182,.28);
+    box-shadow:0 4px 12px rgba(8,16,12,.30);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+    pointer-events:auto;
+  }
+  #mpChatTop .dot{width:6px;height:6px;border-radius:50%;flex:0 0 auto;background:#7be08a;box-shadow:0 0 6px rgba(123,224,138,.9)}
+  #mpChatTop .dot.wait{background:#f2b457;box-shadow:0 0 6px rgba(242,180,87,.9)}
+  #mpChatTop .dot.local{background:#8fc7ff;box-shadow:0 0 6px rgba(143,199,255,.9)}
+  #mpState{font-size:9px;font-weight:900;color:#eef8f0;letter-spacing:-.01em;white-space:nowrap}
+  #mpCodeLbl{margin-left:auto;font-size:8.5px;font-weight:800;color:#ffe08a;opacity:.95;white-space:nowrap}
+  #mpChatBtn{
+    width:20px;height:18px;flex:0 0 auto;border-radius:8px;border:1px solid rgba(255,255,255,.30);
+    background:rgba(255,246,228,.14);color:#fff6e4;font-size:10px;line-height:1;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+  }
+  #mpLog{
+    max-height:56px;overflow:hidden;display:flex;flex-direction:column;gap:1px;
+    padding:4px 7px;border-radius:10px;background:rgba(10,18,15,.52);
+    border:1px solid rgba(255,255,255,.10);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+    pointer-events:auto;cursor:text;
+  }
+  #mpLog .ln{
+    font-size:9.5px;line-height:1.32;font-weight:700;color:#eaf4ee;
+    text-shadow:0 1px 2px rgba(0,0,0,.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  #mpLog .ln b{color:#ffe08a;font-weight:900;margin-right:3px}
+  #mpLog .ln.sys{color:#a9ceb8;font-weight:600;opacity:.92}
+  #mpLog .ln.sys b{color:#a9ceb8}
+  #mpRowIn{display:none;align-items:center;gap:5px;pointer-events:auto}
+  #mpChat.open #mpRowIn{display:flex}
+  #mpChat.open #mpLog{max-height:82px}
+  #mpIn{
+    flex:1 1 auto;min-width:0;height:30px;border-radius:9px;border:1px solid rgba(255,255,255,.34);
+    background:rgba(8,16,13,.80);color:#fff;padding:0 8px;font-size:16px;font-weight:600;outline:none;
+    font-family:inherit;
+  }
+  #mpIn::placeholder{color:#9fb4a8}
+  #mpSend{
+    height:30px;padding:0 11px;border-radius:9px;border:1px solid rgba(255,255,255,.45);
+    background:linear-gradient(180deg,#ffe6b0,#eda23f);color:#4a2a08;font-weight:900;font-size:10.5px;
+    cursor:pointer;font-family:inherit;
+  }
+
+  /* 멀티 패널 */
+  #mpPanel{
+    position:fixed;inset:0;z-index:68;display:none;align-items:center;justify-content:center;
+    padding:16px;background:rgba(8,16,13,.62);backdrop-filter:blur(3px);
+  }
+  #mpPanel.on{display:flex}
+  #mpPanel .mpCard{
+    width:min(400px,94vw);max-height:88vh;overflow-y:auto;border-radius:20px;padding:16px 16px 14px;
+    background:linear-gradient(180deg,#FFF7E6,#F4E6C6);color:#2b3a33;
+    border:2px solid rgba(120,92,50,.35);box-shadow:0 18px 44px rgba(8,20,14,.5);
+    touch-action:pan-y;
+  }
+  .mpHead{display:flex;align-items:center;margin-bottom:10px}
+  .mpHead b{font-size:15px;font-weight:900;letter-spacing:-.02em}
+  .mpHead button{margin-left:auto;width:28px;height:28px;border-radius:9px;border:0;cursor:pointer;
+    background:rgba(90,70,40,.14);color:#4a3a22;font-size:13px;font-weight:900}
+  .mpLbl{display:block;font-size:10.5px;font-weight:900;color:#6b5636;margin:8px 0 4px;letter-spacing:-.01em}
+  #mpNick,#mpCode{
+    width:100%;height:42px;border-radius:12px;border:1.5px solid rgba(120,92,50,.32);
+    background:#fffdf6;color:#26332e;padding:0 11px;font-size:16px;font-weight:700;outline:none;
+    font-family:inherit;letter-spacing:.01em;
+  }
+  #mpCode{text-transform:uppercase;letter-spacing:.06em;font-weight:900}
+  .mpBtn{
+    width:100%;height:44px;margin-top:9px;border-radius:13px;cursor:pointer;
+    border:1.5px solid rgba(120,92,50,.30);background:#fffdf6;color:#33443a;
+    font-size:13px;font-weight:900;letter-spacing:-.01em;font-family:inherit;
+  }
+  .mpBtn.primary{
+    background:linear-gradient(180deg,#ffe3a8,#eda23f);color:#4a2a08;
+    border-color:rgba(160,110,30,.45);box-shadow:0 6px 16px rgba(150,100,20,.28);
+  }
+  .mpBtn.ghost{background:rgba(120,92,50,.10);color:#6b5636;height:38px;font-size:12px}
+  .mpBtn:active{transform:scale(.985)}
+  #mpNow{
+    margin-top:11px;padding:9px 11px;border-radius:12px;background:rgba(120,92,50,.10);
+    font-size:11px;font-weight:800;line-height:1.5;color:#4a5a4a;word-break:break-all;
+  }
+  #mpNow b{color:#2f5e3e;font-weight:900;letter-spacing:.03em}
+  .mpNote{margin-top:10px;font-size:9.5px;line-height:1.5;color:#7a6a4c;font-weight:600}
+  @media (max-height:640px){
+    #mpChat{bottom:calc(env(safe-area-inset-bottom) + 118px);width:min(218px,58vw)}
+    #mpLog{max-height:42px}
+  }
 </style>
 </head>
 <body>
@@ -1328,13 +1429,14 @@
     <div class="menu">
       <button class="mb primary hidden" id="btnContinue">이어하기</button>
       <button class="mb" id="btnNew">새 게임</button>
+      <button class="mb multi" id="btnMulti">🌐 친구와 멀티 (방 코드)</button>
       <div class="menuRow">
         <button class="mb ghost" id="btnSlots">저장 슬롯</button>
         <button class="mb ghost" id="btnStartSet">설정</button>
       </div>
       <div class="startSaveLine" id="startSaveLine"><span>저장 없음 · 새로 시작해요</span></div>
     </div>
-    <div class="startFoot" id="startFoot">WILD LIFE · v2.4 &nbsp;|&nbsp; 왼쪽 조이스틱으로 걷고 오른쪽 버튼으로 채집·공격</div>
+    <div class="startFoot" id="startFoot">WILD LIFE · v2.5 &nbsp;|&nbsp; 왼쪽 조이스틱으로 걷고 오른쪽 버튼으로 채집·공격</div>
   </div>
 
   <div class="slotPanel" id="slotPanel">
@@ -1383,6 +1485,36 @@
     <h2>쓰러졌어요</h2>
     <p>배고픔이 바닥나면 몸이 먼저 지쳐요. 열매라도 챙겨서 다시 일어나요.</p>
     <button class="goto" id="btnRevive">다시 일어나기</button>
+  </div>
+</div>
+
+
+<div id="mpPanel" aria-hidden="true">
+  <div class="mpCard">
+    <div class="mpHead"><b>🌐 멀티플레이</b><button id="mpClose" aria-label="닫기">✕</button></div>
+    <label class="mpLbl" for="mpNick">닉네임</label>
+    <input id="mpNick" maxlength="10" placeholder="탐험가" autocomplete="off" spellcheck="false">
+    <button class="mpBtn primary" id="mpCreate">방 만들기 · 코드 자동 생성</button>
+    <label class="mpLbl" for="mpCode">방 코드로 입장</label>
+    <input id="mpCode" maxlength="9" placeholder="WL-AB12CD" autocomplete="off" spellcheck="false">
+    <button class="mpBtn" id="mpJoin">이 코드로 입장</button>
+    <div id="mpNow">아직 방에 없어요 · 방을 만들거나 코드를 입력해요</div>
+    <button class="mpBtn ghost" id="mpLeave">방 나가기</button>
+    <div class="mpNote">같은 방 코드를 넣으면 서로의 캐릭터·모션·채팅·설치한 구조물이 실시간으로 보여요. 가방·세이브는 각자 폰에 그대로 남아요.</div>
+  </div>
+</div>
+
+<div id="mpChat" aria-label="멀티 채팅">
+  <div id="mpChatTop">
+    <i class="dot ok" id="mpDot"></i>
+    <b id="mpState">🌐 멀티</b>
+    <span id="mpCodeLbl"></span>
+    <button id="mpChatBtn" aria-label="채팅 입력">💬</button>
+  </div>
+  <div id="mpLog"></div>
+  <div id="mpRowIn">
+    <input id="mpIn" maxlength="80" placeholder="메시지…" autocomplete="off" spellcheck="false">
+    <button id="mpSend">보내기</button>
   </div>
 </div>
 
@@ -1962,8 +2094,8 @@ var GEAR = {
   fineDress: { slot: 'armor', name: '예쁜 옷', icon: '👗', def: 2, desc: '직조기로 짠 옷감으로 지은 옷 · 방어 +2' },
   leatherBoots: { slot: 'boots', name: '가죽 신발', icon: '🥾', def: 2, spd: 0.10, desc: '방어 +2 · 이동 +10%' },
   raptorBoots: { slot: 'boots', name: '랩터 부츠', icon: '👢', def: 4, spd: 0.20, desc: '방어 +4 · 이동 +20%' },
-  leatherPack: { slot: 'backpack', name: '가죽 배낭', icon: '🎒', def: 0, slots: 6, desc: '가방 칸 +6 · 얇은 가죽으로 엮은 배낭' },
-  raptorPack: { slot: 'backpack', name: '큰 랩터 배낭', icon: '🎒', def: 0, slots: 12, desc: '가방 칸 +12 · 랩터 가죽으로 크게 지은 배낭' },
+  leatherPack: { slot: 'backpack', name: '가죽 배낭', icon: '🎒', def: 0, slots: 50, desc: '가방 칸 +50 · 얇은 가죽으로 엮은 배낭' },
+  raptorPack: { slot: 'backpack', name: '큰 랩터 배낭', icon: '🎒', def: 0, slots: 100, desc: '가방 칸 +100 · 랩터 가죽으로 크게 지은 배낭' },
   dyedDress: { slot: 'armor', name: '물들인 드레스', icon: '👘', def: 4, desc: '라벤더 염료로 물들인 옷 · 방어 +4' },
   sailCloak: { slot: 'armor', name: '돛 망토', icon: '🪂', def: 14, desc: '스피노 등돛으로 지은 망토 · 방어 +14' },
   furHat: { slot: 'hat', name: '방한 모자', icon: '🧢', def: 4, warm: true, desc: '매머드 털가죽으로 지은 귀마개 털모자 · 방어 +4 · 머리를 덥혀요' },
@@ -2066,8 +2198,8 @@ var RECIPES = [
   { id: 'dyedDress', tab: 'clothes', station: 'tailorBench', out: 'dyedDress', qty: 1, name: '물들인 드레스', icon: '👘', desc: '예쁜 옷 + 염료 → 방어 +4', cost: { fineDress: 1, dye: 2, fiber: 2 }, unlock: 'dye' },
   { id: 'leatherBoots', tab: 'clothes', station: 'tailorBench', out: 'leatherBoots', qty: 1, name: '가죽 신발', icon: '🥾', desc: '방어 +2 · 이동 +10%', cost: { hideThin: 2, hideTough: 1, fiber: 2 }, unlock: 'hideThin' },
   { id: 'raptorBoots', tab: 'clothes', station: 'tailorBench', out: 'raptorBoots', qty: 1, name: '랩터 부츠', icon: '👢', desc: '가죽 신발 x2 + 질긴 가죽 x2 → 방어 +4 · 이동 +20%', cost: { leatherBoots: 2, hideTough: 2, fiber: 2 }, unlock: 'hideTough' },
-  { id: 'leatherPack', tab: 'clothes', station: 'tailorBench', out: 'leatherPack', qty: 1, name: '가죽 배낭', icon: '🎒', desc: '가방 칸 +6 · 얇은 가죽으로 엮은 배낭', cost: { hideThin: 5, hideTough: 2, fiber: 5 }, unlock: 'hideThin' },
-  { id: 'raptorPack', tab: 'clothes', station: 'tailorBench', out: 'raptorPack', qty: 1, name: '큰 랩터 배낭', icon: '🎒', desc: '가죽 배낭 + 랩터 가죽 x4 → 가방 칸 +12', cost: { leatherPack: 1, hideTough: 4, hideBeast: 1, fiber: 6 }, unlock: 'hideTough' },
+  { id: 'leatherPack', tab: 'clothes', station: 'tailorBench', out: 'leatherPack', qty: 1, name: '가죽 배낭', icon: '🎒', desc: '가방 칸 +50 · 얇은 가죽으로 엮은 배낭', cost: { hideThin: 5, hideTough: 2, fiber: 5 }, unlock: 'hideThin' },
+  { id: 'raptorPack', tab: 'clothes', station: 'tailorBench', out: 'raptorPack', qty: 1, name: '큰 랩터 배낭', icon: '🎒', desc: '가죽 배낭 + 랩터 가죽 x4 → 가방 칸 +100', cost: { leatherPack: 1, hideTough: 4, hideBeast: 1, fiber: 6 }, unlock: 'hideTough' },
   /* ── 🧥 방한 풀세트 — 모자 · 털옷 · 털부츠 3종을 모두 갖추면 툰드라 냉기 면역 ── */
   { id: 'furHat', tab: 'clothes', station: 'tailorBench', out: 'furHat', qty: 1, name: '방한 모자', icon: '🧢', warmSet: 1, desc: '매머드 털가죽 x2 + 얇은 가죽 → 방어 +4 · 머리 방한(세트 1/3)', cost: { mammothFur: 2, hideThin: 2, fiber: 3 }, unlock: 'mammothFur' },
   { id: 'furCoat', tab: 'clothes', station: 'tailorBench', out: 'furCoat', qty: 1, name: '방한 털옷', icon: '🧣', warmSet: 1, desc: '매머드 털가죽 x4 + 맹수 가죽 → 방어 +10 · 몸통 방한(세트 1/3)', cost: { mammothFur: 4, hideBeast: 2, fiber: 4 }, unlock: 'mammothFur' },
@@ -2144,10 +2276,10 @@ var COOK = {
 };
 
 /* ---------------- 가방(소지품) 규칙 — 칸(slot) 기반 ----------------
-   ・ 기본 20칸 · 배낭을 장착하면 칸 수가 늘어난다 (가죽 +6 · 큰 랩터 +12)
+   ・ v2.5 — 기본 50칸 · 배낭을 장착하면 칸 수가 늘어난다 (가죽 +50 · 큰 랩터 +100)
    ・ 한 칸에 같은 물건을 100개까지 쌓을 수 있다 (Math.ceil(개수/100) 칸 사용)
    ・ 예: 통나무 200 → 2칸 · 열매 100 + 돌 100 = 2칸 */
-var BAG_SLOTS = 20;
+var BAG_SLOTS = 50;
 var STACK_MAX = 100;
 function bagSlotBonus() {
   var b = S.equip.backpack;
@@ -11130,6 +11262,694 @@ function updateFx(dt) {
   }
 }
 
+/* =========================================================
+   🌐 WILD LIFE v2.5 — 실시간 멀티 (방 코드 · MQTT + BroadcastChannel)
+   ---------------------------------------------------------
+   ・ 서버 로그인 없이 공개 MQTT 브로커(wss)로 방 코드를 나눠 쓴다.
+      같은 브라우저 탭끼리는 BroadcastChannel 로도 즉시 주고받는다(백업 경로).
+   ・ 방에는 위치·모션·장비·채팅·설치한 구조물만 흐른다.
+      내 가방·세이브는 이 폰에만 있고, 방을 나가도 그대로 남는다.
+   ========================================================= */
+var NET = {
+  on: false, code: '', nick: '', id: '', topic: '',
+  bc: null, mq: null, bi: -1, retryT: 0, st: 'off',
+  seq: 0, tSend: 0, rx: 0, seen: {}, peers: {}, rs: {}, buildN: 0,
+  chatOpen: false, badgeT: 0
+};
+var NET_MQ = ['wss://broker.emqx.io:8084/mqtt', 'wss://broker.hivemq.com:8884/mqtt'];
+var NET_AVA_COL = [0xffe2a8, 0xa8d8ff, 0xffc0d4, 0xc9f0b4, 0xe0c8ff, 0xffd0a0];
+
+function netRand(n) {
+  var a = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', s = '';
+  for (var i = 0; i < n; i++) s += a.charAt(Math.floor(Math.random() * a.length));
+  return s;
+}
+function netId() { return 'c' + netRand(5).toLowerCase() + Date.now().toString(36).slice(-4); }
+function netSid() { return (NET.id || 'local') + '-' + (++NET.buildN); }
+function netNormCode(v) {
+  var s = String(v || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (s.indexOf('WL') === 0) s = s.slice(2);
+  if (s.length < 4) return '';
+  return 'WL-' + s.slice(0, 8);
+}
+function netShort(x) { return Math.round(x * 10) / 10; }
+function netAngle(x) { return Math.round(x * 100) / 100; }
+
+/* ---------------- 전송 ---------------- */
+function netPub(o) {
+  if (!NET.on) return;
+  o.f = NET.id;
+  o.s = ++NET.seq;
+  var str;
+  try { str = JSON.stringify(o); } catch (e) { return; }
+  NET.seen[NET.id + ':' + NET.seq] = 1;
+  if (NET.mq && NET.st === 'on') { try { NET.mq.publish(NET.topic, str, { qos: 0 }); } catch (e) {} }
+  if (NET.bc) { try { NET.bc.postMessage(str); } catch (e) {} }
+}
+function netEvent(kind, data) {
+  if (!NET.on) return;
+  data = data || {};
+  data.t = 'ev';
+  data.k = kind;
+  netPub(data);
+}
+
+function netRecv(str) {
+  if (!NET.on || !str) return;
+  var o;
+  try { o = (typeof str === 'string') ? JSON.parse(str) : str; } catch (e) { return; }
+  if (!o || !o.f || o.f === NET.id) return;              // 내가 보낸 메아리
+  if (o.s) {
+    var k = o.f + ':' + o.s;
+    if (NET.seen[k]) return;                             // MQTT + BC 중복 수신 제거
+    NET.seen[k] = 1;
+    NET.rx++;
+    if (NET.rx > 3000) { NET.rx = 0; NET.seen = {}; }
+  }
+  try { netHandle(o); } catch (e) {}
+}
+
+function netHandle(o) {
+  var p = netPeer(o.f, o.n);
+  p.t = performance.now() / 1000;
+  if (o.t === 'hello') {
+    if (o.n) { p.nick = String(o.n).slice(0, 10); p.dirty = 1; }
+    netSyncStructs(o.f, o.st);
+    if (o.x != null) { p.tx = o.x; p.tz = o.z; p.tf = o.fa || 0; }
+    if (!p.joined) {
+      p.joined = 1;
+      netChatAdd('', (p.nick || '친구') + ' 님이 들어왔어요', true);
+      if (typeof toast === 'function') toast('🌐 ' + (p.nick || '친구') + ' 님이 방에 들어왔어요', 'good');
+    }
+    if (!o.to) {                                          // 첫 인사에만 답한다(무한 왕복 방지)
+      netPub({ t: 'hello', to: o.f, n: NET.nick, st: netMyStructs(), x: netShort(player.pos.x), z: netShort(player.pos.z), fa: netAngle(player.facing) });
+    }
+    if (p.tx != null) netAvatar(p);
+    netBadge();
+  } else if (o.t === 'st') {
+    if (o.n && o.n !== p.nick) { p.nick = String(o.n).slice(0, 10); p.dirty = 1; }
+    p.tx = o.x; p.tz = o.z; p.tf = o.f || 0;
+    p.mv = o.mv ? 1 : 0; p.rd = o.rd ? 1 : 0;
+    if (o.eq) p.eq = o.eq;
+    if (o.dy) p.dy = o.dy;
+    netAvatar(p);
+  } else if (o.t === 'c') {
+    var m = String(o.m || '').slice(0, 80);
+    if (!m) return;
+    netChatAdd(p.nick || '친구', m, false);
+    netBubble(p, m);
+    sfx('pop');
+  } else if (o.t === 'ev') {
+    netHandleEv(p, o);
+  } else if (o.t === 'bye') {
+    netDropPeer(o.f, false);
+  }
+}
+
+function netHandleEv(p, o) {
+  if (!o || !o.k) return;
+  if (o.k === 'gather' || o.k === 'hit') {
+    if (p.av) { p.swingT = 0.4; p.swingKind = (o.k === 'hit' ? 'spear' : 'axe'); }
+    if (typeof o.x === 'number' && typeof o.z === 'number') {
+      spawnBurst(o.x, terrainH(o.x, o.z) + (o.k === 'hit' ? 1.1 : 0.9), o.z,
+        o.k === 'hit' ? 0xd8594a : 0xd8c49a, 8, 0.9);
+    }
+    if (o.l) netBubble(p, String(o.l).slice(0, 24), 1.8);
+  } else if (o.k === 'build') {
+    if (o.sid && o.ty) {
+      netRemoteStruct(o.sid, o.ty, o.x, o.z, o.rot);
+      netChatAdd('', (p.nick || '친구') + ' 님이 ' + ((STRUCT_DEF[o.ty] || {}).name || '구조물') + '을(를) 세웠어요', true);
+    }
+  } else if (o.k === 'unbuild') {
+    if (o.sid) netDropRemoteStruct(o.sid);
+  }
+}
+
+/* ---------------- 피어 ---------------- */
+function netPeer(id, nick) {
+  var p = NET.peers[id];
+  if (p) {
+    if (nick && nick !== p.nick) p.nick = String(nick).slice(0, 10);
+    return p;
+  }
+  var h = 0;
+  for (var i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) & 0xffff;
+  p = {
+    id: id, nick: nick ? String(nick).slice(0, 10) : '친구', t: performance.now() / 1000,
+    x: 0, z: 0, tx: 0, tz: 0, tf: 0, yaw: 0, mv: 0, rd: 0, walk: 0, ph: 0,
+    swingT: 0, swingKind: 'axe', eq: {}, dy: {}, av: null, joined: 0,
+    color: NET_AVA_COL[h % NET_AVA_COL.length]
+  };
+  NET.peers[id] = p;
+  return p;
+}
+function netPeerCount() { var n = 0; for (var k in NET.peers) n++; return n; }
+function netDropPeer(id, timeout) {
+  var p = NET.peers[id];
+  if (!p) return;
+  if (p.av) netKillAvatar(p);
+  netClearStructs(id);
+  delete NET.peers[id];
+  if (!timeout) netChatAdd('', (p.nick || '친구') + ' 님이 나갔어요', true);
+  netBadge();
+}
+
+/* ---------------- 3D 원격 캐릭터 ---------------- */
+/* 주인공 빌더를 그대로 재사용해 부품 세트만 떼어 온다 (외형·장비 규격 100% 동일) */
+function netBuildAvatarParts() {
+  var keep = {}, k;
+  for (k in player) keep[k] = player[k];
+  makePlayer();
+  var got = {};
+  for (k in player) got[k] = player[k];
+  for (k in keep) player[k] = keep[k];
+  return got;
+}
+function netAvatar(p) {
+  if (p.av) return p.av;
+  if (!NET.on || !started) return null;
+  var av = netBuildAvatarParts();
+  av.group.position.set(p.tx || 0, groundY(p.tx || 0, p.tz || 0), p.tz || 0);
+  av.group.rotation.y = p.tf || 0;
+  p.x = p.tx || 0; p.z = p.tz || 0; p.yaw = p.tf || 0;
+  p.walk = 0; p.ph = 0;
+  var tag = netTagSprite(p.nick || '친구', p.color);
+  tag.position.y = 2.02;
+  av.group.add(tag);
+  av.tag = tag;
+  p.av = av;
+  netApplyEquip(p);
+  return av;
+}
+function netKillAvatar(p) {
+  var av = p.av;
+  if (!av) return;
+  netClearBubble(av);
+  if (av.tag) {
+    av.group.remove(av.tag);
+    if (av.tag.material) { if (av.tag.material.map) av.tag.material.map.dispose(); av.tag.material.dispose(); }
+  }
+  if (av.group.parent) av.group.parent.remove(av.group);
+  p.av = null;
+}
+function netTagSprite(nick, color) {
+  var cv = document.createElement('canvas');
+  cv.width = 384; cv.height = 96;
+  var ctx = cv.getContext('2d');
+  var font = 'bold 34px -apple-system, "Apple SD Gothic Neo", sans-serif';
+  ctx.font = font;
+  var label = String(nick || '친구').slice(0, 10);
+  var tw = Math.ceil(ctx.measureText(label).width);
+  var w = Math.min(360, Math.max(120, tw + 52)), h = 62, x = (384 - w) / 2, y = 17;
+  ctx.fillStyle = 'rgba(20,30,26,.76)';
+  roundRect(ctx, x, y, w, h, 22); ctx.fill();
+  ctx.strokeStyle = 'rgba(' + ((color >> 16) & 255) + ',' + ((color >> 8) & 255) + ',' + (color & 255) + ',.95)';
+  ctx.lineWidth = 3; ctx.stroke();
+  ctx.font = font;
+  ctx.fillStyle = '#fff6e0';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(label, 192, 49);
+  var tex = new THREE.CanvasTexture(cv);
+  var sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false, depthWrite: false }));
+  sp.scale.set(1.55, 0.39, 1);
+  sp.renderOrder = 8;
+  return sp;
+}
+function netApplyEquip(p) {
+  var av = p.av;
+  if (!av) return;
+  var eq = p.eq || {}, dy = p.dy || {}, k, s, on;
+  if (av.armorSets) for (k in av.armorSets) av.armorSets[k].visible = (eq.a === k);
+  if (av.hatSets) for (k in av.hatSets) av.hatSets[k].visible = (eq.h === k);
+  if (av.bootSets) for (k in av.bootSets) { s = av.bootSets[k]; on = (eq.b === k); if (s.set) s.set(on); else s.visible = on; }
+  if (av.packSets) for (k in av.packSets) av.packSets[k].visible = (eq.p === k);
+  var w = eq.w || '';
+  if (av.axe) av.axe.visible = (w === 'axe');
+  if (av.spear) av.spear.visible = (w === 'spear' || w === 'trikeSpear');
+  if (av.boneSpear) av.boneSpear.visible = (w === 'boneSpear');
+  if (av.knife) av.knife.visible = (w === 'stoneKnife');
+  if (av.boneKnife) av.boneKnife.visible = (w === 'boneKnife' || w === 'trikeKnife');
+  if (av.bow) av.bow.visible = (w === 'bow');
+  if (av.ironBow) av.ironBow.visible = (w === 'ironBow');
+  if (av.sickle) av.sickle.visible = (w === 'stoneSickle');
+  if (av.pick) av.pick.visible = (w === 'stonePick');
+  if (av.armorSets) for (k in av.armorSets) dyeMeshTree(av.armorSets[k], (eq.a === k) ? (dy.a || '') : '');
+  if (av.bootSets) for (k in av.bootSets) {
+    s = av.bootSets[k];
+    var key = (eq.b === k) ? (dy.b || '') : '';
+    if (s.a) dyeMeshTree(s.a, key);
+    if (s.b) dyeMeshTree(s.b, key);
+  }
+}
+function netClearBubble(av) {
+  if (!av || !av.bub) return;
+  av.group.remove(av.bub);
+  if (av.bub.material) { if (av.bub.material.map) av.bub.material.map.dispose(); av.bub.material.dispose(); }
+  av.bub = null; av.bubT = 0;
+}
+/* 머리 위 짧은 말풍선 — 채팅·채집 결과가 3초 떠 있다 */
+function netBubble(p, text, life) {
+  var av = p.av;
+  if (!av || !av.group) return;
+  var msg = String(text || '').slice(0, 48);
+  if (!msg) return;
+  netClearBubble(av);
+  var cv = document.createElement('canvas');
+  cv.width = 512; cv.height = 148;
+  var ctx = cv.getContext('2d');
+  var font = 'bold 31px -apple-system, "Apple SD Gothic Neo", sans-serif';
+  ctx.font = font;
+  var lines = [msg], tw = ctx.measureText(msg).width;
+  if (tw > 430) {                                   // 두 줄로 접기
+    var cut = Math.ceil(msg.length / 2);
+    lines = [msg.slice(0, cut), msg.slice(cut)];
+    tw = 0;
+    for (var i = 0; i < lines.length; i++) tw = Math.max(tw, ctx.measureText(lines[i]).width);
+  }
+  var w = Math.min(470, Math.max(130, tw + 54));
+  var h = lines.length > 1 ? 104 : 66;
+  var x = (512 - w) / 2, y = (148 - h) / 2 - 4;
+  ctx.fillStyle = 'rgba(16,22,20,.86)';
+  roundRect(ctx, x, y, w, h, 24); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,240,200,.55)'; ctx.lineWidth = 2.4;
+  roundRect(ctx, x, y, w, h, 24); ctx.stroke();
+  ctx.font = font; ctx.fillStyle = '#fff8e6';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  for (var j = 0; j < lines.length; j++) {
+    ctx.fillText(lines[j], 256, y + h / 2 + (j === 0 ? (lines.length > 1 ? -22 : 0) : 22));
+  }
+  var tex = new THREE.CanvasTexture(cv);
+  var sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false, depthWrite: false }));
+  var sc = Math.max(0.85, Math.min(2.4, w / 200 + 0.55));
+  sp.scale.set(sc, sc * 0.29, 1);
+  sp.position.y = 2.52;
+  sp.renderOrder = 9;
+  av.group.add(sp);
+  av.bub = sp; av.bubT = (life || 3.0);
+}
+
+/* 원격 캐릭터 모션 — 주인공과 같은 걷기/스윙/탑승 자세를 원격 데이터로 재생 */
+function netAnimPeer(p, dt, now) {
+  var av = p.av;
+  if (!av) return;
+  var target = p.mv ? 1 : 0;
+  p.walk += (target - p.walk) * Math.min(1, dt * (target > p.walk ? 6.4 : 9.5));
+  if (p.mv) p.ph += dt * 8.6;
+  var ph = p.ph, w = p.walk, t = now;
+  var stride = Math.sin(ph) * 0.60 * w;
+  if (av.legL) av.legL.rotation.x = stride;
+  if (av.legR) av.legR.rotation.x = -stride;
+  var kneeL = Math.max(0, Math.sin(ph + 0.85)) * 0.92 * w + 0.04;
+  var kneeR = Math.max(0, Math.sin(ph + 0.85 + Math.PI)) * 0.92 * w + 0.04;
+  if (av.kneeL) av.kneeL.rotation.x = kneeL;
+  if (av.kneeR) av.kneeR.rotation.x = kneeR;
+  if (av.ankleL) av.ankleL.rotation.x = -(stride + kneeL) * 0.72 + 0.10 * w;
+  if (av.ankleR) av.ankleR.rotation.x = -(av.legR.rotation.x + kneeR) * 0.72 + 0.10 * w;
+  if (p.swingT > 0) p.swingT = Math.max(0, p.swingT - dt * 2.2);
+  if (p.swingT > 0) {
+    var sp = clamp(1 - p.swingT / 0.4, 0, 1), arc = Math.sin(sp * Math.PI), wk = p.swingKind || 'axe';
+    if (wk === 'spear') {
+      av.armR.rotation.x = 0.18 - 1.95 * sp; av.armR.rotation.z = 0.10 - 0.16 * sp;
+      av.body.rotation.y = -0.24 + 0.42 * sp;
+    } else if (wk === 'knife') {
+      av.armR.rotation.x = -1.75 + 0.95 * sp; av.armR.rotation.z = 0.95 - 1.75 * sp;
+      av.body.rotation.y = -0.34 + 0.60 * sp;
+    } else {
+      av.armR.rotation.x = -2.30 + 1.72 * sp; av.armR.rotation.z = 0.16 - 0.26 * sp;
+      av.body.rotation.y = -0.28 + 0.48 * sp;
+    }
+    av.armL.rotation.x = -0.42 * arc; av.armL.rotation.z = 0.12 * arc;
+    av.head.rotation.y = 0;
+  } else {
+    var sL = -Math.sin(ph) * 0.52 * w, sR = Math.sin(ph) * 0.52 * w;
+    av.armL.rotation.x = sL; av.armR.rotation.x = sR;
+    if (av.elbowL) av.elbowL.rotation.x = -0.18 - Math.max(0, -sL) * 0.55;
+    if (av.elbowR) av.elbowR.rotation.x = -0.18 - Math.max(0, -sR) * 0.55;
+    av.armL.rotation.z = -0.045; av.armR.rotation.z = 0.045; av.armR.rotation.y = 0;
+    av.body.rotation.y = Math.sin(ph) * 0.055 * w;
+    av.head.rotation.y = 0;
+    av.body.rotation.z = Math.sin(ph) * 0.030 * w;
+  }
+  av.body.position.y = (av.bodyBaseY || 0.62) + Math.abs(Math.sin(ph)) * 0.038 * w + Math.sin(t * 1.7) * 0.007;
+  av.body.rotation.x = 0.055 * w;
+  if (av.head) av.head.rotation.z = Math.sin(ph * 0.5 + 0.6) * 0.022 * w;
+  if (p.rd) {
+    if (av.legL) av.legL.rotation.x = 0.75;
+    if (av.legR) av.legR.rotation.x = 0.75;
+    if (av.kneeL) av.kneeL.rotation.x = 0.95;
+    if (av.kneeR) av.kneeR.rotation.x = 0.95;
+    if (av.ankleL) av.ankleL.rotation.x = -0.25;
+    if (av.ankleR) av.ankleR.rotation.x = -0.25;
+    av.armL.rotation.x = -0.3;
+  }
+  // 위치·방향 보간 (초당 5회 오는 좌표를 부드럽게 잇는다)
+  var dx = p.tx - p.x, dz = p.tz - p.z;
+  if (Math.abs(dx) + Math.abs(dz) > 14) { p.x = p.tx; p.z = p.tz; }
+  else { var kk = Math.min(1, dt * 10); p.x += dx * kk; p.z += dz * kk; }
+  av.group.position.set(p.x, groundY(p.x, p.z) + (p.rd ? 1.02 : 0), p.z);
+  var d = p.tf - p.yaw;
+  while (d > Math.PI) d -= Math.PI * 2;
+  while (d < -Math.PI) d += Math.PI * 2;
+  p.yaw += d * Math.min(1, dt * 10);
+  av.group.rotation.y = p.yaw;
+  if (av.bubT > 0) {
+    av.bubT -= dt;
+    if (av.bubT <= 0) netClearBubble(av);
+  }
+  if (av.tag && p.dirty) {
+    p.dirty = 0;
+    av.group.remove(av.tag);
+    if (av.tag.material) { if (av.tag.material.map) av.tag.material.map.dispose(); av.tag.material.dispose(); }
+    var tag = netTagSprite(p.nick || '친구', p.color);
+    tag.position.y = 2.02;
+    av.group.add(tag);
+    av.tag = tag;
+  }
+}
+
+/* ---------------- 구조물 공유 ---------------- */
+function netMyStructs() {
+  var out = [], list = S.structures || [], dirty = false;
+  for (var i = 0; i < list.length && out.length < 260; i++) {
+    var r = list[i];
+    if (!r || !STRUCT_DEF[r.type]) continue;
+    if (!r.sid) { r.sid = netSid(); dirty = true; }
+    out.push({ sid: r.sid, type: r.type, x: r.x, z: r.z, rot: r.rot || 0 });
+  }
+  if (dirty && typeof saveState === 'function') saveState();
+  return out;
+}
+function netOnPlace(st) {
+  if (!NET.on || !st || !st.rec) return;
+  st.rec.sid = st.rec.sid || netSid();
+  st.sid = st.rec.sid;
+  netPub({ t: 'ev', k: 'build', sid: st.sid, ty: st.type, x: netShort(st.x), z: netShort(st.z), rot: netAngle(st.rot || 0) });
+}
+function netOnRemove(st) {
+  if (!NET.on || !st || !st.rec || !st.rec.sid) return;
+  netPub({ t: 'ev', k: 'unbuild', sid: st.rec.sid });
+}
+function netRemoteStruct(sid, type, x, z, rot) {
+  if (!sid || !STRUCT_DEF[type] || !scene) return;
+  if (NET.rs[sid]) netDropRemoteStruct(sid);
+  if (terrainH(x, z) < 0.4) return;
+  var g = makeStructure(type);
+  g.position.set(x, terrainH(x, z) - 0.03, z);
+  g.rotation.y = rot || 0;
+  scene.add(g);
+  NET.rs[sid] = { group: g, type: type, x: x, z: z, rot: rot || 0, owner: String(sid).split('-')[0] };
+}
+function netDropRemoteStruct(sid) {
+  var r = NET.rs[sid];
+  if (!r) return;
+  if (r.group && r.group.parent) r.group.parent.remove(r.group);
+  delete NET.rs[sid];
+}
+function netClearStructs(owner) {
+  for (var sid in NET.rs) if (NET.rs[sid].owner === owner) netDropRemoteStruct(sid);
+}
+function netSyncStructs(owner, list) {
+  if (!list || !list.length) { netClearStructs(owner); return; }
+  var keep = {}, i, s;
+  for (i = 0; i < list.length; i++) {
+    s = list[i];
+    if (!s || !s.sid || !s.type) continue;
+    keep[s.sid] = 1;
+    var ex = NET.rs[s.sid];
+    if (!ex) netRemoteStruct(s.sid, s.type, s.x, s.z, s.rot);
+    else if (ex.type !== s.type) { netDropRemoteStruct(s.sid); netRemoteStruct(s.sid, s.type, s.x, s.z, s.rot); }
+  }
+  for (var sid in NET.rs) if (NET.rs[sid].owner === owner && !keep[sid]) netDropRemoteStruct(sid);
+}
+
+/* ---------------- 매 프레임 ---------------- */
+function netTick(dt) {
+  if (!NET.on) return;
+  var now = performance.now() / 1000;
+  if (started) {
+    NET.tSend += dt;
+    if (NET.tSend > 0.2) {
+      NET.tSend = 0;
+      netPub({
+        t: 'st', n: NET.nick || S.nick || '탐험가',
+        x: netShort(player.pos.x), z: netShort(player.pos.z),
+        f: netAngle(player.facing), mv: player.moving ? 1 : 0, rd: rideDino ? 1 : 0,
+        eq: { a: S.equip.armor || '', h: S.equip.hat || '', b: S.equip.boots || '', p: S.equip.backpack || '', w: equippedWeapon() || '' },
+        dy: { a: (S.dye && S.dye.armor) || '', b: (S.dye && S.dye.boots) || '' }
+      });
+    }
+  }
+  for (var id in NET.peers) {
+    var p = NET.peers[id];
+    if (now - p.t > 16) { netDropPeer(id, true); continue; }
+    netAnimPeer(p, dt, now);
+  }
+  NET.badgeT += dt;
+  if (NET.badgeT > 1) { NET.badgeT = 0; netBadge(); }
+}
+
+/* ---------------- 채팅 UI ---------------- */
+function netChatAdd(name, text, sys) {
+  var log = $id('mpLog');
+  if (!log) return;
+  var d = document.createElement('div');
+  d.className = 'ln' + (sys ? ' sys' : '');
+  if (name) { var b = document.createElement('b'); b.textContent = name; d.appendChild(b); }
+  d.appendChild(document.createTextNode(String(text)));
+  log.appendChild(d);
+  while (log.children.length > 14) log.removeChild(log.firstChild);
+  try { log.scrollTop = log.scrollHeight; } catch (e) {}
+}
+function netChatFocus(open) {
+  var chat = $id('mpChat');
+  if (!chat) return;
+  if (open) chat.classList.add('open'); else chat.classList.remove('open');
+  NET.chatOpen = !!open;
+  if (open) {
+    var inp = $id('mpIn');
+    setTimeout(function () { try { inp.focus(); } catch (e) {} }, 30);
+  }
+}
+function netSendChat() {
+  var inp = $id('mpIn');
+  if (!inp) return;
+  var v = String(inp.value || '').replace(/\s+/g, ' ').trim().slice(0, 80);
+  inp.value = '';
+  if (!v || !NET.on) return;
+  netPub({ t: 'c', m: v, n: NET.nick });
+  netChatAdd('나', v, false);
+}
+
+/* ---------------- 상태 배지 ---------------- */
+function netBadge() {
+  var el = $id('mpState'), dot = $id('mpDot'), chat = $id('mpChat'), codeEl = $id('mpCodeLbl');
+  if (!el) return;
+  if (!NET.on) {
+    el.textContent = '🌐 멀티';
+    if (chat) chat.classList.remove('on', 'on-open');
+    return;
+  }
+  var n = 1 + netPeerCount();
+  if (NET.st === 'on') el.textContent = '🟢 연결됨 · ' + n + '명';
+  else if (NET.st === 'local') el.textContent = '🔵 이 브라우저만 · ' + n + '명';
+  else if (NET.st === 'connecting') el.textContent = '🟡 연결 중…';
+  else el.textContent = '🟡 재연결 중 · ' + n + '명';
+  if (dot) {
+    dot.className = 'dot ' + (NET.st === 'on' ? 'ok' : (NET.st === 'local' ? 'local' : 'wait'));
+  }
+  if (codeEl) codeEl.textContent = NET.code || '';
+  if (chat && started) chat.classList.add('on');
+}
+
+/* ---------------- 전송 계층 ---------------- */
+function netLoadMqtt(cb) {
+  if (window.mqtt && window.mqtt.connect) { cb(true); return; }
+  var settled = false;
+  function done(ok) { if (settled) return; settled = true; cb(ok); }
+  var s = document.createElement('script');
+  s.src = 'https://unpkg.com/mqtt@5/dist/mqtt.min.js';
+  s.async = true;
+  s.onload = function () { done(!!(window.mqtt && window.mqtt.connect)); };
+  s.onerror = function () { done(false); };
+  document.head.appendChild(s);
+  setTimeout(function () { done(!!(window.mqtt && window.mqtt.connect)); }, 9000);
+}
+function netStartTransport() {
+  try {
+    if (NET.bc) { try { NET.bc.close(); } catch (e) {} }
+    NET.bc = new BroadcastChannel('wildlife25-' + NET.code);
+    NET.bc.onmessage = function (e) { netRecv(e.data); };
+  } catch (e) { NET.bc = null; }
+  NET.st = 'connecting';
+  netBadge();
+  netLoadMqtt(function (ok) {
+    if (!NET.on) return;
+    if (ok) netMqConnect(0);
+    else { NET.st = 'local'; netBadge(); setTimeout(netEnsureMqtt, 9000); }
+  });
+}
+function netEnsureMqtt() {
+  if (!NET.on || NET.st === 'on') return;
+  netLoadMqtt(function (ok) {
+    if (!NET.on) return;
+    if (ok) netMqConnect(NET.bi + 1); else setTimeout(netEnsureMqtt, 9000);
+  });
+}
+function nMqFail(i) {
+  if (!NET.on) return;
+  NET.st = (NET.st === 'on') ? 'retry' : (NET.bc ? 'retry' : 'local');
+  netBadge();
+  clearTimeout(NET.retryT);
+  NET.retryT = setTimeout(function () {
+    if (!NET.on) return;
+    netMqConnect(i + 1);
+  }, i < 1 ? 1200 : 3000);
+}
+function netMqConnect(i) {
+  if (!NET.on) return;
+  if (!(window.mqtt && window.mqtt.connect)) { netEnsureMqtt(); return; }
+  NET.bi = i;
+  var url = NET_MQ[i % NET_MQ.length], cli;
+  try { if (NET.mq) { try { NET.mq.end(true); } catch (e) {} NET.mq = null; } } catch (e) {}
+  try {
+    cli = window.mqtt.connect(url, {
+      clientId: 'wl25_' + NET.id + '_' + (i % 4),
+      clean: true, keepalive: 25, connectTimeout: 7000, reconnectPeriod: 0, protocolVersion: 4
+    });
+  } catch (e) { nMqFail(i); return; }
+  NET.mq = cli;
+  NET.st = 'connecting';
+  netBadge();
+  cli.on('connect', function () {
+    if (NET.mq !== cli || !NET.on) return;
+    NET.st = 'on';
+    netBadge();
+    try { cli.subscribe(NET.topic, { qos: 0 }); } catch (e) {}
+    netChatAdd('', '🌐 방 ' + NET.code + ' 에 연결됐어요', true);
+    netPub({ t: 'hello', n: NET.nick, st: netMyStructs(), x: netShort(player.pos.x), z: netShort(player.pos.z), fa: netAngle(player.facing) });
+  });
+  cli.on('message', function (tp, pl) { try { netRecv(pl.toString()); } catch (e) {} });
+  cli.on('error', function () { if (NET.mq === cli) nMqFail(i); });
+  cli.on('close', function () { if (NET.mq === cli && NET.on) nMqFail(i); });
+  cli.on('offline', function () { if (NET.mq === cli && NET.on && NET.st === 'on') { NET.st = 'retry'; netBadge(); } });
+}
+
+/* ---------------- 방 들어가기 / 나가기 ---------------- */
+function netJoin(code) {
+  code = netNormCode(code);
+  if (!code) { toast('방 코드가 올바르지 않아요 (예: WL-AB12CD)', 'warn'); return; }
+  var nickEl = $id('mpNick');
+  var nick = String((nickEl && nickEl.value) || '').replace(/\s+/g, ' ').trim().slice(0, 10);
+  if (!nick) nick = S.nick || '탐험가';
+  NET.nick = nick;
+  if (!started) {
+    if (SAVE.last) beginSession(SAVE.last, false);
+    else beginSession(1, true, nick);
+  }
+  if (NET.on) netLeave(true);
+  NET.on = true; NET.code = code; NET.topic = 'wildlife/v25/' + code.replace('-', '');
+  NET.id = netId(); NET.seq = 0; NET.rx = 0; NET.seen = {}; NET.peers = {}; NET.rs = {}; NET.buildN = 0;
+  NET.tSend = 0; NET.badgeT = 0;
+  var chat = $id('mpChat');
+  if (chat) chat.classList.add('on');
+  if ($id('mpCodeLbl')) $id('mpCodeLbl').textContent = NET.code;
+  netChatAdd('', '🌐 방 ' + NET.code + ' 접속 중…', true);
+  netStartTransport();
+  netBadge();
+  netPanel(false);
+  toast('🌐 방 ' + NET.code + ' — 친구에게 이 코드를 알려줘', 'good');
+  if (typeof hint === 'function') hint('아래 채팅창을 누르면 말을 걸 수 있어요 · 방 코드 ' + NET.code, 4600);
+}
+function netLeave(quiet) {
+  if (!NET.on) return;
+  netPub({ t: 'bye' });
+  NET.on = false; NET.st = 'off';
+  clearTimeout(NET.retryT);
+  try { if (NET.mq) NET.mq.end(true); } catch (e) {}
+  NET.mq = null;
+  try { if (NET.bc) NET.bc.close(); } catch (e) {}
+  NET.bc = null;
+  for (var id in NET.peers) netKillAvatar(NET.peers[id]);
+  NET.peers = {};
+  for (var sid in NET.rs) netDropRemoteStruct(sid);
+  NET.rs = {};
+  NET.code = ''; NET.topic = '';
+  var chat = $id('mpChat');
+  if (chat) { chat.classList.remove('on'); chat.classList.remove('open'); }
+  NET.chatOpen = false;
+  netBadge();
+  if (!quiet) toast('🌐 방에서 나왔어요 · 저장은 그대로예요', 'warn');
+}
+
+/* ---------------- 멀티 패널 ---------------- */
+function netPanel(open) {
+  var p = $id('mpPanel');
+  if (!p) return;
+  if (open) {
+    if (typeof closeSheet === 'function') closeSheet();   // 설정 시트가 위를 덮지 않게
+    if (typeof closeHexMenu === 'function') closeHexMenu();
+    var nickEl = $id('mpNick');
+    if (nickEl && !nickEl.value) nickEl.value = NET.nick || S.nick || '탐험가';
+    var codeEl = $id('mpCode');
+    if (codeEl && !codeEl.value && NET.code) codeEl.value = NET.code;
+    netPanelInfo();
+    p.classList.add('on');
+  } else {
+    p.classList.remove('on');
+  }
+}
+function netPanelInfo() {
+  var el = $id('mpNow');
+  if (!el) return;
+  if (!NET.on) { el.innerHTML = '아직 방에 없어요 · 방을 만들거나 코드를 입력해요'; return; }
+  var names = ['나(' + escHtml(NET.nick) + ')'];
+  for (var id in NET.peers) names.push(escHtml(NET.peers[id].nick || '친구'));
+  var stTxt = NET.st === 'on' ? '🟢 연결됨' : (NET.st === 'local' ? '🔵 이 브라우저만' : '🟡 연결 중…');
+  el.innerHTML = '<b>' + NET.code + '</b> · ' + stTxt + '<br>' + names.join(' · ');
+}
+(function netWire() {
+  var openBtn = $id('btnMulti'), closeBtn = $id('mpClose'), createBtn = $id('mpCreate'),
+    joinBtn = $id('mpJoin'), leaveBtn = $id('mpLeave'), chat = $id('mpChat');
+  if (openBtn) openBtn.addEventListener('click', function () { netPanel(true); });
+  if (closeBtn) closeBtn.addEventListener('click', function () { netPanel(false); });
+  var panel = $id('mpPanel');
+  if (panel) panel.addEventListener('click', function (e) { if (e.target === panel) netPanel(false); });
+  if (createBtn) createBtn.addEventListener('click', function () {
+    var code = 'WL-' + netRand(6);
+    var ci = $id('mpCode');
+    if (ci) ci.value = code;
+    netJoin(code);
+  });
+  if (joinBtn) joinBtn.addEventListener('click', function () {
+    var ci = $id('mpCode');
+    netJoin(ci ? ci.value : '');
+  });
+  if (leaveBtn) leaveBtn.addEventListener('click', function () { netLeave(false); netPanelInfo(); });
+  var codeIn = $id('mpCode');
+  if (codeIn) {
+    codeIn.addEventListener('input', function () {
+      var v = codeIn.value.toUpperCase().replace(/[^A-Z0-9-]/g, '');
+      if (v.indexOf('WL') !== 0 && codeIn.value.indexOf('WL') < 0) v = 'WL-' + v.replace(/^WL-?/, '');
+      codeIn.value = v.slice(0, 9);
+    });
+    codeIn.addEventListener('keydown', function (e) { if (e.key === 'Enter') netJoin(codeIn.value); });
+  }
+  if (chat) {
+    var log = $id('mpLog');
+    if (log) log.addEventListener('click', function () { netChatFocus(!NET.chatOpen); });
+    var send = $id('mpSend');
+    if (send) send.addEventListener('click', netSendChat);
+    var inp = $id('mpIn');
+    if (inp) inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); netSendChat(); }
+      else if (e.key === 'Escape') { inp.blur(); netChatFocus(false); }
+    });
+    var head = $id('mpChatBtn');
+    if (head) head.addEventListener('click', function (e) { e.stopPropagation(); netChatFocus(!NET.chatOpen); });
+  }
+  window.addEventListener('beforeunload', function () { try { if (NET.on) netPub({ t: 'bye' }); } catch (e) {} });
+})();
+
 /* ---------------- ui refs ---------------- */
 var hpFill = $id('hpFill'), hgFill = $id('hgFill'), hpTxt = $id('hpTxt'), hgTxt = $id('hgTxt');
 var atkTxt = $id('atkTxt'), defTxt = $id('defTxt');
@@ -11659,7 +12479,10 @@ function doAction() {
   }
   if (c.type === 'relight') { relightFire(c.st); return; }
   if (c.type === 'fire') { fireSt = c.st; openSheet('fire'); return; }
-  if (c.type === 'gather') { gatherNode(c.n); return; }
+  if (c.type === 'gather') {
+    if (typeof netEvent === 'function' && NET.on) netEvent('gather', { x: c.n.x, z: c.n.z, l: (NODE_LABEL[c.n.kind] || '채집') });
+    gatherNode(c.n); return;
+  }
   if (c.type === 'bench') { openCraftHome(); return; }
   if (c.type === 'cook') { if (c.item) startCook(c.item); else sfx('deny'); return; }
   if (c.type === 'tame') { tameDino(c.d); return; }
@@ -12043,6 +12866,7 @@ function swingFx(kind) {
 }
 
 function attackDino(d) {
+  if (typeof netEvent === 'function' && NET.on) netEvent('hit', { x: d.x, z: d.z, l: '사냥!' });
   if (!d || d.dead) return;
   if (d.tamed || d.mounted) return;  // 🐾 길들인 공룡·탈것은 공격 대상이 아니다
   if (player.atkCd > 0) return;      // 쿨다운 중에도 이동은 막지 않는다 (무빙 어택)
@@ -13173,7 +13997,7 @@ function renderBag() {
 
   var note = document.createElement('div');
   note.className = 'sheetNote';
-  note.textContent = '음식은 「먹기」로 바로 먹고, 모자·옷·신발·무기·배낭은 「장착」으로 바꿔요. 위 탭에서 🍖음식만·⚔장비만 골라 볼 수 있어요(음식 탭은 회복량이 큰 순). 가방은 칸(슬롯) 방식이라 기본 ' + BAG_SLOTS + '칸 · 한 칸에 ' + STACK_MAX + '개까지 쌓여요(100개 넘으면 칸이 하나 더 필요). 배낭을 장착하면 칸이 늘어나요 (가죽 +6 · 큰 랩터 +12).';
+  note.textContent = '음식은 「먹기」로 바로 먹고, 모자·옷·신발·무기·배낭은 「장착」으로 바꿔요. 위 탭에서 🍖음식만·⚔장비만 골라 볼 수 있어요(음식 탭은 회복량이 큰 순). 가방은 칸(슬롯) 방식이라 기본 ' + BAG_SLOTS + '칸 · 한 칸에 ' + STACK_MAX + '개까지 쌓여요(100개 넘으면 칸이 하나 더 필요). 배낭을 장착하면 칸이 늘어나요 (가죽 +50 → 100칸 · 큰 랩터 +100 → 150칸).';
   sheetBody.appendChild(note);
 }
 
@@ -14075,6 +14899,16 @@ function renderSheet() {
     });
     rowQ.appendChild(qb);
     sheetBody.appendChild(rowQ);
+
+    var rowMP = document.createElement('div');
+    rowMP.className = 'rec';
+    rowMP.innerHTML = '<div class="ic">🌐</div><div class="txt"><b>친구와 멀티플레이</b><small>' +
+      (NET.on ? NET.code + ' · ' + (1 + netPeerCount()) + '명' : '방 코드로 같은 섬에서 만나요') + '</small></div>';
+    var mpb = document.createElement('button');
+    mpb.textContent = NET.on ? '방 정보' : '열기';
+    mpb.addEventListener('click', function () { if (typeof netPanel === 'function') netPanel(true); });
+    rowMP.appendChild(mpb);
+    sheetBody.appendChild(rowMP);
 
     var row2 = document.createElement('div');
     row2.className = 'rec';
@@ -16986,6 +17820,7 @@ function loop(now) {
     SAVE.playTime += dt;
   }
   updateStructures(dt, t);
+  if (typeof netTick === 'function') netTick(dt);
   if (PAD.dirty) rebuildPads();
   updateFx(dt);
   updateDayNight(dt);
@@ -17388,6 +18223,13 @@ window.__game = {
   walkDemo: function (v) { WALK_DEMO = !!v; player.walk = v ? 1 : 0; return WALK_DEMO; },
   errors: ERR,
   started: function () { return started; },
+  /* v2.5 검수용 — 멀티 상태·가방 칸 읽기 */
+  netInfo: function () {
+    var names = [];
+    for (var id in NET.peers) names.push({ id: id, nick: NET.peers[id].nick, x: +NET.peers[id].x.toFixed(1), z: +NET.peers[id].z.toFixed(1), av: !!NET.peers[id].av, bub: !!(NET.peers[id].av && NET.peers[id].av.bub) });
+    return { on: NET.on, code: NET.code, st: NET.st, bc: !!NET.bc, mq: !!NET.mq, topic: NET.topic, me: { nick: NET.nick, x: +player.pos.x.toFixed(1), z: +player.pos.z.toFixed(1) }, peers: names, rs: Object.keys(NET.rs).length, log: Array.prototype.map.call((document.getElementById('mpLog') || { children: [] }).children, function (d) { return d.textContent; }) };
+  },
+  bagInfo: function () { return { base: BAG_SLOTS, bonus: bagSlotBonus(), cap: bagSlots(), used: bagUsed(), stack: STACK_MAX, pack: S.equip.backpack || '' }; },
   eat: eatOrInfo,
   setZoom: function (v) { camZoom = v; },
   fps: function () { return Math.round(fpsVal); },
