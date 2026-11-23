@@ -5671,14 +5671,12 @@ function makePlayer() {
   collar.position.y = 0.605;
   tunic.add(collar);
   // 가슴 V넥 — 안쪽 살색 + 끈 3개
-  var vNeck = new THREE.Mesh(new THREE.BoxGeometry(0.070, 0.100, 0.030), M(C.skin));
-  vNeck.position.set(0, 0.560, 0.128);
-  vNeck.rotation.x = 0.22;
-  tunic.add(vNeck);
-  var vTrim = new THREE.Mesh(new THREE.BoxGeometry(0.020, 0.070, 0.012), M(C.shirtD));
-  vTrim.position.set(0, 0.556, 0.126);
-  vTrim.rotation.z = 0.0;
-  tunic.add(vTrim);
+  for (var vv = -1; vv <= 1; vv += 2) {
+    var vStrip = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.080, 0.010), M(C.shirtD));
+    vStrip.position.set(vv * 0.026, 0.552, 0.1285);
+    vStrip.rotation.z = vv * 0.30;
+    tunic.add(vStrip);
+  }
   // 어깨 요크 (어깨를 덮는 한 겹)
   var yoke = new THREE.Mesh(new THREE.CylinderGeometry(0.219, 0.206, 0.055, 14), M(C.shirtD));
   yoke.position.y = 0.556;
@@ -6153,13 +6151,13 @@ function makePlayer() {
   // 옆머리 + 턱선으로 흐르는 잔가닥
   for (var hb = -1; hb <= 1; hb += 2) {
     var sideLock = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 8), M(C.hair));
-    sideLock.scale.set(0.040, 0.120, 0.058);
-    sideLock.position.set(hb * 0.120, -0.010, 0.040);
-    sideLock.rotation.z = hb * 0.10;
+    sideLock.scale.set(0.030, 0.108, 0.050);
+    sideLock.position.set(hb * 0.118, 0.000, 0.010);
+    sideLock.rotation.z = hb * 0.08;
     hairG.add(sideLock);
-    var strand = new THREE.Mesh(new THREE.ConeGeometry(0.030, 0.185, 6), M(C.hair));
-    strand.position.set(hb * 0.116, -0.126, 0.030);
-    strand.rotation.z = hb * 0.16;
+    var strand = new THREE.Mesh(new THREE.ConeGeometry(0.020, 0.150, 6), M(C.hair));
+    strand.position.set(hb * 0.113, -0.112, 0.004);
+    strand.rotation.z = hb * 0.12;
     hairG.add(strand);
     // 광택이 도는 잔결
     var sheen = new THREE.Mesh(new THREE.ConeGeometry(0.010, 0.095, 4), M(C.hairL));
