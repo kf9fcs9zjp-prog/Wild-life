@@ -6245,7 +6245,7 @@ function makePlayer() {
     head.add(cheek);
   }
   // 코 — 콧대 + 코끝 + 콧구멍
-  var noseBridge = new THREE.Mesh(new THREE.BoxGeometry(0.024, 0.075, 0.030), M(C.skin));
+  var noseBridge = new THREE.Mesh(new THREE.BoxGeometry(0.021, 0.070, 0.028), M(C.skin));
   noseBridge.position.set(0, -0.002, 0.128);
   noseBridge.rotation.x = 0.18;
   head.add(noseBridge);
@@ -6287,30 +6287,30 @@ function makePlayer() {
   eyeG.position.set(0, 0.004, 0);
   head.add(eyeG);
   for (var ey = -1; ey <= 1; ey += 2) {
-    var sclera = new THREE.Mesh(new THREE.SphereGeometry(0.0195, 12, 9), M(C.eyeW));
+    var sclera = new THREE.Mesh(new THREE.SphereGeometry(0.0182, 12, 9), M(C.eyeW));
     sclera.scale.set(1.0, 0.92, 0.78);
-    sclera.position.set(ey * 0.051, 0.009, 0.1265);
+    sclera.position.set(ey * 0.049, 0.009, 0.1268);
     eyeG.add(sclera);
     var iris = new THREE.Mesh(new THREE.SphereGeometry(0.0112, 10, 8), M(C.iris));
     iris.scale.set(1, 1, 0.62);
-    iris.position.set(ey * 0.0515, 0.008, 0.1375);
+    iris.position.set(ey * 0.0495, 0.008, 0.1376);
     eyeG.add(iris);
     var pupil = new THREE.Mesh(new THREE.SphereGeometry(0.0058, 8, 6), M(C.pupil));
     pupil.scale.set(1, 1, 0.6);
-    pupil.position.set(ey * 0.0516, 0.008, 0.1415);
+    pupil.position.set(ey * 0.0496, 0.008, 0.1416);
     eyeG.add(pupil);
     var glint = new THREE.Mesh(new THREE.SphereGeometry(0.0026, 6, 5), M(C.glint));
-    glint.position.set(ey * 0.0470, 0.0145, 0.1430);
+    glint.position.set(ey * 0.0452, 0.0145, 0.1430);
     eyeG.add(glint);
   }
   // 눈꺼풀 선 · 속눈썹 (106 얼굴이 부풀지 않게 얇은 띠만)
   for (var sd = -1; sd <= 1; sd += 2) {
-    var lidLine = new THREE.Mesh(new THREE.BoxGeometry(0.040, 0.0045, 0.012), M(C.skinD));
-    lidLine.position.set(sd * 0.0515, 0.0225, 0.1315);
+    var lidLine = new THREE.Mesh(new THREE.BoxGeometry(0.036, 0.0032, 0.006), M(C.skinD));
+    lidLine.position.set(sd * 0.0510, 0.0225, 0.1275);
     lidLine.rotation.z = sd * -0.10;
     head.add(lidLine);
-    var lash = new THREE.Mesh(new THREE.BoxGeometry(0.040, 0.0035, 0.010), M(C.hairD));
-    lash.position.set(sd * 0.0520, 0.0262, 0.1345);
+    var lash = new THREE.Mesh(new THREE.BoxGeometry(0.038, 0.0030, 0.006), M(C.hairD));
+    lash.position.set(sd * 0.0515, 0.0252, 0.1318);
     lash.rotation.z = sd * -0.13;
     head.add(lash);
     // 눈썹 — 안쪽 두껍고 바깥은 얇은 아치
