@@ -10531,7 +10531,8 @@ function craft(id) {
   }
   if (!stationOk(r)) {
     sfx('deny');
-    toast(stationNeedLabel(r) + ' — 가까이 서면 만들 수 있어요', 'warn');
+    var _tailorish = (r.station === 'tailorBench' || r.station === 'smithBench');
+    toast(stationNeedLabel(r) + (_tailorish ? ' — 전용 작업대나 간이 작업대(🪚) 가까이에서' : ' — 가까이 서면 만들 수 있어요'), 'warn');
     return;
   }
   if (!canCraft(r)) {
@@ -11185,7 +11186,7 @@ function confirmDemolish() {
   sfx('demolish');
   closeSheet();
   toast('🔨 ' + (def ? def.name : '구조물') + ' 철거 완료' + (got.length ? ' · ' + got.join(' · ') + ' 회수' : ''), got.length ? 'good' : undefined);
-  if (lost.length) hint('가방이 가득 차 ' + lost.join(' · ') + '은(는) 회수하지 못했어요', 4200);
+  if (lost.length) hint('가방이 가득 차 ' + lost.join(' · ') + ' 회수분을 놓쳤어요', 4200);
   chipsDirty = true;
   syncStructData();
   saveState();
