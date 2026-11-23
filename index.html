@@ -827,7 +827,7 @@
       </div>
       <div class="startSaveLine" id="startSaveLine"><span>저장 없음 · 새로 시작해요</span></div>
     </div>
-    <div class="startFoot" id="startFoot">WILD LIFE · v2.1 (9단계 + 미니 패치) &nbsp;|&nbsp; 왼쪽 조이스틱으로 걷고 오른쪽 버튼으로 채집·공격</div>
+    <div class="startFoot" id="startFoot">WILD LIFE · v2.2 &nbsp;|&nbsp; 왼쪽 조이스틱으로 걷고 오른쪽 버튼으로 채집·공격</div>
   </div>
 
   <div class="slotPanel" id="slotPanel">
@@ -976,10 +976,11 @@ function defaultState() {
       hideThin: 0, hideTough: 0, hideThick: 0, hideBeast: 0, hideGiant: 0, fang: 0,
       axe: 0, spear: 0, stoneKnife: 0, boneKnife: 0, boneSpear: 0, bow: 0, ironBow: 0,
       hideVest: 0, thickArmor: 0, beastCoat: 0, fineDress: 0,
+      furHat: 0, furCoat: 0, furBoots: 0,
       leatherBoots: 0, raptorBoots: 0, leatherPack: 0, raptorPack: 0
     },
     tools: { axe: false, spear: false, bow: false, boneSpear: false, ironBow: false },
-    equip: { armor: '', boots: '', backpack: '', weapon: '' },
+    equip: { armor: '', hat: '', boots: '', backpack: '', weapon: '' },
     found: {},
     made: { campfire: 0, cabin: 0, workbench: 0, chair: 0, table: 0, planter: 0, hatchNest: 0 },
     structures: [],
@@ -1036,12 +1037,14 @@ function applyData(d) {
   //    인벤에 1개 넣어 주고 도구(무기)도 개수로 옮긴다.
   var eqW = (d.equip && WEAPONS[d.equip.weapon] && (S.inv[d.equip.weapon] || 0) > 0) ? d.equip.weapon : '';
   var eqA = (d.equip && GEAR[d.equip.armor] && GEAR[d.equip.armor].slot === 'armor') ? d.equip.armor : '';
+  var eqH = (d.equip && GEAR[d.equip.hat] && GEAR[d.equip.hat].slot === 'hat') ? d.equip.hat : '';
   var eqB = (d.equip && GEAR[d.equip.boots] && GEAR[d.equip.boots].slot === 'boots') ? d.equip.boots : '';
   var eqP = (d.equip && GEAR[d.equip.backpack] && GEAR[d.equip.backpack].slot === 'backpack') ? d.equip.backpack : '';
   if (eqA && (S.inv[eqA] || 0) < 1) S.inv[eqA] = 1;
+  if (eqH && (S.inv[eqH] || 0) < 1) S.inv[eqH] = 1;
   if (eqB && (S.inv[eqB] || 0) < 1) S.inv[eqB] = 1;
   if (eqP && (S.inv[eqP] || 0) < 1) S.inv[eqP] = 1;
-  S.equip.armor = eqA; S.equip.boots = eqB; S.equip.backpack = eqP;
+  S.equip.armor = eqA; S.equip.hat = eqH; S.equip.boots = eqB; S.equip.backpack = eqP;
   for (k in def.tools) {
     if (S.tools[k] && k in WEAPONS && (S.inv[k] || 0) < 1) S.inv[k] = 1;
   }
@@ -1303,8 +1306,9 @@ var GEAR = {
   raptorPack: { slot: 'backpack', name: '큰 랩터 배낭', icon: '🎒', def: 0, slots: 12, desc: '가방 칸 +12 · 랩터 가죽으로 크게 지은 배낭' },
   dyedDress: { slot: 'armor', name: '물들인 드레스', icon: '👘', def: 4, desc: '라벤더 염료로 물들인 옷 · 방어 +4' },
   sailCloak: { slot: 'armor', name: '돛 망토', icon: '🪂', def: 14, desc: '스피노 등돛으로 지은 망토 · 방어 +14' },
-  furCoat: { slot: 'armor', name: '방한 털옷', icon: '🧣', def: 10, warm: true, desc: '매머드 털가죽으로 지은 두꺼운 털옷 · 방어 +10 · 툰드라 추위를 막아요' },
-  furBoots: { slot: 'boots', name: '털부츠', icon: '🧦', def: 5, spd: 0.12, warm: true, desc: '발목까지 올라오는 털부츠 · 방어 +5 · 이동 +12% · 한파를 막아요' },
+  furHat: { slot: 'hat', name: '방한 모자', icon: '🧢', def: 4, warm: true, desc: '매머드 털가죽으로 지은 귀마개 털모자 · 방어 +4 · 머리를 덥혀요' },
+  furCoat: { slot: 'armor', name: '방한 털옷', icon: '🧣', def: 10, warm: true, desc: '매머드 털가죽으로 지은 두꺼운 털옷 · 방어 +10 · 몸통을 덥혀요' },
+  furBoots: { slot: 'boots', name: '방한 털부츠', icon: '🧦', def: 5, spd: 0.12, warm: true, desc: '발목까지 올라오는 두꺼운 털부츠 · 방어 +5 · 이동 +12% · 발을 덥혀요' },
   tyrantArmor: { slot: 'armor', name: '폭군 비늘 갑옷', icon: '🛡️', def: 18, desc: '티라노 가죽에 비늘판을 덧댄 최상급 갑옷 · 방어 +18' }
 };
 
@@ -1341,7 +1345,7 @@ var ITEM_ORDER = [
   'cactusFruit', 'frostHerb', 'ice', 'bamboo', 'lavender', 'dye', 'banana', 'pineapple',
   'mammothFur', 'spinoSail', 'tyrantLeather', 'tyrantFang', 'pteroEgg', 'feather',
   'stoneKnife', 'axe', 'spear', 'boneKnife', 'boneSpear', 'bow', 'ironBow', 'bambooSpear', 'tyrantSpear', 'trikeKnife', 'trikeSpear',
-  'hideVest', 'thickArmor', 'beastCoat', 'fineDress', 'dyedDress', 'sailCloak', 'furCoat', 'tyrantArmor',
+  'hideVest', 'thickArmor', 'beastCoat', 'fineDress', 'dyedDress', 'sailCloak', 'furHat', 'furCoat', 'tyrantArmor',
   'leatherBoots', 'raptorBoots', 'furBoots', 'leatherPack', 'raptorPack'
 ];
 
@@ -1384,8 +1388,10 @@ var RECIPES = [
   { id: 'bambooSpear', tab: 'basic', out: 'bambooSpear', qty: 1, name: '대나무 창', icon: '🎍', desc: '가볍고 빠른 창 · 공격 32', cost: { bamboo: 3, stick: 1, fiber: 2 } },
   { id: 'dye', tab: 'bench', out: 'dye', qty: 2, name: '염료', icon: '🎨', desc: '라벤더를 삶아 만든 보라 염료 · 옷 염색 재료', cost: { lavender: 3, fiber: 1 }, unlock: 'lavender' },
   { id: 'dyedDress', tab: 'bench', out: 'dyedDress', qty: 1, name: '물들인 드레스', icon: '👘', desc: '예쁜 옷 + 염료 → 방어 +4', cost: { fineDress: 1, dye: 2, fiber: 2 }, unlock: 'dye' },
-  { id: 'furCoat', tab: 'bench', out: 'furCoat', qty: 1, name: '방한 털옷', icon: '🧣', desc: '매머드 털가죽 x4 → 방어 +10 · 툰드라 추위 방어', cost: { mammothFur: 4, hideBeast: 2, fiber: 4 }, unlock: 'mammothFur' },
-  { id: 'furBoots', tab: 'bench', out: 'furBoots', qty: 1, name: '털부츠', icon: '🧦', desc: '가죽 신발 + 매머드 털 → 방어 +5 · 이동 +12% · 한파 방어', cost: { leatherBoots: 1, mammothFur: 2, fiber: 2 }, unlock: 'mammothFur' },
+  /* ── 🧥 방한 풀세트 — 모자 · 털옷 · 털부츠 3종을 모두 갖추면 툰드라 냉기 면역 ── */
+  { id: 'furHat', tab: 'bench', out: 'furHat', qty: 1, name: '방한 모자', icon: '🧢', warmSet: 1, desc: '매머드 털가죽 x2 + 얇은 가죽 → 방어 +4 · 머리 방한(세트 1/3)', cost: { mammothFur: 2, hideThin: 2, fiber: 3 }, unlock: 'mammothFur' },
+  { id: 'furCoat', tab: 'bench', out: 'furCoat', qty: 1, name: '방한 털옷', icon: '🧣', warmSet: 1, desc: '매머드 털가죽 x4 + 맹수 가죽 → 방어 +10 · 몸통 방한(세트 1/3)', cost: { mammothFur: 4, hideBeast: 2, fiber: 4 }, unlock: 'mammothFur' },
+  { id: 'furBoots', tab: 'bench', out: 'furBoots', qty: 1, name: '방한 털부츠', icon: '🧦', warmSet: 1, desc: '가죽 신발 + 매머드 털 → 방어 +5 · 이동 +12% · 발 방한(세트 1/3)', cost: { leatherBoots: 1, mammothFur: 2, fiber: 2 }, unlock: 'mammothFur' },
   { id: 'sailCloak', tab: 'bench', out: 'sailCloak', qty: 1, name: '돛 망토', icon: '🪂', desc: '맹수 코트 + 스피노 등돛 → 방어 +14', cost: { beastCoat: 1, spinoSail: 2, fiber: 3 }, unlock: 'spinoSail' },
   { id: 'tyrantSpear', tab: 'bench', out: 'tyrantSpear', qty: 1, name: '폭군 뼈창', icon: '🦴', desc: '맹수 뼈창 + 폭군 송곳니 x3 → 공격 58', cost: { boneSpear: 1, tyrantFang: 3, hideBeast: 2 }, unlock: 'tyrantFang' },
   { id: 'tyrantArmor', tab: 'bench', out: 'tyrantArmor', qty: 1, name: '폭군 비늘 갑옷', icon: '🛡️', desc: '맹수 코트 + 폭군 가죽 x4 → 방어 +18', cost: { beastCoat: 1, tyrantLeather: 4, fiber: 4 }, unlock: 'tyrantLeather' },
@@ -1469,6 +1475,7 @@ function bowEquipped() {
 function gearDef() {
   var d = 0;
   if (S.equip.armor && GEAR[S.equip.armor]) d += GEAR[S.equip.armor].def || 0;
+  if (S.equip.hat && GEAR[S.equip.hat]) d += GEAR[S.equip.hat].def || 0;
   if (S.equip.boots && GEAR[S.equip.boots]) d += GEAR[S.equip.boots].def || 0;
   return d;
 }
@@ -1477,10 +1484,31 @@ function gearSpeed() {
   if (S.equip.boots && GEAR[S.equip.boots]) s += GEAR[S.equip.boots].spd || 0;
   return s;
 }
-/* 털옷/털부츠를 입고 있으면 툰드라 추위를 막는다 */
+/* ---------------- 🧥 방한 풀세트 (모자 · 털옷 · 털부츠) --------------
+   3종을 모두 갖춰 입어야 툰드라 냉기에 완전 면역(HP 감소 0).
+   1종 -25% · 2종 -55% 는 체력 감소 속도만 완화한다. */
+var WARM_SLOTS = ['hat', 'armor', 'boots'];
+function warmPieceOn(slot) {
+  var id = S.equip[slot];
+  return !!(id && GEAR[id] && GEAR[id].warm);
+}
+/* 지금 입은 방한 장비 개수 (0~3) */
+function warmSetCount() {
+  var n = 0;
+  for (var i = 0; i < WARM_SLOTS.length; i++) if (warmPieceOn(WARM_SLOTS[i])) n++;
+  return n;
+}
+/* 냉기 피해 배율 — 3종 완비 0(면역) · 2종 0.45(-55%) · 1종 0.75(-25%) · 0종 1 */
+function warmDamageScale() {
+  var n = warmSetCount();
+  if (n >= 3) return 0;
+  if (n === 2) return 0.45;
+  if (n === 1) return 0.75;
+  return 1;
+}
+/* 방한 장비를 하나라도 입고 있는지 (표시용) */
 function wearingWarm() {
-  return !!((S.equip.armor && GEAR[S.equip.armor] && GEAR[S.equip.armor].warm) ||
-    (S.equip.boots && GEAR[S.equip.boots] && GEAR[S.equip.boots].warm));
+  return warmSetCount() > 0;
 }
 function meleeAtk() {
   var w = equippedWeapon();
@@ -1598,6 +1626,7 @@ function sfx(name) {
   else if (name === 'spit') { noise(0.16, 900, 0.16, 0, 'bandpass'); tone(420, 0.14, 'sawtooth', 0.08, 180); }
   else if (name === 'freeze') { tone(1046, 0.20, 'sine', 0.07, 640); noise(0.30, 2600, 0.07, 0, 'highpass'); }
   else if (name === 'wing') { noise(0.22, 700, 0.13, 0, 'lowpass'); tone(180, 0.18, 'sine', 0.06, 240); }
+  else if (name === 'growl') { tone(78, 0.34, 'sawtooth', 0.11, 50); noise(0.24, 430, 0.07, 0, 'lowpass'); }
 }
 
 /* ---------------- three base ---------------- */
@@ -3801,6 +3830,7 @@ function makePlayer() {
   player.boneSpear = boneSpearG; player.ironBow = ironBowG;
   player.knife = knifeG; player.boneKnife = boneKnifeG;
   player.armorSets = buildArmorSets(torso);
+  player.hatSets = buildHatSets(head);
   player.bootSets = buildBootSets(legL, legR);
   player.packSets = buildPackSets(torso);
   scene.add(root);
@@ -3989,6 +4019,48 @@ function buildArmorSets(torso) {
   return sets;
 }
 
+function buildHatSets(head) {
+  var sets = {};
+
+  // 방한 모자 — 귀마개가 달린 두꺼운 털모자 (기본 탐험가 모자 위를 덮는다)
+  var g = new THREE.Group();
+  var capMat = new THREE.MeshLambertMaterial({ color: 0x8d6f52, flatShading: true });
+  var furMat = new THREE.MeshLambertMaterial({ color: 0xe8dcc4, flatShading: true });
+  var dome = new THREE.Mesh(new THREE.SphereGeometry(0.315, 10, 7, 0, TAU, 0, Math.PI * 0.56), capMat);
+  dome.position.y = 0.185;
+  g.add(dome);
+  var brim = new THREE.Mesh(new THREE.CylinderGeometry(0.405, 0.415, 0.065, 12), furMat);
+  brim.position.y = 0.195;
+  g.add(brim);
+  for (var i = 0; i < 14; i++) {
+    var a = (i / 14) * TAU;
+    var tuft = new THREE.Mesh(GEO.ico0, furMat);
+    tuft.scale.set(0.075, 0.05, 0.075);
+    tuft.position.set(Math.cos(a) * 0.40, 0.235 + Math.sin(i * 1.7) * 0.012, Math.sin(a) * 0.40);
+    g.add(tuft);
+  }
+  for (var s = -1; s <= 1; s += 2) {
+    var flap = new THREE.Mesh(GEO.ico0, furMat);
+    flap.scale.set(0.105, 0.145, 0.075);
+    flap.position.set(s * 0.285, 0.055, -0.01);
+    g.add(flap);
+    var tie = new THREE.Mesh(GEO.ico0, capMat);
+    tie.scale.setScalar(0.045);
+    tie.position.set(s * 0.30, -0.10, 0.0);
+    g.add(tie);
+  }
+  var pom = new THREE.Mesh(GEO.ico0, furMat);
+  pom.scale.setScalar(0.10);
+  pom.position.y = 0.50;
+  g.add(pom);
+  g.visible = false;
+  g.traverse(function (o) { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+  head.add(g);
+  sets.furHat = g;
+
+  return sets;
+}
+
 function buildBootSets(legL, legR) {
   var sets = {};
 
@@ -4109,6 +4181,9 @@ function buildPackSets(torso) {
 function updateOutfit() {
   if (!player.armorSets) return;
   for (var k in player.armorSets) player.armorSets[k].visible = (S.equip.armor === k);
+  if (player.hatSets) {
+    for (var h in player.hatSets) player.hatSets[h].visible = (S.equip.hat === h);
+  }
   for (var b in player.bootSets) {
     var s = player.bootSets[b];
     var on = (S.equip.boots === b);
@@ -4941,6 +5016,67 @@ function addSpeciesTag(d) {
   d.speciesTag = sp;
   return sp;
 }
+/* =====================================================
+   🦖 공격 전 외침("크아악!!" · "크르릉...") — 머리 위 말풍선
+   · 종류별 캔버스 텍스처 1장 공유 · depthTest:false 로 항상 보인다
+   ===================================================== */
+var CRY_TEX = {};
+function cryTexture(txt) {
+  var t = CRY_TEX[txt];
+  if (t) return t;
+  var cv = document.createElement('canvas');
+  cv.width = 512; cv.height = 192;
+  var ctx = cv.getContext('2d');
+  var font = 'bold 74px -apple-system, "Apple SD Gothic Neo", sans-serif';
+  ctx.font = font;
+  var tw = Math.ceil(ctx.measureText(txt).width);
+  var w = Math.min(488, Math.max(140, tw + 76)), h = 118, x = (512 - w) / 2, y = 22;
+  ctx.fillStyle = 'rgba(120,26,18,.82)';
+  roundRect(ctx, x, y, w, h, 34); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,226,190,.85)';
+  ctx.lineWidth = 4; ctx.stroke();
+  // 꼬리(말풍선 아래 삼각형)
+  ctx.beginPath();
+  ctx.moveTo(226, y + h - 4); ctx.lineTo(256, y + h + 30); ctx.lineTo(286, y + h - 4);
+  ctx.closePath(); ctx.fill();
+  ctx.font = font;
+  ctx.fillStyle = '#fff3df';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(txt, 256, y + h / 2 + 2);
+  t = new THREE.CanvasTexture(cv);
+  CRY_TEX[txt] = t;
+  return t;
+}
+/* dino 머리 위에 외침 말풍선을 띄운다 (0.9초 동안 떠오르며 사라짐) */
+function showDinoCry(d, txt, life) {
+  if (!d || d.dead) return;
+  if (!d.cry) {
+    var sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: cryTexture(txt), transparent: true, depthTest: false, depthWrite: false }));
+    d.group.add(sp);
+    d.cry = sp;
+  }
+  d.cry.material.map = cryTexture(txt);
+  d.cry.material.needsUpdate = true;
+  var hs = clamp((d.parts.height || 1) * 0.62, 1.6, 4.4);
+  d.cry.scale.set(hs * 1.3, hs * 0.49, 1);
+  d.cry.position.y = (d.parts.height || 1) + 1.75;
+  d.cry.visible = true;
+  d.cryLife = life || 0.9;
+  d.cryLifeMax = d.cryLife;
+  d.cry.material.opacity = 1;
+}
+function updateDinoCry(d, dt) {
+  if (!d.cry || !d.cry.visible) return;
+  d.cryLife -= dt;
+  var k = 1 - Math.max(0, d.cryLife) / (d.cryLifeMax || 0.9);
+  var pop = k < 0.22 ? (0.55 + k / 0.22 * 0.55) : (1.10 - Math.min(1, (k - 0.22) / 0.78) * 0.10);
+  var hs = clamp((d.parts.height || 1) * 0.62, 1.6, 4.4);
+  d.cry.scale.set(hs * 1.3 * pop, hs * 0.49 * pop, 1);
+  d.cry.position.y = (d.parts.height || 1) + 1.75 + k * 0.5;
+  d.cry.material.opacity = d.cryLife < 0.3 ? Math.max(0, d.cryLife / 0.3) : 1;
+  if (d.cryLife <= 0) d.cry.visible = false;
+}
+
 function roundRect(ctx, x, y, w, h, r) {
   ctx.beginPath();
   ctx.moveTo(x + r, y);
@@ -7535,11 +7671,21 @@ function animateCreature(d, dt, t) {
     tNeck = -0.02; tHead = 0.06; tSpine = 0.14; tTail = 0.14;
   } else if (st === 'charge') {
     tNeck = 0.10; tHead = 0.12; tSpine = 0.18; tTail = 0.18;
+  } else if (st === 'windup') {
+    // 공격 예비 동작 — 고개를 쳐들고 몸을 부르르 떨며 쏙쏙거림
+    var wp = 1 - Math.max(0, d.stateT) / (d.windDur || 0.5);
+    tNeck = -0.46 - 0.10 * wp; tHead = -0.34 - 0.06 * wp; tSpine = -0.16;
+    tJaw = 0.64 + Math.sin(t * 22 + (d.phase || 0)) * 0.22;
+    tTail = 0.26;
+  } else if (st === 'pounce') {
+    // 팍! 앞으로 달려들어 물거나 박치기 — 몸통을 앞으로 내민 자세
+    tNeck = 0.40; tHead = 0.26; tSpine = 0.24; tJaw = 0.82; tTail = 0.30;
+    if (B.hip) B.hip.position.z = (B.hip.userData.rest ? B.hip.userData.rest.z : 0) + 0.24;
   } else if (st === 'hurt') {
     tNeck = -0.12; tHead = -0.05; tSpine = -0.04; tJaw = 0.30;
   }
 
-  if (st === 'alert' || st === 'threat' || st === 'bite' || st === 'attack' || st === 'chase') {
+  if (st === 'alert' || st === 'threat' || st === 'bite' || st === 'attack' || st === 'chase' || st === 'windup' || st === 'pounce') {
     tYaw = clamp(d.lookYaw || 0, -1.0, 1.0);
   } else if (st !== 'flee') {
     tYaw = Math.sin(t * 0.7 + (d.phase || 0)) * 0.18;
@@ -7552,8 +7698,13 @@ function animateCreature(d, dt, t) {
   a.tail += (tTail - a.tail) * k;
   a.jaw += (tJaw - a.jaw) * Math.min(1, dt * 12);
 
-  // 호흡
-  var br = Math.sin(t * 1.9 + (d.phase || 0)) * 0.012 * (st === 'chase' || st === 'flee' ? 0.35 : 1);
+  // 호흡 — windup(예비 동작)에는 숨을 헐떡이며 크게 부풀린다
+  var br;
+  if (st === 'windup') {
+    br = 0.010 + Math.sin(t * 13 + (d.phase || 0)) * 0.030;
+  } else {
+    br = Math.sin(t * 1.9 + (d.phase || 0)) * 0.012 * (st === 'chase' || st === 'flee' ? 0.35 : 1);
+  }
   if (B.spine) B.spine.scale.set(1 + br, 1 + br * 0.35, 1 + br);
   if (B.hip) {
     var ry = (B.hip.userData.rest && B.hip.userData.rest.y) || 0;
@@ -7705,6 +7856,19 @@ function animateCreature(d, dt, t) {
   } else if (B.armL && d.kind === 'raptor') {
     B.armL.rotation.x = -0.25; B.armL.rotation.z = -0.12;
     if (B.armR) { B.armR.rotation.x = -0.25; B.armR.rotation.z = 0.12; }
+  }
+
+  /* ---- 예비 동작 쏙쏙거림 — 몸을 부르르 떨어 위치를 미세하게 떨린다 ---- */
+  if (B.hip && st !== 'pounce' && !(d.atkT > 0)) {
+    var hipRestZ = (B.hip.userData.rest && B.hip.userData.rest.z) || 0;
+    B.hip.position.z += (hipRestZ - B.hip.position.z) * Math.min(1, dt * 8);
+  }
+  if (st === 'windup') {
+    var prog = clamp(1 - Math.max(0, d.stateT) / (d.windDur || 0.5), 0, 1);
+    var sh = 0.018 + 0.045 * prog;
+    d.group.position.x += Math.sin(t * 61 + (d.phase || 0)) * sh;
+    d.group.position.z += Math.cos(t * 53 + (d.phase || 0)) * sh;
+    if (B.head) B.head.rotation.z = Math.sin(t * 37 + (d.phase || 0)) * 0.06 * (0.4 + prog);
   }
 }
 
@@ -8670,6 +8834,14 @@ function hint(msg, dur) {
   clearTimeout(hintTimer);
   hintTimer = setTimeout(function () { hintEl.classList.remove('on'); }, dur || 3200);
 }
+/* 받침 유무에 맞춰 조사(을/를)를 붙인다 — '매머드 털가죽을' · '맹수 송곳니를' */
+function josaEul(word) {
+  var w = String(word || '');
+  if (!w) return w;
+  var c = w.charCodeAt(w.length - 1);
+  var has = (c >= 0xAC00 && c <= 0xD7A3) ? ((c - 0xAC00) % 28 !== 0) : false;
+  return w + (has ? '을' : '를');
+}
 function escHtml(s) {
   return String(s === undefined || s === null ? '' : s).replace(/[&<>"]/g, function (c) {
     return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
@@ -8935,6 +9107,8 @@ function computeContext() {
   if (r) return { type: 'attack', d: r, label: r.kind === 'compy' ? '사냥' : '공격' };
   var n = nearestNode(3.1);
   if (n) return { type: 'gather', n: n, label: NODE_LABEL[n.kind] || '채집' };
+  // 🛠 작업대 앞(3.5m) — 오른쪽 메인 버튼이 「작업하기」로 바뀐다
+  if (nearestStruct('workbench', 3.5)) return { type: 'bench', label: '🛠 작업하기' };
   if (nearestFire(4.6)) {
     var ck = cookCandidate();
     if (ck) return { type: 'cook', item: ck, label: COOK[ck].name };
@@ -8964,6 +9138,7 @@ function doAction() {
   if (c.type === 'attack') { attackDino(c.d); return; }
   if (c.type === 'shoot') { shootArrow(c.d); return; }
   if (c.type === 'gather') { gatherNode(c.n); return; }
+  if (c.type === 'bench') { craftTab = 'bench'; openSheet('craft'); return; }
   if (c.type === 'cook') { if (c.item) startCook(c.item); else sfx('deny'); return; }
   if (c.type === 'tame') { tameDino(c.d); return; }
   if (c.type === 'mount') { mountDino(c.d); return; }
@@ -9160,6 +9335,7 @@ function ensureEquipValid() {
   var changed = false;
   if (S.equip.weapon && (S.inv[S.equip.weapon] || 0) <= 0) { S.equip.weapon = ''; changed = true; }
   if (S.equip.armor && (S.inv[S.equip.armor] || 0) <= 0) { S.equip.armor = ''; changed = true; }
+  if (S.equip.hat && (S.inv[S.equip.hat] || 0) <= 0) { S.equip.hat = ''; changed = true; }
   if (S.equip.boots && (S.inv[S.equip.boots] || 0) <= 0) { S.equip.boots = ''; changed = true; }
   if (S.equip.backpack && (S.inv[S.equip.backpack] || 0) <= 0) { S.equip.backpack = ''; changed = true; }
   if (S.equip.weapon && WEAPONS[S.equip.weapon] && (S.inv[S.equip.weapon] || 0) <= 0) { S.equip.weapon = ''; changed = true; }
@@ -9171,7 +9347,7 @@ function craft(id) {
   if (!r) return;
   if (!recipeUnlocked(r)) {
     sfx('deny');
-    toast('🔒 ' + unlockItemName(r) + '을(를) 한 번 얻으면 해금돼요', 'warn');
+    toast('🔒 ' + josaEul(unlockItemName(r)) + ' 한 번 얻으면 해금돼요', 'warn');
     return;
   }
   if (r.tab === 'bench' && !nearWorkbench()) { sfx('deny'); toast('작업대 근처에서 만들 수 있어요', 'warn'); return; }
@@ -9698,9 +9874,12 @@ function recipeRow(r) {
   if (!unlocked) { btnLabel = '잠김'; btnOff = true; }
   else if (!benchOk) { btnLabel = '작업대 필요'; btnOff = true; }
   else if (!canCraft(r)) { btnOff = true; if (!bagCanAdd(r.out || r.id, r.qty || 1)) btnLabel = '가방 칸 가득'; }
-  el.innerHTML = '<div class="ic">' + (unlocked ? r.icon : '❔') + '</div>' +
-    '<div class="txt"><b>' + (unlocked ? r.name : '???') + '</b>' + tags +
-    '<small>' + (unlocked ? r.desc : '재료를 처음 얻으면 이 레시피가 열려요') + '</small>' +
+  // 해금 전에도 목록에 이름·재료를 그대로 보여준다 (???? 로 숨기지 않음)
+  var lockHint = unlocked ? '' :
+    '<small style="color:#b4652f;font-weight:800">🔒 아직 잠김 — ' + josaEul(unlockItemName(r)) + ' 한 번 얻으면 바로 만들 수 있어요</small>';
+  el.innerHTML = '<div class="ic">' + r.icon + '</div>' +
+    '<div class="txt"><b>' + r.name + '</b>' + tags +
+    '<small>' + r.desc + '</small>' + lockHint +
     '<div class="cost">' + costHtml + '</div></div>' +
     '<button' + (btnOff ? ' disabled' : '') + '>' + btnLabel + '</button>';
   el.querySelector('button').addEventListener('click', function () { if (!btnOff) craft(r.id); });
@@ -9744,6 +9923,7 @@ function renderBag() {
   var slots = document.createElement('div');
   slots.className = 'slotRow';
   slots.appendChild(bagSlotBox('무기', 'weapon', equippedWeapon()));
+  slots.appendChild(bagSlotBox('모자', 'hat', S.equip.hat || ''));
   slots.appendChild(bagSlotBox('옷', 'armor', S.equip.armor || ''));
   slots.appendChild(bagSlotBox('신발', 'boots', S.equip.boots || ''));
   slots.appendChild(bagSlotBox('배낭', 'backpack', S.equip.backpack || ''));
@@ -9759,7 +9939,7 @@ function renderBag() {
     if (c <= 0) continue;
     any = true;
     var it = ITEMS[k];
-    var on = (S.equip.weapon === k) || (S.equip.armor === k) || (S.equip.boots === k) || (S.equip.backpack === k);
+    var on = (S.equip.weapon === k) || (S.equip.hat === k) || (S.equip.armor === k) || (S.equip.boots === k) || (S.equip.backpack === k);
     var cell = document.createElement('div');
     cell.className = 'bagCell' + (on ? ' on' : '');
     var slotsUsed = Math.ceil(c / STACK_MAX);
@@ -9788,7 +9968,7 @@ function renderBag() {
 
   var note = document.createElement('div');
   note.className = 'sheetNote';
-  note.textContent = '음식은 「먹기」로 바로 먹고, 옷·신발·무기·배낭은 「장착」으로 바꿔요. 가방은 칸(슬롯) 방식이라 기본 ' + BAG_SLOTS + '칸 · 한 칸에 ' + STACK_MAX + '개까지 쌓여요(100개 넘으면 칸이 하나 더 필요). 배낭을 장착하면 칸이 늘어나요 (가죽 +6 · 큰 랩터 +12).';
+  note.textContent = '음식은 「먹기」로 바로 먹고, 모자·옷·신발·무기·배낭은 「장착」으로 바꿔요. 가방은 칸(슬롯) 방식이라 기본 ' + BAG_SLOTS + '칸 · 한 칸에 ' + STACK_MAX + '개까지 쌓여요(100개 넘으면 칸이 하나 더 필요). 배낭을 장착하면 칸이 늘어나요 (가죽 +6 · 큰 랩터 +12).';
   sheetBody.appendChild(note);
 }
 
@@ -9820,8 +10000,18 @@ function renderSheet() {
       nb.textContent = '🔒 작업대 근처(7.5m)에서 만들 수 있어요. 「기본」에서 작업대를 먼저 제작·설치하세요.';
       sheetBody.appendChild(nb);
     }
+    var warmHdr = false;
     for (var i = 0; i < RECIPES.length; i++) {
       if (RECIPES[i].tab !== craftTab) continue;
+      if (RECIPES[i].warmSet && !warmHdr) {
+        warmHdr = true;
+        var wh = document.createElement('div');
+        wh.className = 'sheetNote';
+        wh.style.margin = '0 0 8px';
+        wh.innerHTML = '🧥 <b>방한 풀세트</b> · 방한 모자 + 방한 털옷 + 방한 털부츠 <b>3종을 모두 입으면</b> 툰드라 냉기에 완전 면역(HP 감소 0)' +
+          '<br><small>1종 -25% · 2종 -55% 완화 · 지금 ' + warmSetCount() + '/3 착용</small>';
+        sheetBody.appendChild(wh);
+      }
       sheetBody.appendChild(recipeRow(RECIPES[i]));
     }
     var note = document.createElement('div');
@@ -9845,7 +10035,7 @@ function renderSheet() {
       ['🏹', '야생 사냥터', '숲(동쪽)·바위 고원(북쪽)·초원 외곽은 육식공룡과 희귀 광물·약초가 있는 사냥터예요. 들어가면 전투 준비를 하세요.'],
       ['🔥', '모닥불 휴식', '모닥불 4.5m 안에 서 있으면 체력과 허기가 서서히 회복돼요. 요리도 여기서 해요.'],
       ['🏚️', '오두막', '문 앞으로 걸어 들어가면 지붕이 열리고 실내가 보여요. 안에 있으면 휴식 회복이 더 잘 돼요.'],
-      ['🪚', '작업대', '작업대 7.5m 안에서 가죽 장비·상위 무기·가옷감을 제작할 수 있어요.'],
+      ['🪚', '작업대', '작업대 3.5m 안에 서면 오른쪽 큰 버튼이 「🛠 작업하기」로 바뀌어요. 누르면 제작창이 바로 열리고, 작업대 목록은 7.5m 안에서 열려요.'],
       ['🦎', '콤프소그나투스', '작은 고기(생고기 +1)와 얇은 가죽 +1을 남겨요. 무리로 몰려오면 위험해요.'],
       ['🦖', '벨로시랩터', '생고기 +2, 질긴 랩터 가죽 +1. 9m 안에 들어오면 포효하며 추격해요.'],
       ['🦏', '트리케라톱스', '생고기 +2, 두꺼운 가죽 +2. 열매로 길들이면 타고 다닐 수 있어요.'],
@@ -9855,8 +10045,9 @@ function renderSheet() {
       ['🧶', '옷감 · 예쁜 옷', '섬유와 갈대로 작업대에서 옷감을 짜고, 옷감으로 예쁜 옷을 지어요.'],
       ['🍖', '먹기 버튼', '오른쪽 아래 「먹기」 버튼으로 가장 좋은 음식을 바로 먹어요.'],
       ['🏜️', '사막', '서남쪽 모래언덕. 선인장 열매와 마른 가지가 나고 카르노타우루스·딜로포사우루스가 살아요.'],
-      ['❄️', '툰드라 설원', '서북쪽 설원. 눈 덮인 전나무·서리 약초·얼음 결정이 있고 매머드가 살아요. 털옷 없이 오래 있으면 체력이 깎여요.'],
-      ['🦣', '매머드', '툰드라의 거대한 털북숭이. 잡으면 매머드 털가죽 → 방한 털옷·털부츠 재료.'],
+      ['❄️', '툰드라 설원', '서북쪽 설원. 눈 덮인 전나무·서리 약초·얼음 결정이 있고 매머드가 살아요. 방한 풀세트 없이 오래 있으면 체력이 깎여요.'],
+      ['🦣', '매머드', '툰드라의 거대한 털북숭이. 잡으면 매머드 털가죽 → 방한 모자·방한 털옷·방한 털부츠 재료.'],
+      ['🧥', '방한 풀세트', '방한 모자(머리) · 방한 털옷(몸) · 방한 털부츠(발) 3종을 모두 착용하면 툰드라 냉기에 완전 면역(HP 감소 0). 1종 -25% · 2종 -55% 로 덜 얼어붙어요. 레시피는 재료를 못 모았어도 작업대 목록에 항상 보여요.'],
       ['🐣', '익룡 알 · 부화', '북쪽 고원 절벽의 둥지에서 드물게 익룡 알이 나와요. 모닥불 곁 「부화 둥지」에 넣고 게임 이틀을 품으면 프테라노돈이 태어나요.'],
       ['🕊', '비행 탑승', '길들인 프테라노돈에 타면 장애물·강·절벽을 넘어 맵 전역을 1.4배 빠른 속도로 날 수 있어요.'],
       ['🗺', '지도', '상단 🗺 버튼(또는 M)으로 바이옴·내 위치·🏡 내 집·설치물·길들인 공룡을 한눈에 봐요.']
@@ -10931,6 +11122,7 @@ function updateComp(d, dt, t, dp) {
     d.swarmT = 3.4; d.reactCd = 1.8;
     compSetState(d, 'threat', 0.45);
     sfx('pop');
+    showDinoCry(d, '키악!', 0.55);
     for (var q = 0; q < dinos.length; q++) {
       var o2 = dinos[q];
       if (o2 === d || o2.kind !== 'compy' || o2.dead) continue;
@@ -11091,6 +11283,8 @@ function carnTacticStep(d, A, dt, dp) {
     }
     if (dp > A.atkR && dp < (T === 'rex' ? 15 : 12) && d.atkCd <= 0 && (d.tacticCd || 0) <= 0) {
       d.roarT = T === 'rex' ? 0.85 : 0.28;
+      d.windDur = d.roarT; d.stateT = d.roarT;
+      showDinoCry(d, T === 'rex' ? '크아아악!!' : '크르릉...', d.roarT + 0.3);
       return true;
     }
     return false;
@@ -11118,6 +11312,29 @@ function carnTacticStep(d, A, dt, dp) {
     return false;
   }
   return false;
+}
+
+/* 공격 예비 동작(telegraph) — 0.45~0.6초 동안 고개를 들고 쏙쏙거리며 "크아악!!" */
+function beginDinoWindup(d, A) {
+  var w = 0.45 + Math.random() * 0.15;
+  d.cstate = 'windup';
+  d.windDur = w; d.stateT = w;
+  d.animSpeed = 0; d.walking = 0;
+  d.atkT = 0; d.lunge = 0;
+  d.rushT = 0;
+  var cry = (A.atkDmg >= 12 || Math.random() < 0.45) ? '크아악!!' : '크르릉...';
+  showDinoCry(d, cry, Math.min(0.95, w + 0.35));
+  sfx('growl');
+  spawnBurst(d.x, terrainH(d.x, d.z) + (d.parts.height || 1.2) * 0.85, d.z, 0xffc07a, 6, 0.6);
+}
+/* 예비 동작 직후 — 앞으로 파! 하고 달려들며 돌진 (끝나면 물기/박치기 모션) */
+function beginDinoPounce(d, A) {
+  d.cstate = 'pounce';
+  d.pounceT = 0.26;
+  d.stateT = 0.26;
+  d.animSpeed = 6;
+  spawnBurst(d.x, terrainH(d.x, d.z) + 0.25, d.z, 0xcbb896, 7, 0.9);
+  if (A.atkDmg >= 12) sfx('roar');
 }
 
 /* 공격 모션 시작 — 피해는 즉시 주지 않고 모션 중반(0.26s)에 거리를 다시 잰다 */
@@ -11226,7 +11443,7 @@ function updateCreatureAI(d, dt, t, dp) {
         d.atkCd = Math.max(d.atkCd, 0.45);
         if (dp < 34) sfx('roar');
         // 티라노는 발견하면 먼저 크게 포효한다
-        if (A.tactic === 'rex') d.roarT = 0.9;
+        if (A.tactic === 'rex') { d.roarT = 0.9; d.windDur = 0.9; d.stateT = 0.9; showDinoCry(d, '크아아악!!', 1.05); }
         wakePack(d, A);
       }
       return;
@@ -11263,12 +11480,31 @@ function updateCreatureAI(d, dt, t, dp) {
     }
     // 전법(포효 돌진 · 박치기 · 독액) — 일반 추격보다 먼저
     if (carnTacticStep(d, A, dt, dp)) return;
+    // 🦖 예비 동작(windup: 쏙쏙거리며 "크아악!!") → 돌진(pounce) → 물기/박치기
+    if (d.cstate === 'windup') {
+      d.animSpeed = 0; d.walking = 0;
+      d.lookYaw = compFaceAngle(d, player.pos.x, player.pos.z);
+      var wr2 = Math.atan2(player.pos.x - d.x, player.pos.z - d.z);
+      var wd2 = ((wr2 - d.rot + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+      d.rot += wd2 * Math.min(1, dt * 9);
+      if (d.stateT <= 0) beginDinoPounce(d, A);
+      return;
+    }
+    if (d.cstate === 'pounce') {
+      d.pounceT -= dt;
+      d.animSpeed = 6; d.walking = 1;
+      // 코앞에서 몸이 겹치지 않도록 hitR의 약 60%까지만 파고든다
+      var room = dp - A.hitR * 0.62;
+      if (room > 0.05) moveDino(d, player.pos.x, player.pos.z, Math.max(A.run, room / 0.26), dt);
+      if (d.pounceT <= 0) beginDinoAttack(d, A);
+      return;
+    }
     if (dp > A.atkR) {
       // 코앞(atkR)까지 실제로 파고들어야 공격을 시작한다 (멀리서 활 쏠 때 안 맞음)
       d.cstate = 'chase';
       moveDino(d, player.pos.x, player.pos.z, A.run, dt);
     } else if (d.atkCd <= 0) {
-      beginDinoAttack(d, A);
+      beginDinoWindup(d, A);
     } else {
       d.cstate = 'chase';   // 쿨다운 대기 — 제자리에서 으르렁
     }
@@ -11291,12 +11527,26 @@ function updateCreatureAI(d, dt, t, dp) {
       if (d.stateT <= 0) d.cstate = 'threat';
       return;
     }
+    // 초식 반격도 고개를 들고 쏙쏙거린 뒤 돌진한다
+    if (d.cstate === 'windup') {
+      d.animSpeed = 0; d.walking = 0;
+      d.lookYaw = compFaceAngle(d, player.pos.x, player.pos.z);
+      if (d.stateT <= 0) beginDinoPounce(d, A);
+      return;
+    }
+    if (d.cstate === 'pounce') {
+      d.pounceT -= dt;
+      d.animSpeed = 6; d.walking = 1;
+      var room2 = dp - A.hitR * 0.62;
+      if (room2 > 0.05) moveDino(d, player.pos.x, player.pos.z, Math.max(A.run, room2 / 0.26), dt);
+      if (d.pounceT <= 0) { beginDinoAttack(d, A); d.atkT = 0.7; d.atkDur = 0.7; }
+      return;
+    }
     if (dp > A.atkR) {
       d.cstate = 'charge';
       moveDino(d, player.pos.x, player.pos.z, A.run, dt);
     } else if (d.atkCd <= 0) {
-      beginDinoAttack(d, A);
-      d.atkT = 0.7; d.atkDur = 0.7;
+      beginDinoWindup(d, A);
     } else {
       d.cstate = 'threat';
     }
@@ -11345,6 +11595,7 @@ function updateDinos(dt, t) {
     d.group.position.set(d.x, terrainH(d.x, d.z) + (d.airY || 0), d.z);
     d.group.rotation.y = d.rot;
     d.group.rotation.z = d.flying ? Math.sin(worldT * 1.6 + (d.phase || 0)) * 0.10 : 0;
+    updateDinoCry(d, dt);
     if (d.hurt > 0) {
       d.hurt -= dt;
       d.group.position.x += Math.sin(t * 60) * 0.06 * d.hurt;
@@ -11487,7 +11738,7 @@ function updateRest(dt) {
    툰드라에서 털옷(방한 털옷/털부츠)을 입지 않았고 모닥불 근처도 아니면
    체력이 서서히 깎인다. 옷을 입거나 불을 쬐면 체온이 유지되어 깎이지 않는다.
    ========================================================= */
-var TEMP = { cur: 22, needCoat: false, warm: false, cold: 0, poison: 0, warnT: 0, sp: 0 };
+var TEMP = { cur: 22, needCoat: false, warm: false, warmN: 0, cold: 0, poison: 0, warnT: 0, sp: 0 };
 function tempAt(x, z, night) {
   var b = biomeAt(x, z);
   var base = 22;
@@ -11504,7 +11755,8 @@ function tempAt(x, z, night) {
 function updateTemperature(dt) {
   if (!started) return;
   TEMP.cur = tempAt(player.pos.x, player.pos.z);
-  TEMP.warm = wearingWarm();
+  TEMP.warmN = warmSetCount();
+  TEMP.warm = TEMP.warmN >= 3;          // 3종 완비 = 냉기 면역
   var inTundra = tundraW(player.pos.x, player.pos.z) > 0.42;
   var fire = !!nearestFire(5.0);
   TEMP.needCoat = false;
@@ -11514,12 +11766,17 @@ function updateTemperature(dt) {
     } else {
       TEMP.needCoat = true;
       TEMP.cold = Math.max(0, TEMP.cold - dt * 2);
-      S.hp = clamp(S.hp - 1.6 * dt, 0, 100);
+      // 1종 -25% · 2종 -55% · 3종 면역(위 분기) — 일부만 입으면 덜 얼어붙는다
+      S.hp = clamp(S.hp - 1.6 * warmDamageScale() * dt, 0, 100);
       TEMP.warnT -= dt;
       if (TEMP.warnT <= 0) {
         TEMP.warnT = 7;
         sfx('freeze');
-        hint('❄️ 너무 추워요! 작업대에서 「방한 털옷」을 만들거나 모닥불을 쬐세요', 4200);
+        if (TEMP.warmN > 0) {
+          hint('❄️ 방한 ' + TEMP.warmN + '/3 — 추위를 덜 타요. 3종을 모두 갖추면 냉기 면역!', 4400);
+        } else {
+          hint('❄️ 너무 추워요! 방한 모자·방한 털옷·방한 털부츠를 갖추거나 모닥불을 쬐세요', 4400);
+        }
       }
       if (S.hp <= 0) die();
     }
@@ -11690,6 +11947,10 @@ function initWorld() {
   function spawnPack(kind, biome, minD, n, spread, label) {
     var spot = packSpot(biome, minD);
     if (!spot) return 0;
+    return spawnPackAt(spot, kind, biome, n, spread, label);
+  }
+  /* 지정한 자리 주변에 무리를 배치한다 (초입 군락처럼 위치를 직접 잡을 때) */
+  function spawnPackAt(spot, kind, biome, n, spread, label) {
     var made = 0;
     for (var i = 0; i < n; i++) {
       var a = (i / n) * TAU + rnd(-0.35, 0.35);
@@ -11704,6 +11965,22 @@ function initWorld() {
     }
     if (made) PACKS.push({ x: spot.x, z: spot.z, label: label, kind: kind, n: made });
     return made;
+  }
+  /* 🦖 초반 주거지 초입 — 안전지대 바로 바깥(들판·숲 초입)에 쉽게 찾을 수 있는 랩터 군락 */
+  function packSpotNearHome(minR, maxR) {
+    for (var t = 0; t < 360; t++) {
+      var a = Math.random() * TAU, rr = rnd(minR, maxR);
+      var xx = HOME.x + Math.cos(a) * rr, zz = HOME.z + Math.sin(a) * rr;
+      if (terrainH(xx, zz) < 1.1) continue;
+      if (isSafeZone(xx, zz)) continue;                 // 안전지대 밖
+      if (riverDepth(xx, zz) > 0.02) continue;
+      var bi = biomeAt(xx, zz);
+      if (bi !== 'meadow' && bi !== 'wilds' && bi !== 'forest') continue;
+      var ddx = xx - player.pos.x, ddz = zz - player.pos.z;
+      if (ddx * ddx + ddz * ddz < 20 * 20) continue;    // 시작 지점 바로 앞은 피한다
+      return { x: xx, z: zz };
+    }
+    return null;
   }
   /* 강가·해안가 포식자 — 물길 옆 둑에 배치 */
   function spawnNearRiver(kind, minD) {
@@ -11725,7 +12002,10 @@ function initWorld() {
     spawnInBiome(kinds[i], i % 2 ? 'meadow' : 'wilds', 16);
   }
   // 육식공룡은 마을 밖 사냥터(숲·고원)에만 배치
-  for (var k = 0; k < 6; k++) spawnInBiome('raptor', 'forest', 42);
+  for (var k = 0; k < 8; k++) spawnInBiome('raptor', 'forest', 40);
+  // 🦖 초반 전리품(질긴 랩터 가죽) 확보용 — 주거지 초입 랩터 군락 4마리
+  var nearRaptor = packSpotNearHome(40, 48);
+  if (nearRaptor) spawnPackAt(nearRaptor, 'raptor', biomeAt(nearRaptor.x, nearRaptor.z), 4, 5, '초입 랩터 군락');
   spawnInBiome('allo', 'highland', 52);
   spawnInBiome('allo', 'highland', 58);
   spawnInBiome('allo', 'highland', 74);
@@ -11765,7 +12045,7 @@ function initWorld() {
   spawnInBiome('ptero', 'desert', 38);
   spawnInBiome('ptero', 'shore', 60);
 
-  // 🦖 군락 — 3~5마리씩 무리로 배치 (기존 55 + 31 = 86마리)
+  // 🦖 군락 — 3~5마리씩 무리로 배치 (기존 55 + 35 = 90마리 · 랩터 13 → 19마리)
   spawnPack('raptor', 'forest', 46, 4, 6, '랩터 군락');
   spawnPack('raptor', 'forest', 62, 3, 6, '랩터 군락');
   spawnPack('compy', 'wilds', 34, 4, 4, '콤프 군락');
@@ -11869,9 +12149,15 @@ function updateHUD(dt) {
     var tb = biomeAt(player.pos.x, player.pos.z);
     var tval = Math.round(TEMP.cur);
     var label = tval + '°', cls = 'temp', icon = '🌡';
-    if (TEMP.needCoat) { label = '추움! 따뜻한 옷 필요'; cls += ' cold'; icon = '❄️'; }
+    if (TEMP.needCoat) {
+      label = TEMP.warmN > 0 ? ('추움 · 방한 ' + TEMP.warmN + '/3') : '추움! 방한 세트 필요';
+      cls += ' cold'; icon = '❄️';
+    }
     else if (TEMP.poison > 0) { label = '🧪 독 ' + Math.ceil(TEMP.poison) + 's'; cls += ' poison'; icon = '🧪'; }
-    else if (tb === 'tundra') { label = tval + '° 체온 유지'; cls += ' cold'; icon = '❄️'; }
+    else if (tb === 'tundra') {
+      label = TEMP.warmN >= 3 ? (tval + '° 냉기 면역 · ' + TEMP.warmN + '/3') : (tval + '° 체온 유지');
+      cls += ' cold'; icon = TEMP.warmN >= 3 ? '🧥' : '❄️';
+    }
     else if (tb === 'desert') { label = tval + '° 건조'; cls += ' hot'; icon = '🌞'; }
     else if (tb === 'highland') { icon = '🏔'; }
     setText(tempVal, label);
@@ -13029,13 +13315,127 @@ window.__game = {
     };
   },
   coats: function () {
-    return { armor: S.equip.armor, boots: S.equip.boots, warm: wearingWarm(), furCoat: S.inv.furCoat || 0, furBoots: S.inv.furBoots || 0 };
+    return {
+      hat: S.equip.hat, armor: S.equip.armor, boots: S.equip.boots,
+      warmN: warmSetCount(), scale: warmDamageScale(), warm: wearingWarm(),
+      inv: { furHat: S.inv.furHat || 0, furCoat: S.inv.furCoat || 0, furBoots: S.inv.furBoots || 0 },
+      hatVisible: !!(player.hatSets && player.hatSets.furHat && player.hatSets.furHat.visible)
+    };
   },
   coatTest: function (on) {
     S.inv.furCoat = Math.max(1, S.inv.furCoat || 0);
     S.equip.armor = on ? 'furCoat' : '';
     updateOutfit(); refreshTool(); chipsDirty = true;
     return this.coats();
+  },
+  /* 🧥 방한 n종(0~3)을 입힌 상태로 만든다 */
+  warmTest: function (n) {
+    var set = ['furHat', 'furCoat', 'furBoots'];
+    for (var i = 0; i < set.length; i++) {
+      var id = set[i];
+      S.inv[id] = Math.max(1, S.inv[id] || 0);
+      S.equip[GEAR[id].slot] = (i < (n || 0)) ? id : '';
+    }
+    updateOutfit(); refreshTool(); chipsDirty = true;
+    return this.coats();
+  },
+  /* 툰드라 냉기 피해 실측 — sec 초 동안 updateTemperature()를 실제로 돌린다 */
+  coldRun: function (sec) {
+    var hp0 = S.hp, steps = Math.round((sec || 6) * 60);
+    for (var i = 0; i < steps; i++) updateTemperature(1 / 60);
+    var out = {
+      sec: sec || 6, hp0: +hp0.toFixed(1), hp1: +S.hp.toFixed(1), lost: +(hp0 - S.hp).toFixed(2),
+      warmN: TEMP.warmN, scale: warmDamageScale(), needCoat: TEMP.needCoat, temp: +TEMP.cur.toFixed(1),
+      inTundra: tundraW(player.pos.x, player.pos.z) > 0.42, fire: !!nearestFire(5.0),
+      hud: tempPill ? tempPill.textContent : ''
+    };
+    S.hp = hp0;
+    return out;
+  },
+  /* 🛠 작업대 앞에서 메인 버튼이 「작업하기」로 바뀌는지 / 놀렀을 때 제작창이 열리는지 */
+  benchCtx: function () {
+    var before = computeContext();
+    var old = null;
+    for (var i = 0; i < structures.length; i++) if (structures[i].type === 'workbench') { old = structures[i]; break; }
+    var s = placeStructure('workbench', player.pos.x + 1.26, player.pos.z + 0.9, 0);
+    var after = computeContext();
+    return {
+      before: before.type + ' / ' + before.label, placed: !!s, after: after.type + ' / ' + after.label,
+      near: nearWorkbench(), btn: actLabel ? actLabel.textContent : ''
+    };
+  },
+  benchTap: function () {
+    CTX = computeContext();
+    var c = CTX.type;
+    doAction();
+    return { ctx: c, sheet: sheetMode, tab: craftTab, title: sheetTitle ? sheetTitle.textContent : '' };
+  },
+  sheetClose: function () { closeSheet(); return sheetMode; },
+  /* 🦖 예비 동작 → 돌진 시권스 — 실제 updateCreatureAI()를 프레임 단위로 돌려 상태 전이를 기록 */
+  attackSeq: function (kind, dist) {
+    var d = null;
+    for (var i = 0; i < dinos.length; i++) if (dinos[i].kind === (kind || 'raptor') && !dinos[i].dead) { d = dinos[i]; break; }
+    if (!d) return 'none';
+    var ang = 0.7;
+    d.dead = false; d.hp = d.max; d.group.visible = true; d.frozen = true;
+    d.x = player.pos.x + Math.sin(ang) * (dist || 2.1);
+    d.z = player.pos.z + Math.cos(ang) * (dist || 2.1);
+    d.group.position.set(d.x, terrainH(d.x, d.z), d.z);
+    d.homeX = d.x; d.homeZ = d.z; d.leavingHome = false;
+    d.aggro = 1; d.provoked = 6; d.cstate = 'chase'; d.stateT = 0.2; d.atkCd = 0;
+    d.stagger = 0; d.strikeDone = true; d.strikeT = 0; d.walking = 0; d.atkT = 0;
+    if (d.cry) d.cry.visible = false;
+    var hp0 = S.hp, seq = [], last = '';
+    for (var f = 0; f < 120; f++) {
+      var dp = Math.sqrt((d.x - player.pos.x) * (d.x - player.pos.x) + (d.z - player.pos.z) * (d.z - player.pos.z));
+      updateCreatureAI(d, 1 / 60, f / 60, dp);
+      if (d.cstate !== last) {
+        seq.push({
+          t: +((f / 60).toFixed(2)), st: d.cstate,
+          dp: +Math.sqrt((d.x - player.pos.x) * (d.x - player.pos.x) + (d.z - player.pos.z) * (d.z - player.pos.z)).toFixed(2),
+          cry: !!(d.cry && d.cry.visible), cryTxt: (d.cry && d.cry.visible) ? 'on' : ''
+        });
+        last = d.cstate;
+      }
+    }
+    var out = { kind: d.kind, seq: seq, damage: Math.round(hp0 - S.hp), stunned: false, frozenAfter: true };
+    S.hp = hp0; d.frozen = false;
+    return out;
+  },
+  /* 외침 말풍선 단독 검증 */
+  cryTest: function (txt) {
+    var d = null;
+    for (var i = 0; i < dinos.length; i++) if (dinos[i].kind === 'raptor' && !dinos[i].dead) { d = dinos[i]; break; }
+    if (!d) return 'none';
+    showDinoCry(d, txt || '크아악!!', 0.9);
+    return { visible: !!(d.cry && d.cry.visible), y: d.cry ? +d.cry.position.y.toFixed(2) : 0, tex: !!d.cry };
+  },
+  cryCheck: function () {
+    var out = [];
+    for (var i = 0; i < dinos.length; i++) if (dinos[i].cry && dinos[i].cry.visible) out.push(dinos[i].kind);
+    return out;
+  },
+  /* 자세·외침 스크린샷용 — 공룡을 지정 상태로 앞에 세우고 AI를 잠긐다 */
+  poseDemo: function (kind, st) {
+    var d = null;
+    for (var i = 0; i < dinos.length; i++) if (dinos[i].kind === (kind || 'raptor') && !dinos[i].dead) { d = dinos[i]; break; }
+    if (!d) return 'none';
+    d.dead = false; d.hp = d.max; d.group.visible = true; d.mounted = false;
+    d.x = player.pos.x + Math.sin(0.55) * 3.4;
+    d.z = player.pos.z + Math.cos(0.55) * 3.4;
+    d.group.position.set(d.x, terrainH(d.x, d.z), d.z);
+    d.rot = Math.atan2(player.pos.x - d.x, player.pos.z - d.z);
+    d.homeX = d.x; d.homeZ = d.z; d.leavingHome = false;
+    d.aggro = 1; d.provoked = 0; d.atkCd = 0; d.walking = 0; d.atkT = 0;
+    d.cstate = st || 'windup';
+    d.stateT = 900; d.windDur = 0.5; d.animSpeed = 0;
+    d.frozen = true;
+    if (d.cstate === 'windup') showDinoCry(d, '크아악!!', 6.0);
+    return { kind: d.kind, st: d.cstate, x: +d.x.toFixed(1), z: +d.z.toFixed(1), cry: !!(d.cry && d.cry.visible) };
+  },
+  poseClear: function () {
+    for (var i = 0; i < dinos.length; i++) { dinos[i].frozen = false; if (dinos[i].cry) dinos[i].cry.visible = false; }
+    return 'cleared';
   },
   /* 프테라노돈 비행 검수 */
   flyStart: function () {
