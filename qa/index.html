@@ -5675,12 +5675,10 @@ function makePlayer() {
   vNeck.position.set(0, 0.560, 0.128);
   vNeck.rotation.x = 0.22;
   tunic.add(vNeck);
-  for (var lc = 0; lc < 3; lc++) {
-    var cord = new THREE.Mesh(new THREE.CylinderGeometry(0.0035, 0.0035, 0.070, 4), M(C.shirtD));
-    cord.position.set(0, 0.505 + lc * 0.026, 0.140);
-    cord.rotation.z = (lc % 2 ? 1 : -1) * 0.55;
-    tunic.add(cord);
-  }
+  var vTrim = new THREE.Mesh(new THREE.BoxGeometry(0.020, 0.070, 0.012), M(C.shirtD));
+  vTrim.position.set(0, 0.556, 0.126);
+  vTrim.rotation.z = 0.0;
+  tunic.add(vTrim);
   // 어깨 요크 (어깨를 덮는 한 겹)
   var yoke = new THREE.Mesh(new THREE.CylinderGeometry(0.219, 0.206, 0.055, 14), M(C.shirtD));
   yoke.position.y = 0.556;
@@ -5698,7 +5696,6 @@ function makePlayer() {
   }
   stitchRing(0.596, 0.100, 16, 0xd8a074);
   stitchRing(0.088, 0.170, 20, 0xd8a074);
-  stitchRing(0.232, 0.161, 20, 0xd8a074);
   // 허리 주름 — 천이 접혀 만든 세로 결
   for (var wf = 0; wf < 7; wf++) {
     var wa = (wf / 7) * TAU + 0.4;
@@ -5786,7 +5783,7 @@ function makePlayer() {
   /* ───────────────────────── 팔 ───────────────────────── */
   function arm(sx) {
     var p = new THREE.Group();
-    p.position.set(sx * 0.243, 0.50, 0);
+    p.position.set(sx * 0.232, 0.50, 0);
     // 어깨 덮개
     var del = new THREE.Mesh(new THREE.SphereGeometry(0.070, 12, 9), M(C.shirt));
     del.scale.set(1.02, 0.94, 0.96);
@@ -6042,11 +6039,6 @@ function makePlayer() {
     cheek.scale.set(0.050, 0.040, 0.044);
     cheek.position.set(ck2 * 0.080, -0.020, 0.070);
     head.add(cheek);
-    // 볼 홍조
-    var blush = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 6), M(0xf3bfae));
-    blush.scale.set(0.024, 0.014, 0.008);
-    blush.position.set(ck2 * 0.080, -0.048, 0.1065);
-    head.add(blush);
   }
   // 코 — 콧대 + 코끝 + 콧구멍
   var noseBridge = new THREE.Mesh(new THREE.BoxGeometry(0.024, 0.075, 0.030), M(C.skin));
@@ -6086,59 +6078,46 @@ function makePlayer() {
     earIn.position.set(er * 0.136, -0.008, 0.006);
     head.add(earIn);
   }
-  // 눈꺼풀 (눈 위를 덮는 살) + 속눈썹 + 눈썹
-  for (var sd = -1; sd <= 1; sd += 2) {
-    var lid = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 7), M(C.skin));
-    lid.scale.set(0.033, 0.017, 0.018);
-    lid.position.set(sd * 0.052, 0.027, 0.1215);
-    head.add(lid);
-    var lidLo = new THREE.Mesh(new THREE.SphereGeometry(1, 9, 6), M(C.skin));
-    lidLo.scale.set(0.026, 0.010, 0.014);
-    lidLo.position.set(sd * 0.052, -0.007, 0.1225);
-    head.add(lidLo);
-    var lash = new THREE.Mesh(new THREE.BoxGeometry(0.042, 0.0040, 0.009), M(C.hairD));
-    lash.position.set(sd * 0.053, 0.0315, 0.1300);
-    lash.rotation.z = sd * -0.12;
-    head.add(lash);
-    // 눈썹 — 안쪽이 두껍고 바깥으로 갈수록 얇게, 살짝 아치
-    var browIn = new THREE.Mesh(new THREE.BoxGeometry(0.030, 0.010, 0.012), M(C.hair));
-    browIn.position.set(sd * 0.040, 0.060, 0.115);
-    browIn.rotation.z = sd * 0.16;
-    head.add(browIn);
-    var browOut = new THREE.Mesh(new THREE.BoxGeometry(0.026, 0.008, 0.011), M(C.hair));
-    browOut.position.set(sd * 0.066, 0.066, 0.112);
-    browOut.rotation.z = sd * -0.06;
-    head.add(browOut);
-  }
-
   /* ───────────── 눈 (광택 메시 · 깜빡임용) ───────────── */
   var eyeG = new THREE.Group();
   eyeG.position.set(0, 0.004, 0);
   head.add(eyeG);
   for (var ey = -1; ey <= 1; ey += 2) {
-    var sclera = new THREE.Mesh(new THREE.SphereGeometry(0.0255, 12, 9), M(C.eyeW));
-    sclera.scale.set(1.0, 0.94, 0.80);
-    sclera.position.set(ey * 0.052, 0.010, 0.1225);
+    var sclera = new THREE.Mesh(new THREE.SphereGeometry(0.0195, 12, 9), M(C.eyeW));
+    sclera.scale.set(1.0, 0.92, 0.78);
+    sclera.position.set(ey * 0.051, 0.009, 0.1265);
     eyeG.add(sclera);
-    var iris = new THREE.Mesh(new THREE.SphereGeometry(0.0150, 10, 8), M(C.iris));
+    var iris = new THREE.Mesh(new THREE.SphereGeometry(0.0112, 10, 8), M(C.iris));
     iris.scale.set(1, 1, 0.62);
-    iris.position.set(ey * 0.0528, 0.009, 0.1405);
+    iris.position.set(ey * 0.0515, 0.008, 0.1375);
     eyeG.add(iris);
-    var pupil = new THREE.Mesh(new THREE.SphereGeometry(0.0078, 8, 6), M(C.pupil));
+    var pupil = new THREE.Mesh(new THREE.SphereGeometry(0.0058, 8, 6), M(C.pupil));
     pupil.scale.set(1, 1, 0.6);
-    pupil.position.set(ey * 0.0530, 0.009, 0.1465);
+    pupil.position.set(ey * 0.0516, 0.008, 0.1415);
     eyeG.add(pupil);
-    var glint = new THREE.Mesh(new THREE.SphereGeometry(0.0038, 6, 5), M(C.glint));
-    glint.position.set(ey * 0.0472, 0.0175, 0.1475);
+    var glint = new THREE.Mesh(new THREE.SphereGeometry(0.0026, 6, 5), M(C.glint));
+    glint.position.set(ey * 0.0470, 0.0145, 0.1430);
     eyeG.add(glint);
-    var glint2 = new THREE.Mesh(new THREE.SphereGeometry(0.0020, 5, 4), M(C.glint));
-    glint2.position.set(ey * 0.0580, 0.0025, 0.1440);
-    eyeG.add(glint2);
-    // 눈두덩 그늘 — 눈이 파인 자리
-    var socket = new THREE.Mesh(new THREE.SphereGeometry(1, 9, 7), M(C.skinD));
-    socket.scale.set(0.036, 0.024, 0.012);
-    socket.position.set(ey * 0.053, 0.008, 0.1255);
-    eyeG.add(socket);
+  }
+  // 눈꺼풀 선 · 속눈썹 (106 얼굴이 부풀지 않게 얇은 띠만)
+  for (var sd = -1; sd <= 1; sd += 2) {
+    var lidLine = new THREE.Mesh(new THREE.BoxGeometry(0.040, 0.0045, 0.012), M(C.skinD));
+    lidLine.position.set(sd * 0.0515, 0.0225, 0.1315);
+    lidLine.rotation.z = sd * -0.10;
+    head.add(lidLine);
+    var lash = new THREE.Mesh(new THREE.BoxGeometry(0.040, 0.0035, 0.010), M(C.hairD));
+    lash.position.set(sd * 0.0520, 0.0262, 0.1345);
+    lash.rotation.z = sd * -0.13;
+    head.add(lash);
+    // 눈썹 — 안쪽 두껍고 바깥은 얇은 아치
+    var browIn = new THREE.Mesh(new THREE.BoxGeometry(0.026, 0.0080, 0.010), M(C.hair));
+    browIn.position.set(sd * 0.038, 0.0495, 0.1275);
+    browIn.rotation.z = sd * 0.18;
+    head.add(browIn);
+    var browOut = new THREE.Mesh(new THREE.BoxGeometry(0.024, 0.0062, 0.009), M(C.hair));
+    browOut.position.set(sd * 0.062, 0.0545, 0.1245);
+    browOut.rotation.z = sd * -0.05;
+    head.add(browOut);
   }
 
   /* ─────────────────── 머리칼 ─────────────────── */
@@ -6153,21 +6132,22 @@ function makePlayer() {
   backHair.scale.set(0.128, 0.140, 0.116);
   backHair.position.set(0, -0.040, -0.062);
   hairG.add(backHair);
-  // 앞머리 — 결이 다른 가닥 5장
-  var bangs = [
-    [-0.084, 0.104, 0.080, 0.030, 0.062, 0.040, -0.34],
-    [-0.046, 0.112, 0.094, 0.034, 0.070, 0.044, -0.16],
-    [0.004, 0.116, 0.098, 0.036, 0.076, 0.046, 0.03],
-    [0.052, 0.111, 0.092, 0.033, 0.068, 0.043, 0.15],
-    [0.090, 0.100, 0.078, 0.029, 0.058, 0.038, 0.33]
-  ];
-  for (var bg = 0; bg < bangs.length; bg++) {
-    var B2 = bangs[bg];
-    var lock2 = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 8), M(bg % 2 ? C.hair : C.hairL));
-    lock2.scale.set(B2[3], B2[4], B2[5]);
-    lock2.position.set(B2[0], B2[1], B2[2]);
-    lock2.rotation.z = B2[6];
-    lock2.rotation.x = -0.14;
+  // 앞머리 — 이마를 덮는 한 장의 앞머리 + 결을 만드는 얇은 가닥
+  var fringe = new THREE.Mesh(new THREE.SphereGeometry(1, 14, 10), M(C.hair));
+  fringe.scale.set(0.128, 0.072, 0.070);
+  fringe.position.set(0, 0.098, 0.070);
+  fringe.rotation.x = -0.22;
+  hairG.add(fringe);
+  var fringeSide = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 9), M(C.hair));
+  fringeSide.scale.set(0.132, 0.086, 0.062);
+  fringeSide.position.set(0, 0.078, 0.036);
+  hairG.add(fringeSide);
+  for (var bg = 0; bg < 6; bg++) {
+    var bx = (-1 + bg * 0.4) * 0.062;
+    var lock2 = new THREE.Mesh(new THREE.ConeGeometry(0.020, 0.070, 5), M(bg % 2 ? C.hair : C.hairL));
+    lock2.position.set(bx, 0.070, 0.104 - Math.abs(bx) * 0.30);
+    lock2.rotation.x = 0.42;
+    lock2.rotation.z = -bx * 2.2;
     hairG.add(lock2);
   }
   // 옆머리 + 턱선으로 흐르는 잔가닥
@@ -6241,9 +6221,10 @@ function makePlayer() {
     cordLine.rotation.z = cc2 * 0.16;
     hatG.add(cordLine);
   }
-  hatG.position.y = 0.108;
-  hatG.rotation.z = 0.035;
-  hatG.rotation.x = -0.045;
+  hatG.position.y = 0.098;
+  hatG.scale.setScalar(0.94);
+  hatG.rotation.z = 0.030;
+  hatG.rotation.x = -0.050;
   head.add(hatG);
 
   torso.add(head);
@@ -6261,8 +6242,8 @@ function makePlayer() {
   flattenGroup(AR.elbow, [AR.wrist], MAT.charBody, true, true, 9);
   flattenGroup(AR.wrist, null, MAT.charBody, true, true, 9);
   /* 원단·가죽·짚·눈 — 질감 메시 */
-  flattenGroup(tunic, null, MAT.clothTunic, true, true, 11);
-  flattenGroup(beltG, null, MAT.gearLeather, true, true, 14);
+  flattenGroup(tunic, null, MAT.clothTunic, true, true, 19);
+  flattenGroup(beltG, null, MAT.gearLeather, true, true, 20);
   flattenGroup(eyeG, null, MAT.eye, true, false);
   flattenGroup(hatG, null, MAT.strawHat, true, true, 15);
   /* 도구 — 나무결/돌 결 */
