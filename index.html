@@ -3070,13 +3070,13 @@ var MAT = {
   bark: new THREE.MeshLambertMaterial({ color: 0x8a5d3a, flatShading: true }),
   barkP: new THREE.MeshLambertMaterial({ color: 0xa87c4f, flatShading: true }),
   barkD: new THREE.MeshLambertMaterial({ color: 0x6f4a2e, flatShading: true }),
-  leafA: new THREE.MeshLambertMaterial({ color: 0x579b4d, flatShading: true }),
-  leafB: new THREE.MeshLambertMaterial({ color: 0x6fb257, flatShading: true }),
-  leafC: new THREE.MeshLambertMaterial({ color: 0x3d7440, flatShading: true }),
-  leafD: new THREE.MeshLambertMaterial({ color: 0x8cc060, flatShading: true }),
-  palmA: new THREE.MeshLambertMaterial({ color: 0x4a9349, flatShading: true }),
-  palmB: new THREE.MeshLambertMaterial({ color: 0x67b055, flatShading: true }),
-  palmC: new THREE.MeshLambertMaterial({ color: 0x3e7f4a, flatShading: true }),
+  leafA: new THREE.MeshLambertMaterial({ color: 0x5c7a45, flatShading: true }),
+  leafB: new THREE.MeshLambertMaterial({ color: 0x70894c, flatShading: true }),
+  leafC: new THREE.MeshLambertMaterial({ color: 0x415a37, flatShading: true }),
+  leafD: new THREE.MeshLambertMaterial({ color: 0x849455, flatShading: true }),
+  palmA: new THREE.MeshLambertMaterial({ color: 0x567a45, flatShading: true }),
+  palmB: new THREE.MeshLambertMaterial({ color: 0x6d8a4c, flatShading: true }),
+  palmC: new THREE.MeshLambertMaterial({ color: 0x44653e, flatShading: true }),
   palmDry: new THREE.MeshLambertMaterial({ color: 0x9a8050, flatShading: true }),
   rock: new THREE.MeshLambertMaterial({ color: 0x8e968f, flatShading: true }),
   rockD: new THREE.MeshLambertMaterial({ color: 0x767e78, flatShading: true }),
@@ -3085,10 +3085,10 @@ var MAT = {
   oreVein: new THREE.MeshLambertMaterial({ color: 0xb8792f, flatShading: true }),
   oreSteel: new THREE.MeshLambertMaterial({ color: 0x9fb3c4, flatShading: true }),
   berry: new THREE.MeshLambertMaterial({ color: 0xcf4b58, flatShading: true }),
-  bushA: new THREE.MeshLambertMaterial({ color: 0x477f42, flatShading: true }),
-  bushB: new THREE.MeshLambertMaterial({ color: 0x5b9c4f, flatShading: true }),
-  bushC: new THREE.MeshLambertMaterial({ color: 0x396b39, flatShading: true }),
-  herbLeaf: new THREE.MeshLambertMaterial({ color: 0x7fb35a, flatShading: true }),
+  bushA: new THREE.MeshLambertMaterial({ color: 0x4b5f37, flatShading: true }),
+  bushB: new THREE.MeshLambertMaterial({ color: 0x5c7441, flatShading: true }),
+  bushC: new THREE.MeshLambertMaterial({ color: 0x3b5133, flatShading: true }),
+  herbLeaf: new THREE.MeshLambertMaterial({ color: 0x7c9a55, flatShading: true }),
   herbStem: new THREE.MeshLambertMaterial({ color: 0x4e7f45, flatShading: true }),
   herbBloom: new THREE.MeshLambertMaterial({ color: 0xcbe3a6, flatShading: true }),
   reedStem: new THREE.MeshLambertMaterial({ color: 0xb3aa72, flatShading: true }),
@@ -9721,8 +9721,8 @@ function makeCabin() {
   chim.position.set(0.92, H + 0.82, -0.72);
   shell.add(chim);
   // ⛺ v2.4 — 가죽 지붕: 두 장의 천 + 용마루 기둥 + 너덜한 처마
-  var apexY = H + 1.95, eaveY = H + 0.62;
-  var halfW = W / 2 + 0.40, reach = D / 2 + 0.42;
+  var apexY = H + 2.18, eaveY = H + 0.92;
+  var halfW = W / 2 + 0.30, reach = D / 2 + 0.30;
   var roofMat = new THREE.MeshLambertMaterial({
     color: 0xffffff, map: roofLeatherTex(), vertexColors: true,
     flatShading: false, transparent: true, opacity: 1, side: THREE.DoubleSide
@@ -9733,8 +9733,8 @@ function makeCabin() {
     roofG.add(sheet);
   }
   // 박공 삼각벽 (앞·뒤) — 가죽 조각으로 막아 안이 안 비친다
-  var gL = new THREE.Mesh(gableGeo(D + 0.5, H, apexY - 0.02, W / 2 - 0.02), roofMat);
-  var gR = new THREE.Mesh(gableGeo(D + 0.5, H, apexY - 0.02, -W / 2 + 0.02), roofMat);
+  var gL = new THREE.Mesh(gableGeo(D + 0.1, H, apexY - 0.30, W / 2 - 0.03), roofMat);
+  var gR = new THREE.Mesh(gableGeo(D + 0.1, H, apexY - 0.30, -W / 2 + 0.03), roofMat);
   roofG.add(gL); roofG.add(gR);
   // 용마루에 위로 삐죽 묶인 기둥 두 쌍 (X자로 교차)
   var trimG = new THREE.Group();
@@ -9757,23 +9757,6 @@ function makeCabin() {
     tie.position.set(rp * halfW * 0.42, apexY + 0.06, 0);
     tie.rotation.y = Math.PI / 2;
     trimG.add(tie);
-  }
-  // 덧댄 가죽 조각 — 이음선이 보이는 너덜한 패치
-  var ang = Math.atan2(apexY - eaveY, reach);
-  for (var pz2 = -1; pz2 <= 1; pz2 += 2) {
-    for (var pt = 0; pt < 3; pt++) {
-      var pw2 = 0.62 + Math.random() * 0.5;
-      var ph2 = 0.46 + Math.random() * 0.4;
-      var dfrac = 0.30 + pt * 0.26 + Math.random() * 0.06;
-      var pxx = -halfW * 0.62 + Math.random() * halfW * 1.1;
-      var pyy = apexY + (eaveY - apexY) * Math.pow(dfrac, 0.94) + 0.035;
-      var pzz = pz2 * reach * dfrac;
-      var patch = new THREE.Mesh(new THREE.BoxGeometry(pw2, 0.018, ph2), pt % 2 ? MAT.furD : MAT.fur);
-      patch.position.set(pxx, pyy, pzz);
-      patch.rotation.x = -pz2 * ang;
-      patch.rotation.y = (Math.random() - 0.5) * 0.20;
-      trimG.add(patch);
-    }
   }
   // 처마 아래로 늘어진 가죽 조각 몇 개
   for (var f = 0; f < 5; f++) {
@@ -14760,6 +14743,7 @@ function canStand(x, z) {
 var worldT = 0;
 var started = false;
 var worldReady = false;
+var WALK_DEMO = false;
 
 function updatePlayer(dt) {
   var ix = joy.x + ((keys.KeyD || keys.ArrowRight) ? 1 : 0) - ((keys.KeyA || keys.ArrowLeft) ? 1 : 0);
@@ -14767,6 +14751,7 @@ function updatePlayer(dt) {
   var len = Math.hypot(ix, iy);
   if (len > 1) { ix /= len; iy /= len; len = 1; }
   player.moving = len > 0.12;
+  if (WALK_DEMO) player.moving = true;      // 검수용: 제자리 걷기 자세
 
   // 🏹 활 카이팅 — 발사 동작 0.15초만 발을 멈추고 조준 쪽으로 몸만 돌린다.
   //    조이스틱에서 손을 떼지 않아도 이 시간이 끝나면 그 방향으로 곧바로 이어진다(후딜 0).
@@ -17400,6 +17385,7 @@ window.__game = {
     return { x: x, z: z, zone: zoneAt(x, z) };
   },
   context: function () { return CTX; },
+  walkDemo: function (v) { WALK_DEMO = !!v; player.walk = v ? 1 : 0; return WALK_DEMO; },
   errors: ERR,
   started: function () { return started; },
   eat: eatOrInfo,
