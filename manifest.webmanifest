@@ -1,0 +1,36 @@
+{
+  "name": "WILD LIFE · 야생의 섬",
+  "short_name": "WILD LIFE",
+  "description": "듀랑고풍 쿼터뷰 3D 웹 생존 게임 — 나만의 세계가 기다리고 있어",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#1d3a34",
+  "theme_color": "#1d3a34",
+  "categories": [
+    "games",
+    "entertainment"
+  ],
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
