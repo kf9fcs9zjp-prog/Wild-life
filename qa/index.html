@@ -3331,9 +3331,10 @@ var water, waterAttr, waterX, waterZ, waterAmp, waterMat, sparkle, sparkleMat;
   waterZ = new Float32Array(n);
   waterAmp = new Float32Array(n);
   var cols = new Float32Array(n * 3);
-  var nrm = new Float32Array(n * 3);
+  var alphas = new Float32Array(n);
   var c = new THREE.Color();
-  var cSh = new THREE.Color(0x8fdfd4), cMd = new THREE.Color(0x2b9aa9), cDp = new THREE.Color(0x115b7c);
+  /* v2.7 — 깊은 청보라 ~ 얕은 청록 (바다 레퍼런스) */
+  var cSh = new THREE.Color(0x74cfc4), cMd = new THREE.Color(0x2f6f9e), cDp = new THREE.Color(0x1d2a57);
   for (var i = 0; i < n; i++) {
     var x = pos.getX(i), z = pos.getZ(i);
     waterX[i] = x; waterZ[i] = z;
@@ -3347,18 +3348,85 @@ var water, waterAttr, waterX, waterZ, waterAmp, waterMat, sparkle, sparkleMat;
     var mot = noise2(x * 0.07 + 3, z * 0.09 - 2) * 0.5 + 0.5;
     c.multiplyScalar(0.965 + mot * 0.07);
     cols[i * 3] = c.r; cols[i * 3 + 1] = c.g; cols[i * 3 + 2] = c.b;
-    nrm[i * 3 + 1] = 1;
+    alphas[i] = d;
     waterAmp[i] = 0.30 + clamp(d, 0, 1) * 1.35;
   }
-  g.setAttribute('color', new THREE.BufferAttribute(cols, 3));
-  g.setAttribute('normal', new THREE.BufferAttribute(nrm, 3));
-  waterMat = new THREE.MeshPhongMaterial({
-    color: 0xffffff, vertexColors: true, transparent: true, opacity: 0.90,
-    shininess: 120, specular: 0xdffaff, flatShading: true
+  g.setAttribute('aCol', new THREE.BufferAttribute(cols, 3));
+  g.setAttribute('aDepth', new THREE.BufferAttribute(alphas, 1));
+  /* 두 겹의 잔물결 + 포말 + 햇빛 반사 — 한 draw call 셰이더 */
+  waterMat = new THREE.ShaderMaterial({
+    transparent: true, depthWrite: false, fog: false, side: THREE.DoubleSide,
+    uniforms: {
+      uTime: { value: 0 },
+      uSunDir: { value: new THREE.Vector3(0.45, 0.72, 0.35).normalize() },
+      uSunCol: { value: new THREE.Color(0xfff0cf) },
+      uFoamCol: { value: new THREE.Color(0xf2fbfb) },
+      uNight: { value: 0 },
+      fogColor: { value: new THREE.Color(0xbfc6a9) },
+      fogNear: { value: 90 }, fogFar: { value: 235 }
+    },
+    vertexShader: [
+      'attribute vec3 aCol; attribute float aDepth;',
+      'uniform float uTime;',
+      'varying vec3 vCol; varying float vDep; varying vec3 vWPos; varying float vViewDepth;',
+      'void main(){',
+      '  vec3 p = position;',
+      '  p.y += sin(p.x * 0.62 + uTime * 1.15) * 0.018 + cos(p.z * 0.51 + uTime * 0.92) * 0.018;',
+      '  vec4 wp = modelMatrix * vec4(p, 1.0);',
+      '  vWPos = wp.xyz; vCol = aCol; vDep = aDepth;',
+      '  vec4 mv = viewMatrix * wp;',
+      '  vViewDepth = -mv.z;',
+      '  gl_Position = projectionMatrix * mv;',
+      '}'
+    ].join('\n'),
+    fragmentShader: [
+      'uniform float uTime; uniform vec3 uSunDir; uniform vec3 uSunCol; uniform vec3 uFoamCol; uniform float uNight;',
+      'uniform vec3 fogColor; uniform float fogNear; uniform float fogFar;',
+      'varying vec3 vCol; varying float vDep; varying vec3 vWPos; varying float vViewDepth;',
+      'float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }',
+      'float vnoise(vec2 p){',
+      '  vec2 i = floor(p), f = fract(p);',
+      '  f = f * f * (3.0 - 2.0 * f);',
+      '  float a = hash(i), b = hash(i + vec2(1.0, 0.0)), c = hash(i + vec2(0.0, 1.0)), d = hash(i + vec2(1.0, 1.0));',
+      '  return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);',
+      '}',
+      'float fbm(vec2 p){',
+      '  float v = 0.0, a = 0.5;',
+      '  for (int i = 0; i < 4; i++) { v += a * vnoise(p); p *= 2.03; a *= 0.5; }',
+      '  return v;',
+      '}',
+      'void main(){',
+      '  vec2 uv = vWPos.xz;',
+      /* 두 겹의 물결이 서로 반대 방향으로 느리게 흐른다 */
+      '  float w1 = fbm(uv * 0.55 + vec2(uTime * 0.050, uTime * 0.022));',
+      '  float w2 = fbm(uv * 1.05 - vec2(uTime * 0.032, -uTime * 0.058));',
+      '  float ripple = w1 * 0.62 + w2 * 0.38;',
+      /* 포말 — 큰 덩어리 + 잔 레이스 */
+      '  float foamMask = smoothstep(0.60, 0.86, w1 * 0.70 + w2 * 0.46);',
+      '  float lace = smoothstep(0.70, 0.94, fbm(uv * 2.7 + vec2(uTime * 0.11, -uTime * 0.09)));',
+      '  float foam = clamp(foamMask * 0.80 + lace * 0.60, 0.0, 1.0);',
+      '  foam *= mix(0.30, 1.0, vDep);',
+      /* 법선을 흔들어 햇빛 반사(스펙큘러)가 부딪히며 반짝이게 */
+      '  vec3 nrm = normalize(vec3((w1 - w2) * 1.35, 1.0, (w2 - w1) * 1.35));',
+      '  vec3 V = normalize(cameraPosition - vWPos);',
+      '  vec3 H = normalize(normalize(uSunDir) + V);',
+      '  float spec = pow(max(dot(nrm, H), 0.0), 140.0);',
+      '  float glint = pow(max(dot(nrm, H), 0.0), 26.0) * 0.22;',
+      '  vec3 base = vCol;',
+      '  base = mix(base, base * vec3(1.05, 1.12, 1.34), 0.30);',       /* 깊은 쪽 청보라 기운 */
+      '  base *= 0.90 + ripple * 0.26;',
+      '  base = mix(base, uFoamCol, foam * 0.86);',
+      '  base += uSunCol * (spec * 2.4 + glint) * (1.0 - uNight * 0.85);',
+      '  float f = clamp((vViewDepth - fogNear) / (fogFar - fogNear), 0.0, 1.0);',
+      '  gl_FragColor = vec4(mix(base, fogColor, f * 0.94), 0.94);',
+      '}'
+    ].join('\n')
   });
   water = new THREE.Mesh(g, waterMat);
   water.position.y = WATER_Y - 0.04;
   water.receiveShadow = false;
+  water.frustumCulled = false;
+  water.renderOrder = 1;
   scene.add(water);
 
   // sparkles over the open sea
@@ -5160,6 +5228,7 @@ function buildGrassField() {
   GRASS.mesh = inst;
   GRASS.mat = gMat;
   buildTallGrassField();
+  buildUndergrowth();
 }
 
 /* v2.6 — 키 큰 풀·갈대·수풀 포기: 강가와 숲 가장자리를 따라 촘촘히 (한 draw call) */
@@ -5245,6 +5314,140 @@ function buildTallGrassField() {
   if (inst.instanceColor) inst.instanceColor.needsUpdate = true;
   scene.add(inst);
   GRASS.tall = inst;
+}
+
+/* =========================================================
+   🌿 v2.7 — 열대 덤불(고사리 + 넓은 잎) 군락
+   ---------------------------------------------------------
+   · 고사리 잎 6장 + 넓은 잎 4장 + 곧은 풀 3장을 한 지오메트리로 묶어
+     InstancedMesh 한 번(1 draw call)에 1,600포기까지 그린다.
+   · 바람 셰이더(grassSway)를 그대로 공유해 잔디와 같은 결로 흔들린다.
+   ========================================================= */
+function undergrowthGeo() {
+  var pos = [], nor = [], col = [], idx = [];
+
+  function pushTri(p0, p1, p2, shade, nx, ny, nz) {
+    var base = pos.length / 3;
+    var pts = [p0, p1, p2];
+    for (var i = 0; i < 3; i++) {
+      pos.push(pts[i][0], pts[i][1], pts[i][2]);
+      nor.push(nx, ny, nz);
+      col.push(shade, shade, shade);
+    }
+    idx.push(base, base + 1, base + 2);
+  }
+
+  /* ── 고사리 잎: 줄기를 따라 좌우로 잔잎이 붙는 깃꼴 ── */
+  function frond(ang, len, droop, shade) {
+    var dx = Math.cos(ang), dz = Math.sin(ang);
+    var px = -dz, pz = dx;
+    var seg = 7;
+    for (var s = 0; s < seg; s++) {
+      var t0 = s / seg, t1 = (s + 1) / seg;
+      var h0 = len * (t0 - droop * t0 * t0), h1 = len * (t1 - droop * t1 * t1);
+      var r0 = 0.10 + len * 0.42 * t0, r1 = 0.10 + len * 0.42 * t1;
+      var sh0 = shade * (0.72 + 0.34 * t0), sh1 = shade * (0.72 + 0.34 * t1);
+      // 좌우 잔잎 — 끝으로 갈수록 길고 얇다
+      for (var sgn = -1; sgn <= 1; sgn += 2) {
+        var leafLen = (0.075 + 0.10 * (1 - Math.abs(t0 - 0.45) * 1.6)) * (1 - t0 * 0.35);
+        var w = 0.030 + 0.020 * (1 - t0);
+        var cxp = dx * r0, czp = dz * r0;
+        pushTri(
+          [px * sgn * w * 0.5 + dx * r0 * 0.2, h0, pz * sgn * w * 0.5 + dz * r0 * 0.2],
+          [px * sgn * (w + leafLen) + dx * (r0 + 0.05), h0 + leafLen * 0.55, pz * sgn * (w + leafLen) + dz * (r0 + 0.05)],
+          [px * sgn * w * 0.5 - dx * 0.05 + dx * r1 * 0.2, h1, pz * sgn * w * 0.5 - dz * 0.05 + dz * r1 * 0.2],
+          sh1, 0.25, 0.94, 0.22
+        );
+      }
+      // 가운데 줄기
+      pushTri(
+        [-px * 0.012 + dx * r0, h0, -pz * 0.012 + dz * r0],
+        [px * 0.012 + dx * r0, h0, pz * 0.012 + dz * r0],
+        [dx * r1, h1, dz * r1],
+        sh0 * 0.92, 0.2, 0.96, 0.2
+      );
+    }
+  }
+
+  /* ── 넓은 잎: 크고 둥근 잎몸이 바깥으로 젖혀진다 ── */
+  function broadLeaf(ang, len, wide, shade) {
+    var dx = Math.cos(ang), dz = Math.sin(ang);
+    var px = -dz, pz = dx;
+    var seg = 4;
+    for (var s = 0; s < seg; s++) {
+      var t0 = s / seg, t1 = (s + 1) / seg;
+      var r0 = 0.06 + len * t0 * 0.9, r1 = 0.06 + len * t1 * 0.9;
+      var h0 = 0.28 + Math.sin(t0 * Math.PI * 0.9) * 0.30 - t0 * t0 * 0.18;
+      var h1 = 0.28 + Math.sin(t1 * Math.PI * 0.9) * 0.30 - t1 * t1 * 0.18;
+      var w0 = wide * Math.sin(Math.min(1, t0 * 1.15) * Math.PI * 0.92) + 0.02;
+      var w1 = wide * Math.sin(Math.min(1, t1 * 1.15) * Math.PI * 0.92) + 0.02;
+      var sh0 = shade * (0.66 + 0.42 * t0), sh1 = shade * (0.66 + 0.42 * t1);
+      var cx0 = dx * r0, cz0 = dz * r0, cx1 = dx * r1, cz1 = dz * r1;
+      var a0 = [cx0 - px * w0, h0, cz0 - pz * w0], a1 = [cx0 + px * w0, h0, cz0 + pz * w0];
+      var b0 = [cx1 - px * w1, h1, cz1 - pz * w1], b1 = [cx1 + px * w1, h1, cz1 + pz * w1];
+      pushTri(a0, a1, b1, sh0, 0.18, 0.95, 0.18);
+      pushTri(a0, b1, b0, sh1, 0.18, 0.95, 0.18);
+    }
+  }
+
+  frond(0.30, 0.72, 0.55, 0.98);
+  frond(1.35, 0.60, 0.60, 0.90);
+  frond(2.40, 0.66, 0.52, 0.95);
+  frond(3.45, 0.55, 0.62, 0.84);
+  frond(4.55, 0.68, 0.56, 0.92);
+  frond(5.50, 0.52, 0.64, 0.80);
+  broadLeaf(0.9, 0.48, 0.20, 0.86);
+  broadLeaf(2.7, 0.42, 0.17, 0.78);
+  broadLeaf(4.2, 0.52, 0.22, 0.90);
+  broadLeaf(5.9, 0.38, 0.15, 0.74);
+
+  var g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(pos), 3));
+  g.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(nor), 3));
+  g.setAttribute('color', new THREE.BufferAttribute(new Float32Array(col), 3));
+  g.setIndex(idx);
+  g.computeBoundingSphere();
+  return g;
+}
+
+function buildUndergrowth() {
+  var geo = undergrowthGeo();
+  var mat = grassSway(new THREE.MeshPhongMaterial({
+    color: 0xffffff, vertexColors: true, side: THREE.DoubleSide,
+    shininess: 0, specular: 0x000000, flatShading: false
+  }));
+  var COUNT = 1700;
+  var inst = new THREE.InstancedMesh(geo, mat, COUNT);
+  inst.castShadow = false; inst.receiveShadow = false;
+  var dummy = new THREE.Object3D(), placed = 0, guard = 0;
+  var color = new THREE.Color();
+  while (placed < COUNT && guard < COUNT * 30) {
+    guard++;
+    var a = Math.random() * TAU, r = Math.sqrt(Math.random()) * 150;
+    var x = Math.cos(a) * r, z = Math.sin(a) * r;
+    var h = terrainH(x, z);
+    if (h < 1.15 || h > 6.9) continue;
+    if (desertW(x, z) > 0.26 || tundraW(x, z) > 0.26) continue;
+    var bio = biomeAt(x, z, h);
+    var nearWater = nearRiver(x, z, 8.0);
+    // 숲·강가에 몰아 심고, 들판엔 드물게
+    if (!nearWater && bio !== 'forest' && Math.random() > 0.30) continue;
+    dummy.position.set(x, h - 0.05, z);
+    dummy.rotation.set(sr(-0.06, 0.06), Math.random() * TAU, sr(-0.06, 0.06));
+    var sc = sr(0.75, 1.65);
+    dummy.scale.set(sc, sr(0.80, 1.45), sc);
+    dummy.updateMatrix();
+    inst.setMatrixAt(placed, dummy.matrix);
+    // 이끼 낀 짙은 초록 ~ 햇살 든 연둣빛
+    color.setHSL(0.235 + Math.random() * 0.055, 0.30 + Math.random() * 0.24, 0.20 + Math.random() * 0.17);
+    inst.setColorAt(placed, color);
+    placed++;
+  }
+  inst.count = placed;
+  inst.instanceMatrix.needsUpdate = true;
+  if (inst.instanceColor) inst.instanceColor.needsUpdate = true;
+  scene.add(inst);
+  GRASS.under = inst;
 }
 
 /* ---------------- seashells / pebbles on the sand (one baked mesh) ---------------- */
@@ -6231,7 +6434,7 @@ function makePlayer() {
   root.add(torso);
   addShadows(root);
   /* 정적 파츠를 하나의 메시로 — 몸(피부/기본천/배낭) · 얼굴 */
-  flattenGroup(torso, [armL, armR, head, tunic, beltG], MAT.charBody, true, true, 9);
+  flattenGroup(torso, [armL, armR, head, tunic], MAT.charBody, true, true, 9);
   flattenGroup(head, [eyeG, hatG], MAT.charBody, true, true, 9);
   flattenGroup(armL, [AL.elbow], MAT.charBody, true, true, 9);
   flattenGroup(AL.elbow, [AL.wrist], MAT.charBody, true, true, 9);
@@ -6241,7 +6444,6 @@ function makePlayer() {
   flattenGroup(AR.wrist, null, MAT.charBody, true, true, 9);
   /* 원단·가죽·짚·눈 — 질감 메시 */
   flattenGroup(tunic, null, MAT.clothTunic, true, true, 19);
-  flattenGroup(beltG, null, MAT.gearLeather, true, true, 20);
   flattenGroup(eyeG, null, MAT.eye, true, false);
   flattenGroup(hatG, null, MAT.strawHat, true, true, 15);
   /* 도구 — 나무결/돌 결 */
@@ -10657,10 +10859,12 @@ function buildFoamRing() {
       'uniform vec3 fogColor; uniform float fogNear; uniform float fogFar;',
       'varying float vA; varying float vAng; varying float vDepth;',
       'void main(){',
-      '  float w = 0.52 + 0.48 * sin(uPhase + vAng * 7.0);',
-      '  float a = vA * uOp * w;',
+      '  float w1 = 0.52 + 0.48 * sin(uPhase + vAng * 7.0);',
+      '  float w2 = 0.50 + 0.50 * sin(uPhase * 1.37 - vAng * 12.0 + 1.7);',
+      '  float lace = pow(max(0.0, sin(vAng * 46.0 + uPhase * 2.1)), 6.0) * 0.35;',
+      '  float a = vA * uOp * (w1 * 0.62 + w2 * 0.38 + lace);',
       '  float f = clamp((vDepth - fogNear) / (fogFar - fogNear), 0.0, 1.0);',
-      '  gl_FragColor = vec4(mix(uCol, fogColor, f), a);',
+      '  gl_FragColor = vec4(mix(uCol, fogColor, f), clamp(a, 0.0, 0.95));',
       '}'
     ].join('\n')
   });
@@ -13896,9 +14100,8 @@ function doAction() {
   if (c.type === 'mount') { mountDino(c.d); return; }
   if (bowEquipped()) { shootArrow(null); return; }
   var wk0 = weaponKind();
-  player.swing = 0.4;
-  player.swingKind = (wk0 === 'bow' ? 'fist' : wk0);
-  swingFx(wk0);
+  var cb0 = startSwing(wk0 === 'bow' ? 'fist' : wk0, 0.40);
+  swingFx(wk0, cb0);
   sfx('pop');
   hint('가까이 가면 채집할 수 있어요', 1500);
 }
@@ -14039,7 +14242,7 @@ function gatherNode(n) {
   n.hp -= (b > 1 ? 2 : 1);
   n.shake = 0.4;
   var wkNow = weaponKind();
-  player.swing = 0.35; player.swingKind = (wkNow === 'bow' ? 'axe' : wkNow);
+  startSwing(wkNow === 'bow' ? 'axe' : wkNow, 0.35);
   if (n.kind !== 'nest') sfx('pick');
   if (n.kind !== 'nest') toast(got.join(' · '), 'good');
   if (b > 1) {
@@ -14263,13 +14466,40 @@ function killDino(d) {
 }
 
 /* 무기 종류에 맞는 궤적 FX — 칼은 가로 호, 창은 앞으로 뻗는 잔상, 도끼는 생략(먼지) */
-function swingFx(kind) {
+/* v2.7 — 타격 모션 시작: 0.8초 안에 다시 치면 3단 콤보(내려찍기·가로베기·찌르기) */
+function startSwing(kind, dur) {
+  var now = worldT;
+  if (player.lastSwingAt !== undefined && (now - player.lastSwingAt) < 0.80 && player.comboT > 0) {
+    player.combo = ((player.combo || 0) + 1) % 3;
+  } else {
+    player.combo = 0;
+  }
+  player.lastSwingAt = now;
+  player.comboT = 0.80;
+  player.swingMax = dur || 0.40;
+  player.swing = dur || 0.40;
+  player.swingKind = kind;
+  return player.combo;
+}
+
+function swingFx(kind, combo) {
   var fx2 = Math.sin(player.facing), fz2 = Math.cos(player.facing);
   var px = player.pos.x + fx2 * 0.35, pz = player.pos.z + fz2 * 0.35;
   var py = groundY(player.pos.x, player.pos.z) + 1.05;
-  if (kind === 'knife' || kind === 'boneKnife' || kind === 'stoneKnife') spawnSlashArc(px, py, pz, player.facing, 'knife');
-  else if (kind === 'spear') spawnSlashArc(px, py - 0.05, pz, player.facing, 'spear');
-  else if (kind === 'sickle') spawnSlashArc(px, py - 0.28, pz, player.facing, 'knife');
+  var cb = combo || 0;
+  if (kind === 'knife' || kind === 'boneKnife' || kind === 'stoneKnife') {
+    spawnSlashArc(px, py, pz, player.facing, 'knife');
+    if (cb === 1) spawnSlashArc(px, py + 0.10, pz, player.facing + 0.35, 'knife');
+  } else if (kind === 'spear') {
+    spawnSlashArc(px, py - 0.05, pz, player.facing, 'spear');
+    if (cb === 2) spawnSlashArc(px + fx2 * 0.25, py + 0.16, pz + fz2 * 0.25, player.facing, 'spear');
+  } else if (kind === 'sickle') {
+    spawnSlashArc(px, py - 0.28, pz, player.facing, 'knife');
+    if (cb === 1) spawnSlashArc(px, py - 0.10, pz, player.facing - 0.30, 'knife');
+  } else if (kind === 'axe' && cb === 2) {
+    // 큰 내려찍기 — 넓고 옅은 호를 하나 더
+    spawnSlashArc(px, py + 0.08, pz, player.facing + 0.22, 'knife');
+  }
 }
 
 function attackDino(d) {
@@ -14280,10 +14510,14 @@ function attackDino(d) {
   player.atkCd = 0.40;
   var dmg = meleeAtk();
   player.facing = Math.atan2(d.x - player.pos.x, d.z - player.pos.z);
-  player.swing = 0.4;
   var wk = weaponKind();
-  player.swingKind = (wk === 'bow' ? 'fist' : wk);
-  swingFx(wk);
+  var cbA = startSwing(wk === 'bow' ? 'fist' : wk, 0.42);
+  swingFx(wk, cbA);
+  if (cbA === 2) {
+    // 콤보 마무리 — 발밑 먼지와 함께 살짝 내려찍는 무게감
+    spawnBurst(player.pos.x + Math.sin(player.facing) * 0.5, groundY(player.pos.x, player.pos.z) + 0.08,
+      player.pos.z + Math.cos(player.facing) * 0.5, 0xd8c7a6, 6, 0.5);
+  }
   d.hp -= dmg;
   d.hurt = 0.35;
   d.atkT = 0.62; d.atkDur = 0.62;
@@ -17167,57 +17401,146 @@ function updatePlayer(dt) {
     player.body.rotation.y = 0.26;
     player.head.rotation.y = -0.16;
   } else if (player.swing > 0) {
-    /* 무기별 모션 — 모든 동작이 캐릭터가 보는 정면(+Z) 앞에서 끝난다 (v2.3c 수정)
+    /* 무기별 3단 콤보 (v2.7)
        armR.rotation.x:  음수 = 팔을 앞으로 들기 · 양수 = 뒤로 젖히기
-       (예전엔 도끼 후딜이 +0.70, 칼은 몸통 역회전이 겹쳐 팔이 등 뒤로 넘어갔다) */
-    var sp = clamp(1 - player.swing / 0.4, 0, 1);
+       · 상체(어깨 회전 → 허리 비틀기 → 앞으로 실리는 무게중심)를 함께 돌린다
+       · 1타 내려찍기/지르기 · 2타 가로베기/백핸드 · 3타 큰 마무리(디딤) */
+    var sp = clamp(1 - player.swing / (player.swingMax || 0.4), 0, 1);
     var arc = Math.sin(sp * Math.PI);
     var wk = player.swingKind || 'axe';
+    var cb = player.combo || 0;
+    var wind = Math.sin(Math.min(1, sp * 2.2) * Math.PI * 0.5);   // 예비 동작(0→1)
+    var hit = Math.max(0, Math.min(1, (sp - 0.30) / 0.45));        // 내려치는 순간
     player.armR.rotation.y = 0;
+    // 공통 상체 무게 — 어깨가 열리고 허리가 비틀린다
+    var bodyY = 0, bodyX = 0, bodyZ = 0, step = 0, headY = 0, armLx = 0, armLz = 0;
+
     if (wk === 'knife') {
-      // 칼 — 오른 어깨 위로 들어 올려 정면을 가로질러 왼쪽 아래로 베어 내린다
-      player.armR.rotation.x = -1.75 + 0.95 * sp;      // 위·앞 → 앞·아래
-      player.armR.rotation.z = 0.95 - 1.75 * sp;       // 오른쪽 → 왼쪽
-      player.body.rotation.y = -0.34 + 0.60 * sp;      // 어깨를 열었다가 정면으로
-      player.head.rotation.y = 0.14 - 0.26 * sp;
-      player.armL.rotation.x = -0.35 * arc;
-      player.armL.rotation.z = -0.20 * arc;
+      if (cb === 1) {
+        // 2타 · 백핸드 — 왼쪽에서 오른쪽으로 반대로 쓸어 벤다
+        player.armR.rotation.x = -1.30 + 0.62 * sp;
+        player.armR.rotation.z = -0.85 + 1.70 * sp;
+        bodyY = 0.34 - 0.62 * sp; bodyZ = -0.05 + 0.09 * sp;
+        headY = -0.16 + 0.30 * sp;
+        armLx = -0.30 * arc; armLz = 0.20 * arc;
+      } else if (cb === 2) {
+        // 3타 · 파고들며 찌르기
+        player.armR.rotation.x = -0.20 - 1.55 * Math.pow(hit, 0.7);
+        player.armR.rotation.z = 0.06;
+        bodyY = -0.26 + 0.42 * hit; bodyX = 0.10 * hit; step = 0.10 * hit;
+        headY = 0.06 * (1 - hit);
+        armLx = 0.28 * hit; armLz = 0.10;
+      } else {
+        // 1타 · 어깨 위로 들어 정면을 가로질러 벤다
+        player.armR.rotation.x = -1.75 + 0.95 * sp;
+        player.armR.rotation.z = 0.95 - 1.75 * sp;
+        bodyY = -0.34 + 0.60 * sp; bodyZ = 0.04 * arc;
+        headY = 0.14 - 0.26 * sp;
+        armLx = -0.35 * arc; armLz = -0.20 * arc;
+      }
     } else if (wk === 'spear') {
-      // 창 — 팔을 살짝 뒤로 당겼다가 정면으로 쭉 찌른다
-      player.armR.rotation.x = 0.18 - 1.95 * sp;       // 뒤·아래 → 앞·수평
-      player.armR.rotation.z = 0.10 - 0.16 * sp;
-      player.body.rotation.y = -0.24 + 0.42 * sp;      // 오른 어깨가 앞으로 실린다
-      player.head.rotation.y = 0;
-      player.armL.rotation.x = 0.20 * arc;
-      player.armL.rotation.z = 0.0;
+      if (cb === 1) {
+        // 2타 · 낮게 쓸어 베기
+        player.armR.rotation.x = -0.70 + 0.34 * sp;
+        player.armR.rotation.z = 0.95 - 1.80 * sp;
+        bodyY = -0.32 + 0.58 * sp; bodyZ = 0.06 * arc;
+        headY = 0.16 - 0.30 * sp;
+        armLx = -0.24 * arc; armLz = -0.14 * arc;
+      } else if (cb === 2) {
+        // 3타 · 들어 올려 내리찍는 묵직한 찌르기
+        player.armR.rotation.x = -1.95 + 1.55 * sp;
+        player.armR.rotation.z = 0.14 - 0.20 * sp;
+        bodyY = -0.20 + 0.34 * sp;
+        bodyX = -0.10 + 0.30 * sp;
+        step = 0.09 * hit;
+        armLx = -0.40 * arc; armLz = 0.10 * arc;
+      } else {
+        // 1타 · 정면 찌르기
+        player.armR.rotation.x = 0.18 - 1.95 * sp;
+        player.armR.rotation.z = 0.10 - 0.16 * sp;
+        bodyY = -0.24 + 0.42 * sp; step = 0.06 * hit;
+        armLx = 0.20 * arc;
+      }
     } else if (wk === 'sickle') {
-      // 낫 — 허리 높이에서 정면을 낮게 쓸어 베기
-      player.armR.rotation.x = -1.15 + 0.30 * sp;
-      player.armR.rotation.z = 1.00 - 1.85 * sp;
-      player.body.rotation.y = -0.30 + 0.54 * sp;
-      player.head.rotation.y = 0.12 - 0.24 * sp;
-      player.armL.rotation.x = -0.28 * arc;
-      player.armL.rotation.z = -0.16 * arc;
+      if (cb === 1) {
+        player.armR.rotation.x = -1.00 + 0.34 * sp;
+        player.armR.rotation.z = -0.85 + 1.70 * sp;
+        bodyY = 0.30 - 0.56 * sp; bodyZ = -0.06 + 0.10 * sp;
+        headY = -0.14 + 0.26 * sp;
+        armLx = -0.22 * arc;
+      } else {
+        player.armR.rotation.x = -1.15 + 0.30 * sp;
+        player.armR.rotation.z = 1.00 - 1.85 * sp;
+        bodyY = -0.30 + 0.54 * sp;
+        headY = 0.12 - 0.24 * sp;
+        armLx = -0.28 * arc; armLz = -0.16 * arc;
+      }
     } else if (wk === 'fist') {
-      // 맨손 — 정면으로 곧게 지르기
-      player.armR.rotation.x = -0.10 - 1.45 * arc;
-      player.armR.rotation.z = -0.04;
-      player.body.rotation.y = -0.20 + 0.34 * sp;
-      player.head.rotation.y = 0;
-      player.armL.rotation.x = -0.22 * arc;
+      if (cb === 1) {
+        // 2타 · 반대손 훅
+        player.armR.rotation.x = -0.30 - 1.15 * hit;
+        player.armR.rotation.z = -0.55 + 0.90 * sp;
+        bodyY = 0.34 - 0.60 * sp;
+        headY = -0.18 + 0.30 * sp;
+        armLx = -0.35 * arc;
+      } else if (cb === 2) {
+        // 3타 · 몸을 실은 강타
+        player.armR.rotation.x = -0.20 - 1.65 * hit;
+        player.armR.rotation.z = 0.10;
+        bodyY = -0.32 + 0.55 * sp; bodyX = 0.12 * hit; step = 0.08 * hit;
+        armLx = 0.30 * hit;
+      } else {
+        player.armR.rotation.x = -0.10 - 1.45 * arc;
+        player.armR.rotation.z = -0.04;
+        bodyY = -0.20 + 0.34 * sp;
+        armLx = -0.22 * arc;
+      }
     } else {
-      // 도끼 — 머리 위로 크게 들어 올렸다가 정면 아래로 내려찍는다
-      player.armR.rotation.x = -2.30 + 1.72 * sp;      // -2.30(위로 젖힘) → -0.58(정면 아래)
-      player.armR.rotation.z = 0.16 - 0.26 * sp;
-      player.armL.rotation.x = -0.42 * arc;
-      player.armL.rotation.z = 0.12 * arc;
-      player.body.rotation.y = -0.28 + 0.48 * sp;
-      player.head.rotation.y = 0;
+      // 도끼
+      if (cb === 1) {
+        // 2타 · 어깨에서 허리로 비스듬히 내려 긋기
+        player.armR.rotation.x = -1.70 + 1.05 * sp;
+        player.armR.rotation.z = 0.95 - 1.80 * sp;
+        bodyY = -0.44 + 0.76 * sp;
+        bodyZ = 0.10 * arc;
+        headY = 0.20 - 0.34 * sp;
+        armLx = -0.52 * arc; armLz = -0.28 * arc;
+      } else if (cb === 2) {
+        // 3타 · 한 발 내딛고 머리 위에서 무겁게 내려찍기
+        player.armR.rotation.x = -2.55 + 1.95 * sp;
+        player.armR.rotation.z = 0.22 - 0.34 * sp;
+        bodyY = -0.36 + 0.62 * sp;
+        bodyX = -0.16 + 0.42 * sp;
+        bodyZ = 0.08 - 0.14 * sp;
+        step = 0.10 * hit;
+        armLx = -0.60 * wind + 0.20 * hit; armLz = 0.16;
+      } else {
+        // 1타 · 머리 위로 들어 정면 아래로 내려찍기
+        player.armR.rotation.x = -2.30 + 1.72 * sp;
+        player.armR.rotation.z = 0.16 - 0.26 * sp;
+        bodyY = -0.28 + 0.48 * sp;
+        bodyX = -0.08 + 0.20 * sp;
+        armLx = -0.42 * arc; armLz = 0.12 * arc;
+      }
     }
+    player.body.rotation.y = bodyY;
+    player.body.rotation.x = bodyX;
+    player.body.rotation.z = bodyZ;
+    player.body.position.z = step;
+    player.head.rotation.y = headY;
+    player.head.rotation.x = -bodyX * 0.5 + 0.10 * hit;
+    player.armL.rotation.x = armLx;
+    player.armL.rotation.z = armLz;
+    if (player.elbowR) player.elbowR.rotation.x = -0.25 - 0.35 * arc;
+    if (player.elbowL) player.elbowL.rotation.x = -0.20 - 0.25 * arc;
+    if (player.kneeL) player.kneeL.rotation.x = 0.06 * hit;
+    if (player.kneeR) player.kneeR.rotation.x = 0.09 * hit;
+
   } else {
     // v2.4 — 팔은 어깨에서 흔들리고 팔꿈치가 살짝 접혀 따라온다
     var swingL = -Math.sin(ph) * 0.52 * player.walk;
     var swingR = Math.sin(ph) * 0.52 * player.walk;
+    player.body.position.z += (0 - player.body.position.z) * Math.min(1, dt * 12);
     player.armL.rotation.x = swingL;
     player.armR.rotation.x = swingR;
     if (player.elbowL) player.elbowL.rotation.x = -0.18 - Math.max(0, -swingL) * 0.55;
@@ -19184,11 +19507,11 @@ var DAY = { t: 0.36, len: 480, night: 0, acc: 0, pause: false };
 var SKY_KEYS = [
   { t: 0.00, sun: 0x93aee8, si: 0.34, hs: 0x33456a, hg: 0x18231f, hi: 0.44, ai: 0.09, fog: 0x16233a, fn: 48, ff: 180, top: 0x070d1c, bot: 0x1b2a44, glow: 0.32, gc: 0x8eadff, star: 1.00, cloud: 0x46567a, water: 0x93aac8, night: 1.00 },
   { t: 0.20, sun: 0xa3b6e2, si: 0.36, hs: 0x3f4e70, hg: 0x202b26, hi: 0.44, ai: 0.09, fog: 0x26354e, fn: 50, ff: 186, top: 0x1a2740, bot: 0x3d4b6a, glow: 0.38, gc: 0xb0b6ff, star: 0.72, cloud: 0x5b6a8a, water: 0x97add0, night: 0.82 },
-  { t: 0.275, sun: 0xffc48f, si: 0.56, hs: 0x93a8c8, hg: 0x6a5a42, hi: 0.44, ai: 0.07, fog: 0xdcb1a0, fn: 54, ff: 192, top: 0x7aa4cf, bot: 0xffc79a, glow: 0.90, gc: 0xffb877, star: 0.06, cloud: 0xffd0b0, water: 0xbfccd2, night: 0.22 },
+  { t: 0.275, sun: 0xffb87c, si: 0.58, hs: 0x9db2ce, hg: 0x6b5a40, hi: 0.43, ai: 0.07, fog: 0xdca894, fn: 52, ff: 190, top: 0x6f9ccb, bot: 0xffbd8c, glow: 0.96, gc: 0xffae6c, star: 0.05, cloud: 0xffc9a6, water: 0xbfccd2, night: 0.20 },
   { t: 0.40, sun: 0xffeccb, si: 0.92, hs: 0xcfdfec, hg: 0x6a6744, hi: 0.40, ai: 0.10, fog: 0xc3c8ae, fn: 62, ff: 208, top: 0x58aec9, bot: 0xd8e2c8, glow: 0.52, gc: 0xffd9a0, star: 0.00, cloud: 0xfbf7ea, water: 0xffffff, night: 0.00 },
-  { t: 0.50, sun: 0xfff2da, si: 0.98, hs: 0xdceaf6, hg: 0x6f6f48, hi: 0.42, ai: 0.10, fog: 0xc0c5aa, fn: 64, ff: 212, top: 0x50aac6, bot: 0xdae4c6, glow: 0.46, gc: 0xffe8b8, star: 0.00, cloud: 0xfdf8ec, water: 0xffffff, night: 0.00 },
+  { t: 0.50, sun: 0xfff3dd, si: 1.02, hs: 0xdcebf7, hg: 0x736f45, hi: 0.40, ai: 0.10, fog: 0xc4c9ac, fn: 68, ff: 222, top: 0x50aac6, bot: 0xdae4c6, glow: 0.46, gc: 0xffe8b8, star: 0.00, cloud: 0xfdf8ec, water: 0xffffff, night: 0.00 },
   { t: 0.66, sun: 0xffddaa, si: 0.90, hs: 0xe0dccb, hg: 0x73713f, hi: 0.40, ai: 0.09, fog: 0xc8c2a0, fn: 60, ff: 205, top: 0x5aa8bd, bot: 0xe0e1bd, glow: 0.58, gc: 0xffcc8a, star: 0.00, cloud: 0xffeedd, water: 0xfff4e4, night: 0.00 },
-  { t: 0.745, sun: 0xff9a52, si: 0.62, hs: 0xb9a6c4, hg: 0x6b5a44, hi: 0.42, ai: 0.07, fog: 0xe0a07c, fn: 54, ff: 192, top: 0x5c76ad, bot: 0xffab6e, glow: 1.00, gc: 0xff9a4a, star: 0.08, cloud: 0xffc3a0, water: 0xe8cbb8, night: 0.16 },
+  { t: 0.745, sun: 0xff8b45, si: 0.66, hs: 0xc4a6b8, hg: 0x6f5540, hi: 0.40, ai: 0.07, fog: 0xe89a72, fn: 52, ff: 188, top: 0x4a6aa8, bot: 0xff9a5e, glow: 1.10, gc: 0xff8a3e, star: 0.06, cloud: 0xffb98c, water: 0xe8cbb8, night: 0.14 },
   { t: 0.805, sun: 0xc08aa8, si: 0.36, hs: 0x5b5a86, hg: 0x3a3242, hi: 0.38, ai: 0.06, fog: 0x7d6f92, fn: 50, ff: 182, top: 0x2a3160, bot: 0x8a5f7c, glow: 0.70, gc: 0xd58aa8, star: 0.44, cloud: 0xb08aa0, water: 0xa9a4bc, night: 0.48 },
   { t: 0.885, sun: 0x97ace0, si: 0.34, hs: 0x36486c, hg: 0x1c2626, hi: 0.42, ai: 0.08, fog: 0x1f2c43, fn: 48, ff: 178, top: 0x0c1526, bot: 0x243450, glow: 0.36, gc: 0x9fb4ff, star: 0.92, cloud: 0x4d5c7c, water: 0x97abca, night: 0.96 },
   { t: 1.00, sun: 0x93aee8, si: 0.34, hs: 0x33456a, hg: 0x18231f, hi: 0.44, ai: 0.09, fog: 0x16233a, fn: 48, ff: 180, top: 0x070d1c, bot: 0x1b2a44, glow: 0.32, gc: 0x8eadff, star: 1.00, cloud: 0x46567a, water: 0x93aac8, night: 1.00 }
@@ -19224,7 +19547,11 @@ function applySky() {
   starMat.opacity = L(k0.star, k1.star);
   starField.visible = starMat.opacity > 0.02;
   cloudMat.color.copy(LC('cloud', _kC));
-  if (waterMat) waterMat.color.copy(LC('water', _kC));
+  if (waterMat && waterMat.uniforms) {
+    if (waterMat.uniforms.uNight) waterMat.uniforms.uNight.value = L(k0.night, k1.night);
+    if (waterMat.uniforms.uSunCol) waterMat.uniforms.uSunCol.value.copy(sun.color).lerp(new THREE.Color(0xffffff), 0.35);
+    if (waterMat.uniforms.uSunDir) waterMat.uniforms.uSunDir.value.copy(SUN_OFF).normalize();
+  }
   DAY.night = L(k0.night, k1.night);
   var el = Math.sin((t - 0.25) * TAU);
   var up = Math.max(0, el), dn = Math.max(0, -el);
@@ -19297,6 +19624,15 @@ function loop(now) {
     waterAttr.needsUpdate = true;
   }
   if (sparkleMat) sparkleMat.opacity = (0.35 + Math.abs(Math.sin(t * 1.4)) * 0.4) * (1 - DAY.night * 0.7);
+  /* v2.7 — 바다 셰이더: 흐르는 물결 시간 + 안개 연동 */
+  if (waterMat && waterMat.uniforms) {
+    waterMat.uniforms.uTime.value = t;
+    if (scene.fog) {
+      waterMat.uniforms.fogColor.value.copy(scene.fog.color);
+      waterMat.uniforms.fogNear.value = scene.fog.near;
+      waterMat.uniforms.fogFar.value = scene.fog.far;
+    }
+  }
   if (frameNo % 2 === 0) updateFoam(t);
   updateRiverWater(t);
   if (GRASS.mesh) GRASS.time.value = t;
