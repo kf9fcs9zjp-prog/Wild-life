@@ -281,6 +281,45 @@
   }
   .actbtn.busy .ring{opacity:.9}
 
+  /* ================= 💨 v2.8 구르기(회피) 버튼 =================
+     공격 버튼 바로 위 오른쪽 기둥 — 먹기·펫·타기·설치 열(왼쪽)과
+     퀵슬롯(위)·채팅(왼쪽 아래) 어느 것과도 겹치지 않는 자리다. */
+  #btnDodge{
+    position:absolute;right:0;bottom:86px;width:54px;height:54px;border-radius:50%;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:2px solid rgba(212,238,255,.74);
+    background:radial-gradient(circle at 40% 30%,rgba(222,246,255,.97),rgba(104,180,218,.96) 62%,rgba(46,112,156,.96));
+    color:#0b2838;font-family:inherit;font-size:8.5px;font-weight:900;letter-spacing:-.03em;
+    box-shadow:0 6px 16px rgba(10,40,60,.34), inset 0 -3px 8px rgba(18,66,96,.26);
+    cursor:pointer;overflow:hidden;padding:0;line-height:1;
+    transition:transform .09s, opacity .16s, filter .16s;
+  }
+  #btnDodge .dc{font-size:16px;line-height:1;display:block;margin-bottom:1px}
+  #btnDodge .dl{display:block;text-shadow:0 1px 0 rgba(255,255,255,.35)}
+  #btnDodge:active{transform:scale(.9)}
+  #btnDodge.cd{opacity:.66;filter:saturate(.5) brightness(.94)}
+  #btnDodge .cdRing{
+    position:absolute;inset:0;border-radius:50%;pointer-events:none;
+    background:conic-gradient(rgba(6,22,32,.74) var(--cd,0deg), transparent 0);
+    opacity:0;transition:opacity .12s;
+  }
+  #btnDodge.cd .cdRing{opacity:1}
+  #btnDodge.roll{animation:dodgeRollPulse .22s ease-out}
+  @keyframes dodgeRollPulse{
+    0%{box-shadow:0 0 0 0 rgba(164,232,255,.85), inset 0 -3px 8px rgba(18,66,96,.26)}
+    100%{box-shadow:0 0 0 13px rgba(164,232,255,0), inset 0 -3px 8px rgba(18,66,96,.26)}
+  }
+  @media (max-height:700px){
+    #btnDodge{bottom:80px}
+  }
+  @media (max-height:560px){
+    #btnDodge{width:46px;height:46px;bottom:74px;font-size:7.5px}
+    #btnDodge .dc{font-size:13px}
+  }
+  @media (max-width:340px){
+    #btnDodge{width:48px;height:48px;bottom:76px}
+  }
+
   .hint{
     position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom) + 104px);transform:translateX(-50%);
     max-width:78%;padding:6px 12px;border-radius:12px;background:rgba(24,40,33,.62);
@@ -1405,6 +1444,7 @@
       <button class="mbtn" id="btnBuild">🏕 설치</button>
     </div>
     <button class="actbtn dim" id="btnAct"><div class="ring" id="actRing"></div><span id="actLabel">채집</span></button>
+    <button id="btnDodge" aria-label="구르기 · 회피"><i class="cdRing"></i><span class="dc">💨</span><span class="dl">구르기</span></button>
   </div>
 
   <div class="qslot" id="qslot" role="toolbar" aria-label="무기·도구 퀵슬롯"></div>
@@ -1456,7 +1496,7 @@
       </div>
       <div class="startSaveLine" id="startSaveLine"><span>저장 없음 · 새로 시작해요</span></div>
     </div>
-    <div class="startFoot" id="startFoot">WILD LIFE · v2.7 &nbsp;|&nbsp; 왼쪽 조이스틱으로 걷고 오른쪽 버튼으로 채집·공격</div>
+    <div class="startFoot" id="startFoot">WILD LIFE · v2.8 &nbsp;|&nbsp; 왼쪽 조이스틱으로 걷고 오른쪽 버튼으로 채집·공격 · 빨간 예고선은 💨 구르기로 피하기</div>
   </div>
 
   <div class="slotPanel" id="slotPanel">
@@ -2627,6 +2667,30 @@ function sfx(name) {
   } else if (name === 'relight') {
     burst({ dur: 0.45, type: 'bandpass', f0: 480, f1: 2100, q: 1.2, vol: 0.17, attack: 0.03 });
     burst({ dur: 0.10, type: 'highpass', f0: 2800, vol: 0.07, delay: 0.28 });
+  } else if (name === 'dodge') {
+    /* 💨 v2.8 구르기 — 옷자락이 바람을 가르는 '휙-' + 구른 뒤 발을 딛는 '툭' */
+    burst({ dur: 0.24, type: 'bandpass', f0: 2500, f1: 360, q: 0.85, vol: 0.17, attack: 0.008 });
+    burst({ dur: 0.15, type: 'highpass', f0: 3800, f1: 1100, vol: 0.075, delay: 0.02 });
+    burst({ dur: 0.12, type: 'lowpass', f0: 300, f1: 110, vol: 0.13, delay: 0.20 });
+  } else if (name === 'crit') {
+    /* 🎯 백어택·약점 — 날카로운 쇳소리와 함께 묵직하게 꽂히는 한 방 */
+    burst({ dur: 0.09, type: 'bandpass', f0: 3300, f1: 1500, q: 2.6, vol: 0.20 });
+    burst({ dur: 0.19, type: 'lowpass', f0: 420, f1: 110, vol: 0.26, delay: 0.012 });
+    burst({ dur: 0.22, type: 'bandpass', f0: 1750, q: 5.5, vol: 0.10, delay: 0.05 });
+  } else if (name === 'groggy') {
+    /* 💫 기절 — 머리를 얻어맞고 휘청이는 '우웅-' + 몸이 풀리는 낮은 탁 */
+    burst({ dur: 0.36, type: 'bandpass', f0: 720, f1: 210, q: 3.4, vol: 0.17 });
+    burst({ dur: 0.28, type: 'bandpass', f0: 1500, f1: 520, q: 9, vol: 0.085, delay: 0.07 });
+    burst({ dur: 0.24, type: 'lowpass', f0: 290, f1: 85, vol: 0.16, delay: 0.17 });
+  } else if (name === 'tail') {
+    /* 🦖 꼬리 휘두르기 — 공기를 크게 갈라치는 묵직한 휘 */
+    burst({ dur: 0.30, type: 'bandpass', f0: 900, f1: 220, q: 0.7, vol: 0.19, attack: 0.01 });
+    burst({ dur: 0.16, type: 'lowpass', f0: 380, f1: 120, vol: 0.20, delay: 0.10 });
+  } else if (name === 'charge') {
+    /* 🦏 뿔 돌진 — 땅을 박차는 쿵쿵 + 우르릉 */
+    burst({ dur: 0.42, type: 'lowpass', f0: 260, f1: 95, vol: 0.24, attack: 0.01 });
+    burst({ dur: 0.14, type: 'bandpass', f0: 520, q: 3.2, vol: 0.13, delay: 0.02 });
+    burst({ dur: 0.13, type: 'bandpass', f0: 440, q: 3.2, vol: 0.11, delay: 0.18 });
   }
 }
 
@@ -5729,7 +5793,9 @@ var player = {
   group: null, pos: new THREE.Vector3(0, 0, 0), facing: 0,
   walk: 0, moving: false, armR: null, armL: null, legL: null, legR: null,
   body: null, head: null, axe: null, spear: null, bow: null, hat: null, swing: 0,
-  atkCd: 0, arrowCd: 0, kx: 0, kz: 0, knockT: 0
+  atkCd: 0, arrowCd: 0, kx: 0, kz: 0, knockT: 0,
+  /* 💨 v2.8 구르기 — 남은 구르기 시간·쿨다운·무적 프레임 */
+  dodgeT: 0, dodgeCd: 0, dodgeP: 0, invuln: 0, slowT: 0, dodgeDX: 0, dodgeDZ: 1
 };
 
 /* =========================================================
@@ -12777,6 +12843,13 @@ function updateFx(dt) {
       f.mesh.material.opacity = 0.5 * (1 - k) * (1 - k);
       continue;
     }
+    /* 💨 v2.8 — 짧게 퍼지는 고리(구르기 잔상·타격 섬광) */
+    if (f.fxRing) {
+      var rs = 0.35 + k * (f.grow || 2.6);
+      f.mesh.scale.set(rs, rs, rs);
+      f.mesh.material.opacity = 0.85 * (1 - k) * (1 - k);
+      continue;
+    }
     f.vy -= f.grav * dt;
     f.mesh.position.x += f.vx * dt;
     f.mesh.position.y += f.vy * dt;
@@ -12796,6 +12869,290 @@ function updateFx(dt) {
     if (f.mesh.position.y < terrainH(f.mesh.position.x, f.mesh.position.z) + 0.05 && !f.smoke) {
       f.vy = Math.abs(f.vy) * 0.3;
     }
+  }
+}
+
+/* =========================================================
+   🦖 v2.8 바닥 공격 예고선 (Telegraph)
+   ---------------------------------------------------------
+   공룡이 특수 공격을 준비하는 동안 바닥에 반투명 붉은 경고 영역을 띄운다.
+   · lane  : 직선 돌진 레인 (트리케라톱스 돌진 · 랩터 도약 물기)
+   · fan   : 부채꼴 휘두르기 (꼬리 치기 · 앞발/물기)
+   · ring  : 원형 범위 (위압 포효 · 착지)
+   지오메트리는 종류별로 한 번만 만들어 모두가 공유하고,
+   메시·재질만 8개 풀에서 돌려 쓴다 → 예고선 수만큼만 드로우콜이 늘어난다.
+   ========================================================= */
+var TELE_DEF = { max: 8, y: 0.055 };
+var TELE_GEO = null;
+var TELE_POOL = [];
+var TELES = [];
+
+/* 지오메트리에 밝기 그라데이션(정점 색)을 입힌다 — 가산 합성이라 어두운 쪽은 사라진다 */
+function telePaint(geo, fn) {
+  var pos = geo.attributes.position, n = pos.count;
+  var col = new Float32Array(n * 3);
+  for (var i = 0; i < n; i++) {
+    var c = fn(pos.getX(i), pos.getY(i), pos.getZ(i));
+    col[i * 3] = c[0]; col[i * 3 + 1] = c[1]; col[i * 3 + 2] = c[2];
+  }
+  geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  return geo;
+}
+/* 붉은 경고색 — 밝기 k(0~1) */
+function teleRed(k) { return [1.0 * k, 0.075 * k, 0.035 * k]; }
+function teleBuild() {
+  if (TELE_GEO) return TELE_GEO;
+  TELE_GEO = {};
+  /* 레인 — 로컬 X가 폭, 로컬 -Y가 진행 방향. 시작(공룡 발밑)이 밝고 끝으로 갈수록 옅어진다 */
+  TELE_GEO.lane = telePaint(new THREE.PlaneGeometry(1, 1, 1, 10), function (x, y) {
+    var t = (0.5 - y);                      // 0 = 공룡 쪽, 1 = 먼 쪽
+    return teleRed(0.30 + 0.70 * Math.max(0, 1 - t * 1.05));
+  });
+  /* 부채꼴 — 로컬 +X가 정면. 꼭짓점(공룡)에서 바깥으로 갈수록 밝다 */
+  function fanGeo(halfDeg) {
+    var half = halfDeg * Math.PI / 180;
+    var g = new THREE.CircleGeometry(1, 30, -half, half * 2);
+    return telePaint(g, function (x, y) {
+      var r = Math.sqrt(x * x + y * y);
+      return teleRed(0.22 + 0.78 * Math.min(1, r));
+    });
+  }
+  TELE_GEO.fan40 = fanGeo(40);
+  TELE_GEO.fan70 = fanGeo(70);
+  TELE_GEO.fan108 = fanGeo(108);
+  /* 원형 링 — 착지·포효 범위 (가운데는 살짝 비워 '범위'로 읽히게) */
+  TELE_GEO.ring = telePaint(new THREE.RingGeometry(0.22, 1, 32), function (x, y) {
+    var r = Math.sqrt(x * x + y * y);
+    return teleRed(0.20 + 0.80 * Math.min(1, (r - 0.22) / 0.78));
+  });
+  return TELE_GEO;
+}
+function teleTake() {
+  teleBuild();
+  for (var i = 0; i < TELE_POOL.length; i++) if (!TELE_POOL[i].used) return TELE_POOL[i];
+  if (TELE_POOL.length >= TELE_DEF.max) return null;      // 자리가 없으면 새로 만들지 않는다
+  var mat = new THREE.MeshBasicMaterial({
+    vertexColors: true, transparent: true, opacity: 0, depthWrite: false,
+    blending: THREE.AdditiveBlending, side: THREE.DoubleSide, fog: false
+  });
+  var mesh = new THREE.Mesh(TELE_GEO.lane, mat);
+  mesh.rotation.order = 'YXZ';
+  mesh.rotation.x = -Math.PI / 2;
+  mesh.renderOrder = 3;
+  mesh.frustumCulled = false;
+  mesh.visible = false;
+  scene.add(mesh);
+  var e = { mesh: mesh, mat: mat, used: false, laneGeo: null };
+  TELE_POOL.push(e);
+  return e;
+}
+
+/* 레인은 경사진 땅에서 묻히지 않도록 지형을 따라 흐르는 리본으로 그린다 (정점 8칸) */
+ var TELE_LANE_SEG = 8;
+function teleLaneGeo(e) {
+  if (e.laneGeo) return e.laneGeo;
+  var g = new THREE.BufferGeometry();
+  var n = (TELE_LANE_SEG + 1) * 2;
+  g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(n * 3), 3));
+  g.setAttribute('color', new THREE.BufferAttribute(new Float32Array(n * 3), 3));
+  var idx = [];
+  for (var i = 0; i < TELE_LANE_SEG; i++) {
+    var a = i * 2, b = i * 2 + 1, c = (i + 1) * 2, d = (i + 1) * 2 + 1;
+    idx.push(a, b, c, b, d, c);
+  }
+  g.setIndex(idx);
+  e.laneGeo = g;
+  return g;
+}
+/* 레인 리본 정점 갱신 — 시작(공룡 발밑)이 밝고 끝으로 갈수록 옅어진다 */
+function teleDrapeLane(rec) {
+  var g = rec.e.laneGeo;
+  var pos = g.attributes.position.array, col = g.attributes.color.array;
+  var dx = Math.sin(rec.yaw), dz = Math.cos(rec.yaw);
+  var px = dz * rec.wid * 0.5, pz = -dx * rec.wid * 0.5;
+  for (var i = 0; i <= TELE_LANE_SEG; i++) {
+    var f = i / TELE_LANE_SEG;
+    var cx = rec.x + dx * rec.len * f, cz = rec.z + dz * rec.len * f;
+    var y = terrainH(cx, cz) + TELE_DEF.y;
+    var o = i * 6;
+    pos[o] = cx + px; pos[o + 1] = y; pos[o + 2] = cz + pz;
+    pos[o + 3] = cx - px; pos[o + 4] = y; pos[o + 5] = cz - pz;
+    var k = Math.max(0, 1 - f * 1.02);
+    var b = 0.30 + 0.70 * k;
+    for (var j = 0; j < 2; j++) {
+      col[o + j * 3] = 1.0 * b; col[o + j * 3 + 1] = 0.075 * b; col[o + j * 3 + 2] = 0.035 * b;
+    }
+  }
+  g.attributes.position.needsUpdate = true;
+  g.attributes.color.needsUpdate = true;
+  g.computeBoundingSphere();
+}
+
+/* 예고선 띄우기
+   o = { kind:'lane'|'fan'|'ring', x, z, yaw, len, wid, rad, half(40|70|108),
+         dur, owner(공룡), yawOff, follow(1이면 공룡을 따라간다) } */
+function spawnTelegraph(o) {
+  if (!o) return null;
+  var e = teleTake();
+  if (!e) return null;
+  var kind = o.kind || 'fan';
+  e.used = true;
+  if (kind === 'lane') e.mesh.geometry = teleLaneGeo(e);
+  else e.mesh.geometry = TELE_GEO[kind === 'ring' ? 'ring' : ('fan' + (o.half === 108 ? '108' : (o.half === 40 ? '40' : '70')))];
+  var rec = {
+    e: e, mesh: e.mesh, mat: e.mat, kind: kind,
+    x: o.x || 0, z: o.z || 0, yaw: o.yaw || 0, yawOff: o.yawOff || 0,
+    len: o.len || 3, wid: o.wid || 1.6, rad: o.rad || 2.6,
+    dur: o.dur || 0.5, t: 0, owner: o.owner || null, follow: o.follow !== 0,
+    dead: false, flash: 0
+  };
+  rec.baseOp = kind === 'ring' ? 0.44 : 0.62;
+  TELES.push(rec);
+  e.mat.opacity = rec.baseOp;        // 첫 프레임에도 바로 보이게
+  telePlace(rec, 0);
+  return rec;
+}
+/* 위치·회전·크기 — 사거리와 방향은 매 프레임 공룡을 따라간다 */
+function telePlace(rec, t) {
+  var m = rec.mesh;
+  if (rec.owner && rec.follow && !rec.dead) {
+    rec.x = rec.owner.x; rec.z = rec.owner.z;
+    rec.yaw = (rec.owner.rot || 0) + rec.yawOff;
+  }
+  var gy = terrainH(rec.x, rec.z);
+  var dx = Math.sin(rec.yaw), dz = Math.cos(rec.yaw);
+  if (rec.kind === 'lane') {
+    /* 지형을 따라 흐르는 리본 — 경사에서도 묻히지 않는다 */
+    m.rotation.set(0, 0, 0);
+    m.position.set(0, 0, 0);
+    m.scale.set(1, 1, 1);
+    teleDrapeLane(rec);
+    m.visible = true;
+    return;
+  }
+  var r = rec.rad;
+  /* 부채꼴·원형은 한 장의 평면이라, 영역 안에서 가장 높은 지점에 맞춰 띄운다 */
+  var top = terrainH(rec.x, rec.z);
+  for (var s = 0; s < 8; s++) {
+    var aa = rec.yaw + (s / 8) * Math.PI * 2;
+    var hh = terrainH(rec.x + Math.sin(aa) * r * 0.95, rec.z + Math.cos(aa) * r * 0.95);
+    if (hh > top) top = hh;
+    var hh2 = terrainH(rec.x + Math.sin(aa) * r * 0.55, rec.z + Math.cos(aa) * r * 0.55);
+    if (hh2 > top) top = hh2;
+  }
+  m.scale.set(r, r, 1);
+  m.position.set(rec.x, top + TELE_DEF.y, rec.z);
+  m.rotation.x = -Math.PI / 2;
+  m.rotation.y = rec.yaw - Math.PI / 2;
+  m.visible = true;
+}
+function killTelegraph(rec) {
+  if (!rec || rec.dead) return;
+  rec.dead = true;
+  rec.mesh.visible = false;
+  rec.e.used = false;
+  var i = TELES.indexOf(rec);
+  if (i >= 0) TELES.splice(i, 1);
+}
+function killTelegraphOf(d) {
+  if (!d || !d.tele) return;
+  killTelegraph(d.tele);
+  d.tele = null;
+}
+function updateTelegraphs(dt) {
+  for (var i = TELES.length - 1; i >= 0; i--) {
+    var rec = TELES[i];
+    rec.t += dt;
+    var k = rec.t / Math.max(0.001, rec.dur);
+    if (k >= 1 || rec.dead) { killTelegraph(rec); continue; }
+    telePlace(rec, rec.t);
+    /* 들어올 때 살짝 밝아졌다가, 마지막 0.14초에 확 밝아져 '곧 온다'를 알린다 */
+    var ramp = Math.min(1, rec.t / 0.09);
+    var pulse = 0.55 + 0.45 * Math.sin(rec.t * 17);
+    var tail = k > 0.72 ? 1.25 : 1;
+    rec.mat.opacity = Math.min(1, (rec.baseOp || 0.62) * ramp * tail) * (0.62 + 0.38 * pulse);
+    rec.mesh.visible = true;
+  }
+}
+/* 예고선이 끝나는 순간 — 타격 지점에 짧게 붉은 섬광을 남긴다 (메시 1개, 0.2초) */
+function teleFlash(rec) {
+  if (!rec) return;
+  spawnFxRing(rec.x, terrainH(rec.x, rec.z) + 0.06, rec.z, 0xff4a2a, 0.24, 1.6);
+}
+
+/* 짧게 퍼지는 고리 — 구르기 잔상·타격 섬광 공용 (fx 풀 사용) */
+var FX_RING_GEO = new THREE.RingGeometry(0.55, 1, 28);
+function spawnFxRing(x, y, z, color, life, grow) {
+  var mat = new THREE.MeshBasicMaterial({
+    color: color, transparent: true, opacity: 0.85, depthWrite: false,
+    blending: THREE.AdditiveBlending, side: THREE.DoubleSide
+  });
+  var m = new THREE.Mesh(FX_RING_GEO, mat);
+  m.rotation.x = -Math.PI / 2;
+  m.position.set(x, y, z);
+  m.scale.setScalar(0.35);
+  m.renderOrder = 4;
+  scene.add(m);
+  fx.push({ mesh: m, life: 0, max: life || 0.3, vx: 0, vy: 0, vz: 0, spin: 0, grav: 0, fxMat: mat, fxRing: true, grow: grow || 2.6, growRate: (grow || 2.6) / (life || 0.3) });
+}
+
+/* =========================================================
+   🎯 v2.8 월드 좌표 플로팅 텍스트 (백어택 · 기절 · 회피)
+   텍스처는 글자별로 한 번만 그려 16개까지만 캐시한다.
+   ========================================================= */
+var FLOAT_TEX = {}, FLOAT_KEYS = [], FLOATS = [];
+function floatTex(text, color) {
+  var key = color + '|' + text;
+  if (FLOAT_TEX[key]) return FLOAT_TEX[key];
+  var cv = document.createElement('canvas');
+  cv.width = 320; cv.height = 104;
+  var ctx = cv.getContext('2d');
+  var font = 'bold 54px -apple-system, "Apple SD Gothic Neo", sans-serif';
+  ctx.font = font;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.lineJoin = 'round';
+  ctx.lineWidth = 12; ctx.strokeStyle = 'rgba(24,12,8,.92)';
+  ctx.strokeText(text, 160, 54);
+  ctx.fillStyle = color;
+  ctx.fillText(text, 160, 54);
+  var tex = new THREE.CanvasTexture(cv);
+  FLOAT_TEX[key] = tex;
+  FLOAT_KEYS.push(key);
+  while (FLOAT_KEYS.length > 16) {
+    var old = FLOAT_KEYS.shift();
+    if (FLOAT_TEX[old]) { FLOAT_TEX[old].dispose(); delete FLOAT_TEX[old]; }
+  }
+  return tex;
+}
+function spawnFloatText(x, y, z, text, color, scale) {
+  var s = scale || 1;
+  var mat = new THREE.SpriteMaterial({
+    map: floatTex(text, color || '#ffe27a'), transparent: true,
+    depthTest: false, depthWrite: false, opacity: 1
+  });
+  var sp = new THREE.Sprite(mat);
+  sp.scale.set(1.85 * s, 0.60 * s, 1);
+  sp.position.set(x, y, z);
+  sp.renderOrder = 9;
+  scene.add(sp);
+  FLOATS.push({ sp: sp, mat: mat, life: 0, max: 1.05, vy: 1.55, x0: x, y0: y, z0: z });
+  return sp;
+}
+function updateFloats(dt) {
+  for (var i = FLOATS.length - 1; i >= 0; i--) {
+    var f = FLOATS[i];
+    f.life += dt;
+    var k = f.life / f.max;
+    if (k >= 1) {
+      scene.remove(f.sp);
+      f.mat.dispose();
+      FLOATS.splice(i, 1);
+      continue;
+    }
+    f.sp.position.y = f.y0 + f.vy * f.life * (1 - k * 0.45);
+    f.mat.opacity = k < 0.55 ? 1 : Math.max(0, 1 - (k - 0.55) / 0.45);
+    var pop = k < 0.16 ? 0.72 + (k / 0.16) * 0.34 : 1.06 - (k - 0.16) * 0.07;
+    f.sp.scale.set(1.85 * pop, 0.60 * pop, 1);
   }
 }
 
@@ -13587,6 +13944,7 @@ var chipsEl = $id('chips'), toastsEl = $id('toasts');
 var btnAct = $id('btnAct'), actLabel = $id('actLabel'), actRing = $id('actRing');
 var btnMount = $id('btnMount'), btnBuild = $id('btnBuild'), btnEat = $id('btnEat'), btnDemolish = $id('btnDemolish');
 var btnPet = $id('btnPet');
+var btnDodge = $id('btnDodge');          // 💨 v2.8 구르기
 var stickEl = $id('stick'), knobEl = $id('knob');
 var sheet = $id('sheet'), sheetTitle = $id('sheetTitle'), sheetSub = $id('sheetSub'), sheetBody = $id('sheetBody');
 var hintEl = $id('hint');
@@ -14468,6 +14826,11 @@ function wakeDino(d) {
 function killDino(d) {
   if (!d || d.tamed) return;          // 아군이 죽는 일이 없도록 마지막 안전장치
   d.dead = true; d.deadAt = worldT + 50;
+  /* 💨 v2.8 — 예고선·기절 별을 함께 정리한다 */
+  killTelegraphOf(d);
+  removeStars(d);
+  d.groggy = 0; d.groggyT = 0; d.exhaustT = 0; d.hornT = 0; d.chgT = 0;
+  d.tailT = 0; d.flankT = 0; d.roar2T = 0;
   /* v2.7 — 바로 사라지지 않고 옆으로 무겁게 쓰러진 뒤 사라진다 */
   d.dying = 1.25; d.dyingMax = 1.25;
   d.deathDir = Math.random() < 0.5 ? -1 : 1;
@@ -14532,6 +14895,22 @@ function attackDino(d) {
   if (player.atkCd > 0) return;      // 쿨다운 중에도 이동은 막지 않는다 (무빙 어택)
   player.atkCd = 0.40;
   var dmg = meleeAtk();
+  /* 🦖 v2.8 — 뒤잡기(백어택) · 지침 · 기절 보상 계산 */
+  var toP = Math.atan2(player.pos.x - d.x, player.pos.z - d.z);
+  var relA = Math.abs(v28AngDiff(toP, d.rot || 0));   // 0 = 공룡 정면, π = 등 뒤
+  var behind = relA > 2.18;                            // 125° 밖에서 때리면 등 뒤
+  var stun = (d.groggyT || 0) > 0;
+  var tired = (d.exhaustT || 0) > 0;
+  var mult = 1;
+  if (behind) mult *= 1.45;
+  if (stun) mult *= 1.35;
+  if (tired) mult *= 1.7;
+  var crit = behind || stun || tired;
+  if (crit) dmg = Math.max(1, Math.round(dmg * mult));
+  /* 기절 게이지 — 등 뒤·연속 타격으로 쌓이고, 시간이 지나면 식는다 */
+  if (!stun) {
+    d.groggy = Math.min(100, (d.groggy || 0) + (behind ? 27 : 17) + (tired ? 9 : 0));
+  }
   player.facing = Math.atan2(d.x - player.pos.x, d.z - player.pos.z);
   var wk = weaponKind();
   var cbA = startSwing(wk === 'bow' ? 'fist' : wk, 0.42);
@@ -14544,16 +14923,26 @@ function attackDino(d) {
   d.hp -= dmg;
   d.hurt = 0.35;
   d.atkT = 0.62; d.atkDur = 0.62;
-  sfx('hit');
+  sfx(crit ? 'crit' : 'hit');
   var gy = terrainH(d.x, d.z);
-  spawnBurst(d.x, gy + (d.parts.height || 1.4) * 0.55, d.z, 0xd8583c, 8, 1);
+  spawnBurst(d.x, gy + (d.parts.height || 1.4) * 0.55, d.z, crit ? 0xffd166 : 0xd8583c, crit ? 12 : 8, crit ? 1.25 : 1);
+  /* 🎯 백어택·약점 타격 — 금빛 충격고리 + 플로팅 텍스트 */
+  if (crit) {
+    spawnFxRing(d.x, gy + 0.07, d.z, 0xffe08a, 0.3, 2.6);
+    spawnBurst(d.x, gy + (d.parts.height || 1.4) * 0.7, d.z, 0xfff2c4, 6, 1.5);
+    var tag = tired ? '지침!' : (stun ? '기절!' : '백어택!');
+    var tagCol = tired ? '#ffd0a0' : (stun ? '#ffe27a' : '#ffef9a');
+    spawnFloatText(d.x, gy + (d.parts.height || 1.4) * 0.95, d.z, '-' + dmg + ' ' + tag, tagCol, 1.0);
+  }
+  /* 💫 게이지가 다 차면 짧은 기절 — 2초 무방비 */
+  if (!stun && d.groggy >= 100 && d.hp > 0) startGroggy(d);
   var kx = d.x - player.pos.x, kz = d.z - player.pos.z, kl = Math.hypot(kx, kz) || 1;
   var push = d.kind === 'brachio' ? 0.10 : 0.45;
   if (terrainH(d.x + kx / kl * push, d.z + kz / kl * push) > 0.4) { d.x += kx / kl * push; d.z += kz / kl * push; }
   wakeDino(d);
   if (d.kind === 'compy') compStartle(d, d.x - player.pos.x, d.z - player.pos.z, 2.4);
   if (d.hp <= 0) { killDino(d); return; }
-  toast('-' + dmg + ' · ' + Math.max(0, Math.round(d.hp)) + '/' + d.max, undefined);
+  toast((crit ? '🎯 ' : '') + '-' + dmg + ' · ' + Math.max(0, Math.round(d.hp)) + '/' + d.max, crit ? 'good' : undefined);
   if (Math.random() < 0.4) { d.tx = d.x + rnd(-4, 4); d.tz = d.z + rnd(-4, 4); }
 }
 
@@ -17088,6 +17477,8 @@ window.addEventListener('keydown', function (e) {
   if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
   keys[e.code] = true;
   if (e.code === 'Space') { e.preventDefault(); if (!e.repeat) doAction(); }
+  if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') { if (!e.repeat) startDodge(); }
+  if (e.code === 'KeyQ') { if (!e.repeat) startDodge(); }
   if (e.code === 'KeyE') { if (!e.repeat) toggleMount(); }
   if (e.code === 'KeyF') { if (!e.repeat) eatOrInfo(bestFood()); }
   if (e.code === 'KeyB') { if (!e.repeat) { audioInit(); openSheet('bag'); } }
@@ -17145,6 +17536,7 @@ function toggleMount() {
 
 // buttons
 btnAct.addEventListener('pointerdown', function (e) { e.preventDefault(); doAction(); });
+if (btnDodge) btnDodge.addEventListener('pointerdown', function (e) { e.preventDefault(); startDodge(); });
 btnEat.addEventListener('pointerdown', function (e) { e.preventDefault(); audioInit(); eatOrInfo(bestFood()); });
 btnMount.addEventListener('pointerdown', function (e) { e.preventDefault(); audioInit(); toggleMount(); });
 btnBuild.addEventListener('pointerdown', function (e) {
@@ -17221,6 +17613,15 @@ function updateCamera(dt) {
   var d = camDist();
   var want = new THREE.Vector3(camLook.x + camDir.x * d, camLook.y + camDir.y * d, camLook.z + camDir.z * d);
   camera.position.lerp(want, 1 - Math.pow(0.002, dt));
+  /* 🦖 v2.8 — 위압 포효·돌진 같은 큰 충격에 짧게 흔들린다 */
+  if (CAM_SHAKE.t > 0) {
+    CAM_SHAKE.t = Math.max(0, CAM_SHAKE.t - dt);
+    var sk = CAM_SHAKE.t / CAM_SHAKE.max;
+    var amp = CAM_SHAKE.amp * sk * sk;
+    camera.position.x += Math.sin(worldT * 61) * amp;
+    camera.position.y += Math.sin(worldT * 47 + 1.3) * amp * 0.7;
+    camera.position.z += Math.cos(worldT * 53 + 0.7) * amp;
+  }
   camera.lookAt(camLook);
   // keep the tight shadow window centred on the player
   sun.position.set(camLook.x + SUN_OFF.x, camLook.y + SUN_OFF.y, camLook.z + SUN_OFF.z);
@@ -17241,6 +17642,350 @@ var worldT = 0;
 var started = false;
 var worldReady = false;
 var WALK_DEMO = false;
+var FREEZE_SIM = false;   // 검수용: 시뮬레이션만 멈추고 렌더는 계속
+
+/* =========================================================
+   💨🦖 v2.8 — 듀랑고식 전투 공략
+   ---------------------------------------------------------
+   1) 구르기(회피) : 0.30초 미끄러지며 0.45초 무적 · 쿨다운 1.8초
+   2) 바닥 예고선  : 직선 레인 / 부채꼴 / 원형 (world.js 풀링 메시)
+   3) 종별 패턴    : 랩터 측면 우회·도약 물기 · 트리케라톱스 뿔 돌진 + 지침
+                     대형 육식·꼬리 달린 초식의 꼬리 휘두르기 · 위압 포효
+   4) 백어택       : 등 뒤 1.45배 · 지침 1.7배
+   5) 기절(그로기) : 누적 게이지 100 → 2초 무방비(1.35배) + 머리 위 별
+   ========================================================= */
+var DODGE = { dur: 0.30, cd: 1.8, dist: 2.75, invuln: 0.45 };
+
+/* 두 각의 최단 차이(−π~π) */
+function v28AngDiff(a, b) {
+  var d = (a - b) % (Math.PI * 2);
+  if (d > Math.PI) d -= Math.PI * 2;
+  if (d < -Math.PI) d += Math.PI * 2;
+  return d;
+}
+/* 지금 구를 수 있나 */
+function dodgeReady() {
+  return started && !rideDino && !document.getElementById('death').classList.contains('on') &&
+    player.dodgeCd <= 0 && player.dodgeT <= 0;
+}
+/* 💨 구르기 발동 */
+function startDodge() {
+  audioInit();
+  if (!started) return false;
+  if (rideDino) { sfx('deny'); toast('탈것에서 내려야 구를 수 있어요', 'warn'); return false; }
+  if (player.dodgeT > 0) return false;
+  if (player.dodgeCd > 0) { sfx('deny'); return false; }
+  var dx = joy.x, dz = joy.y;
+  if (Math.hypot(dx, dz) < 0.25) {              // 조이스틱을 놓고 있으면 바라보는 쪽으로
+    dx = Math.sin(player.facing); dz = Math.cos(player.facing);
+  }
+  var l = Math.hypot(dx, dz) || 1;
+  player.dodgeDX = dx / l; player.dodgeDZ = dz / l;
+  player.facing = Math.atan2(dx, dz);
+  player.dodgeT = DODGE.dur;
+  player.dodgeP = 0;
+  player.dodgeCd = DODGE.cd;
+  player.invuln = DODGE.invuln;
+  player.knockT = 0;
+  sfx('dodge');
+  var gy = groundY(player.pos.x, player.pos.z);
+  spawnBurst(player.pos.x, gy + 0.10, player.pos.z, 0xd8c7a6, 7, 0.5);
+  spawnFxRing(player.pos.x, gy + 0.06, player.pos.z, 0xbfe8ff, 0.32, 2.9);
+  if (btnDodge) {
+    btnDodge.classList.remove('roll'); void btnDodge.offsetWidth; btnDodge.classList.add('roll');
+  }
+  return true;
+}
+/* 구르는 동안의 이동 — 시작은 빠르고 끝에서 부드럽게 멎는다 */
+function dodgeMove(dt) {
+  var k = 1 - player.dodgeT / DODGE.dur;            // 0 → 1
+  var v = (DODGE.dist / DODGE.dur) * Math.pow(1 - k, 0.65) * 1.5;
+  var nx = player.pos.x + player.dodgeDX * v * dt;
+  var nz = player.pos.z + player.dodgeDZ * v * dt;
+  if (canStand(nx, nz)) { player.pos.x = nx; player.pos.z = nz; }
+  else if (canStand(nx, player.pos.z)) player.pos.x = nx;
+  else if (canStand(player.pos.x, nz)) player.pos.z = nz;
+  player.pos.y = groundY(player.pos.x, player.pos.z);
+  /* 발밑에 남는 먼지 잔상 */
+  if (Math.random() < dt * 34) {
+    spawnBurst(player.pos.x, player.pos.y + 0.08, player.pos.z, 0xcfc0a4, 2, 0.32);
+  }
+}
+/* 구르기 자세 — 앞으로 한 바퀴 구르며 몸을 접는다 */
+function poseDodge() {
+  var p = player.dodgeP;
+  var arc = Math.sin(Math.min(1, p * 1.08) * Math.PI);
+  player.swing = 0;
+  player.body.rotation.x = -2.05 * arc;
+  player.body.rotation.y = 0;
+  player.body.rotation.z = 0.48 * arc;
+  player.body.position.z = 0;
+  player.body.position.y = (player.bodyBaseY || 0.62) - 0.30 * arc;
+  player.head.rotation.x = 0.80 * arc;
+  player.head.rotation.y = 0;
+  if (player.armR) { player.armR.rotation.x = -1.20 * arc; player.armR.rotation.z = 0.28 * arc; }
+  if (player.armL) { player.armL.rotation.x = -1.00 * arc; player.armL.rotation.z = -0.28 * arc; }
+  if (player.legL) player.legL.rotation.x = -1.10 * arc;
+  if (player.legR) player.legR.rotation.x = -0.72 * arc;
+  if (player.kneeL) player.kneeL.rotation.x = 0.28 + 1.30 * arc;
+  if (player.kneeR) player.kneeR.rotation.x = 0.28 + 1.00 * arc;
+  if (player.ankleL) player.ankleL.rotation.x = -0.22 * arc;
+  if (player.ankleR) player.ankleR.rotation.x = -0.22 * arc;
+}
+/* 구르기 버튼 쿨다운 게이지 */
+function updateDodgeUI() {
+  if (!btnDodge) return;
+  var cd = player.dodgeCd;
+  var on = cd > 0 || player.dodgeT > 0;
+  if (btnDodge.__cd !== on) { btnDodge.__cd = on; btnDodge.classList.toggle('cd', on); }
+  var deg = Math.max(0, Math.min(360, (cd / DODGE.cd) * 360));
+  btnDodge.style.setProperty('--cd', deg.toFixed(1) + 'deg');
+}
+
+/* ---------------- 💫 기절(그로기) ---------------- */
+var STAR_GEO = null, STAR_MAT = null;
+function makeStars(d) {
+  removeStars(d);
+  if (!STAR_GEO) {
+    STAR_GEO = new THREE.OctahedronGeometry(0.155, 0);
+    STAR_MAT = new THREE.MeshBasicMaterial({ color: 0xffe27a });
+  }
+  var g = new THREE.Group();
+  for (var i = 0; i < 3; i++) {
+    var m = new THREE.Mesh(STAR_GEO, STAR_MAT);
+    g.add(m);
+  }
+  g.position.y = (d.parts.height || 2) + 0.92;
+  d.group.add(g);
+  d.stars = g;
+}
+function removeStars(d) {
+  if (!d || !d.stars) return;
+  if (d.stars.parent) d.stars.parent.remove(d.stars);
+  d.stars = null;
+}
+function updateStars(d, t) {
+  if (!d.stars) return;
+  d.stars.rotation.y += 0.14;
+  var n = d.stars.children.length;
+  for (var i = 0; i < n; i++) {
+    var a = i / n * Math.PI * 2 + t * 4.6;
+    d.stars.children[i].position.set(Math.cos(a) * 0.50, Math.sin(t * 7 + i * 2) * 0.07, Math.sin(a) * 0.50);
+    d.stars.children[i].rotation.y = t * 5 + i;
+  }
+}
+function startGroggy(d) {
+  if (!d || d.dead) return;
+  d.groggyT = 2.0;
+  d.groggyMax = 2.0;
+  d.groggy = 0;
+  d.cstate = 'stun';
+  d.stateT = 2.0;
+  d.atkT = 0; d.lunge = 0;
+  killTelegraphOf(d);
+  makeStars(d);
+  sfx('groggy');
+  var hy = terrainH(d.x, d.z) + (d.parts.height || 2) + 0.95;
+  spawnFloatText(d.x, hy, d.z, '기절!', '#ffe27a', 1.18);
+  spawnFxRing(d.x, terrainH(d.x, d.z) + 0.07, d.z, 0xffd76a, 0.42, 3.4);
+  toast('🦖 ' + petSpeciesName(d) + ' 기절! 2초간 무방비', 'good');
+  hint('등 뒤 백어택 1.45배 · 지친 트리케라톱스는 1.7배', 3800);
+}
+
+/* ---------------- 🦖 종별 고유 패턴 테이블 ---------------- */
+var V28 = {
+  raptor: { flank: 1, flankCd: 4.4 },
+  trike: { charge: 1, chgSpeed: 8.6, chgDur: 0.86, chgLane: 11.5, chgWid: 2.5, chgDmg: 10, exhaust: 1.5 },
+  trex: { tail: 1, roar: 1, tailCd: 7.5, roarCd: 15 },
+  allo: { tail: 1, roar: 1, tailCd: 6.5, roarCd: 0 },
+  carno: { tail: 1, roar: 0, tailCd: 6.5 },
+  spino: { tail: 1, tailCd: 6.0 },
+  mammoth: { tail: 1, tailCd: 6.5 },
+  anky: { tail: 1, tailCd: 6.0 },
+  stego: { tail: 1, tailCd: 6.0 }
+};
+
+/* 꼬리 휘두르기 — 예고선(후방 부채꼴)이 끝나는 순간 뒤·옆을 후려친다 */
+function dinoTailStrike(d, A) {
+  var toP = Math.atan2(player.pos.x - d.x, player.pos.z - d.z);
+  var rel = Math.abs(v28AngDiff(toP, d.rot + Math.PI));
+  var reach = A.hitR + 1.15;
+  sfx('tail');
+  d.tailKick = 0.42;
+  spawnFxRing(d.x, terrainH(d.x, d.z) + 0.06, d.z, 0xff5a34, 0.3, 4.4);
+  if (rideDino) return;
+  if (Math.hypot(player.pos.x - d.x, player.pos.z - d.z) <= reach && rel < 1.95) {
+    hurtPlayer(Math.round(A.atkDmg * 0.85), d);
+    player.kx = (player.pos.x - d.x) * 2.6; player.kz = (player.pos.z - d.z) * 2.6;
+    player.knockT = 0.34;
+    spawnBurst(player.pos.x, terrainH(player.pos.x, player.pos.z) + 1.0, player.pos.z, 0xd8583c, 8, 1.1);
+  } else sfx('miss');
+}
+/* 위압 포효 — 넓은 원형 경고 뒤, 반경 안이면 밀려나고 잠시 느려진다 */
+function dinoRoarBlast(d, A, rad) {
+  sfx('roar');
+  spawnFxRing(d.x, terrainH(d.x, d.z) + 0.07, d.z, 0xffb066, 0.45, rad * 2.0);
+  spawnBurst(d.x, terrainH(d.x, d.z) + (d.parts.height || 3) * 0.6, d.z, 0xffb066, 12, 1.5);
+  if (rad < 0) return;
+  var dp = Math.hypot(player.pos.x - d.x, player.pos.z - d.z);
+  if (!rideDino && dp <= rad) {
+    player.kx = (player.pos.x - d.x) / (dp || 1) * 9.0;
+    player.kz = (player.pos.z - d.z) / (dp || 1) * 9.0;
+    player.knockT = 0.30;
+    player.slowT = Math.max(player.slowT || 0, 1.5);
+    toast('😱 위압 포효! 잠시 몸이 무거워요', 'warn');
+    shakeCam(0.55);
+  }
+}
+/* 화면 흔들림 (v2.8 — 위압 포효·트리케라톱스 돌진 피격) */
+var CAM_SHAKE = { t: 0, max: 0.4, amp: 0 };
+function shakeCam(v) {
+  CAM_SHAKE.t = 0.38; CAM_SHAKE.max = 0.38;
+  CAM_SHAKE.amp = Math.max(CAM_SHAKE.amp * 0.5, 0.10 * (v || 1));
+}
+
+/* 🦖 육식 — 측면 우회(랩터) · 꼬리 휘두르기 · 위압 포효 */
+function v28CarnStep(d, A, dt, dp) {
+  var v = V28[d.kind];
+  if (!v) return false;
+  /* ── 위압 포효 (티렉스·알로) ── */
+  if (v.roar) {
+    if (d.roar2T > 0) {
+      d.roar2T -= dt;
+      d.cstate = 'roar'; d.animSpeed = 0; d.walking = 0;
+      if (d.roar2T <= 0) {
+        var rr = d.roar2Rad || 6.5;
+        killTelegraphOf(d);
+        dinoRoarBlast(d, A, rr);
+        d.roar2Cd = v.roarCd || 15;
+      }
+      return true;
+    }
+    d.roar2Cd = Math.max(0, (d.roar2Cd || 0) - dt);
+    if (d.roar2Cd <= 0 && dp < 8.5 && dp > 2.0) {
+      d.roar2T = 0.92; d.roar2Rad = 5.8;
+      d.atkT = 0.55; d.atkDur = 0.55;        // 고개를 치켜드는 모션
+      d.tele = spawnTelegraph({ kind: 'ring', owner: d, rad: 5.8, dur: 0.92, follow: 1 });
+      showDinoAlert(d, 1.1);
+      sfx('growl');
+      return true;
+    }
+  }
+  /* ── 꼬리 휘두르기 ── */
+  if (v.tail) {
+    if (d.tailT > 0) {
+      d.tailT -= dt;
+      d.cstate = 'tail'; d.animSpeed = 0; d.walking = 0;
+      if (d.tailT <= 0) {
+        killTelegraphOf(d);
+        dinoTailStrike(d, A);
+        d.tailCd = v.tailCd || 6.5;
+      }
+      return true;
+    }
+    d.tailCd = Math.max(0, (d.tailCd || 0) - dt);
+    var toP = Math.atan2(player.pos.x - d.x, player.pos.z - d.z);
+    var relP = Math.abs(v28AngDiff(toP, d.rot));
+    /* 등 뒤·옆구리에 붙어 있으면 곧바로, 아니면 가끔 (플레이어가 등 뒤를 노릴 때 대응) */
+    var want = d.tailCd <= 0 && dp < A.atkR + 2.0 && (relP > 1.15 || Math.random() < dt * 0.22);
+    if (want) {
+      d.tailT = 0.62;
+      d.tele = spawnTelegraph({ kind: 'fan', owner: d, yawOff: Math.PI, rad: A.hitR + 1.25, half: 108, dur: 0.62, follow: 1 });
+      showDinoAlert(d, 0.8);
+      sfx('growl');
+      return true;
+    }
+  }
+  /* ── 랩터 측면 우회 → 도약 물기 ── */
+  if (v.flank) {
+    if (d.flankT > 0) {
+      d.flankT -= dt;
+      d.cstate = 'flank'; d.animSpeed = 1; d.walking = 1;
+      moveDino(d, d.ftx, d.ftz, A.run * 1.10, dt);
+      var rx = d.x - d.ftx, rz = d.z - d.ftz;
+      if (d.flankT <= 0 || rx * rx + rz * rz < 0.55) {
+        d.flankT = 0;
+        d.flankCd = v.flankCd || 4.4;
+        beginDinoWindup(d, A, 'lane');      // 측면에서 재빠르게 각을 잡고 도약 물기
+      }
+      return true;
+    }
+    d.flankCd = Math.max(0, (d.flankCd || 0) - dt);
+    if (d.flankCd <= 0 && dp > 3.2 && dp < 11 && !isSafeZone(player.pos.x, player.pos.z) && Math.random() < dt * 1.35) {
+      var side = Math.random() < 0.5 ? 1 : -1;
+      var a0 = Math.atan2(d.x - player.pos.x, d.z - player.pos.z);
+      var rad = Math.min(dp, 4.4);
+      var a1 = a0 + side * (0.95 + Math.random() * 0.45);
+      var fx2 = player.pos.x + Math.sin(a1) * rad, fz2 = player.pos.z + Math.cos(a1) * rad;
+      if (terrainH(fx2, fz2) > 0.45) {
+        d.ftx = fx2; d.ftz = fz2;
+        d.flankT = 1.0 + Math.random() * 0.5;
+        d.flankCd = 1.8;
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+/* 🦏 트리케라톱스 — 뿔 낮추고 발구르기(직선 레인) → 묵직한 돌진 → 숨 고르기 */
+function v28TrikeStep(d, A, dt, dp) {
+  var v = V28[d.kind];
+  if (!v || !v.charge) return false;
+  /* 돌진 중 */
+  if (d.chgT > 0) {
+    d.chgT -= dt;
+    d.cstate = 'charge'; d.animSpeed = 7; d.walking = 1;
+    var nx = d.x + Math.sin(d.rot) * v.chgSpeed * dt;
+    var nz = d.z + Math.cos(d.rot) * v.chgSpeed * dt;
+    if (terrainH(nx, nz) > 0.42 && nx * nx + nz * nz < 22000) { d.x = nx; d.z = nz; }
+    else d.chgT = 0;
+    if (!d.chgHit && !rideDino) {
+      var pd = Math.hypot(player.pos.x - d.x, player.pos.z - d.z);
+      if (pd < A.hitR + 0.45) {
+        d.chgHit = true;
+        hurtPlayer(v.chgDmg, d);
+        player.kx = Math.sin(d.rot) * 11.0; player.kz = Math.cos(d.rot) * 11.0;
+        player.knockT = 0.34;
+        spawnBurst(player.pos.x, terrainH(player.pos.x, player.pos.z) + 1.0, player.pos.z, 0xd8583c, 12, 1.3);
+        shakeCam(0.4);
+      }
+    }
+    if (d.chgT <= 0) {
+      killTelegraphOf(d);
+      d.exhaustT = v.exhaust;               // 숨 고르기 — 이때가 빈틈
+      d.chgHit = false;
+      d.cstate = 'idle';
+      spawnBurst(d.x, terrainH(d.x, d.z) + 0.35, d.z, 0xcfc0a4, 10, 0.8);
+      hint('🦏 트리케라톱스가 숨을 고릅니다 — 지금 치면 1.7배!', 2600);
+    }
+    return true;
+  }
+  /* 뿔 낮추고 기 모으기 (조준은 이때 고정 — 옆으로 돌아 피할 수 있다) */
+  if (d.hornT > 0) {
+    d.hornT -= dt;
+    d.cstate = 'windup'; d.animSpeed = 0; d.walking = 0;
+    if (d.hornT <= 0) {
+      d.chgT = v.chgDur;
+      d.chgHit = false;
+      killTelegraphOf(d);
+      sfx('charge');
+      spawnBurst(d.x, terrainH(d.x, d.z) + 0.16, d.z, 0xd8c7a6, 10, 0.7);
+    }
+    return true;
+  }
+  d.chargeCd = Math.max(0, (d.chargeCd || 0) - dt);
+  if (d.provoked > 0 && d.chargeCd <= 0 && dp > 3.0 && dp < 12.5) {
+    d.hornT = 0.95;
+    d.chargeCd = 7.0;
+    d.rot = Math.atan2(player.pos.x - d.x, player.pos.z - d.z);
+    d.tele = spawnTelegraph({ kind: 'lane', owner: d, len: v.chgLane, wid: v.chgWid, dur: 0.95, follow: 1 });
+    showDinoAlert(d, 1.15);
+    sfx('growl');
+    return true;
+  }
+  return false;
+}
 
 function updatePlayer(dt) {
   var ix = joy.x + ((keys.KeyD || keys.ArrowRight) ? 1 : 0) - ((keys.KeyA || keys.ArrowLeft) ? 1 : 0);
@@ -17249,6 +17994,16 @@ function updatePlayer(dt) {
   if (len > 1) { ix /= len; iy /= len; len = 1; }
   player.moving = len > 0.12;
   if (WALK_DEMO) player.moving = true;      // 검수용: 제자리 걷기 자세
+
+  /* 💨 v2.8 구르기 · 무적 · 둔화 타이머 */
+  if (player.dodgeT > 0) {
+    player.dodgeT = Math.max(0, player.dodgeT - dt);
+    player.dodgeP = 1 - player.dodgeT / DODGE.dur;
+  } else player.dodgeP = 0;
+  if (player.dodgeCd > 0) player.dodgeCd = Math.max(0, player.dodgeCd - dt);
+  if (player.invuln > 0) player.invuln = Math.max(0, player.invuln - dt);
+  if (player.slowT > 0) player.slowT = Math.max(0, player.slowT - dt);
+  var dodging = player.dodgeT > 0;
 
   // 🏹 활 카이팅 — 발사 동작 0.15초만 발을 멈추고 조준 쪽으로 몸만 돌린다.
   //    조이스틱에서 손을 떼지 않아도 이 시간이 끝나면 그 방향으로 곧바로 이어진다(후딜 0).
@@ -17292,6 +18047,8 @@ function updatePlayer(dt) {
   // 얕은 강물·해안 물가에서는 걸음이 조금 느려지고 첨벙거린다
   var wadeD = waterDepth(player.pos.x, player.pos.z);
   if (!rideDino && wadeD > 0.04) speed *= 0.84;
+  /* 🦖 위압 포효에 얼어붙은 동안엔 발이 무겁다 */
+  if (player.slowT > 0) speed *= 0.55;
 
   // 피격 넉백 (조이스틱 입력과 별개로 살짝 밀린다)
   if (player.knockT > 0) {
@@ -17303,7 +18060,10 @@ function updatePlayer(dt) {
   if (player.atkCd > 0) player.atkCd = Math.max(0, player.atkCd - dt);
   if (player.arrowCd > 0) player.arrowCd = Math.max(0, player.arrowCd - dt);
 
-  if (len > 0.12 && !bowStop) {
+  /* 💨 구르는 동안은 일반 이동 대신 구르기 미끄럼 */
+  if (dodging) { dodgeMove(dt); player.moving = false; }
+
+  if (len > 0.12 && !bowStop && !dodging) {
     var dirX = ix, dirZ = iy;
     var wantRot = Math.atan2(dirX, dirZ);
     var diff = ((wantRot - player.facing + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
@@ -17604,6 +18364,8 @@ function updatePlayer(dt) {
     player.group.position.set(player.pos.x, player.pos.y, player.pos.z);
     player.group.rotation.y = player.facing;
   }
+  // 💨 v2.8 — 구르기 자세 (걷기·공격 포즐 위에 덮어쓴다)
+  if (player.dodgeT > 0 || (player.dodgeP > 0 && player.dodgeP < 1)) poseDodge();
   // ❄️ 툰드라 덜덜 떨림 — 좌표·자세를 다 잡은 뒤 마지막에 미세 진동만 더한다
   updateShiver(dt, t);
 }
@@ -17828,6 +18590,8 @@ function retreatFromSafe(d, dt) {
     d.leaveProg = 1e9;
   }
   d.aggro = 0; d.provoked = 0; d.swarmT = 0;
+  killTelegraphOf(d);
+  d.tailT = 0; d.flankT = 0; d.roar2T = 0;
   d.cstate = d.kind === 'compy' ? 'flee' : 'walk';
   moveDino(d, d.leaveX, d.leaveZ, 3.3, dt);
   var outD = Math.hypot(d.x - anchor.x, d.z - anchor.z);
@@ -18084,8 +18848,10 @@ function carnTacticStep(d, A, dt, dp) {
 
 /* 공격 예비 동작(telegraph) — 0.45~0.6초 동안 고개를 치켜들고 쏙쏙거리며 숨을 헐떡인다.
    예전의 "크아악!!" 텍스트 말풍선은 없애고, 머리 위 작은 붉은 경고 표식 + 발밑 분노 링 + 발구르기 먼지로 바꿨다. */
-function beginDinoWindup(d, A) {
+function beginDinoWindup(d, A, teleKind) {
   var w = 0.45 + Math.random() * 0.15;
+  /* 🦏 트리케라톱스는 뿔을 낮추고 더 길게 기를 모은다 */
+  if (V28[d.kind] && V28[d.kind].charge) w = 0.62;
   d.cstate = 'windup';
   d.windDur = w; d.stateT = w;
   d.animSpeed = 0; d.walking = 0;
@@ -18096,6 +18862,15 @@ function beginDinoWindup(d, A) {
   var gy = terrainH(d.x, d.z);
   spawnAngerRing(d.x, gy, d.z);
   spawnBurst(d.x, gy + 0.16, d.z, 0xd8c7a6, 8, 0.55);      // 발구르기 먼지
+  /* 🦖 v2.8 바닥 예고선 — 랩터 계열은 '도약할 직선 레인', 나머지는 앞쪽 부채꼴 */
+  killTelegraphOf(d);
+  var dpNow = Math.hypot(player.pos.x - d.x, player.pos.z - d.z);
+  if (teleKind === 'lane' || (V28[d.kind] && V28[d.kind].flank)) {
+    var lane = Math.max(2.4, Math.min(9.5, dpNow + A.hitR * 0.8));
+    d.tele = spawnTelegraph({ kind: 'lane', owner: d, len: lane, wid: 1.9, dur: w + 0.52, follow: 1 });
+  } else {
+    d.tele = spawnTelegraph({ kind: 'fan', owner: d, rad: A.hitR + 0.95, half: 70, dur: w + 0.52, follow: 1 });
+  }
 }
 /* 예비 동작 직후 — 앞으로 파! 하고 달려들며 돌진 (끝나면 물기/박치기 모션) */
 function beginDinoPounce(d, A) {
@@ -18104,6 +18879,7 @@ function beginDinoPounce(d, A) {
   d.stateT = 0.26;
   d.animSpeed = 6;
   spawnBurst(d.x, terrainH(d.x, d.z) + 0.25, d.z, 0xcbb896, 7, 0.9);
+  /* 예고선은 물기 모션까지 바닥에 남겨 두고, 타격 순간에 지운다 */
   if (A.atkDmg >= 12) sfx('roar');
 }
 
@@ -18124,6 +18900,7 @@ function beginDinoAttack(d, A) {
 }
 /* 타격 타이밍 — 실제로 닿아 있을 때만 피해, 무빙으로 빠져나갔으면 빗나감 */
 function dinoStrike(d, A, dp) {
+  killTelegraphOf(d);
   if (dp <= A.hitR) {
     hurtPlayer(A.atkDmg, d);
     spawnBurst(player.pos.x, terrainH(player.pos.x, player.pos.z) + 1.0, player.pos.z, 0xd8583c, 5, 0.8);
@@ -18169,6 +18946,33 @@ function updateCreatureAI(d, dt, t, dp) {
     d.stagger = Math.max(0, d.stagger - dt);
     d.walking = 0;
     d.animSpeed = 0;
+    return;
+  }
+  /* 💫 v2.8 — 기절(그로기): 머리 위 별이 돌고 2초간 아무 것도 못 한다 */
+  if (d.groggyT > 0) {
+    d.groggyT = Math.max(0, d.groggyT - dt);
+    d.walking = 0; d.animSpeed = 0; d.cstate = 'stun';
+    killTelegraphOf(d);
+    updateStars(d, worldT);
+    d.group.rotation.z = Math.sin(worldT * 8.5) * 0.055;
+    if (d.groggyT <= 0) {
+      removeStars(d);
+      d.group.rotation.z = 0;
+      d.cstate = 'alert'; d.stateT = 0.55;
+      d.atkCd = Math.max(d.atkCd, 0.55);
+    }
+    return;
+  }
+  if (d.groggy) d.groggy = Math.max(0, d.groggy - dt * 7);
+  /* 🦏 v2.8 — 지침(숨 고르기): 돌진 직후 1.5초 빈틈 */
+  if (d.exhaustT > 0) {
+    d.exhaustT = Math.max(0, d.exhaustT - dt);
+    d.walking = 0; d.animSpeed = 0; d.cstate = 'idle';
+    d.group.rotation.x = 0.10 + Math.sin(worldT * 5.2) * 0.035;   // 헐떡이며 고개 숙임
+    if (d.exhaustT <= 0) {
+      d.group.rotation.x = 0;
+      d.cstate = 'alert'; d.stateT = 0.4;
+    }
     return;
   }
   var homeD = Math.sqrt((d.x - d.homeX) * (d.x - d.homeX) + (d.z - d.homeZ) * (d.z - d.homeZ));
@@ -18285,6 +19089,7 @@ function updateCreatureAI(d, dt, t, dp) {
       return;
     }
     // 전법(포효 돌진 · 박치기 · 독액) — 플레이어를 쫓을 때만 (펫에게는 일반 돌진)
+    if (!pet && v28CarnStep(d, A, dt, dp)) return;      // 🦖 v2.8 측면 우회 · 꼬리 · 위압 포효
     if (!pet && carnTacticStep(d, A, dt, dp)) return;
     // 🦖 예비 동작(windup) → 돌진(pounce) → 물기/박치기
     if (d.cstate === 'windup') {
@@ -18333,6 +19138,10 @@ function updateCreatureAI(d, dt, t, dp) {
       if (d.stateT <= 0) d.cstate = 'threat';
       return;
     }
+    // 🦏 v2.8 트리케라톱스 뿔 돌진 — 기 모으기(직선 레인) → 돌진 → 숨 고르기 빈틈
+    if (v28TrikeStep(d, A, dt, dp)) return;
+    // 🦕 꼬리 달린 초식(스테고·안킬로·매머드) — 등 뒤로 돌면 꼬리를 후린다
+    if (v28CarnStep(d, A, dt, dp)) return;
     // 초식 반격도 고개를 들고 쏙쏙거린 뒤 돌진한다
     if (d.cstate === 'windup') {
       d.animSpeed = 0; d.walking = 0;
@@ -18722,6 +19531,14 @@ function updateVenom(dt) {
 /* ---------------- damage ---------------- */
 var hurtFlash = 0;
 function hurtPlayer(n, src) {
+  /* 💨 v2.8 — 구르기 무적 프레임: 공룡의 직접 공격을 '회피'로 흘린다 (독 점성 피해는 예전대로) */
+  if (player.invuln > 0) {
+    sfx('miss');
+    var _gy = groundY(player.pos.x, player.pos.z);
+    spawnFloatText(player.pos.x, _gy + 1.95, player.pos.z, '회피!', '#9fe8ff', 0.82);
+    spawnFxRing(player.pos.x, _gy + 0.06, player.pos.z, 0xbfe8ff, 0.26, 2.2);
+    return;
+  }
   var df = gearDef();
   var mit = df > 0 ? Math.min(0.62, df / (df + 26)) : 0;
   var dmg = Math.max(1, Math.round(n * (1 - mit)));
@@ -19403,6 +20220,7 @@ function updateHUD(dt) {
   if (rideDino) { setText(btnMount, '⬇ 내리기'); btnMount.classList.remove('dim'); }
   else { setText(btnMount, '🐾 타기'); btnMount.classList.toggle('dim', !t); }
   setText(btnBuild, placing ? '✕ 취소' : '🏕 설치');
+  updateDodgeUI();          // 💨 v2.8 구르기 쿨다운 게이지
 
   // 🔨 철거 버튼 — 내 구조물 바로 앞에 있을 때만 나타난다
   if (btnDemolish) {
@@ -19629,7 +20447,7 @@ function loop(now) {
     }
   }
 
-  if (started) {
+  if (started && !FREEZE_SIM) {
     updatePlayer(dt);
     updateDinos(dt, t);
     updateArrows(dt);
@@ -19644,7 +20462,7 @@ function loop(now) {
   updateStructures(dt, t);
   if (typeof netTick === 'function') netTick(dt);
   if (PAD.dirty) rebuildPads();
-  updateFx(dt);
+  if (!FREEZE_SIM) { updateFx(dt); updateTelegraphs(dt); updateFloats(dt); }
   updateDayNight(dt);
   if (MAP.open && started && frameNo % 20 === 0) drawMap();
 
@@ -20741,6 +21559,350 @@ window.__game = {
     d.frozen = true;
     if (d.cstate === 'windup') showDinoAlert(d, 6.0);
     return { kind: d.kind, st: d.cstate, x: +d.x.toFixed(1), z: +d.z.toFixed(1), alert: !!(d.cry && d.cry.visible) };
+  },
+  /* 🦖 공격 장면 데모 — 공룡을 세우고 그 공룡 기준의 긴 예고선을 띄운다 (스크린샷) */
+  attackDemo: function (kind, mode, dist) {
+    var d = null;
+    for (var i = 0; i < dinos.length; i++) if (dinos[i].kind === (kind || 'trike') && !dinos[i].dead) { d = dinos[i]; break; }
+    if (!d) return 'none';
+    d.tamed = false; d.dead = false; d.frozen = true; d.group.visible = true; d.leavingHome = false;
+    d.hp = d.max; d.groggy = 0; d.groggyT = 0; d.exhaustT = 0; d.chgT = 0; d.hornT = 0;
+    var dd = dist || 6.0;
+    d.x = player.pos.x + Math.sin(0.45) * dd;
+    d.z = player.pos.z + Math.cos(0.45) * dd;
+    d.homeX = d.x; d.homeZ = d.z;
+    d.rot = Math.atan2(player.pos.x - d.x, player.pos.z - d.z);
+    d.group.position.set(d.x, terrainH(d.x, d.z), d.z);
+    d.group.rotation.y = d.rot;
+    player.facing = Math.atan2(d.x - player.pos.x, d.z - player.pos.z);
+    var A = DINO_AI[d.kind] || DINO_AI.trike;
+    var rec;
+    if (mode === 'fan') {
+      rec = spawnTelegraph({ kind: 'fan', owner: d, x: d.x, z: d.z, yaw: d.rot + Math.PI, yawOff: Math.PI, rad: A.hitR + 1.25, half: 108, dur: 60, follow: 0 });
+      d.cstate = 'tail';
+    } else if (mode === 'ring') {
+      rec = spawnTelegraph({ kind: 'ring', owner: d, x: d.x, z: d.z, yaw: d.rot, rad: 6.5, dur: 60, follow: 0 });
+      d.cstate = 'roar';
+    } else {
+      rec = spawnTelegraph({ kind: 'lane', owner: d, x: d.x, z: d.z, yaw: d.rot, len: 9.5, wid: 2.4, dur: 60, follow: 0 });
+      d.cstate = 'windup';
+    }
+    showDinoAlert(d, 60);
+    return { kind: d.kind, mode: mode || 'lane', dp: +dd.toFixed(1), teles: TELES.length };
+  },
+  /* 🚩 예고선 데모 — 스크린샷용으로 40초짜리 예고선을 플레이어 앞에 띄운다 */
+  teleDemo: function (kind, half, rad, len) {
+    var a = player.facing;
+    var rec = null;
+    if (kind === 'lane') {
+      rec = spawnTelegraph({ kind: 'lane', x: player.pos.x, z: player.pos.z, yaw: a, len: len || 9.5, wid: 2.4, dur: 40, follow: 0 });
+    } else if (kind === 'fan') {
+      rec = spawnTelegraph({ kind: 'fan', x: player.pos.x, z: player.pos.z, yaw: a, rad: rad || 3.6, half: half || 108, dur: 40, follow: 0 });
+    } else {
+      rec = spawnTelegraph({ kind: 'ring', x: player.pos.x, z: player.pos.z, yaw: a, rad: rad || 6.5, dur: 40, follow: 0 });
+    }
+    return { kind: kind, active: TELES.length, pool: TELE_POOL.length, calls: renderer.info.render.calls };
+  },
+  teleClear: function () {
+    while (TELES.length) killTelegraph(TELES[0]);
+    return { active: TELES.length };
+  },
+  /* 🎯 백어택 데모 — 등 뒤에서 한 대 (플로팅 텍스트·금빛 링 유지) */
+  backDemo: function (kind) {
+    var d = null;
+    for (var i = 0; i < dinos.length; i++) if (dinos[i].kind === (kind || 'raptor') && !dinos[i].dead) { d = dinos[i]; break; }
+    if (!d) return 'none';
+    d.tamed = false; d.dead = false; d.frozen = true; d.group.visible = true; d.leavingHome = false;
+    d.hp = d.max; d.groggy = 0; d.groggyT = 0;
+    d.x = player.pos.x + Math.sin(0.6) * 3.6; d.z = player.pos.z + Math.cos(0.6) * 3.6;
+    d.homeX = d.x; d.homeZ = d.z;
+    d.group.position.set(d.x, terrainH(d.x, d.z), d.z);
+    d.rot = Math.atan2(player.pos.x - d.x, player.pos.z - d.z) + Math.PI;   // 등 뒤를 보인다
+    player.facing = Math.atan2(d.x - player.pos.x, d.z - player.pos.z);
+    if ((S.inv.stoneKnife || 0) < 1) S.inv.stoneKnife = 1;
+    S.equip.weapon = 'stoneKnife'; refreshTool();
+    player.atkCd = 0;
+    var hp0 = d.hp;
+    attackDino(d);
+    return { kind: d.kind, dmg: hp0 - d.hp, floats: FLOATS.length, groggy: Math.round(d.groggy || 0) };
+  },
+  /* 💫 기절 데모 — 별 3개 + 플로팅 텍스트 */
+  groggyDemo: function (kind) {
+    var d = null;
+    for (var i = 0; i < dinos.length; i++) if (dinos[i].kind === (kind || 'trike') && !dinos[i].dead) { d = dinos[i]; break; }
+    if (!d) return 'none';
+    d.tamed = false; d.dead = false; d.frozen = false; d.group.visible = true; d.leavingHome = false;
+    d.hp = d.max;
+    d.x = player.pos.x + Math.sin(0.6) * 3.8; d.z = player.pos.z + Math.cos(0.6) * 3.8;
+    d.homeX = d.x; d.homeZ = d.z;
+    d.group.position.set(d.x, terrainH(d.x, d.z), d.z);
+    d.rot = Math.atan2(player.pos.x - d.x, player.pos.z - d.z);
+    startGroggy(d);
+    return { kind: d.kind, stars: !!d.stars, groggyT: d.groggyT };
+  },
+  /* 🧊 시뮬레이션 정지 (검수용 — 자세·이펙트를 고정해 스크린샷) */
+  freeze: function (on) { FREEZE_SIM = !!on; return FREEZE_SIM; },
+  /* 💨 구르기 자세 고정 — p(0~1) 위치의 구르기 포즈 */
+  dodgePose: function (p) {
+    p = p == null ? 0.5 : p;
+    player.dodgeP = p;
+    player.dodgeT = DODGE.dur * (1 - p);
+    poseDodge();
+    return { p: p, lean: +player.body.rotation.x.toFixed(2), legs: +player.legL.rotation.x.toFixed(2), y: +player.body.position.y.toFixed(2) };
+  },
+  /* 💨 구르기 데모 — 버튼을 실제로 눌러 발동 */
+  dodgeDemo: function (deg) {
+    player.dodgeT = 0; player.dodgeCd = 0; player.invuln = 0;
+    player.facing = (deg || 0) * Math.PI / 180;
+    joy.x = 0; joy.y = 0;
+    var ok = startDodge();
+    return { fired: ok, dodgeT: player.dodgeT, invuln: player.invuln };
+  },
+  /* 🔎 v2.8 AI 추적 (검수 전용) */
+  aiTrace: function (kind, n) {
+    var d = null;
+    for (var i = 0; i < dinos.length; i++) if (dinos[i].kind === (kind || 'trike') && !dinos[i].dead) { d = dinos[i]; break; }
+    if (!d) return 'none';
+    d.tamed = false; d.frozen = false; d.dead = false; d.leavingHome = false;
+    d.x = player.pos.x + 6.0; d.z = player.pos.z;
+    d.homeX = d.x; d.homeZ = d.z;
+    d.group.position.set(d.x, terrainH(d.x, d.z), d.z);
+    d.provoked = 12; d.aggro = 0; d.chargeCd = 0; d.hornT = 0; d.chgT = 0; d.exhaustT = 0; d.atkCd = 99;
+    var out = [];
+    for (var f = 0; f < (n || 8); f++) {
+      var dp = Math.hypot(player.pos.x - d.x, player.pos.z - d.z);
+      var b = { st: d.cstate, prov: +(d.provoked || 0).toFixed(2), dp: +dp.toFixed(2), tamed: !!d.tamed, frozen: !!d.frozen };
+      updateCreatureAI(d, 1 / 60, worldT, dp);
+      out.push({ before: b, after: d.cstate, prov: +(d.provoked || 0).toFixed(2), horn: +(d.hornT || 0).toFixed(2), chg: +(d.chgT || 0).toFixed(2), tele: d.tele ? d.tele.kind : null, stateT: +(d.stateT || 0).toFixed(2), safe: isSafeZone(d.x, d.z), aiType: (DINO_AI[d.kind] || {}).type });
+    }
+    return out;
+  },
+  /* ================= v2.8 전투 공략 검수 훅 ================= */
+  /* 💨 구르기 — 이동 거리 · 무적 · 쿨다운 실측 */
+  dodgeTest: function (angleDeg) {
+    var a = (angleDeg == null ? 0 : angleDeg) * Math.PI / 180;
+    player.dodgeT = 0; player.dodgeCd = 0; player.invuln = 0;
+    player.facing = a;
+    joy.x = 0; joy.y = 0;
+    var x0 = player.pos.x, z0 = player.pos.z;
+    var ok = startDodge();
+    var inv0 = +player.invuln.toFixed(2), cd0 = +player.dodgeCd.toFixed(2);
+    var f = 0, maxD = 0;
+    while (f < 40) {
+      updatePlayer(1 / 60); f++;
+      var dd = Math.hypot(player.pos.x - x0, player.pos.z - z0);
+      if (dd > maxD) maxD = dd;
+    }
+    return {
+      fired: ok, invulnAtStart: inv0, cdAtStart: cd0,
+      distance: +Math.hypot(player.pos.x - x0, player.pos.z - z0).toFixed(2),
+      dirDeg: angleDeg, movedForSec: +(f / 60).toFixed(2),
+      dodgeT: +player.dodgeT.toFixed(2), invulnLeft: +player.invuln.toFixed(2),
+      cdLeft: +player.dodgeCd.toFixed(2), poseLean: +player.body.rotation.x.toFixed(2),
+      btnCd: btnDodge ? btnDodge.className : 'none'
+    };
+  },
+  /* 💨 무적 프레임 — 구르는 중엔 피해 0, 끝나면 정상 피해 */
+  dodgeInvulnTest: function () {
+    S.hp = 100;
+    player.invuln = 0.45;
+    hurtPlayer(10, { x: player.pos.x + 2, z: player.pos.z });
+    var during = +S.hp.toFixed(0);
+    player.invuln = 0;
+    hurtPlayer(10, { x: player.pos.x + 2, z: player.pos.z });
+    var after = +S.hp.toFixed(0);
+    S.hp = 100;
+    var fl = FLOATS.length;
+    return { hpDuringInvuln: during, hpAfterInvuln: after, floatTexts: fl, floats: FLOATS.length };
+  },
+  /* 🚩 예고선 상태 — 활성 수 · 풀 · 지오메트리 종류 */
+  teleInfo: function () {
+    var out = [];
+    for (var i = 0; i < TELES.length; i++) {
+      var r = TELES[i];
+      out.push({ kind: r.kind, owner: r.owner ? r.owner.kind : null, len: +r.len.toFixed(1), rad: +r.rad.toFixed(1), dur: +r.dur.toFixed(2), t: +r.t.toFixed(2), opacity: +r.mat.opacity.toFixed(2) });
+    }
+    var used = 0;
+    for (var k = 0; k < TELE_POOL.length; k++) if (TELE_POOL[k].used) used++;
+    return { active: TELES.length, poolSize: TELE_POOL.length, poolUsed: used, list: out, calls: renderer.info.render.calls, floats: FLOATS.length };
+  },
+  /* 🎯 백어택 — 등 뒤 1.45배 vs 정면 */
+  backAttackTest: function (kind) {
+    var d = null;
+    for (var i = 0; i < dinos.length; i++) if (dinos[i].kind === (kind || 'raptor') && !dinos[i].dead) { d = dinos[i]; break; }
+    if (!d) return 'none';
+    d.dead = false; d.hp = d.max; d.group.visible = true; d.frozen = true;
+    d.tamed = false; d.mounted = false; d.leavingHome = false;
+    d.x = player.pos.x + 2.2; d.z = player.pos.z;
+    d.homeX = d.x; d.homeZ = d.z;
+    d.group.position.set(d.x, terrainH(d.x, d.z), d.z);
+    if ((S.inv.stoneKnife || 0) < 1) S.inv.stoneKnife = 1;
+    S.equip.weapon = 'stoneKnife'; refreshTool();
+    /* 등 뒤: 공룡이 플레이어 반대쪽을 본다 */
+    d.rot = Math.atan2(player.pos.x - d.x, player.pos.z - d.z) + Math.PI;
+    d.hp = d.max; player.atkCd = 0;
+    var hp0 = d.hp;
+    attackDino(d);
+    var backDmg = hp0 - d.hp;
+    /* 정면 */
+    d.rot = Math.atan2(player.pos.x - d.x, player.pos.z - d.z);
+    d.hp = d.max; d.groggy = 0; player.atkCd = 0;
+    var hp1 = d.hp;
+    attackDino(d);
+    var frontDmg = hp1 - d.hp;
+    var fl = FLOATS.length;
+    d.frozen = false;
+    return {
+      kind: d.kind, front: frontDmg, back: backDmg,
+      ratio: +(backDmg / Math.max(1, frontDmg)).toFixed(2),
+      floatTexts: fl, groggyGauge: Math.round(d.groggy || 0)
+    };
+  },
+  /* 💫 기절 — 게이지 100 → 2초 무방비 · 별 회전 · 피해 1.35배 */
+  groggyTest: function (kind) {
+    var d = null;
+    for (var i = 0; i < dinos.length; i++) if (dinos[i].kind === (kind || 'trike') && !dinos[i].dead) { d = dinos[i]; break; }
+    if (!d) return 'none';
+    d.dead = false; d.hp = d.max * 6; d.max = d.hp; d.group.visible = true; d.frozen = false; d.tamed = false; d.leavingHome = false;
+    d.x = player.pos.x + 2.0; d.z = player.pos.z;
+    d.homeX = d.x; d.homeZ = d.z;
+    d.group.position.set(d.x, terrainH(d.x, d.z), d.z);
+    d.rot = Math.atan2(player.pos.x - d.x, player.pos.z - d.z);
+    d.groggy = 99; d.groggyT = 0;
+    if ((S.inv.stoneKnife || 0) < 1) S.inv.stoneKnife = 1;
+    S.equip.weapon = 'stoneKnife'; refreshTool();
+    var hp0 = d.hp; player.atkCd = 0;
+    attackDino(d);
+    var first = hp0 - d.hp;
+    var stunned = (d.groggyT || 0) > 0, stars = !!d.stars;
+    /* 기절 중 피해 */
+    player.atkCd = 0;
+    var hp1 = d.hp;
+    attackDino(d);
+    var during = hp1 - d.hp;
+    /* 기절 중엔 움직이지 않는다 */
+    var mx0 = d.x, mz0 = d.z;
+    for (var f = 0; f < 20; f++) updateCreatureAI(d, 1 / 60, worldT, Math.hypot(player.pos.x - d.x, player.pos.z - d.z));
+    var moved = +Math.hypot(d.x - mx0, d.z - mz0).toFixed(2);
+    var starTilt = +d.group.rotation.z.toFixed(3);
+    return {
+      kind: d.kind, firstHit: first, groggyStarted: stunned, stars: stars,
+      stunDamage: during, movedWhileStunned: moved, groggyT: +(d.groggyT || 0).toFixed(2),
+      starTilt: starTilt, hint: !!hintEl
+    };
+  },
+  /* 🦏 트리케라톱스 — 기 모으기(레인 예고) → 돌진 → 숨 고르기 */
+  trikeChargeTest: function () {
+    var d = null;
+    for (var i = 0; i < dinos.length; i++) if (dinos[i].kind === 'trike' && !dinos[i].dead) { d = dinos[i]; break; }
+    if (!d) return 'none';
+    d.dead = false; d.hp = d.max; d.group.visible = true; d.frozen = false; d.tamed = false; d.leavingHome = false;
+    d.x = player.pos.x + 6.0; d.z = player.pos.z;
+    d.homeX = d.x; d.homeZ = d.z;
+    d.group.position.set(d.x, terrainH(d.x, d.z), d.z);
+    d.provoked = 12; d.aggro = 0; d.chargeCd = 0; d.hornT = 0; d.chgT = 0; d.exhaustT = 0;
+    d.atkCd = 99;
+    var seen = { horn: false, teleLane: false, charge: false, exhaust: false };
+    var dists = [], dmgHp0 = S.hp;
+    for (var f = 0; f < 240; f++) {
+      var dp = Math.hypot(player.pos.x - d.x, player.pos.z - d.z);
+      updateCreatureAI(d, 1 / 60, worldT, dp);
+      if (d.hornT > 0) seen.horn = true;
+      if (d.tele && d.tele.kind === 'lane') seen.teleLane = true;
+      if (d.chgT > 0) { seen.charge = true; dists.push(+Math.hypot(player.pos.x - d.x, player.pos.z - d.z).toFixed(1)); }
+      if (d.exhaustT > 0) { seen.exhaust = true; break; }
+      hurtPlayer(0, null);           // 피해 0 — HP 만회용 아님, 단지 프레임 진행
+      S.hp = 100;
+    }
+    return {
+      kind: 'trike', horn: seen.horn, laneTelegraph: seen.teleLane, charged: seen.charge,
+      exhaust: seen.exhaust, exhaustSec: +((d.exhaustT || 0)).toFixed(2),
+      chargeDistTrace: dists.slice(0, 8), playerHit: +(dmgHp0 - S.hp).toFixed(0),
+      state: d.cstate
+    };
+  },
+  /* 🦖 랩터 측면 우회 — 각도 변화 → 도약 물기 레인 예고 */
+  raptorFlankTest: function () {
+    var d = null;
+    for (var i = 0; i < dinos.length; i++) if (dinos[i].kind === 'raptor' && !dinos[i].dead) { d = dinos[i]; break; }
+    if (!d) return 'none';
+    d.dead = false; d.hp = d.max; d.group.visible = true; d.frozen = false; d.tamed = false; d.leavingHome = false;
+    d.x = player.pos.x + 5.5; d.z = player.pos.z;
+    d.homeX = d.x; d.homeZ = d.z;
+    d.group.position.set(d.x, terrainH(d.x, d.z), d.z);
+    d.aggro = 1; d.provoked = 12; d.flankCd = 0; d.flankT = 0; d.atkCd = 99;
+    d.cstate = 'chase'; d.stateT = 0; d.hp = d.max;
+    var a0 = Math.atan2(d.x - player.pos.x, d.z - player.pos.z);
+    var flanked = false, unwrapped = 0, laneSeen = false, pounce = false, windup = false;
+    for (var f = 0; f < 200; f++) {
+      var dp = Math.hypot(player.pos.x - d.x, player.pos.z - d.z);
+      updateCreatureAI(d, 1 / 60, worldT, dp);
+      if (d.flankT > 0) flanked = true;
+      if (d.cstate === 'windup') windup = true;
+      if (d.tele && d.tele.kind === 'lane') laneSeen = true;
+      if (d.cstate === 'pounce') pounce = true;
+      if (flanked && f % 6 === 0) {
+        var a1 = Math.atan2(d.x - player.pos.x, d.z - player.pos.z);
+        unwrapped = +(Math.abs(v28AngDiff(a1, a0))).toFixed(2);
+      }
+      S.hp = 100;
+    }
+    killTelegraphOf(d);
+    return { kind: 'raptor', flanked: flanked, angleSwing: unwrapped, laneTelegraph: laneSeen, windup: windup, pounced: pounce };
+  },
+  /* 🦖 꼬리 휘두르기 — 후방 부채꼴 예고 → 피해 */
+  tailTest: function (kind) {
+    var d = null;
+    for (var i = 0; i < dinos.length; i++) if (dinos[i].kind === (kind || 'allo') && !dinos[i].dead) { d = dinos[i]; break; }
+    if (!d) return 'none';
+    d.dead = false; d.hp = d.max; d.group.visible = true; d.frozen = false; d.tamed = false; d.leavingHome = false;
+    d.provoked = 20; d.aggro = 1;
+    d.x = player.pos.x + 2.0; d.z = player.pos.z;
+    d.homeX = d.x; d.homeZ = d.z;
+    d.group.position.set(d.x, terrainH(d.x, d.z), d.z);
+    d.rot = Math.atan2(player.pos.x - d.x, player.pos.z - d.z) + Math.PI;   // 등 뒤를 보여 준다
+    d.tailCd = 0; d.tailT = 0; d.atkCd = 99; d.roar2Cd = 99; d.roar2T = 0;
+    S.hp = 100;
+    var hp0 = S.hp, teleSeen = false, fanYaw = null, kindSeen = null;
+    for (var f = 0; f < 90; f++) {
+      var dp = Math.hypot(player.pos.x - d.x, player.pos.z - d.z);
+      updateCreatureAI(d, 1 / 60, worldT, dp);
+      if (d.tele) { teleSeen = true; fanYaw = d.tele.yaw; kindSeen = d.tele.kind; }
+      if (d.tailT <= 0 && teleSeen) break;
+    }
+    return { kind: d.kind, tailStarted: teleSeen, teleKind: kindSeen, teleYawOff: fanYaw != null ? +v28AngDiff(fanYaw, d.rot).toFixed(2) : null, damage: +(hp0 - S.hp).toFixed(0), state: d.cstate };
+  },
+  /* 🦖 위압 포효 — 원형 예고 → 넉백/둔화 */
+  roarTest: function (kind) {
+    var d = null;
+    for (var i = 0; i < dinos.length; i++) if (dinos[i].kind === (kind || 'trex') && !dinos[i].dead) { d = dinos[i]; break; }
+    if (!d) return 'none';
+    d.dead = false; d.hp = d.max; d.group.visible = true; d.frozen = false; d.tamed = false; d.leavingHome = false;
+    d.provoked = 20; d.aggro = 1; d.atkCd = 99; d.tailCd = 99; d.tailT = 0;
+    d.x = player.pos.x + 4.2; d.z = player.pos.z;
+    d.homeX = d.x; d.homeZ = d.z;
+    d.group.position.set(d.x, terrainH(d.x, d.z), d.z);
+    d.rot = Math.atan2(player.pos.x - d.x, player.pos.z - d.z);
+    d.roar2Cd = 0; d.roar2T = 0;
+    S.hp = 100;
+    var ringSeen = false, x0 = 0, slow = 0;
+    for (var f = 0; f < 90; f++) {
+      var dp = Math.hypot(player.pos.x - d.x, player.pos.z - d.z);
+      updateCreatureAI(d, 1 / 60, worldT, dp);
+      if (d.tele && d.tele.kind === 'ring') ringSeen = true;
+      if (d.roar2T <= 0 && ringSeen) break;
+    }
+    slow = +(player.slowT || 0).toFixed(2);
+    return { kind: d.kind, ringTelegraph: ringSeen, slowSec: slow, state: d.cstate };
+  },
+  /* 🔁 v2.8 상태 전체 요약 (스크린샷 직전 확인용) */
+  v28Info: function () {
+    return {
+      dodge: { t: +player.dodgeT.toFixed(2), cd: +player.dodgeCd.toFixed(2), invuln: +player.invuln.toFixed(2) },
+      dodgeBtn: btnDodge ? { visible: !!btnDodge.offsetParent, cls: btnDodge.className, cd: btnDodge.style.getPropertyValue('--cd') } : null,
+      teles: TELES.length, floats: FLOATS.length, calls: renderer.info.render.calls,
+      err: (window.__gameErrors || []).length
+    };
   },
   poseClear: function () {
     for (var i = 0; i < dinos.length; i++) { dinos[i].frozen = false; if (dinos[i].cry) dinos[i].cry.visible = false; }
