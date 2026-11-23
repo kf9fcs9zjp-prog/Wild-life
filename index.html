@@ -8598,7 +8598,7 @@ function spawnSplash(x, y, z, n) {
 
 /* 🦖 공격 전 분노 링 — 발밑에서 붉은 고리가 퍼진다 (v2.3c) */
 var ANGER_GEO = new THREE.RingGeometry(0.42, 0.56, 24);
-function spawnAngerRing(x, y, z) {
+function spawnAngerRing(x, y, z, life) {
   var mat = new THREE.MeshBasicMaterial({
     color: 0xff3b28, transparent: true, opacity: 0.5, depthWrite: false, side: THREE.DoubleSide
   });
@@ -8608,7 +8608,7 @@ function spawnAngerRing(x, y, z) {
   m.scale.setScalar(0.55);
   m.renderOrder = 4;
   scene.add(m);
-  fx.push({ mesh: m, life: 0, max: 0.55, vx: 0, vy: 0, vz: 0, spin: 0, grav: 0, anger: true, fxMat: mat });
+  fx.push({ mesh: m, life: 0, max: life || 0.55, vx: 0, vy: 0, vz: 0, spin: 0, grav: 0, anger: true, fxMat: mat });
 }
 
 /* ❄️ 입김 — 추운 툰드라에서 하얀 숨결이 피어오른다 */
@@ -16153,6 +16153,15 @@ window.__game = {
     var frontAll = true, minLz = 9;
     for (var q = 0; q < out.length; q++) { if (out[q].lz < 0) frontAll = false; if (out[q].lz < minLz) minLz = out[q].lz; }
     return { weapon: wk, kind: kind, frontAll: frontAll, minFront: +minLz.toFixed(2), tip: out };
+  },
+  /* 🦖 경고 표식 + 분노 링 스크린샷용 — 표식 6초 · 링 6초로 늘려 둔다 */
+  alertDemo: function (kind) {
+    var d = this.poseDemo(kind || 'raptor', 'windup');
+    if (!d || d === 'none') return d;
+    var gy = terrainH(d.x, d.z);
+    spawnAngerRing(d.x, gy, d.z, 6.0);
+    spawnBurst(d.x, gy + 0.16, d.z, 0xd8c7a6, 8, 0.55);
+    return d;
   },
   /* 🐾 아군(길들인 공룡·탈것) 오폭 확인 — 근접·자동조준·화살 모두 통과해야 한다 */
   friendlyTest: function () {
