@@ -4571,6 +4571,54 @@ function updateOutfit() {
   if (player.packSets) {
     for (var p in player.packSets) player.packSets[p].visible = (S.equip.backpack === p);
   }
+  updateDyeOutfit();
+}
+
+/* =========================================================
+   🎨 염색한 옷·신발 색을 3D 메시에 입힌다 (v2.3c)
+   · 메시마다 원래 재질을 기억해 두고, 색이 있으면 업료 색 80% + 원래 색 20%로
+     섞은 복제 재질을 쓴다 — 밑단·장식의 명암이 남아 옷처럼 보인다.
+   · 다른 옷으로 갈아입거나 염색을 지우면 원래 재질을 그대로 돌려놓는다.
+   ========================================================= */
+function dyeMeshTree(root, key) {
+  if (!root) return;
+  var hex = (key && DYE_COLORS[key]) ? DYE_COLORS[key].hex : 0;
+  var dr = hex ? ((hex >> 16) & 255) / 255 : 0;
+  var dg = hex ? ((hex >> 8) & 255) / 255 : 0;
+  var db = hex ? (hex & 255) / 255 : 0;
+  root.traverse(function (o) {
+    if (!o.isMesh || !o.material || !o.material.color) return;
+    var ud = o.userData;
+    if (!ud._dyeBase) { ud._dyeBase = o.material; ud._dyeBaseHex = o.material.color.getHex(); }
+    if (!hex) { if (o.material !== ud._dyeBase) o.material = ud._dyeBase; return; }
+    if (!ud._dyeMats) ud._dyeMats = {};
+    var m = ud._dyeMats[hex];
+    if (!m) {
+      m = ud._dyeBase.clone();
+      var br = ((ud._dyeBaseHex >> 16) & 255) / 255;
+      var bg = ((ud._dyeBaseHex >> 8) & 255) / 255;
+      var bb = (ud._dyeBaseHex & 255) / 255;
+      m.color.setRGB(dr * 0.82 + br * 0.18, dg * 0.82 + bg * 0.18, db * 0.82 + bb * 0.18);
+      ud._dyeMats[hex] = m;
+    }
+    o.material = m;
+  });
+}
+function updateDyeOutfit() {
+  if (!player.armorSets) return;
+  var dye = S.dye || {};
+  for (var k in player.armorSets) {
+    var on = (S.equip.armor === k);
+    dyeMeshTree(player.armorSets[k], on ? dye.armor : '');
+  }
+  if (player.bootSets) {
+    for (var b in player.bootSets) {
+      var s = player.bootSets[b];
+      var key = (S.equip.boots === b) ? dye.boots : '';
+      if (s.a) dyeMeshTree(s.a, key);
+      if (s.b) dyeMeshTree(s.b, key);
+    }
+  }
 }
 
 /* ---------------- dinosaurs ---------------- */
@@ -15940,6 +15988,7 @@ window.__game = {
       player.group.position.copy(player.pos);
       camLook.set(player.pos.x, player.pos.y + 1.6, player.pos.z);
       var ctx = computeContext();
+      CTX = ctx;                       // 실제 프레임에서는 updateHUD 가 CTX 를 채운다
       doAction();
       out.push({
         type: type, ctx: ctx.type + ' / ' + ctx.label, tab: craftTab, sheet: sheetMode,
