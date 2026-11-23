@@ -3334,7 +3334,7 @@ var water, waterAttr, waterX, waterZ, waterAmp, waterMat, sparkle, sparkleMat;
   var alphas = new Float32Array(n);
   var c = new THREE.Color();
   /* v2.7 — 깊은 청보라 ~ 얕은 청록 (바다 레퍼런스) */
-  var cSh = new THREE.Color(0x74cfc4), cMd = new THREE.Color(0x2f6f9e), cDp = new THREE.Color(0x1d2a57);
+  var cSh = new THREE.Color(0x5bbcbc), cMd = new THREE.Color(0x2a5f92), cDp = new THREE.Color(0x1a2450);
   for (var i = 0; i < n; i++) {
     var x = pos.getX(i), z = pos.getZ(i);
     waterX[i] = x; waterZ[i] = z;
@@ -3402,10 +3402,10 @@ var water, waterAttr, waterX, waterZ, waterAmp, waterMat, sparkle, sparkleMat;
       '  float w2 = fbm(uv * 1.05 - vec2(uTime * 0.032, -uTime * 0.058));',
       '  float ripple = w1 * 0.62 + w2 * 0.38;',
       /* 포말 — 큰 덩어리 + 잔 레이스 */
-      '  float foamMask = smoothstep(0.60, 0.86, w1 * 0.70 + w2 * 0.46);',
-      '  float lace = smoothstep(0.70, 0.94, fbm(uv * 2.7 + vec2(uTime * 0.11, -uTime * 0.09)));',
-      '  float foam = clamp(foamMask * 0.80 + lace * 0.60, 0.0, 1.0);',
-      '  foam *= mix(0.30, 1.0, vDep);',
+      '  float foamMask = smoothstep(0.52, 0.78, w1 * 0.68 + w2 * 0.50);',
+      '  float lace = smoothstep(0.62, 0.92, fbm(uv * 1.55 + vec2(uTime * 0.07, -uTime * 0.05)));',
+      '  float foam = clamp(foamMask * 0.85 + lace * 0.45, 0.0, 1.0);',
+      '  foam *= mix(0.55, 1.0, vDep);',
       /* 법선을 흔들어 햇빛 반사(스펙큘러)가 부딪히며 반짝이게 */
       '  vec3 nrm = normalize(vec3((w1 - w2) * 1.35, 1.0, (w2 - w1) * 1.35));',
       '  vec3 V = normalize(cameraPosition - vWPos);',
@@ -3413,7 +3413,7 @@ var water, waterAttr, waterX, waterZ, waterAmp, waterMat, sparkle, sparkleMat;
       '  float spec = pow(max(dot(nrm, H), 0.0), 140.0);',
       '  float glint = pow(max(dot(nrm, H), 0.0), 26.0) * 0.22;',
       '  vec3 base = vCol;',
-      '  base = mix(base, base * vec3(1.05, 1.12, 1.34), 0.30);',       /* 깊은 쪽 청보라 기운 */
+      '  base = mix(base, base * vec3(1.02, 1.10, 1.42), 0.42);',       /* 깊은 쪽 청보라 기운 */
       '  base *= 0.90 + ripple * 0.26;',
       '  base = mix(base, uFoamCol, foam * 0.86);',
       '  base += uSunCol * (spec * 2.4 + glint) * (1.0 - uNight * 0.85);',
@@ -5235,10 +5235,13 @@ function buildGrassField() {
 function tallGrassGeo() {
   var pos = [], nor = [], col = [], idx = [];
   var blades = [
-    { a: 0.0, len: 1.85, w: 0.055, lean: 0.46, ox: 0.0, oz: 0.0 },
-    { a: 1.55, len: 1.42, w: 0.048, lean: 0.54, ox: 0.07, oz: -0.03 },
-    { a: 3.30, len: 1.60, w: 0.044, lean: 0.50, ox: -0.06, oz: 0.06 },
-    { a: 4.85, len: 1.15, w: 0.038, lean: 0.62, ox: 0.03, oz: 0.07 }
+    { a: 0.0, len: 1.55, w: 0.075, lean: 0.52, ox: 0.0, oz: 0.0 },
+    { a: 0.9, len: 1.22, w: 0.066, lean: 0.60, ox: 0.05, oz: 0.03 },
+    { a: 1.55, len: 1.38, w: 0.062, lean: 0.56, ox: 0.07, oz: -0.03 },
+    { a: 2.35, len: 1.05, w: 0.058, lean: 0.66, ox: -0.04, oz: 0.05 },
+    { a: 3.30, len: 1.46, w: 0.064, lean: 0.54, ox: -0.06, oz: 0.06 },
+    { a: 4.85, len: 1.10, w: 0.055, lean: 0.68, ox: 0.03, oz: 0.07 },
+    { a: 5.60, len: 0.92, w: 0.050, lean: 0.72, ox: -0.02, oz: -0.05 }
   ];
   for (var b = 0; b < blades.length; b++) {
     var B = blades[b];
@@ -5377,8 +5380,8 @@ function undergrowthGeo() {
     for (var s = 0; s < seg; s++) {
       var t0 = s / seg, t1 = (s + 1) / seg;
       var r0 = 0.06 + len * t0 * 0.9, r1 = 0.06 + len * t1 * 0.9;
-      var h0 = 0.28 + Math.sin(t0 * Math.PI * 0.9) * 0.30 - t0 * t0 * 0.18;
-      var h1 = 0.28 + Math.sin(t1 * Math.PI * 0.9) * 0.30 - t1 * t1 * 0.18;
+      var h0 = 0.42 + Math.sin(t0 * Math.PI * 0.8) * 0.26 - t0 * t0 * 0.10;
+      var h1 = 0.42 + Math.sin(t1 * Math.PI * 0.8) * 0.26 - t1 * t1 * 0.10;
       var w0 = wide * Math.sin(Math.min(1, t0 * 1.15) * Math.PI * 0.92) + 0.02;
       var w1 = wide * Math.sin(Math.min(1, t1 * 1.15) * Math.PI * 0.92) + 0.02;
       var sh0 = shade * (0.66 + 0.42 * t0), sh1 = shade * (0.66 + 0.42 * t1);
@@ -5390,16 +5393,16 @@ function undergrowthGeo() {
     }
   }
 
-  frond(0.30, 0.72, 0.55, 0.98);
-  frond(1.35, 0.60, 0.60, 0.90);
-  frond(2.40, 0.66, 0.52, 0.95);
-  frond(3.45, 0.55, 0.62, 0.84);
-  frond(4.55, 0.68, 0.56, 0.92);
-  frond(5.50, 0.52, 0.64, 0.80);
-  broadLeaf(0.9, 0.48, 0.20, 0.86);
-  broadLeaf(2.7, 0.42, 0.17, 0.78);
-  broadLeaf(4.2, 0.52, 0.22, 0.90);
-  broadLeaf(5.9, 0.38, 0.15, 0.74);
+  frond(0.30, 0.95, 0.50, 0.99);
+  frond(1.35, 0.80, 0.55, 0.94);
+  frond(2.40, 0.90, 0.48, 0.97);
+  frond(3.45, 0.74, 0.58, 0.90);
+  frond(4.55, 0.88, 0.52, 0.95);
+  frond(5.50, 0.70, 0.60, 0.86);
+  broadLeaf(0.9, 0.50, 0.17, 0.92);
+  broadLeaf(2.7, 0.44, 0.14, 0.86);
+  broadLeaf(4.2, 0.54, 0.19, 0.95);
+  broadLeaf(5.9, 0.40, 0.13, 0.82);
 
   var g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(pos), 3));
@@ -5439,7 +5442,7 @@ function buildUndergrowth() {
     dummy.updateMatrix();
     inst.setMatrixAt(placed, dummy.matrix);
     // 이끼 낀 짙은 초록 ~ 햇살 든 연둣빛
-    color.setHSL(0.235 + Math.random() * 0.055, 0.30 + Math.random() * 0.24, 0.20 + Math.random() * 0.17);
+    color.setHSL(0.232 + Math.random() * 0.060, 0.34 + Math.random() * 0.26, 0.26 + Math.random() * 0.20);
     inst.setColorAt(placed, color);
     placed++;
   }
