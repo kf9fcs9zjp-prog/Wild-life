@@ -11292,8 +11292,9 @@ function netNormCode(v) {
   if (s.length < 4) return '';
   return 'WL-' + s.slice(0, 8);
 }
-function netShort(x) { return Math.round(x * 10) / 10; }
-function netAngle(x) { return Math.round(x * 100) / 100; }
+function nNum(v) { v = Number(v); return isFinite(v) ? v : 0; }
+function netShort(x) { return Math.round(nNum(x) * 10) / 10; }
+function netAngle(x) { return Math.round(nNum(x) * 100) / 100; }
 
 /* ---------------- 전송 ---------------- */
 function netPub(o) {
@@ -11335,11 +11336,13 @@ function netHandle(o) {
   if (o.t === 'hello') {
     if (o.n) { p.nick = String(o.n).slice(0, 10); p.dirty = 1; }
     netSyncStructs(o.f, o.st);
-    if (o.x != null) { p.tx = o.x; p.tz = o.z; p.tf = o.fa || 0; }
+    if (o.x != null) { p.tx = nNum(o.x); p.tz = nNum(o.z); p.tf = nNum(o.fa); }
     if (!p.joined) {
       p.joined = 1;
-      netChatAdd('', (p.nick || '친구') + ' 님이 들어왔어요', true);
-      if (typeof toast === 'function') toast('🌐 ' + (p.nick || '친구') + ' 님이 방에 들어왔어요', 'good');
+      if (!o.to) {
+        netChatAdd('', (p.nick || '친구') + ' 님이 들어왔어요', true);
+        if (typeof toast === 'function') toast('🌐 ' + (p.nick || '친구') + ' 님이 방에 들어왔어요', 'good');
+      }
     }
     if (!o.to) {                                          // 첫 인사에만 답한다(무한 왕복 방지)
       netPub({ t: 'hello', to: o.f, n: NET.nick, st: netMyStructs(), x: netShort(player.pos.x), z: netShort(player.pos.z), fa: netAngle(player.facing) });
@@ -11348,7 +11351,7 @@ function netHandle(o) {
     netBadge();
   } else if (o.t === 'st') {
     if (o.n && o.n !== p.nick) { p.nick = String(o.n).slice(0, 10); p.dirty = 1; }
-    p.tx = o.x; p.tz = o.z; p.tf = o.f || 0;
+    p.tx = nNum(o.x); p.tz = nNum(o.z); p.tf = nNum(o.fa);
     p.mv = o.mv ? 1 : 0; p.rd = o.rd ? 1 : 0;
     if (o.eq) p.eq = o.eq;
     if (o.dy) p.dy = o.dy;
@@ -11603,15 +11606,18 @@ function netAnimPeer(p, dt, now) {
     av.armL.rotation.x = -0.3;
   }
   // 위치·방향 보간 (초당 5회 오는 좌표를 부드럽게 잇는다)
-  var dx = p.tx - p.x, dz = p.tz - p.z;
+  var dx = nNum(p.tx) - p.x, dz = nNum(p.tz) - p.z;
+  if (!isFinite(p.x) || !isFinite(p.z)) { p.x = nNum(p.tx); p.z = nNum(p.tz); dx = 0; dz = 0; }
   if (Math.abs(dx) + Math.abs(dz) > 14) { p.x = p.tx; p.z = p.tz; }
   else { var kk = Math.min(1, dt * 10); p.x += dx * kk; p.z += dz * kk; }
-  av.group.position.set(p.x, groundY(p.x, p.z) + (p.rd ? 1.02 : 0), p.z);
-  var d = p.tf - p.yaw;
+  var gy = groundY(p.x, p.z); if (!isFinite(gy)) gy = 0;
+  av.group.position.set(p.x, gy + (p.rd ? 1.02 : 0), p.z);
+  if (!isFinite(p.yaw)) p.yaw = 0;
+  var d = nNum(p.tf) - p.yaw;
   while (d > Math.PI) d -= Math.PI * 2;
   while (d < -Math.PI) d += Math.PI * 2;
   p.yaw += d * Math.min(1, dt * 10);
-  av.group.rotation.y = p.yaw;
+  av.group.rotation.y = isFinite(p.yaw) ? p.yaw : 0;
   if (av.bubT > 0) {
     av.bubT -= dt;
     if (av.bubT <= 0) netClearBubble(av);
@@ -11693,7 +11699,7 @@ function netTick(dt) {
       netPub({
         t: 'st', n: NET.nick || S.nick || '탐험가',
         x: netShort(player.pos.x), z: netShort(player.pos.z),
-        f: netAngle(player.facing), mv: player.moving ? 1 : 0, rd: rideDino ? 1 : 0,
+        fa: netAngle(player.facing), mv: player.moving ? 1 : 0, rd: rideDino ? 1 : 0,
         eq: { a: S.equip.armor || '', h: S.equip.hat || '', b: S.equip.boots || '', p: S.equip.backpack || '', w: equippedWeapon() || '' },
         dy: { a: (S.dye && S.dye.armor) || '', b: (S.dye && S.dye.boots) || '' }
       });
