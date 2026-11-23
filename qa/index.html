@@ -3402,10 +3402,10 @@ var water, waterAttr, waterX, waterZ, waterAmp, waterMat, sparkle, sparkleMat;
       '  float w2 = fbm(uv * 1.05 - vec2(uTime * 0.032, -uTime * 0.058));',
       '  float ripple = w1 * 0.62 + w2 * 0.38;',
       /* 포말 — 큰 덩어리 + 잔 레이스 */
-      '  float foamMask = smoothstep(0.52, 0.78, w1 * 0.68 + w2 * 0.50);',
-      '  float lace = smoothstep(0.62, 0.92, fbm(uv * 1.55 + vec2(uTime * 0.07, -uTime * 0.05)));',
-      '  float foam = clamp(foamMask * 0.85 + lace * 0.45, 0.0, 1.0);',
-      '  foam *= mix(0.55, 1.0, vDep);',
+      '  float foamMask = smoothstep(0.50, 0.72, w1 * 0.66 + w2 * 0.52);',
+      '  float lace = smoothstep(0.68, 0.95, fbm(uv * 1.15 + vec2(uTime * 0.06, -uTime * 0.045)));',
+      '  float foam = clamp(foamMask * 0.92 + lace * 0.30, 0.0, 1.0);',
+      '  foam *= mix(0.60, 1.0, vDep);',
       /* 법선을 흔들어 햇빛 반사(스펙큘러)가 부딪히며 반짝이게 */
       '  vec3 nrm = normalize(vec3((w1 - w2) * 1.35, 1.0, (w2 - w1) * 1.35));',
       '  vec3 V = normalize(cameraPosition - vWPos);',
@@ -6447,7 +6447,8 @@ function makePlayer() {
   flattenGroup(AR.wrist, null, MAT.charBody, true, true, 9);
   /* 원단·가죽·짚·눈 — 질감 메시 */
   flattenGroup(tunic, null, MAT.clothTunic, true, true, 19);
-  flattenGroup(eyeG, null, MAT.eye, true, false);
+  var eyeMesh = flattenGroup(eyeG, null, MAT.eye, false, false);
+  if (eyeMesh) eyeMesh.castShadow = false;
   flattenGroup(hatG, null, MAT.strawHat, true, true, 15);
   /* 도구 — 나무결/돌 결 */
   flattenGroup(axeG, null, MAT.toolBake, true, true, 14);
@@ -20062,6 +20063,13 @@ window.__game = {
   bagInfo: function () { return { base: BAG_SLOTS, bonus: bagSlotBonus(), cap: bagSlots(), used: bagUsed(), stack: STACK_MAX, pack: S.equip.backpack || '' }; },
   eat: eatOrInfo,
   setZoom: function (v) { camZoom = v; },
+  /* v2.7 검수용 — 하루 시간대를 바로 맞춘다 (0=자정 · 0.5=정오 · 0.745=노을) */
+  setDay: function (t, pause) {
+    DAY.t = ((t % 1) + 1) % 1;
+    DAY.pause = (pause === undefined) ? true : !!pause;
+    applySky();
+    return { t: +DAY.t.toFixed(3), pause: DAY.pause, night: +DAY.night.toFixed(2) };
+  },
   fps: function () { return Math.round(fpsVal); },
   camera: function () { return camera; },
   renderer: renderer,
