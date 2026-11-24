@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>🦕 트리케라톱스 3D 리깅 구경</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #14191f; color: #eef2f5; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  #canvas-wrap { position: fixed; inset: 0; }
+  .hud-top {
+    position: fixed; top: max(12px, env(safe-area-inset-top)); left: 12px; right: 12px;
+    display: flex; justify-content: space-between; align-items: center; pointer-events: none; z-index: 10;
+  }
+  .badge {
+    background: rgba(15, 20, 26, 0.78); border: 1px solid rgba(232, 185, 86, 0.45);
+    padding: 8px 12px; border-radius: 10px; font-size: 13px; line-height: 1.35; pointer-events: auto;
+  }
+  .badge b { color: #f2c96b; }
+  .controls {
+    position: fixed; bottom: max(14px, env(safe-area-inset-bottom)); left: 12px; right: 12px;
+    display: flex; flex-direction: column; gap: 8px; align-items: center; z-index: 10;
+  }
+  .row { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+  button {
+    border: 1px solid rgba(232, 185, 86, 0.45); background: rgba(20, 26, 33, 0.86);
+    color: #eef2f5; padding: 9px 14px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer;
+  }
+  button.active { background: #e8b956; color: #14191f; border-color: #f6d584; }
+  button.spd { padding: 6px 10px; font-size: 12px; opacity: 0.9; }
+  #loading {
+    position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+    background: #14191f; z-index: 20; font-size: 15px; color: #f2c96b;
+  }
+</style>
+</head>
+<body>
+<div id="loading">🦕 트리케라톱스 3D 모델 불러오는 중...</div>
+<div id="canvas-wrap"></div>
+<div class="hud-top">
+  <div class="badge"><b>🦕 트리케라톱스 리깅 (2.76MB · 20본)</b><br><span id="status">한 손가락: 회전 · 두 손가락: 확대/이동</span></div>
+</div>
+<div class="controls">
+  <div class="row" id="clips">
+    <button data-clip="Idle">Idle</button>
+    <button data-clip="Walk" class="active">Walk</button>
+    <button data-clip="Run">Run</button>
+    <button data-clip="Attack">Attack</button>
+    <button data-clip="Death">Death</button>
+  </div>
+  <div class="row" id="speeds">
+    <button class="spd" data-spd="0.5">0.5x</button>
+    <button class="spd active" data-spd="1">1.0x</button>
+    <button class="spd" data-spd="1.5">1.5x</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script>
+const wrap = document.getElementById('canvas-wrap');
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x1b222a);
+scene.fog = new THREE.Fog(0x1b222a, 12, 32);
+
+const camera = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, 0.1, 100);
+camera.position.set(4.2, 2.3, 4.6);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.shadowMap.enabled = true;
+wrap.appendChild(renderer.domElement);
+
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.target.set(0, 0.85, 0);
+
+const hemi = new THREE.HemisphereLight(0xf6f3e8, 0x3b4440, 1.15);
+scene.add(hemi);
+const dir = new THREE.DirectionalLight(0xfff5df, 1.35);
+dir.position.set(4, 7, 5);
+dir.castShadow = true;
+dir.shadow.mapSize.set(1024, 1024);
+scene.add(dir);
+
+const ground = new THREE.Mesh(
+  new THREE.CircleGeometry(12, 48),
+  new THREE.MeshStandardMaterial({ color: 0x2a332d, roughness: 0.95, metalness: 0.0 })
+);
+ground.rotation.x = -Math.PI / 2;
+ground.receiveShadow = true;
+scene.add(ground);
+
+const grid = new THREE.GridHelper(16, 16, 0x4c5a52, 0x2f3934);
+grid.position.y = 0.002;
+scene.add(grid);
+
+let mixer = null;
+const actions = {};
+let currentAction = null;
+
+new THREE.GLTFLoader().load('./assets/triceratops_rigged.glb?v=1', (gltf) => {
+  const model = gltf.scene;
+  model.traverse((o) => {
+    if (o.isMesh) {
+      o.castShadow = true;
+      o.receiveShadow = true;
+      o.material = new THREE.MeshStandardMaterial({
+        vertexColors: true,
+        metalness: 0.0,
+        roughness: 0.88,
+        skinning: o.isSkinnedMesh
+      });
+    }
+  });
+  scene.add(model);
+
+  mixer = new THREE.AnimationMixer(model);
+  gltf.animations.forEach((clip) => {
+    const act = mixer.clipAction(clip);
+    if (clip.name === 'Death') {
+      act.setLoop(THREE.LoopOnce);
+      act.clampWhenFinished = true;
+    }
+    actions[clip.name] = act;
+  });
+
+  if (actions['Walk']) {
+    currentAction = actions['Walk'];
+    currentAction.play();
+  }
+  document.getElementById('loading').style.display = 'none';
+}, undefined, (err) => {
+  document.getElementById('loading').textContent = '로드 실패: ' + err;
+});
+
+document.getElementById('clips').addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-clip]');
+  if (!btn || !mixer) return;
+  const name = btn.dataset.clip;
+  const next = actions[name];
+  if (!next) return;
+  document.querySelectorAll('#clips button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (currentAction && currentAction !== next) currentAction.fadeOut(0.18);
+  next.reset().fadeIn(0.18).play();
+  currentAction = next;
+});
+
+document.getElementById('speeds').addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-spd]');
+  if (!btn || !mixer) return;
+  mixer.timeScale = parseFloat(btn.dataset.spd);
+  document.querySelectorAll('#speeds button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+});
+
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+const clock = new THREE.Clock();
+(function loop() {
+  requestAnimationFrame(loop);
+  if (mixer) mixer.update(clock.getDelta());
+  controls.update();
+  renderer.render(scene, camera);
+})();
+</script>
+</body>
+</html>
