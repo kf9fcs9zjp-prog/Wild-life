@@ -1819,7 +1819,7 @@
      ========================================================= */
   #ccModal{
     position:fixed;inset:0;z-index:84;display:none;align-items:center;justify-content:center;
-    padding:10px;background:rgba(6,10,12,.72);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+    padding:10px;padding-top:max(12px, env(safe-area-inset-top));background:rgba(6,10,12,.72);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
   }
   #ccModal.on{display:flex}
   .ccCard{
@@ -20586,19 +20586,19 @@ function corpseOf(d) { return (d && d.corpse && !d.corpse.gone) ? d.corpse : nul
      빛기둥을 띄운다. 시체가 사라지면(도축 완료·시간 초과) 함께 정리된다.
    · 빛기둥은 가산 합성 1장, 아이콘은 스프라이트 1장 — 드로우콜 2개.
    ========================================================= */
-var CORPSE_MARK = { tex: null, mat: null, colMat: null };
+var CORPSE_MARK = { tex: null, mat: null };
 function corpseMarkTex() {
   if (CORPSE_MARK.tex) return CORPSE_MARK.tex;
   var cv = document.createElement('canvas');
   cv.width = 128; cv.height = 128;
   var ctx = cv.getContext('2d');
   var grd = ctx.createRadialGradient(64, 64, 4, 64, 64, 60);
-  grd.addColorStop(0, 'rgba(255,236,190,.95)');
-  grd.addColorStop(0.45, 'rgba(255,214,130,.42)');
+  grd.addColorStop(0, 'rgba(255,236,190,.92)');
+  grd.addColorStop(0.45, 'rgba(255,214,130,.36)');
   grd.addColorStop(1, 'rgba(255,200,110,0)');
   ctx.fillStyle = grd;
   ctx.beginPath(); ctx.arc(64, 64, 60, 0, TAU); ctx.fill();
-  ctx.font = 'bold 74px -apple-system, "Apple SD Gothic Neo", "Apple Color Emoji", sans-serif';
+  ctx.font = 'bold 66px -apple-system, "Apple SD Gothic Neo", "Apple Color Emoji", sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillStyle = '#fff6e0';
   ctx.fillText('🦴', 64, 68);
@@ -20606,44 +20606,75 @@ function corpseMarkTex() {
   CORPSE_MARK.tex = tex;
   return tex;
 }
+/* 🦴 v3.5 — 빛기둥 없이, 시체 메쉬 자체가 은은하게 숨쉬듯 빛난다 */
 function addCorpseMark(d) {
   if (!d || d.mark) return;
-  if (!CORPSE_MARK.mat) {
-    CORPSE_MARK.mat = new THREE.SpriteMaterial({ map: corpseMarkTex(), transparent: true, depthWrite: false, depthTest: false, opacity: 0.95 });
-  }
-  if (!CORPSE_MARK.colMat) {
-    CORPSE_MARK.colMat = new THREE.MeshBasicMaterial({
-      color: 0xffd694, transparent: true, opacity: 0.16, depthWrite: false,
-      blending: THREE.AdditiveBlending, side: THREE.DoubleSide, fog: false
-    });
-  }
-  var h = Math.max(1.2, (d.parts.height || 1.4) * 0.9);
-  var col = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.46, h * 1.9, 10, 1, true), CORPSE_MARK.colMat);
-  col.position.set(d.x, terrainH(d.x, d.z) + h * 0.95, d.z);
-  col.renderOrder = 3;
-  worldAdd(col);
-  var sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: corpseMarkTex(), transparent: true, depthWrite: false, depthTest: false, opacity: 0.95 }));
-  sp.scale.set(0.78, 0.78, 1);
-  sp.position.set(d.x, terrainH(d.x, d.z) + h + 1.15, d.z);
+  var mats = [];
+  d.group.traverse(function (o) {
+    if (!o.isMesh && !o.isSkinnedMesh) return;
+    var list = Array.isArray(o.material) ? o.material : [o.material];
+    var out = [];
+    for (var i = 0; i < list.length; i++) {
+      var m = list[i];
+      if (!m) { out.push(m); continue; }
+      if (!m.userData._glow) {
+        m = m.clone();
+        m.userData._glow = 1;
+        m.transparent = true;
+        m.opacity = 1;
+        out.push(m);
+      } else out.push(m);
+      if (m.emissive) { m.emissive.setHex(0xffb060); m.emissiveIntensity = 0.20; }
+      mats.push(m);
+    }
+    o.material = Array.isArray(o.material) ? out : out[0];
+  });
+  var sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: corpseMarkTex(), transparent: true, depthWrite: false, depthTest: false, opacity: 0.9 }));
+  sp.scale.set(0.62, 0.62, 1);
+  sp.position.set(0, (d.parts.height || 1.4) * 0.55 + 0.75, 0);
   sp.renderOrder = 4;
-  worldAdd(sp);
-  d.mark = { sp: sp, col: col, baseY: sp.position.y, ph: Math.random() * TAU };
+  d.group.add(sp);
+  d.mark = { sp: sp, mats: mats, ph: Math.random() * TAU, fadeT: 0, baseY: sp.position.y };
 }
 function removeCorpseMark(d) {
   if (!d || !d.mark) return;
   var m = d.mark;
   if (m.sp) { if (m.sp.parent) m.sp.parent.remove(m.sp); if (m.sp.material) m.sp.material.dispose(); }
-  if (m.col) { if (m.col.parent) m.col.parent.remove(m.col); if (m.col.geometry) m.col.geometry.dispose(); }
   d.mark = null;
+}
+/* 부위를 다 챙긴 시체는 6초에 걸쳐 서서히 사라진다 */
+function corpseFadeStart(d) {
+  if (!d) return;
+  if (!d.mark) addCorpseMark(d);
+  if (d.mark) { d.mark.fadeT = 6.0; if (d.mark.sp) d.mark.sp.visible = false; }
+  else if (d.group) d.group.visible = false;
 }
 function updateCorpseMarks(t) {
   for (var i = 0; i < dinos.length; i++) {
     var d = dinos[i], m = d.mark;
     if (!m) continue;
+    /* 도축이 끝난 시체 — 6초에 걸쳐 서서히 투명해진 뒤 사라진다 */
+    if (m.fadeT > 0) {
+      m.fadeT = Math.max(0, m.fadeT - (1 / 60));
+      var op = Math.max(0, m.fadeT / 6);
+      for (var q = 0; q < m.mats.length; q++) {
+        if (!m.mats[q]) continue;
+        m.mats[q].opacity = op;
+        if (m.mats[q].emissive) m.mats[q].emissiveIntensity = 0.14 * op;
+      }
+      if (m.fadeT <= 0) { if (d.group) d.group.visible = false; removeCorpseMark(d); }
+      continue;
+    }
     if (!corpseOf(d)) { removeCorpseMark(d); continue; }
-    m.sp.position.y = m.baseY + Math.sin(t * 2.1 + m.ph) * 0.11;
-    m.sp.material.opacity = 0.72 + 0.24 * (0.5 + 0.5 * Math.sin(t * 2.8 + m.ph));
-    if (m.col) m.col.material.opacity = 0.11 + 0.07 * (0.5 + 0.5 * Math.sin(t * 1.7 + m.ph));
+    /* 은은한 숨쉬기 발광 */
+    var gl = 0.16 + 0.13 * (0.5 + 0.5 * Math.sin(t * 2.0 + m.ph));
+    for (var k = 0; k < m.mats.length; k++) {
+      if (m.mats[k] && m.mats[k].emissive) m.mats[k].emissiveIntensity = gl;
+    }
+    if (m.sp) {
+      m.sp.position.y = m.baseY + Math.sin(t * 1.7 + m.ph) * 0.05;
+      m.sp.material.opacity = 0.55 + 0.30 * (0.5 + 0.5 * Math.sin(t * 2.2 + m.ph));
+    }
   }
 }
 function corpseTakenAll(d) {
@@ -20687,8 +20718,9 @@ function finishCorpse(d) {
   var c = corpseOf(d);
   if (c) c.gone = true;
   if (BUTCH.d === d) closeButchMenu();
-  removeCorpseMark(d);
-  if (d.group) d.group.visible = false;
+  /* v3.5 — 툭 사라지지 않고 바닥에 누운 채 6초간 반투명으로 사라진다 */
+  corpseFadeStart(d);
+  d.deadAt = Math.min(d.deadAt || (worldT + 1), worldT + 0.8);
   d.deadAt = Math.min(d.deadAt || (worldT + 1), worldT + 0.8);
   spawnBurst(d.x, terrainH(d.x, d.z) + 0.5, d.z, 0x9a8f7a, 10, 0.9);
   sfx('demolish');
@@ -20786,7 +20818,7 @@ function attackDino(d) {
   if (!d || d.dead) return;
   if (d.tamed || d.mounted) return;  // 🐾 길들인 공룡·탈것은 공격 대상이 아니다
   if (player.atkCd > 0) return;      // 쿨다운 중에도 이동은 막지 않는다 (무빙 어택)
-  player.atkCd = 0.40;
+  player.atkCd = 0.55;
   var dmg = meleeAtk();
   /* 🦖 v2.8 — 뒤잡기(백어택) · 지침 · 기절 보상 계산 */
   var toP = Math.atan2(player.pos.x - d.x, player.pos.z - d.z);
@@ -20808,7 +20840,7 @@ function attackDino(d) {
   }
   player.facing = Math.atan2(d.x - player.pos.x, d.z - player.pos.z);
   var wk = weaponKind();
-  var cbA = startSwing(wk === 'bow' ? 'fist' : wk, 0.42);
+  var cbA = startSwing(wk === 'bow' ? 'fist' : wk, 0.56);
   swingFx(wk, cbA);
   if (cbA === 2) {
     // 콤보 마무리 — 발밑 먼지와 함께 살짝 내려찍는 무게감
@@ -27829,7 +27861,9 @@ function updateCulling(dt) {
     var n = nodes[i];
     if (SHOT_CLEAN) { if (n.group.visible) n.group.visible = false; continue; }
     var dx = n.x - px, dz = n.z - pz;
-    var want = !n.dead && (dx * dx + dz * dz < nr2);
+    /* v3.5 — 경계에서 매 프레임 깜빡이던 문제: 보이던 것은 +5m 더 멀어져야 숨긴다 */
+    var nrOn = n.group.visible ? (NODE_CULL_R + 5) : NODE_CULL_R;
+    var want = !n.dead && (dx * dx + dz * dz < nrOn * nrOn);
     if (n.group.visible !== want) n.group.visible = want;
   }
   // 🦖 야생 공룡은 46m(저사양 38m) 밖이면 그룹을 숨기고 스키닝·애니메이션 계산을 건너뛴다
@@ -27841,7 +27875,8 @@ function updateCulling(dt) {
     var ex = d.x - px, ez = d.z - pz;
     var cr = d.tamed ? Math.max(DINO_CULL_R, 60) : DINO_CULL_R;
     /* 🦴 v3.5 긴급 수정 — 시체도 거리 안에 있으면 계속 보여야 도축할 수 있다 */
-    var w = (!d.dead || (d.corpse && !d.corpse.gone)) && (ex * ex + ez * ez < cr * cr);
+    var crOn = d.group.visible ? (cr + 6) : cr;
+    var w = (!d.dead || (d.corpse && !d.corpse.gone)) && (ex * ex + ez * ez < crOn * crOn);
     if (SHOT_CLEAN && d.kind !== 'compy') w = false;
     if (SHOT_HIDE_ACTORS && d.kind !== 'compy') w = false;
     if (d.group.visible !== w) d.group.visible = w;
@@ -29251,6 +29286,7 @@ var HERO = {
   root: null, mixer: null, actions: {}, cur: null, curName: '',
   bones: {}, headG: null, handG: null, chestG: null, ready: false,
   cfg: null, mats: null, faceTex: null, faceCanvas: null, headMesh: null, hairG: null,
+  stance: -0.24, arms: 0.16,
   scrubbing: false, meta: { tris: 0, clips: 0 }
 };
 
@@ -29317,15 +29353,23 @@ function heroPrepMaterials(root, cfg) {
         if (Array.isArray(o.material)) o.material[i] = c; else o.material = c;
         m = c;
       }
+      /* GLTF 기본 metalness 1.0 은 환경맵이 없는 씬에서 새까맣게 보인다 → 0 으로 */
+      if (m.metalness !== undefined) m.metalness = 0.0;
+      if (m.roughness !== undefined) m.roughness = 0.88;
+      /* 🧵 v3.5 — 현대식 체크/전투복 → 야생 가죽·린넨 팔레트 */
+      if (m.map) { m.map = null; m.needsUpdate = true; }
       var nm = (m.name || '').toLowerCase();
       if (nm.indexOf('skin') >= 0) { m.color.setHex(skin); m.roughness = 0.86; m.shininess = 6; }
-      else if (nm.indexOf('green') >= 0) { m.color.setHex(0x6d7350); m.roughness = 1; m.shininess = 1; }
-      else if (nm.indexOf('lightgreen') >= 0) { m.color.setHex(0x8b8f63); }
-      else if (nm.indexOf('brown2') >= 0) { m.color.setHex(0x6a4a30); }
-      else if (nm.indexOf('brown') >= 0) { m.color.setHex(0x7d5735); m.roughness = 0.95; }
-      else if (nm.indexOf('gold') >= 0) { m.color.setHex(0xb8965b); }
-      else if (nm.indexOf('black') >= 0) { m.color.setHex(0x2b2620); }
-      else if (nm.indexOf('grey') >= 0) { m.color.setHex(0x6a6358); }
+      else if (nm.indexOf('hair') >= 0) { m.color.setHex(heroHairHex(cfg)); m.roughness = 0.72; }
+      else if (nm.indexOf('eye') >= 0 || nm.indexOf('brow') >= 0) { }
+      else if (nm.indexOf('lightgreen') >= 0) { m.color.setHex(0xb3a878); }
+      else if (nm.indexOf('green') >= 0) { m.color.setHex(0x8e8a5c); m.roughness = 1; }
+      else if (nm.indexOf('swat') >= 0) { m.color.setHex(0x6f5537); m.roughness = 0.95; }
+      else if (nm.indexOf('brown2') >= 0) { m.color.setHex(0x6a4a2c); m.roughness = 0.95; }
+      else if (nm.indexOf('brown') >= 0) { m.color.setHex(0x8a6039); m.roughness = 0.95; }
+      else if (nm.indexOf('gold') >= 0) { m.color.setHex(0xb08a52); }
+      else if (nm.indexOf('black') >= 0) { m.color.setHex(0x4a3b2b); }
+      else if (nm.indexOf('grey') >= 0) { m.color.setHex(0x8c8270); }
       if (m.flatShading !== undefined && m.flatShading) m.flatShading = false;
       m.needsUpdate = true;
       mats[m.name || ('mat' + i)] = m;
@@ -29632,19 +29676,19 @@ function heroHairGroup(cfg, R) {
   matD.color.multiplyScalar(0.72);
   var style = cfg.style || 'short';
   /* 두상 덮개 */
-  var cover = new THREE.Mesh(new THREE.SphereGeometry(R * 1.045, 22, 16, 0, TAU, 0, Math.PI * (style === 'buzz' ? 0.40 : 0.52)), mat);
-  cover.position.set(0, R * 0.02, -R * 0.02);
-  cover.scale.set(1, 1.06, 1.02);
+  var cover = new THREE.Mesh(new THREE.SphereGeometry(R * 1.025, 22, 16, 0, TAU, 0, Math.PI * (style === 'buzz' ? 0.34 : 0.44)), mat);
+  cover.position.set(0, R * 0.10, -R * 0.02);
+  cover.scale.set(1, 1.04, 1.02);
   g.add(cover);
-  /* 뒤통수 덮개 */
-  var back = new THREE.Mesh(new THREE.SphereGeometry(R * 1.04, 20, 14, Math.PI * 0.15, Math.PI * 0.70, 0, Math.PI * 0.78), style === 'buzz' ? matD : mat);
-  back.position.set(0, 0, -R * 0.02);
+  /* 뒤통수 덮개 — 뒷면 절반만 (얼굴은 절대 가리지 않는다) */
+  var back = new THREE.Mesh(new THREE.SphereGeometry(R * 1.02, 20, 14, Math.PI * 0.92, Math.PI * 1.10, 0, Math.PI * 0.86), style === 'buzz' ? matD : mat);
+  back.position.set(0, R * 0.02, -R * 0.01);
   g.add(back);
   if (style === 'short' || style === 'bob' || style === 'pony' || style === 'bun' || style === 'long') {
     /* 앞머리 — 이마를 덮는 곡선 띠 */
-    var fringe = new THREE.Mesh(new THREE.SphereGeometry(R * 1.05, 20, 10, Math.PI * 0.22, Math.PI * 0.56, 0, Math.PI * 0.34), mat);
-    fringe.position.set(0, R * 0.06, R * 0.02);
-    fringe.scale.set(1.0, 1.02, 1.04);
+    var fringe = new THREE.Mesh(new THREE.SphereGeometry(R * 1.03, 20, 10, Math.PI * 0.30, Math.PI * 0.40, Math.PI * 0.10, Math.PI * 0.20), mat);
+    fringe.position.set(0, R * 0.02, R * 0.01);
+    fringe.scale.set(1.0, 1.02, 1.02);
     g.add(fringe);
   }
   if (style === 'bob') {
@@ -29695,6 +29739,21 @@ function heroHairGroup(cfg, R) {
   return g;
 }
 
+/* GLB 원본 머리·헤어·눈·눈썹 메시를 이름으로 전부 숨긴다 (각진 지점토 머리 제거) */
+function heroHideGltfHead(root) {
+  root.traverse(function (o) {
+    if (!o.isMesh && !o.isSkinnedMesh) return;
+    var nm = (o.name || '').toLowerCase();
+    var par = (o.parent && o.parent.name ? o.parent.name : '').toLowerCase();
+    if (nm.indexOf('head') >= 0 || nm.indexOf('hair') >= 0 || nm.indexOf('eye') >= 0 ||
+      nm.indexOf('brow') >= 0 || nm.indexOf('backpack') >= 0 ||
+      par.indexOf('head') >= 0) {
+      o.visible = false;
+    }
+  });
+  var hg = root.getObjectByName('Adventurer_Head');
+  if (hg) hg.visible = false;
+}
 function heroFindBone(root, names) {
   for (var i = 0; i < names.length; i++) {
     var o = root.getObjectByName(names[i]);
@@ -29718,7 +29777,7 @@ function heroBuildHead(ctx, root, cfg) {
   if (neck && headEnd) {
     var hePos = headEnd.getWorldPosition(new THREE.Vector3());
     var hh = neckPos.distanceTo(hePos);
-    if (hh > 0.05 && hh < 0.6) R = hh * 0.52;
+    if (hh > 0.05 && hh < 0.6) R = hh * 0.30;
   }
   /* 소켓 — 위치·방향을 메시 기준으로 맞춘다 */
   if (ctx.headG) {
@@ -29797,16 +29856,20 @@ function heroAttach(cfg) {
     heroDetach();
     var root = THREE.SkeletonUtils.clone(gltf.scene);
     HERO.mats = heroPrepMaterials(root, cfg);
-    root.traverse(function (o) {
-      if (o.name === 'Adventurer_Head' || o.name === 'Backpack') o.visible = false;
-    });
+    heroHideGltfHead(root);
     /* 본 캐시 — GLTFLoader 가 'Hand.R' 의 점을 지워 'HandR' 로 만들 수 있다 */
     HERO.bones = {
       head: heroFindBone(root, ['Head']),
       handR: heroFindBone(root, ['Hand.R', 'HandR', 'Hand_R']),
       handL: heroFindBone(root, ['Hand.L', 'HandL', 'Hand_L']),
       chest: heroFindBone(root, ['Chest', 'Torso']),
-      hips: heroFindBone(root, ['Hips'])
+      hips: heroFindBone(root, ['Hips']),
+      legL: heroFindBone(root, ['UpperLeg.L', 'UpperLegL', 'UpperLeg_L']),
+      legR: heroFindBone(root, ['UpperLeg.R', 'UpperLegR', 'UpperLeg_R']),
+      kneeL: heroFindBone(root, ['LowerLeg.L', 'LowerLegL', 'LowerLeg_L']),
+      kneeR: heroFindBone(root, ['LowerLeg.R', 'LowerLegR', 'LowerLeg_R']),
+      armL: heroFindBone(root, ['UpperArm.L', 'UpperArmL', 'UpperArm_L']),
+      armR: heroFindBone(root, ['UpperArm.R', 'UpperArmR', 'UpperArm_R'])
     };
     var sc = heroBodyScale(cfg);
     root.scale.set(sc.x, sc.y, sc.z);
@@ -29935,9 +29998,21 @@ function heroScrub(name, p, fade) {
 }
 function heroLocoName(spd) {
   if (spd < 0.35) return 'Idle_Loop';
-  if (spd < 2.0) return 'Walk_Loop';
-  if (spd < 3.6) return 'Jog_Fwd_Loop';
+  if (spd < 1.7) return 'Walk_Loop';
+  if (spd < 3.2) return 'Jog_Fwd_Loop';
   return 'Sprint_Loop';
+}
+/* v3.5 — 리타게팅된 클립이 다리를 벌린 채 고정돼 있어(쩍벌) 다리뼈를 안쪽으로 모아 준다 */
+function heroApplyStance() {
+  var b = HERO.bones;
+  if (b.legL && b.legR) {
+    b.legL.rotation.z += (HERO.stance || 0);
+    b.legR.rotation.z -= (HERO.stance || 0);
+  }
+  if (b.armL && b.armR && HERO.arms) {
+    b.armL.rotation.z += HERO.arms;
+    b.armR.rotation.z -= HERO.arms;
+  }
 }
 function heroFrame(dt) {
   if (!HERO.ready || !HERO.mixer) return;
@@ -29945,22 +30020,26 @@ function heroFrame(dt) {
   if (player.dodgeT > 0 || (player.dodgeP > 0 && player.dodgeP < 1 && player.dodgeT > 0)) {
     heroScrub('Roll', player.dodgeP, 0.06);
     HERO.mixer.update(dt);
+    heroApplyStance();
     return;
   }
   if (player.swing > 0) {
     var p = clamp(1 - player.swing / (player.swingMax || 0.4), 0, 1);
     heroScrub(player.swingKind === 'fist' ? 'Punch_Jab' : 'Sword_Attack', p);
     HERO.mixer.update(dt);
+    heroApplyStance();
     return;
   }
   if (player.bowT > 0) {
     heroScrub('Sword_Attack', clamp(1 - player.bowT / (player.bowTotal || 0.55), 0, 1) * 0.9);
     HERO.mixer.update(dt);
+    heroApplyStance();
     return;
   }
   if (player.skillT > 0) {
     heroScrub(player.skillBow ? 'Punch_Cross' : 'Sword_Attack', clamp(1 - player.skillT / (player.skillMax || 0.66), 0, 1));
     HERO.mixer.update(dt);
+    heroApplyStance();
     return;
   }
   if (player.craftT > 0) {
@@ -29968,23 +30047,27 @@ function heroFrame(dt) {
     var ca = HERO.actions['Fixing_Kneeling'];
     if (ca) ca.setEffectiveTimeScale(1.6);
     HERO.mixer.update(dt);
+    heroApplyStance();
     return;
   }
   if (rideDino) {
     heroPlay('Sitting_Idle_Loop', { fade: 0.2 });
     HERO.mixer.update(dt);
+    heroApplyStance();
     return;
   }
   var spd = player.spd || 0;
   var nm = heroLocoName(spd);
   var ref = nm === 'Walk_Loop' ? 1.1 : (nm === 'Jog_Fwd_Loop' ? 2.9 : 3.7);
-  heroPlay(nm, { fade: 0.20 });
+  heroPlay(nm, { fade: 0.22 });
   var a2 = HERO.actions[nm];
   if (a2 && nm !== 'Idle_Loop') {
-    var ts = clamp(spd / ref, 0.55, 1.6);
+    /* v3.5 — 클립이 실제 이동보다 빨라 발이 헛돌던 문제: 0.72배로 낮춰 보폭을 맞춘다 */
+    var ts = clamp(spd / ref, 0.42, 1.25) * 0.72;
     a2.setEffectiveTimeScale(ts);
   }
   HERO.mixer.update(dt);
+  heroApplyStance();
 }
 /* 피격·사망 연출 */
 function heroHitReact() {
@@ -30075,9 +30158,9 @@ function ccRender() {
   if (!CCP.renderer || !CCP.scene) return;
   ccResize();
   var cam = CCP.camera;
-  var headY = 1.60 * (CCP.cfg ? heroBodyScale(CCP.cfg).y : 1);
-  cam.position.set(Math.sin(CCP.yaw) * 1.30, headY + 0.10, Math.cos(CCP.yaw) * 1.30);
-  cam.lookAt(0, headY - 0.06, 0);
+  var headY = 1.63 * (CCP.cfg ? heroBodyScale(CCP.cfg).y : 1);
+  cam.position.set(Math.sin(CCP.yaw) * 0.95, headY + 0.06, Math.cos(CCP.yaw) * 0.95);
+  cam.lookAt(0, headY - 0.10, 0);
   if (CCP.root) CCP.root.rotation.y = 0;
   CCP.renderer.render(CCP.scene, cam);
 }
@@ -30096,9 +30179,7 @@ function ccBuildModel() {
     if (CCP.root) { CCP.scene.remove(CCP.root); CCP.root = null; }
     var root = THREE.SkeletonUtils.clone(gltf.scene);
     var mats = heroPrepMaterials(root, cfg);
-    root.traverse(function (o) {
-      if (o.name === 'Adventurer_Head' || o.name === 'Backpack') o.visible = false;
-    });
+    heroHideGltfHead(root);
     var sc = heroBodyScale(cfg);
     root.scale.set(sc.x, sc.y, sc.z);
     CCP.scene.add(root);
@@ -30106,7 +30187,11 @@ function ccBuildModel() {
     CCP.bones = {
       head: heroFindBone(root, ['Head']),
       handR: heroFindBone(root, ['Hand.R', 'HandR', 'Hand_R']),
-      chest: heroFindBone(root, ['Chest', 'Torso'])
+      chest: heroFindBone(root, ['Chest', 'Torso']),
+      legL: heroFindBone(root, ['UpperLeg.L', 'UpperLegL', 'UpperLeg_L']),
+      legR: heroFindBone(root, ['UpperLeg.R', 'UpperLegR', 'UpperLeg_R']),
+      armL: heroFindBone(root, ['UpperArm.L', 'UpperArmL', 'UpperArm_L']),
+      armR: heroFindBone(root, ['UpperArm.R', 'UpperArmR', 'UpperArm_R'])
     };
     CCP.skinMats = [];
     for (var k in mats) if (k.toLowerCase().indexOf('skin') >= 0) CCP.skinMats.push(mats[k]);
@@ -30122,9 +30207,15 @@ function ccBuildModel() {
         break;
       }
     }
+    ccStance(CCP);
     heroBuildHead(CCP, root, cfg);
     ccRender();
   });
+}
+function ccStance(ctx) {
+  var b = ctx.bones || {};
+  if (b.legL && b.legR) { b.legL.rotation.z += HERO.stance; b.legR.rotation.z -= HERO.stance; }
+  if (b.armL && b.armR) { b.armL.rotation.z += HERO.arms; b.armR.rotation.z -= HERO.arms; }
 }
 function ccApplyLive() {
   var cfg = CCP.cfg;
@@ -30442,6 +30533,81 @@ window.__game = {
       out.bodyH = +(rb.max.y - rb.min.y).toFixed(2);
     }
     return out;
+  },
+  teleLog: function () { return TELE_LOG.slice(-24); },
+  heroTracks: function (clip) {
+    var a = HERO.actions[clip || 'Idle_Loop'];
+    if (!a) return 'none';
+    return a.getClip().tracks.map(function (t) { return t.name; });
+  },
+  heroStance: function (a, b) { HERO.stance = +a || 0; if (b !== undefined) HERO.arms = +b || 0; return [HERO.stance, HERO.arms]; },
+  heroForce: function (name) { heroPlay(name, { fade: 0.1, restart: true }); return HERO.curName; },
+  heroAnim: function () {
+    var names = Object.keys(HERO.actions);
+    var out = { clips: names, cur: HERO.curName, time: HERO.cur ? +HERO.cur.time.toFixed(2) : null,
+      running: HERO.cur ? HERO.cur.isRunning() : null, weight: HERO.cur ? +HERO.cur.getEffectiveWeight().toFixed(2) : null,
+      mixer: HERO.mixer ? +HERO.mixer.time.toFixed(2) : null };
+    if (HERO.actions['Idle_Loop']) { var a = HERO.actions['Idle_Loop']; out.idle = { t: +a.time.toFixed(2), run: a.isRunning(), w: +a.getEffectiveWeight().toFixed(2), dur: +a.getClip().duration.toFixed(2), tracks: a.getClip().tracks.length, t0: a.getClip().tracks[0] ? a.getClip().tracks[0].name : '' }; }
+    return out;
+  },
+  simTime: function () { return { worldT: +worldT.toFixed(2), day: +DAY.t.toFixed(3), fps: Math.round(fpsVal) }; },
+  /* 🧪 v3.5 검수용 — 렌더 없이 시뮬레이션만 빠르게 돌린다(헤드리스 1fps 대응) */
+  fastForward: function (sec) {
+    var n = Math.min(1200, Math.ceil((sec || 1) / 0.05));
+    for (var i = 0; i < n; i++) {
+      worldT += 0.05;
+      updatePlayer(0.05);
+      if (typeof heroFrame === 'function') heroFrame(0.05);
+      updateDinos(0.05, worldT);
+      if (typeof updateTelegraphs === 'function') updateTelegraphs(0.05);
+      if (typeof updateFx === 'function') updateFx(0.05);
+    }
+    var mm = null;
+    for (var j = 0; j < dinos.length; j++) if (dinos[j].kind === 'mammoth') mm = dinos[j];
+    return {
+      worldT: +worldT.toFixed(2), hp: +S.hp.toFixed(1), knock: +(player.knockT || 0).toFixed(2),
+      px: +player.pos.x.toFixed(2), pz: +player.pos.z.toFixed(2),
+      m: mm ? { st: mm.mbSt || '', aggro: mm.aggro, cstate: mm.cstate, tele: !!mm.tele, dist: +Math.hypot(mm.x - player.pos.x, mm.z - player.pos.z).toFixed(2) } : null
+    };
+  },
+  /* 🦣 v3.5 — 매머드 보스 검수 */
+  bossSpawn: function (dist) {
+    var d = spawnDino('mammoth', player.pos.x + (dist || 7.5) * 0.6, player.pos.z - (dist || 7.5) * 0.8, {});
+    if (d) { d.aggro = 0; d.provoked = 0; d.mbSt = ''; d.mbT = 0; d.hp = d.max; }
+    if (!d) return 'none';
+    d.hp = d.max;
+    var pl = { hp: +S.hp.toFixed(1), x: +player.pos.x.toFixed(2), z: +player.pos.z.toFixed(2) };
+    return { kind: d.kind, x: +d.x.toFixed(2), z: +d.z.toFixed(2), hp: d.max, atkR: (DINO_AI.mammoth || {}).atkR, hitR: (DINO_AI.mammoth || {}).hitR, atkDmg: (DINO_AI.mammoth || {}).atkDmg, player: pl };
+  },
+  bossState: function () {
+    var out = null;
+    for (var i = 0; i < dinos.length; i++) {
+      var d = dinos[i];
+      if (d.kind !== 'mammoth') continue;
+      out = { hp: Math.round(d.hp), max: d.max, st: d.mbSt || '', aggro: d.aggro, provoked: +(d.provoked || 0).toFixed(1),
+        cstate: d.cstate, tele: !!d.tele, dist: +Math.hypot(d.x - player.pos.x, d.z - player.pos.z).toFixed(2),
+        dead: d.dead, corpse: !!(d.corpse && !d.corpse.gone), visible: d.group.visible, dying: +(d.dying || 0).toFixed(2), mark: !!d.mark };
+    }
+    return { m: out, hp: +S.hp.toFixed(1), knock: +(player.knockT || 0).toFixed(2), px: +player.pos.x.toFixed(1), pz: +player.pos.z.toFixed(1) };
+  },
+  /* 🦴 v3.5 — 시체 표시 검수: 앞의 공룡을 즉사시키고 상태를 되돌려 준다 */
+  corpseSpawn: function (kind) {
+    var d = spawnDino(kind || 'trike', player.pos.x + 2.6, player.pos.z - 2.0, {});
+    if (!d) return 'none';
+    d.hp = 1;
+    killDino(d);
+    return { kind: kind || 'trike', x: +d.x.toFixed(1), z: +d.z.toFixed(1), dead: d.dead, dying: d.dying, visible: d.group.visible };
+  },
+  corpseState: function (kind) {
+    for (var i = 0; i < dinos.length; i++) {
+      var d = dinos[i];
+      if (kind && d.kind !== kind) continue;
+      if (!d.corpse) continue;
+      return { kind: d.kind, dead: d.dead, dying: +(d.dying || 0).toFixed(2), visible: d.group.visible,
+        corpse: !!(d.corpse && !d.corpse.gone), mark: !!d.mark, why: BUTCH.d === d ? 'menu' : '',
+        dist: +Math.hypot(d.x - player.pos.x, d.z - player.pos.z).toFixed(2) };
+    }
+    return 'none';
   },
   ccOpen: function () { ccOpen(); return CCP.on; },
   ccClose: function (v) { ccClose(v !== false); return CCP.on; },
@@ -33350,7 +33516,7 @@ window.__game = {
     };
   },
   /* 🐘 매머드 기본 모델 — v3.2 절차 모델(상아·털)인지 */
-  mammothInfo: function () {
+  bossInfo: function () {
     var d = null, i;
     for (i = 0; i < dinos.length; i++) if (dinos[i].kind === 'mammoth' && !dinos[i].dead) { d = dinos[i]; break; }
     if (!d) d = spawnDino('mammoth', player.pos.x + 12, player.pos.z + 2, {});
