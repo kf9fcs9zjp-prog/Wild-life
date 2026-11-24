@@ -1927,6 +1927,22 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* @@V37CSS@@ */
 /* =========================================================
    WILD LIFE v3.7 — 듀랑고 UI 문법 (다크 슬레이트 · 얇은 보더 · 노란 L자 코너 · 머스타드 CTA)
@@ -2191,6 +2207,85 @@ body.targeting .toasts{top:calc(env(safe-area-inset-top) + 92px) !important}
   box-shadow:0 4px 14px rgba(0,0,0,.28) !important;
 }
 
+/* =========================================================
+   v3.7.1 — 아이폰 세로모드 노치/다이나믹 아일랜드 핫픽스
+   · 모달을 항상 상단 HUD·BGM 배지보다 위로 (겹침 제거)
+   · 세로 모달은 노치 아래로 내려오고 높이는 '보이는 화면(dvh)' 기준
+   ========================================================= */
+#sheet, #sheet.v37c, #sheet.v37f{z-index:66}
+@media (max-width:760px){
+  #sheet{
+    top:auto !important;bottom:0;
+    /* dvh 미지원 브라우저 폴백 */
+    max-height:calc(100vh - 88px - env(safe-area-inset-bottom, 0px));
+    max-height:calc(100dvh - max(88px, env(safe-area-inset-top, 0px) + 26px) - env(safe-area-inset-bottom, 0px));
+  }
+  #sheet.v37c{
+    width:100vw;max-width:100vw;
+    height:calc(100vh - 88px - env(safe-area-inset-bottom, 0px));
+    max-height:calc(100vh - 88px - env(safe-area-inset-bottom, 0px));
+    height:calc(100dvh - max(88px, env(safe-area-inset-top, 0px) + 26px) - env(safe-area-inset-bottom, 0px));
+    max-height:calc(100dvh - max(88px, env(safe-area-inset-top, 0px) + 26px) - env(safe-area-inset-bottom, 0px));
+    inset:auto 0 0 0 !important;margin:0;border-radius:0;transform:none !important;
+  }
+}
+/* 아주 낮은 화면(가로 모드·구형)에서도 헤더가 잘리지 않게 */
+@media (max-height:520px){
+  #sheet.v37c{height:calc(100dvh - 56px) !important;max-height:calc(100dvh - 56px) !important}
+}
+
+/* ---------- v3.7.1 · 제작 진행 배지 ---------- */
+#wl37job{
+  position:fixed;left:50%;transform:translateX(-50%);
+  bottom:calc(env(safe-area-inset-bottom, 0px) + 132px);
+  z-index:58;display:none;align-items:center;gap:7px;
+  min-width:172px;max-width:min(320px,86vw);height:30px;padding:0 11px;
+  border-radius:3px;border:1px solid rgba(234,179,8,.42);
+  background:linear-gradient(180deg,rgba(20,24,31,.96),rgba(11,14,18,.97));
+  color:#f2efe4;font-family:inherit;font-size:10.5px;font-weight:900;letter-spacing:-.01em;
+  box-shadow:0 6px 18px rgba(0,0,0,.52);cursor:pointer;pointer-events:auto;
+  overflow:hidden;
+}
+#wl37job.on{display:flex}
+#wl37job .ic{font-size:13px;line-height:1;flex:0 0 auto}
+#wl37job .lb{color:#c9c2b0;font-size:9px;font-weight:800;flex:0 0 auto}
+#wl37job .nm{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff6da}
+#wl37job .tm{flex:0 0 auto;color:#ffd76a;font-variant-numeric:tabular-nums;font-weight:900}
+#wl37job .more{flex:0 0 auto;color:#9b978c;font-size:9px;font-weight:900}
+#wl37job .bar{position:absolute;left:0;right:0;bottom:0;height:2px;background:rgba(255,255,255,.10)}
+#wl37job .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#f2c62a,#ff9d3d);transition:width .18s linear}
+#wl37job.ready{border-color:rgba(120,220,150,.55);background:linear-gradient(180deg,rgba(20,34,24,.97),rgba(11,18,14,.97))}
+#wl37job.ready .tm{color:#9ff0b4}
+
+/* 제작창 안 대기열 (진행 바 · 남은 시간 · 취소 → 재료 100% 환불) */
+#sheet.v37c .sheetBody{flex-direction:column}
+#sheet.v37c .sheetBody > .c37{flex:1 1 auto;min-height:0;height:auto;width:100%}
+.c37jobs{flex:0 0 auto;max-height:32vh;overflow-y:auto;background:rgba(14,18,23,.97);border-bottom:1px solid var(--d37-line)}
+.c37jobs::before{content:'🔨 진행 중인 제작';display:block;padding:5px 10px 3px;font-size:9px;font-weight:900;
+  letter-spacing:.06em;color:#b9b3a6}
+.c37job{display:flex;align-items:center;gap:7px;padding:4px 9px;font-size:10.5px;font-weight:800;color:#e9e4d7}
+.c37job + .c37job{border-top:1px solid rgba(150,160,170,.10)}
+.c37job .ji{flex:0 0 auto;font-size:13px;line-height:1}
+.c37job .jn{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#f4f0e3}
+.c37job .jn em{font-style:normal;color:#8f8a80;font-size:9px;font-weight:800}
+.c37job .jbar{flex:0 0 58px;height:5px;border-radius:3px;background:rgba(255,255,255,.10);overflow:hidden;display:block}
+.c37job .jbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#f2c62a,#ff9d3d)}
+.c37job .jtm{flex:0 0 56px;text-align:right;color:#ffd76a;font-variant-numeric:tabular-nums;font-weight:900;white-space:nowrap}
+.c37job button{flex:0 0 auto;height:22px;padding:0 8px;border-radius:2px;border:1px solid rgba(210,110,90,.42);
+  background:rgba(58,26,22,.88);color:#ffd9cd;font-family:inherit;font-size:9.5px;font-weight:900;cursor:pointer}
+
+/* ---------- 데스크탑: 글씨가 너무 작지 않게 15~20% 키운다 (모바일 390px는 그대로) ---------- */
+@media (min-width:900px){
+  #wl37top > *{height:26px;line-height:26px;font-size:12px;padding:0 9px !important}
+  #wl37top b,#wl37top i,#wl37top em,#wl37top span{font-size:12px}
+  body{--v37-top:calc(env(safe-area-inset-top) + 30px)}
+  .c37catBtn{height:64px;font-size:11px}
+  .c37row .nm{font-size:11.5px} .c37row .sub{font-size:9.5px} .c37row .lv{font-size:10px}
+  .c37detHead b{font-size:13px} .c37detBody{font-size:11px} .c37kv{font-size:11px}
+  .c37btn{height:44px;font-size:14px}
+  #wl37job{height:34px;font-size:12px}
+}
+
 /* ---------- 기타 ---------- */
 #butchMenu .hexBtn{transform-origin:50% 50%}
 body.v37 .toasts .toast{animation:v37toastIn .16s ease both}
@@ -2349,7 +2444,7 @@ body.v37 .toasts .toast{animation:v37toastIn .16s ease both}
       </div>
       <div class="startSaveLine" id="startSaveLine"><span>저장 없음 · 새로 시작해요</span></div>
     </div>
-    <div class="startFoot" id="startFoot">WILD LIFE · v3.7 &nbsp;|&nbsp; 왼쪽 조이스틱으로 걷고 오른쪽 버튼으로 채집·공격 · 빨간 예고선은 구르기로 피하기</div>
+    <div class="startFoot" id="startFoot">WILD LIFE · v3.7.1 &nbsp;|&nbsp; 왼쪽 조이스틱으로 걷고 오른쪽 버튼으로 채집·공격 · 빨간 예고선은 구르기로 피하기</div>
   </div>
 
   <div class="slotPanel" id="slotPanel">
@@ -36186,13 +36281,29 @@ window.__game = {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* @@V37JS@@ */
 /* ==========================================================================
    WILD LIFE v3.7 — 듀랑고 1차 패치
    (UI 문법 · HUD 한 줄 · 슬림 토스트 · 3분할 제작창 · 심층 가공 · 요리/회복 ·
     무기 티어 · 강타 스킬 · 락온 자동조준 · 펫 정지 · 부족 AI · 해골 토템)
    ========================================================================== */
-var V37 = { ver: '3.7', ready: false };
+var V37 = { ver: '3.7.1', ready: false };
 document.body.classList.add('v37');
 
 /* 저장 호환: S.v37 이 없으면 새로 만든다 (기존 세이브 100% 호환) */
@@ -36780,8 +36891,175 @@ craft = function (id) {
     if (r.v37skill) v37AddXp(r.v37skill, r.v37xp || 4);
     if (r.out) S.v37.found[r.out] = 1;
     if (r.made) S.v37.crafted[r.id] = 1;
+    v37CraftBegin(r, st1);
   }
 };
+
+/* ==========================================================================
+   v3.7.1 — "제작 눌렀으면 만드는 중"이 바로 보이게
+   ① 제작창을 자동으로 닫는다 ② 착수 모션을 창이 닫힌 뒤 처음부터 다시 튼다
+   ③ 화면 아래에 진행 배지(🔨 제작 중 · 남은 시간 · 게이지)를 띄우고
+      완료될 때까지 남아 있게 한다 (창을 닫고 사냥해도 계속 보인다)
+   ========================================================================== */
+var V37JOB = { el: null, ic: null, nm: null, tm: null, more: null, bar: null, on: false };
+function v37JobEl() {
+  if (V37JOB.el && V37JOB.el.parentNode) return V37JOB.el;
+  var d = document.createElement('div');
+  d.id = 'wl37job';
+  d.setAttribute('role', 'button');
+  d.setAttribute('aria-label', '제작 진행 상황 열기');
+  d.innerHTML = '<span class="ic">🔨</span><span class="lb">제작 중</span>' +
+    '<span class="nm">작업</span><span class="tm">0초</span><span class="more"></span>' +
+    '<span class="bar"><i></i></span>';
+  document.body.appendChild(d);
+  V37JOB.el = d;
+  V37JOB.ic = d.querySelector('.ic');
+  V37JOB.nm = d.querySelector('.nm');
+  V37JOB.tm = d.querySelector('.tm');
+  V37JOB.more = d.querySelector('.more');
+  V37JOB.bar = d.querySelector('.bar i');
+  d.addEventListener('click', function (e) {
+    e.stopPropagation();
+    if (e.preventDefault) e.preventDefault();
+    v37OpenJobSheet();
+  });
+  return d;
+}
+/* 진행 중인 작업 — 손작업 + 모든 가공 시설 */
+function v37LiveJobs() {
+  var out = [], i, j;
+  for (i = 0; i < (S.hand || []).length; i++) out.push({ job: S.hand[i], st: null, idx: i });
+  for (i = 0; i < structures.length; i++) {
+    var st = structures[i];
+    if (!st || !isCraftStation(st.type)) continue;
+    var jobs = st.jobs || [];
+    for (j = 0; j < jobs.length; j++) out.push({ job: jobs[j], st: st, idx: j });
+  }
+  out.sort(function (a, b) { return (a.job.doneAt || 0) - (b.job.doneAt || 0); });
+  return out;
+}
+/* 진행 중 대기열을 시간에 맞춰 갱신 (배지 + 제작창 대기열 행) */
+function v37UpdateJobRows() {
+  var rows = document.querySelectorAll('#sheet .c37job');
+  for (var i = 0; i < rows.length; i++) {
+    var el = rows[i], j = el.__job;
+    if (!j) continue;
+    var left = Math.max(0, (j.doneAt - Date.now()) / 1000);
+    var p = clamp(1 - left / Math.max(1, j.total), 0, 1);
+    if (el.__bar) el.__bar.style.width = (p * 100).toFixed(1) + '%';
+    if (el.__tm) el.__tm.textContent = left <= 0 ? '완성 대기' : (left < 60 ? Math.ceil(left) + '초' : craftTimeLabel(Math.ceil(left)));
+  }
+}
+function v37JobTick() {
+  var el = v37JobEl();
+  var live = v37LiveJobs();
+  if (!live.length) {
+    if (V37JOB.on) { el.classList.remove('on'); V37JOB.on = false; }
+    return;
+  }
+  var f = live[0].job;
+  var left = Math.max(0, (f.doneAt - Date.now()) / 1000);
+  var p = clamp(1 - left / Math.max(1, f.total), 0, 1);
+  var ready = left <= 0;
+  if (V37JOB.ic) V37JOB.ic.textContent = ready ? '✅' : (f.icon || '🔨');
+  if (V37JOB.nm) V37JOB.nm.textContent = (f.name || f.id || '작업') + ((f.qty || 1) > 1 ? ' x' + f.qty : '');
+  if (V37JOB.tm) V37JOB.tm.textContent = ready ? '완성' : (left < 60 ? Math.ceil(left) + '초' : craftTimeLabel(Math.ceil(left)));
+  if (V37JOB.more) V37JOB.more.textContent = live.length > 1 ? '+' + (live.length - 1) : '';
+  if (V37JOB.bar) V37JOB.bar.style.width = (ready ? 100 : p * 100).toFixed(1) + '%';
+  el.classList.toggle('ready', ready);
+  if (!V37JOB.on) { el.classList.add('on'); V37JOB.on = true; }
+  v37UpdateJobRows();
+}
+setInterval(function () { try { v37JobTick(); } catch (e) { } }, 240);
+
+/* ==========================================================================
+   v3.7.1 — 완성 시 자동 지급 + "✅ OO 제작 성공!" + 짧은 환호 모션
+   (작업대에서 만든 것도 「수령」 버튼을 찾지 않아도 바로 가방/설치 대기로 들어간다)
+   ========================================================================== */
+/* 제작창 안의 대기열 한 줄 — 남은 시간·게이지·취소(재료 100% 환불) */
+function v37JobRow(entry) {
+  var j = entry && entry.job;
+  if (!j) return null;
+  var stName = entry.st ? ((STRUCT_DEF[entry.st.type] && STRUCT_DEF[entry.st.type].name) || '작업대') : '손작업';
+  var row = document.createElement('div');
+  row.className = 'c37job';
+  row.innerHTML = '<span class="ji">' + (j.icon || '🔨') + '</span>' +
+    '<span class="jn">' + (j.name || j.id) + ((j.qty || 1) > 1 ? ' x' + j.qty : '') +
+    ' <em>' + stName + '</em></span>' +
+    '<span class="jbar"><i></i></span><span class="jtm"></span>';
+  var b = document.createElement('button');
+  b.textContent = '취소';
+  b.addEventListener('click', function (e) {
+    e.stopPropagation();
+    cancelCraftJob(entry.st || null, entry.idx || 0);
+    try { v37JobTick(); } catch (err) { }
+    if (sheetMode === 'craft' && sheet.classList.contains('on')) renderSheet();
+  });
+  row.appendChild(b);
+  row.__job = j;
+  row.__bar = row.querySelector('.jbar i');
+  row.__tm = row.querySelector('.jtm');
+  return row;
+}
+function v37CraftDone(j) {
+  if (!j) return;
+  var nm = j.name || (ITEMS[j.out] && ITEMS[j.out].name) || j.id || '물건';
+  toast('✅ ' + nm + ' 제작 성공!', 'good');
+  sfx('ding');
+  player.cheerT = 1.4;
+  player.cheerMax = 1.4;
+  try { spawnBurst(player.pos.x, terrainH(player.pos.x, player.pos.z) + 1.6, player.pos.z, 0xffe0a0, 8, 0.9); } catch (e) { }
+  try { v37JobTick(); } catch (e) { }
+}
+/* 손작업 — 원래도 자동 지급이지만, 성공 토스트·환호를 v3.7.1 문구로 통일 */
+var _v37DeliverJob = deliverJob;
+deliverJob = function (j) {
+  var got = _v37DeliverJob(j);
+  /* 기본 토스트("✅ OO 완성!")가 먼저 뜨므로, 성공 토스트는 한 박자 뒤에 덮어쓴다 */
+  if (got > 0 && j) setTimeout(function () { try { v37CraftDone(j); } catch (e) { } }, 40);
+  return got;
+};
+/* 작업대(시설) — 완성되면 바로 자동 수령 (수령 버튼 없이) */
+var _v37FinishStationJob = finishStationJob;
+finishStationJob = function (st) {
+  var j = _v37FinishStationJob(st);
+  if (j) {
+    try { collectStation(st, true); } catch (e) { }
+    v37CraftDone(j);
+    try { if (sheetMode === 'craft' && sheet.classList.contains('on')) renderSheet(); } catch (e) { }
+  }
+  return j;
+};
+function v37OpenJobSheet() {
+  var live = v37LiveJobs();
+  if (!live.length) return false;
+  craftStation = live[0].st || null;
+  if (sheetMode !== 'craft' || !sheet.classList.contains('on')) openSheet('craft');
+  else renderSheet();
+  return true;
+}
+function v37CraftBegin(r, st) {
+  /* ① 제작창 닫기 — 만드는 장면이 보이도록 */
+  if (sheetMode === 'craft' && sheet && sheet.classList.contains('on')) closeSheet();
+  /* ② 착수 모션을 창이 닫힌 뒤 처음부터 */
+  try { if (r) startCraftMotion(st || null, r); } catch (e) { }
+  /* ③ 진행 배지 + 짧은 토스트 */
+  v37JobTick();
+  toast('🔨 ' + r.name + ' 만들기 시작!', 'good');
+}
+
+/* 모달 바깥(게임 화면)을 누르면 닫힌다 — 손이 편하게 */
+if (!document.__v37Outside) {
+  document.__v37Outside = true;
+  document.addEventListener('pointerdown', function (e) {
+    try {
+      if (!sheet || !sheet.classList.contains('on')) return;
+      if (sheet.contains(e.target)) return;
+      if (!sheetMode) return;
+      closeSheet();
+    } catch (err) { }
+  }, true);
+}
 
 /* ── 카테고리 ── */
 var V37_CATS = [
@@ -36926,7 +37204,19 @@ function v37RenderCraft() {
   var det = document.createElement('div');
   det.className = 'c37det';
   wrap.appendChild(det);
+  /* v3.7.1 — 지금 돌아가는 제작 대기열을 창 맨 위에 다시 보여 준다 */
+  var liveJobs = v37LiveJobs();
+  if (liveJobs.length) {
+    var jb = document.createElement('div');
+    jb.className = 'c37jobs';
+    for (var ji = 0; ji < liveJobs.length; ji++) {
+      var row = v37JobRow(liveJobs[ji]);
+      if (row) jb.appendChild(row);
+    }
+    sheetBody.appendChild(jb);
+  }
   sheetBody.appendChild(wrap);
+  try { v37UpdateJobRows(); } catch (e) { }
 
   function filtered() {
     var q = (V37_UI.q || '').replace(/\s+/g, '').toLowerCase();
@@ -37514,46 +37804,87 @@ function v37SpearDrill() {
 var V37_TRIBE = { threat: {}, alert: {} };
 
 function v37TribePowerMul(t) { return t && t.hostile ? (2 / 6) : (3 / 5); }
-function v37TribeDmg(t) { return Math.max(2, Math.round(Math.max(12, meleeAtk()) * v37TribePowerMul(t))); }
 function v37IsFighter(m) {
   return !!m && (m.role === 'hunt' || m.role === 'warrior' || m.role === 'chief');
 }
+/* 부족원 한 명의 타격량 — 비전투 역할(제작·채집·요리)도 합동 방어 때는 확실히 대미지를 준다 */
+function v37TribeDmg(t, m) {
+  if (t && t.hostile) return Math.max(6, Math.round(Math.max(12, meleeAtk()) * v37TribePowerMul(t)));
+  var base = Math.max(16, meleeAtk() * 0.6);
+  if (m && !v37IsFighter(m)) base *= 0.66;      // 제작꾼·채집꾼은 조금 약하게
+  return Math.max(6, Math.round(base));
+}
+var V37_GUARD_R = 6;          // 영토 경계에서 이만큼까지는 미리 나가 맞는다
+var V37_DEFEND_MAX = 3;       // 우호 부족 합동 방어 인원 (사냥꾼 + 제작꾼/채집꾼)
 function v37TribeThreats(t) {
   var out = [];
   for (var i = 0; i < dinos.length; i++) {
     var d = dinos[i];
     if (!d || d.dead || d.tamed || d.mounted || !d.hostile) continue;
     if (d.isle && d.isle !== ISLE.cur) continue;
+    if (d.dying > 0) continue;
     var dd = Math.hypot(d.x - t.center.x, d.z - t.center.z);
-    if (dd < t.r + 9) out.push({ d: d, dd: dd });
+    if (dd < t.r + V37_GUARD_R) out.push({ d: d, dd: dd });
   }
   out.sort(function (a, b) { return a.dd - b.dd; });
   return out;
 }
+/* 함께 나설 방어 인원 — 사냥꾼 우선, 그다음 제작꾼·채집꾼(가까운 순) */
+function v37Defenders(t, threat) {
+  if (!t || !t.members) return [];
+  var max = (t.hostile ? t.members.length : V37_DEFEND_MAX);
+  var cand = [];
+  for (var i = 0; i < t.members.length; i++) {
+    var m = t.members[i];
+    if (!m || !m.model || m.dead) continue;
+    if ((m.downT || 0) > 0) continue;
+    var pri = v37IsFighter(m) ? 0 : (m.role === 'craft' ? 1 : (m.role === 'gather' ? 2 : (m.role === 'cook' ? 3 : 1)));
+    var dd = threat ? Math.hypot(m.x - threat.x, m.z - threat.z) : 0;
+    cand.push({ m: m, pri: pri, dd: dd });
+  }
+  cand.sort(function (a, b) { return (a.pri - b.pri) || (a.dd - b.dd); });
+  var out = [];
+  for (var j = 0; j < cand.length && out.length < max; j++) out.push(cand[j].m);
+  return out;
+}
+function v37IsGuard(t, m) {
+  var g = t && t.v37guards;
+  return !!(g && g[m.v37id || m.name]);
+}
+function v37SetGuards(t, list) {
+  t.v37guards = {};
+  for (var i = 0; i < list.length; i++) t.v37guards[list[i].v37id || list[i].name] = 1;
+}
 function v37MemberFight(m, foe, t, dt) {
+  if (!foe || foe.dead) return;
+  if (m.offer) { m.offer = false; if (t && !t.hostile) t.barter = null; }
+  var reach = 3.0;
   var dist = Math.hypot(foe.x - m.x, foe.z - m.z);
-  if (dist > 2.4) {
-    m.state = 'v37chase';
+  m.state = 'v37chase';
+  if (dist > reach) {
+    /* 도망가는 맹수(4.4~4.5 m/s)를 확실히 따라잡도록 부족원은 더 빠르게 달린다 */
     m.tx = foe.x; m.tz = foe.z;
-    tribeMove(m, dt, 4.3, true);
-  } else {
-    m.state = 'v37chase';
-    m.tx = m.x; m.tz = m.z;
-    tribeFace(m, foe.x, foe.z);
-    if (m.atkCd <= 0) {
-      m.atkCd = 1.3;
-      tribeAnim(m, m.hostile ? 'Punch_Jab' : 'Sword_Attack', 0.1);
-      var dmg = v37TribeDmg(t);
-      foe.hp -= dmg; foe.hurt = 0.34;
-      wakeDino(foe);
-      var fy = terrainH(foe.x, foe.z);
-      spawnBurst(foe.x, fy + (foe.parts.height || 1.4) * 0.5, foe.z, 0xffb06a, 6, 0.8);
-      spawnFloatText(foe.x, fy + (foe.parts.height || 1.4) * 0.9, foe.z, '-' + dmg, '#ffd8a0', 0.9);
-      m.v37dealt = (m.v37dealt || 0) + dmg;
-      if (foe.hp <= 0 && !foe.dead) {
-        killDino(foe);
-        m.v37expT = 30 + Math.random() * 25;
-      }
+    tribeMove(m, dt, 6.6, true);
+    m.v37atkArm = 0.25;                       // 다가가는 동안은 팔을 흔들지 않는다
+    return;
+  }
+  m.tx = m.x; m.tz = m.z;
+  tribeFace(m, foe.x, foe.z);
+  if (m.atkCd <= 0) {
+    m.atkCd = 1.15;
+    tribeAnim(m, (t && t.hostile) ? 'Punch_Jab' : 'Sword_Attack', 0.08);
+    var dmg = v37TribeDmg(t, m);
+    foe.hp -= dmg; foe.hurt = 0.34;
+    wakeDino(foe);
+    var fy = terrainH(foe.x, foe.z);
+    spawnBurst(foe.x, fy + (foe.parts.height || 1.4) * 0.5, foe.z, 0xffb06a, 6, 0.8);
+    spawnFloatText(foe.x, fy + (foe.parts.height || 1.4) * 0.9, foe.z, '-' + dmg, '#ffd8a0', 0.9);
+    m.v37dealt = (m.v37dealt || 0) + dmg;
+    if (foe.hp <= 0 && !foe.dead) {
+      killDino(foe);
+      m.v37expT = 30 + Math.random() * 25;
+      if (!t.hostile) toast('⚔️ ' + (t.name || '부족') + ' ' + (m.roleName || m.name) + '이(가) 침입한 ' +
+        ((DINO_META[foe.kind] && DINO_META[foe.kind].name) || '공룡') + '을(를) 처치했어요', 'good');
     }
   }
 }
@@ -37570,10 +37901,18 @@ function v37TribeTick(t, dt) {
   var th = v37TribeThreats(t);
   var threat = th.length ? th[0].d : null;
   if (threat && !t.v37lastThreat) {
-    /* 영토에 육식공룡 침입 — 사냥꾼·전사 즉시 합동 방어 */
-    if (!t.hostile) toast('⚔️ ' + t.name + ' 사냥꾼·전사가 침입한 ' + (DINO_META[threat.kind] ? DINO_META[threat.kind].name : '공룡') + '에게 달려들어요', undefined);
+    /* 영토에 육식공룡 침입 — 사냥꾼 + 제작꾼·채집꾼이 함께 달려든다 */
+    if (!t.hostile) {
+      var who = v37Defenders(t, threat);
+      var names = [];
+      for (var wi = 0; wi < who.length; wi++) names.push(who[wi].roleName || who[wi].name);
+      toast('⚔️ ' + t.name + ' ' + (names.length ? names.join('·') : '부족원') + '이(가) 침입한 ' +
+        ((DINO_META[threat.kind] && DINO_META[threat.kind].name) || '공룡') + '에게 달려들어요', undefined);
+    }
   }
   t.v37lastThreat = threat;
+  var guards = threat ? v37Defenders(t, threat) : [];
+  v37SetGuards(t, guards);
   for (var i = 0; i < t.members.length; i++) {
     var m = t.members[i];
     if (!m.model || m.dead || (m.downT || 0) > 0) continue;
@@ -37583,15 +37922,17 @@ function v37TribeTick(t, dt) {
     if (m.hp < m.max * 0.85 && t.hostile === false && t.alert37 <= 0) t.alert37 = 10;
     var fighter = v37IsFighter(m);
     if (threat) {
-      if (fighter || t.alert37 > 0) {
+      if (v37IsGuard(t, m) || fighter || t.alert37 > 0) {
         v37MemberFight(m, threat, t, dt);
         continue;
       }
       var td = Math.hypot(threat.x - m.x, threat.z - m.z);
-      if (td < 13) { v37MemberFlee(m, threat, t, dt); continue; }
+      if (td < 12) { v37MemberFlee(m, threat, t, dt); continue; }
       if (m.state === 'v37flee') { tribeIdle(m, 1.0); }
       continue;
     }
+    /* 위협이 끝나면 방어 자세를 풀고 하던 일로 돌아간다 */
+    if (m.state === 'v37chase') { tribeIdle(m, 0.8 + Math.random()); }
     /* 위협 없음 — 원정 사냥(사냥꾼·전사만) */
     if (fighter) {
       m.v37expT = Math.max(0, (m.v37expT || 0) - dt);
@@ -37827,6 +38168,44 @@ heroBuildHead = function (hero, root, cfg) {
   }
 };
 
+/* ==========================================================================
+   v3.7.1 — 동행 펫 맷집: 플레이어 최대 체력의 1.3배 이상
+   (이미 길들인 펫 세이브에도 적용 · 현재 체력은 비율 유지)
+   ========================================================================== */
+var V37_PLAYER_HP_MAX = 100;
+var V37_PET_HP_MIN = Math.round(V37_PLAYER_HP_MAX * 1.3);   // 130
+var _v37PetMaxHp = petMaxHpOf;
+petMaxHpOf = function (kind, lv) {
+  var base = _v37PetMaxHp(kind, lv);
+  return Math.max(V37_PET_HP_MIN, Math.round(base));
+};
+function v37PetTough() {
+  var changed = 0;
+  for (var i = 0; i < dinos.length; i++) {
+    var d = dinos[i];
+    if (!d || !d.tamed || d.dead) continue;
+    var need = Math.max(V37_PET_HP_MIN, petMaxHpOf(d.kind, petLvOf(d)));
+    if (!(need > (d.max || 0))) continue;
+    var ratio = (d.max > 0) ? clamp(d.hp / d.max, 0, 1) : 1;
+    d.max = need;
+    d.hp = Math.min(need, Math.max(1, Math.round(need * ratio)));
+    changed++;
+    try { addNameTag(d); } catch (e) { }
+  }
+  if (changed) { try { syncTamedData(); } catch (e) { } }
+  return changed;
+}
+var V37_PET_T = { t: 0 };
+var _v37UpdateStructuresPet = updateStructures;
+updateStructures = function (dt, t) {
+  _v37UpdateStructuresPet(dt, t);
+  V37_PET_T.t += dt;
+  if (V37_PET_T.t < 1.5) return;
+  V37_PET_T.t = 0;
+  v37PetTough();
+};
+setTimeout(function () { try { v37PetTough(); } catch (e) { } }, 1200);
+
 /* ── 검수용 API ── */
 if (window.__game) {
   window.__game.v37 = {
@@ -37888,6 +38267,38 @@ if (window.__game) {
       }
       return out;
     },
+    /* v3.7.1 검수 — 부족 영토·침입 공룡·합동 방어 상태 */
+    tribeCenter: function (id) {
+      var t = TRIBES[id || 'friendly'];
+      if (!t) return null;
+      return {
+        id: t.id, name: t.name, hostile: !!t.hostile, built: !!t.built,
+        center: [+t.center.x.toFixed(1), +t.center.z.toFixed(1)], r: t.r,
+        guards: Object.keys(t.v37guards || {})
+      };
+    },
+    dinoScan: function (x, z, r) {
+      var out = [], rr = r || 60;
+      for (var i = 0; i < dinos.length; i++) {
+        var d = dinos[i];
+        if (!d || d.dead || d.tamed) continue;
+        var dd = Math.hypot(d.x - x, d.z - z);
+        if (dd > rr) continue;
+        out.push({ kind: d.kind, hostile: !!d.hostile, hp: Math.round(d.hp), max: d.max, dd: +dd.toFixed(1), x: +d.x.toFixed(1), z: +d.z.toFixed(1), dying: d.dying || 0 });
+      }
+      out.sort(function (a, b) { return a.dd - b.dd; });
+      return out;
+    },
+    jobInfo: function () {
+      var live = v37LiveJobs();
+      return {
+        n: live.length,
+        first: live.length ? { id: live[0].job.id, name: live[0].job.name, left: Math.max(0, Math.round((live[0].job.doneAt - Date.now()) / 1000)), total: live[0].job.total, st: live[0].st ? live[0].st.type : 'hand' } : null,
+        badge: (function () { var e = document.getElementById('wl37job'); return e ? { on: e.classList.contains('on'), text: e.textContent.replace(/\s+/g, ' ').trim() } : null; })(),
+        sheet: sheetMode, sheetOn: !!(sheet && sheet.classList.contains('on'))
+      };
+    },
+    petTough: function () { var n = v37PetTough(); var out = []; for (var i = 0; i < dinos.length; i++) { var d = dinos[i]; if (d && d.tamed && d.pid === S.companion) out.push({ kind: d.kind, hp: Math.round(d.hp), max: Math.round(d.max), need: V37_PET_HP_MIN }); } return { fixed: n, playerMax: V37_PLAYER_HP_MAX, min: V37_PET_HP_MIN, pets: out }; },
     petInfo: function () {
       var p = (typeof companionPet === 'function') ? companionPet() : null;
       if (!p) return null;
@@ -37939,8 +38350,19 @@ if (window.__game) {
    · 저장된 커마 헤어 설정도 안전한 기본값으로 강제 정리한다.
    ========================================================================== */
 var V37_HAIR_STYLES = ['short', 'bob', 'pony', 'bun', 'long', 'buzz'];
+var V37_HEAD_SCALE = 1.13;                  // v3.7.1 — 소두 교정(머리+헤어 13% 확대)
+var V37_DEFAULT_STYLE = 'bob';              // 기본 여캐 — 대머리처럼 보이지 않는 단발
 function v37SafeStyle(st) {
-  return (V37_HAIR_STYLES.indexOf(st) >= 0) ? st : 'short';
+  if (st === 'short') st = V37_DEFAULT_STYLE;   // 너무 짧아 대머리 같던 기본값 → 단발
+  return (V37_HAIR_STYLES.indexOf(st) >= 0) ? st : V37_DEFAULT_STYLE;
+}
+function v37ScaleHead() {
+  if (!HERO || !HERO.headG || HERO.headG.__v37scale13) return false;
+  var s = HERO.headG.scale;
+  HERO.headG.scale.set(s.x * V37_HEAD_SCALE, s.y * V37_HEAD_SCALE, s.z * V37_HEAD_SCALE);
+  HERO.headG.__v37scale13 = 1;
+  HERO.headScale37 = V37_HEAD_SCALE;
+  return true;
 }
 function v37SanitizeHeroCfg(cfg) {
   if (!cfg || typeof cfg !== 'object') return cfg;
@@ -37970,6 +38392,7 @@ heroHairGroup = function (cfg, R) {
   var matD = new THREE.MeshPhongMaterial({ color: col, shininess: 8, specular: 0x1a1410, flatShading: false });
   matD.color.multiplyScalar(0.86);
   var style = v37SafeStyle(cfg && cfg.style);
+  if (style === 'short') style = V37_DEFAULT_STYLE;
   var TAU2 = Math.PI * 2;
   var FACE0 = Math.PI / 2 - 1.02;          // 얼굴 텍스처가 붙는 정면 구간 시작
   var FACE1 = Math.PI / 2 + 1.02;          // 끝 (이 구간에는 머리카락을 두지 않는다)
@@ -37991,12 +38414,18 @@ heroHairGroup = function (cfg, R) {
     geo.computeVertexNormals();
     return geo;
   }
-  /* ① 정수리 캡 — 눈썹(≈70°) 위에서 끊는다 (눈 82° 를 절대 덮지 않는다) */
-  var capT = (style === 'buzz') ? 0.335 : 0.375;
-  var cap = new THREE.Mesh(shell(0, TAU2, 0, Math.PI * capT, 1.006), mat);
-  g.add(cap);
+  /* ① 정수리 캡 — 얼굴 구간(정면)은 이마 위에서 끊고, 옆·뒤는 더 내려온다.
+        (예전처럼 통짜 캡을 72°까지 내리면 눈썹을 덮는 '바가지 머리'가 된다) */
+  var capT = (style === 'buzz') ? 0.335 : (style === 'bob' ? 0.425 : 0.375);
+  var capFrontT = (style === 'buzz' || style === 'short') ? Math.min(capT, 0.315) : 0.30;
+  /* 정면 — 이마 위(≈54°)에서 끝난다 (눈 82° 와는 28° 여유) */
+  var capF = new THREE.Mesh(shell(FACE0, FACE1 - FACE0, 0, Math.PI * capFrontT, 1.008), mat);
+  g.add(capF);
+  /* 옆·뒤 — 귀 옆까지 자연스럽게 덮는다 */
+  var capB = new THREE.Mesh(shell(FACE1 - 0.02, TAU2 - (FACE1 - FACE0) + 0.04, 0, Math.PI * capT, 1.006), mat);
+  g.add(capB);
   /* ② 뒤통수 — 정면 얼굴 구간을 비우고 뒤쪽만 목덜미까지 */
-  var napeT = (style === 'buzz') ? 0.50 : (style === 'short' ? 0.56 : 0.62);
+  var napeT = (style === 'buzz') ? 0.50 : (style === 'short' ? 0.56 : 0.70);
   var nape = new THREE.Mesh(shell(FACE1, TAU2 - (FACE1 - FACE0), 0, Math.PI * napeT, 1.004), mat);
   g.add(nape);
   /* ③ 옆머리 살짝 — 귀 뒤쪽 얇은 띠 (얼굴 구간 밖) */
@@ -38009,8 +38438,18 @@ heroHairGroup = function (cfg, R) {
   }
   /* ④ 스타일별 — 전부 '뒤쪽'에만 붙인다 */
   if (style === 'bob') {
-    var bob = new THREE.Mesh(shell(FACE1 - 0.05, TAU2 - (FACE1 - FACE0) + 0.10, Math.PI * 0.34, Math.PI * 0.42, 1.012), matD);
+    /* 뒤통수 — 턱선까지 풍성하게 내려오는 단발 */
+    var bob = new THREE.Mesh(shell(FACE1 - 0.07, TAU2 - (FACE1 - FACE0) + 0.14, Math.PI * 0.30, Math.PI * 0.54, 1.020), matD);
     g.add(bob);
+    /* 옆가리 — 귀 앞·뺨 옆으로 자연스럽게 내리는 두 가닥 (얼굴 구간 밖) */
+    for (var sb = -1; sb <= 1; sb += 2) {
+      var ph0 = (sb < 0) ? (FACE0 - 0.30) : FACE1;
+      var lock = new THREE.Mesh(shell(ph0, 0.30, Math.PI * 0.28, Math.PI * 0.52, 1.018), mat);
+      g.add(lock);
+    }
+    /* 정수리 볼륨 — 납작한 캡 대신 살짝 두께를 준다 */
+    var crown = new THREE.Mesh(shell(0, TAU2, 0, Math.PI * 0.30, 1.030), mat);
+    g.add(crown);
   }
   if (style === 'pony') {
     var tie = new THREE.Mesh(new THREE.SphereGeometry(R * 0.085, 8, 6), matD);
@@ -38038,11 +38477,37 @@ heroHairGroup = function (cfg, R) {
   return g;
 };
 
+/* ==========================================================================
+   v3.7.1 — 제작 완료 환호(만세) 모션
+   · 리깅에 Victory/Cheer 클립이 없어서 팔 본을 직접 올린다 (믹서가 자세를 쓴 직후)
+   · 1.4초만, 이동·공격·제작 같은 다른 입력이 들어오면 즉시 끊긴다
+   ========================================================================== */
+function v37CheerTick(dt) {
+  if (!HERO.ready || !player) return;
+  if (!(player.cheerT > 0)) return;
+  player.cheerT = Math.max(0, player.cheerT - (dt || 0));
+  if (player.moving || (player.swing > 0) || (player.bowT > 0) || (player.dodgeT > 0) ||
+    (player.craftT > 0) || (player.skillT > 0)) { player.cheerT = 0; return; }
+  var total = player.cheerMax || 1.4;
+  var t = clamp(1 - player.cheerT / total, 0, 1);
+  var ramp = Math.min(1, t / 0.16) * Math.min(1, (1 - t) / 0.26);
+  var amp = 2.35 * Math.max(0, ramp);
+  var b = HERO.bones || {};
+  if (b.armL) { b.armL.rotation.z += amp; b.armL.rotation.y -= amp * 0.16; }
+  if (b.armR) { b.armR.rotation.z += amp; b.armR.rotation.y += amp * 0.16; }
+}
+var _v37HeroFrameCheer = heroFrame;
+heroFrame = function (dt) {
+  _v37HeroFrameCheer(dt);
+  v37CheerTick(dt);
+};
+
 /* ── 머리 조립 후: 남아 있는 옛 절차 머리·헤어 메시를 확실히 숨긴다 ── */
 var _v37HeroBuildHead = heroBuildHead;
 heroBuildHead = function (ctx, root, cfg) {
   var r = _v37HeroBuildHead(ctx, root, cfg);
   try {
+    v37ScaleHead();                       // v3.7.1 — 두상·헤어를 함께 키워 소두 교정
     if (typeof heroHideProcedural === 'function') heroHideProcedural();
     if (ctx && ctx.hairG) {
       ctx.hairG.traverse(function (o) {
@@ -38075,7 +38540,7 @@ updateStructures = function (dt, t) {
 /* 검수용 */
 if (window.__game && window.__game.v37) {
   window.__game.v37.hair = function () {
-    var out = { style: HERO.cfg ? HERO.cfg.style : null, color: HERO.cfg ? HERO.cfg.hair : null, slim: !!HERO.hairSlim37 };
+    var out = { style: HERO.cfg ? HERO.cfg.style : null, color: HERO.cfg ? HERO.cfg.hair : null, slim: !!HERO.hairSlim37, headScale: HERO.headScale37 || 1 };
     if (HERO.hairG) {
       var bb = new THREE.Box3().setFromObject(HERO.hairG);
       out.size = [+(bb.max.x - bb.min.x).toFixed(3), +(bb.max.y - bb.min.y).toFixed(3), +(bb.max.z - bb.min.z).toFixed(3)];
@@ -38090,7 +38555,12 @@ if (window.__game && window.__game.v37) {
     }
     return out;
   };
+  window.__game.v37.cheer = function (sec) {
+    player.cheerT = sec || 1.4; player.cheerMax = sec || 1.4;
+    return { cheerT: player.cheerT };
+  };
   window.__game.v37.setHair = function (style, color) {
+    if (style === 'short') style = V37_DEFAULT_STYLE;
     if (!S.hero) S.hero = heroDefaultCfg();
     S.hero.style = v37SafeStyle(style || 'short');
     if (color) S.hero.hair = color;
