@@ -1943,6 +1943,14 @@
 
 
 
+
+
+
+
+
+
+
+
 /* @@V37CSS@@ */
 /* =========================================================
    WILD LIFE v3.7 — 듀랑고 UI 문법 (다크 슬레이트 · 얇은 보더 · 노란 L자 코너 · 머스타드 CTA)
@@ -2029,10 +2037,9 @@ body.targeting .toasts{top:calc(env(safe-area-inset-top) + 92px) !important}
   width:min(1080px,96vw);height:min(86vh,760px);max-height:86vh;max-width:96vw;
   background:var(--d37-panel);border:1px solid var(--d37-line);border-radius:2px;
   box-shadow:0 24px 70px rgba(0,0,0,.72);
-  backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
-  padding-bottom:0;opacity:0;pointer-events:none;transition:opacity .14s ease;
+  padding-bottom:0;
 }
-#sheet.v37c.on{transform:none !important;opacity:1;pointer-events:auto}
+#sheet.v37c.on{transform:none !important}
 #sheet.v37c .sheetHead{
   background:linear-gradient(180deg,rgba(30,34,42,.96),rgba(18,21,27,.96));
   border-bottom:1px solid var(--d37-line);padding:10px 14px 9px;
@@ -2161,11 +2168,10 @@ body.targeting .toasts{top:calc(env(safe-area-inset-top) + 92px) !important}
 #sheet.v37f{
   left:0;right:0;bottom:0;top:auto;margin:0 auto;transform:none !important;
   width:min(560px,94vw);max-width:94vw;height:auto;max-height:80vh;background:var(--d37-panel);
-  border:1px solid var(--d37-line);border-radius:2px;opacity:0;pointer-events:none;
-  transition:opacity .14s ease;padding-bottom:0;
+  border:1px solid var(--d37-line);border-radius:2px;padding-bottom:0;
 }
 #sheet.v37f .sheetBody{flex:0 0 auto;overflow:visible}
-#sheet.v37f.on{transform:none !important;opacity:1;pointer-events:auto}
+#sheet.v37f.on{transform:none !important}
 #sheet.v37f .sheetHead{background:linear-gradient(180deg,rgba(30,34,42,.96),rgba(18,21,27,.96));border-bottom:1px solid var(--d37-line);padding:10px 13px 9px}
 #sheet.v37f .sheetHead h3{color:#f1efe6;font-size:14px}
 #sheet.v37f .sheetHead .sub{color:var(--d37-txt2)}
@@ -2203,7 +2209,6 @@ body.targeting .toasts{top:calc(env(safe-area-inset-top) + 92px) !important}
   background:rgba(14,17,22,.74) !important;border:1px solid rgba(160,170,180,.20) !important;
   color:#ece9dd !important;font-size:10px !important;font-weight:800 !important;
   line-height:1.4 !important;text-align:center;letter-spacing:-.01em;
-  backdrop-filter:blur(4px) !important;-webkit-backdrop-filter:blur(4px) !important;
   box-shadow:0 4px 14px rgba(0,0,0,.28) !important;
 }
 
@@ -2290,6 +2295,55 @@ body.targeting .toasts{top:calc(env(safe-area-inset-top) + 92px) !important}
 #butchMenu .hexBtn{transform-origin:50% 50%}
 body.v37 .toasts .toast{animation:v37toastIn .16s ease both}
 @keyframes v37toastIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+
+/* ==========================================================================
+   v3.7.2 — 🧊 iOS 프리징 3대 핫픽스
+   ① 닫힌 모달(#sheet)은 '없는 것'으로 만든다.
+      예전엔 opacity:0 + pointer-events:none 만 썼는데, 안쪽 .sheetBody 가
+      pointer-events:auto 라서 투명 모달이 화면 전체 터치(조이스틱·HUD)를
+      그대로 가로챘다 → "화면이 멈추고 나는 못 움직이고, 제작 버튼이 저절로
+      눌려 염색대가 계속 만들어진다"의 원인.
+   ② WebGL 캔버스 위 backdrop-filter 전면 제거 (iOS Safari GPU 프리징).
+   ③ 토스트를 상단 아이콘 줄 아래로 내려 버튼을 가리지 않게.
+   ========================================================================== */
+/* ① 닫힌 모달 = display:none (터치·페인트·레이아웃 모두 제거) */
+#sheet:not(.on){
+  display:none !important;
+  visibility:hidden !important;
+  opacity:0 !important;
+  pointer-events:none !important;
+  transform:none !important;
+}
+#sheet:not(.on) *{pointer-events:none !important}
+#sheet.on{
+  display:flex !important;
+  visibility:visible !important;
+  opacity:1 !important;
+  pointer-events:auto !important;
+}
+/* 열린 모달 안에서만 자식 터치 허용 */
+#sheet.on .sheetBody{pointer-events:auto !important}
+
+/* ② backdrop-filter 전면 제거 — iOS Safari WebGL 프레임 저하·컨텍스트 유실 방지 */
+*,*::before,*::after{
+  -webkit-backdrop-filter:none !important;
+  backdrop-filter:none !important;
+}
+/* 블러를 걷어낸 만큼 반투명 패널은 살짝 진하게 (가독성 유지) */
+.topbar .iconbtn{background:rgba(16,22,20,.72) !important}
+#zonePill{background:rgba(24,38,32,.72)}
+#zonePill.home{background:rgba(96,150,88,.80)}
+#zonePill.wild{background:rgba(158,88,50,.80)}
+#targetBar{background:linear-gradient(180deg,rgba(30,16,14,.94),rgba(18,10,9,.96))}
+.hint{background:rgba(14,17,22,.90) !important}
+
+/* ③ 토스트 — 상단 아이콘 줄(지도·가방·제작·도감·음악·소리·조명) 아래로 */
+.toasts{top:calc(env(safe-area-inset-top) + 84px) !important}
+body.targeting .toasts{top:calc(env(safe-area-inset-top) + 172px) !important}
+@media (min-width:900px){
+  .toasts{top:calc(env(safe-area-inset-top) + 96px) !important}
+  body.targeting .toasts{top:calc(env(safe-area-inset-top) + 178px) !important}
+}
 
 /* @@/V37CSS@@ */
 </style>
@@ -2444,7 +2498,7 @@ body.v37 .toasts .toast{animation:v37toastIn .16s ease both}
       </div>
       <div class="startSaveLine" id="startSaveLine"><span>저장 없음 · 새로 시작해요</span></div>
     </div>
-    <div class="startFoot" id="startFoot">WILD LIFE · v3.7.1 &nbsp;|&nbsp; 왼쪽 조이스틱으로 걷고 오른쪽 버튼으로 채집·공격 · 빨간 예고선은 구르기로 피하기</div>
+    <div class="startFoot" id="startFoot">WILD LIFE · v3.7.2 &nbsp;|&nbsp; 왼쪽 조이스틱으로 걷고 오른쪽 버튼으로 채집·공격 · 빨간 예고선은 구르기로 피하기</div>
   </div>
 
   <div class="slotPanel" id="slotPanel">
@@ -36297,13 +36351,21 @@ window.__game = {
 
 
 
+
+
+
+
+
+
+
+
 /* @@V37JS@@ */
 /* ==========================================================================
    WILD LIFE v3.7 — 듀랑고 1차 패치
    (UI 문법 · HUD 한 줄 · 슬림 토스트 · 3분할 제작창 · 심층 가공 · 요리/회복 ·
     무기 티어 · 강타 스킬 · 락온 자동조준 · 펫 정지 · 부족 AI · 해골 토템)
    ========================================================================== */
-var V37 = { ver: '3.7.1', ready: false };
+var V37 = { ver: '3.7.2', ready: false };
 document.body.classList.add('v37');
 
 /* 저장 호환: S.v37 이 없으면 새로 만든다 (기존 세이브 100% 호환) */
@@ -36883,7 +36945,14 @@ craft = function (id) {
   if (!v37ToolOk(r)) { sfx('deny'); toast('🛠 ' + v37ToolName(r.v37tool) + '이(가) 필요해요', 'warn'); return; }
   var st0 = r.station ? craftStationFor(r) : null;
   var n0 = (st0 ? stationJobs(st0).length : (S.hand || []).length);
-  _v37Craft(id);
+  /* v3.7.2 — 작업이 걸리면 창을 곧 닫으므로 그 100줄짜리 목록을 다시 그리지 않는다
+     (아이폰에서 제작 누를 때마다 DOM 100행 재생성 = 버벅임의 큰 몫) */
+  V37_SKIP_RENDER = true;
+  try {
+    _v37Craft(id);
+  } finally {
+    V37_SKIP_RENDER = false;
+  }
   var st1 = r.station ? craftStationFor(r) : null;
   var n1 = (st1 ? stationJobs(st1).length : (S.hand || []).length);
   if (n1 > n0) {
@@ -36892,6 +36961,8 @@ craft = function (id) {
     if (r.out) S.v37.found[r.out] = 1;
     if (r.made) S.v37.crafted[r.id] = 1;
     v37CraftBegin(r, st1);
+  } else if (sheet && sheet.classList.contains('on')) {
+    renderSheet();                    /* 실패·재료 부족이면 열린 창만 갱신 */
   }
 };
 
@@ -36951,6 +37022,7 @@ function v37UpdateJobRows() {
   }
 }
 function v37JobTick() {
+  v37SheetGuard();                     /* v3.7.2 — 유령 모달 청소 */
   var el = v37JobEl();
   var live = v37LiveJobs();
   if (!live.length) {
@@ -37117,23 +37189,68 @@ function v37GrpOf(r) {
 var V37_UI = { cat: 'all', q: '', sel: '' };
 
 /* ── 창 열고 닫기: 다크 슬레이트 모드 ── */
+/* v3.7.2 — 모달은 '.on' 하나로만 살아 있다. 렌더가 터져도 'on' 은 반드시 붙인다. */
 var _v37OpenSheet = openSheet;
 openSheet = function (mode) {
   var sh = document.getElementById('sheet');
-  if (sh) { sh.classList.toggle('v37c', mode === 'craft'); sh.classList.toggle('v37f', mode === 'fire'); }
-  _v37OpenSheet(mode);
+  if (sh) {
+    sh.classList.toggle('v37c', mode === 'craft');
+    sh.classList.toggle('v37f', mode === 'fire');
+    sh.setAttribute('aria-hidden', 'false');
+  }
+  try {
+    _v37OpenSheet(mode);
+  } catch (e) {
+    try { console.error('[v37] openSheet render', e); } catch (e2) { }
+  }
+  if (sh) sh.classList.add('on');      /* 렌더 예외가 나도 모달 상태는 일관되게 */
 };
 var _v37CloseSheet = closeSheet;
 closeSheet = function () {
   var sh = document.getElementById('sheet');
-  if (sh) sh.classList.remove('v37c', 'v37f');
-  _v37CloseSheet();
+  /* 닫을 때는 'on' 과 v37c/v37f 를 한꺼번에 내린다(투명 모달이 남지 않게) */
+  if (sh) {
+    sh.classList.remove('on', 'v37c', 'v37f');
+    sh.setAttribute('aria-hidden', 'true');
+    sh.style.pointerEvents = 'none';
+  }
+  try { _v37CloseSheet(); } catch (e) { }
+  if (sh) {
+    sh.classList.remove('on', 'v37c', 'v37f');
+    sh.style.pointerEvents = '';
+  }
+  try { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); } catch (e) { }
 };
+/* ✕ 버튼은 예전 closeSheet(원본)에 묶여 있어 v37c 클래스가 남았다 → 새 핸들러로 교체 */
+(function v37RebindClose() {
+  var b = document.getElementById('sheetClose');
+  if (!b || !b.parentNode) return;
+  var nb = b.cloneNode(true);
+  nb.addEventListener('click', function (e) {
+    if (e) { e.preventDefault(); e.stopPropagation(); }
+    closeSheet();
+  });
+  b.parentNode.replaceChild(nb, b);
+})();
+/* 모달이 닫힌 채로 남은 v37 클래스를 주기적으로 청소 (안전망) */
+function v37SheetGuard() {
+  var sh = document.getElementById('sheet');
+  if (!sh) return;
+  if (!sh.classList.contains('on') && (sh.classList.contains('v37c') || sh.classList.contains('v37f'))) {
+    sh.classList.remove('v37c', 'v37f');
+  }
+}
+var V37_SKIP_RENDER = false;
 var _v37RenderSheet = renderSheet;
 renderSheet = function () {
-  if (sheetMode === 'craft') { v37RenderCraft(); return; }
-  if (sheetMode === 'fire') { _v37RenderFire(); return; }
-  _v37RenderSheet();
+  if (V37_SKIP_RENDER) return;              /* 닫히는 중인 창은 다시 그리지 않는다 */
+  try {
+    if (sheetMode === 'craft') { v37RenderCraft(); return; }
+    if (sheetMode === 'fire') { _v37RenderFire(); return; }
+    _v37RenderSheet();
+  } catch (e) {
+    try { console.error('[v37] renderSheet', e); } catch (e2) { }
+  }
 };
 
 /* ── 3분할 제작/건설 창 ── */
@@ -37368,6 +37485,10 @@ function v37RenderCraft() {
     btn.textContent = label;
     btn.addEventListener('click', function () {
       if (off) { sfx('deny'); return; }
+      /* v3.7.2 — 한 번의 탭이 두 번 들어와(아이폰 합성 클릭) 연속 제작되는 것을 막는다 */
+      var now = Date.now();
+      if (v37RenderDetail.__last && now - v37RenderDetail.__last < 220) return;
+      v37RenderDetail.__last = now;
       craft(r.id);
     });
     foot.appendChild(btn);
@@ -38102,21 +38223,51 @@ updateTribes = function (dt, time) {
    v3.7 — 구조물 조명(횃대) · 시체 이름표/도축 메뉴 분리 · 검수용 API
    ========================================================================== */
 var _v37UpdateStructures = updateStructures;
+/* ==========================================================================
+   v3.7.2 — 횃대 조명 1개로 통합
+   · 횃대마다 PointLight 를 두면 개수만큼 three.js 셔더가 다시 컴파일되고
+     라이트 루프가 길어져 iOS GPU 에서 프레임이 끊긴다(참고: 브리프 핫스팟).
+   · 횃대 자체 라이트는 숨기고, 가장 가까운 횃대 하나만 비추는 공유 라이트를 쓴다.
+     라이트 개수가 고정되므로 플레이 중 셔더 재컴파일이 생기지 않는다.
+   ========================================================================== */
+var V37_TLIGHT = null;
+(function v37SharedTorchLight() {
+  try {
+    if (typeof scene === 'undefined' || typeof THREE === 'undefined') return;
+    V37_TLIGHT = new THREE.PointLight(0xffb066, 0, 13, 2);
+    V37_TLIGHT.position.set(0, -50, 0);
+    scene.add(V37_TLIGHT);
+  } catch (e) { V37_TLIGHT = null; }
+})();
 updateStructures = function (dt, t) {
   _v37UpdateStructures(dt, t);
   var night = (typeof DAY !== 'undefined') ? (DAY.night || 0) : 0;
+  var bestT = null, bestD = 14 * 14;
   for (var i = 0; i < structures.length; i++) {
     var s = structures[i];
     var u = s.group && s.group.userData;
     if (!u) continue;
     if (s.type === 'torchStand') {
       var want = 0.55 + night * 1.75 + Math.sin((t || 0) * 7.3) * 0.07;
-      if (u.light) u.light.intensity = want;
+      /* 개별 라이트는 한 번만 꺼 둔다(플래그로 반복 토글 방지 → 셔더 재컴파일 없음) */
+      if (u.light && !u.__v37off) { u.light.visible = false; u.__v37off = 1; }
       if (u.flame) {
         var f = 0.92 + Math.abs(Math.sin((t || 0) * 9.1)) * 0.16;
         u.flame.scale.set(1, f, 1);
       }
       if (u.glow) u.glow.material.opacity = 0.35 + night * 0.45;
+      var dx = s.x - player.pos.x, dz = s.z - player.pos.z;
+      var dd = dx * dx + dz * dz;
+      if (dd < bestD) { bestD = dd; bestT = s; }
+    }
+  }
+  if (V37_TLIGHT) {
+    if (bestT) {
+      V37_TLIGHT.position.set(bestT.x, terrainH(bestT.x, bestT.z) + 2.45, bestT.z);
+      V37_TLIGHT.intensity = 0.55 + night * 1.75 + Math.sin((t || 0) * 7.3) * 0.07;
+    } else if (V37_TLIGHT.intensity !== 0) {
+      V37_TLIGHT.intensity = 0;
+      V37_TLIGHT.position.set(0, -50, 0);
     }
   }
   /* 🦴 시체 이름표와 도축 육각 메뉴가 겹치지 않게 — 도축 중엔 이름표를 숨긴다 */
@@ -38339,6 +38490,29 @@ if (window.__game) {
     }
   };
 }
+
+/* ==========================================================================
+   v3.7.2 — iOS WebGL 컨텍스트 유실 방어
+   · iOS Safari 는 메모리 압박·GPU 리셋에서 컨텍스트를 조용히 잃는다.
+     preventDefault 를 걸지 않으면 복구 이벤트가 오지 않고 '화면이 그대로 멈춘'
+     캔버스가 남는다. 여기서 잡아 두면 자동으로 다시 그려진다.
+   ========================================================================== */
+(function v37GLGuard() {
+  try {
+    var r = (window.__game && window.__game.renderer) || null;
+    var cv = r && r.domElement;
+    if (!cv || cv.__v37gl) return;
+    cv.__v37gl = true;
+    cv.addEventListener('webglcontextlost', function (e) {
+      try { e.preventDefault(); } catch (e2) { }
+      try { toast('🧊 화면을 다시 그리는 중…', undefined); } catch (e3) { }
+    }, false);
+    cv.addEventListener('webglcontextrestored', function () {
+      try { r.setSize(window.innerWidth, window.innerHeight); } catch (e) { }
+      try { toast('✅ 화면 복구 완료', 'good'); } catch (e2) { }
+    }, false);
+  } catch (e) { }
+})();
 
 /* ==========================================================================
    v3.7 — 헤어 전면 교체: 부풀어 오른 검은 껍질('수류탄 머리') 제거
