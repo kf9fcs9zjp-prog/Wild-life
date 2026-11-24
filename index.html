@@ -1757,6 +1757,8 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/SkeletonUtils.js"></script>
 <script>
 (function () {
 'use strict';
@@ -9272,6 +9274,11 @@ function spawnDino(kind, x, z, opt) {
   var need = kind === 'compy' ? 0.55 : 0.9;
   while (terrainH(x, z) < need && guard < 24) { x *= 0.88; z *= 0.88; guard++; }
   var built = DINO_MAKE[kind]();
+  /* 🦣 v3.3 — 매머드는 외부 GLB(리깅+애니메이션) 모델이 준비되면 그것으로 스폰한다 */
+  if (kind === 'mammoth' && typeof mammothGLBBuild === 'function') {
+    var gbBuilt = mammothGLBBuild();
+    if (gbBuilt) built = gbBuilt;
+  }
   var st = DINO_STAT[kind] || DINO_STAT.trike;
   var meta0 = DINO_META[kind] || DINO_META.trike;
   var d = {
@@ -9289,6 +9296,7 @@ function spawnDino(kind, x, z, opt) {
     hurt: 0, taming: 0, mounted: false, speed: st.speed
   };
   d.skinned = !!built.skinned;
+  if (built.glbAnim) d.glbAnim = built.glbAnim;   /* 🦣 v3.3 — GLB 매머드는 AnimationMixer 로 움직인다 */
   d.homeX = x; d.homeZ = z;
   if (opt.tamed) {
     if (!d.pid && typeof newPetId === 'function') d.pid = newPetId();   // 펫은 항상 고유 id 를 갖는다
@@ -12422,6 +12430,8 @@ function makeParasaurPro() {
 }
 
 function animateCreature(d, dt, t) {
+  /* 🦣 v3.3 — 외부 GLB 매머드는 골격 대신 AnimationMixer 가 자세를 만든다 */
+  if (d.glbAnim && typeof mammothGLBAnimate === 'function') { mammothGLBAnimate(d, dt, t); return; }
   var P = d.parts, B = P.bones, T = P.tune;
   if (!B || !T) return;
   var a = d.anim;
@@ -12667,6 +12677,523 @@ function animateCreature(d, dt, t) {
     d.group.position.x += Math.sin(t * 61 + (d.phase || 0)) * sh;
     d.group.position.z += Math.cos(t * 53 + (d.phase || 0)) * sh;
     if (B.head) B.head.rotation.z = Math.sin(t * 37 + (d.phase || 0)) * 0.06 * (0.4 + prog);
+  }
+}
+
+/* =========================================================
+   🦣 v3.3 — 외부 GLB 매머드 (리깅 + 애니메이션 포함 에셋 적용 테스트)
+   ---------------------------------------------------------
+   에셋: "Armored Frost Mammoth" (Ariescar, CC0 1.0) — gobkit.com 커뮤니티 모델
+         · glTF 2.0 binary, 238KB, 4,588 tris, 32 bones, 11 materials
+         · 클립: idle(2.6s) / move(1.25s) / attack(1.1s)
+         · +Z 정면, 발바닥 y≈0, 실측 높이 1.97m 모델 단위
+   이 파일이 하는 일
+   1) GLTFLoader 로 비동기 로드 → 준비(prepare) → 이미 스폰된 매머드에 소급 적용
+   2) 갑옷 파츠(재질 'armor') 숨김 + 정점 색을 야생 매머드 팔레트로 다시 굽기
+   3) 몸통·엄니·눈 11개 프리미티브를 3개 SkinnedMesh 로 병합(드로우콜 11 → 3)
+   4) 인스턴스마다 SkeletonUtils.clone + AnimationMixer, 상태(idle/move/attack)에
+      맞춰 크로스페이드. 게임의 체력·공격·타겟바·탑승 좌표계(parts.height/seatY/…)는
+      기존 절차 생성 모델과 동일한 값을 그대로 넘겨준다.
+   ?mammoth=proc 로 열면 기존 코드 기반 매머드를 그대로 쓴다(비교용 스위치).
+   ========================================================= */
+
+var MAMMOTH_GLB = {
+  url: './assets/dinos/mammoth_frost.glb',
+  enabled: true,
+  ready: false, failed: false, started: false,
+  proto: null,
+  info: { clipNames: [], tris: 0, meshes: 0, sourceMeshes: 0, bbox: null, height: 0, scale: 1 },
+  /* 게임플레이 수치 — 기존 makeMammoth() 와 동일하게 유지한다 */
+  dims: { height: 4.78, backY: 4.40, backZ: 0.30, radius: 1.75, seatY: 3.42 }
+};
+
+var MAMMOTH_PALETTE = {
+  back: 0x543c27, flank: 0x7b5738, belly: 0x6a4c33,
+  dark: 0x4a3220, darkest: 0x3a2a1b, light: 0x8a6440, lightest: 0xa9805a,
+  tusk: 0xeae0c6, tuskBase: 0xd8c9a4, eye: 0x0b0805, foot: 0x3a2a1b
+};
+
+function mgClamp(v, a, b) { return v < a ? a : (v > b ? b : v); }
+function mgLerp(a, b, t) { return a + (b - a) * t; }
+function mgHex(h) { return new THREE.Color(h); }
+
+/* 정점 위치 기반 결정적 해시 — 같은 좌표는 항상 같은 값(재현 가능) */
+function mgHash3(x, y, z) {
+  var s = Math.sin(x * 127.1 + y * 311.7 + z * 74.7) * 43758.5453;
+  return s - Math.floor(s);
+}
+
+/* 부위별 기본색 + 높이 그라데이션 + 거친 털 얼룩 */
+function mammothBakeColor(name, x, y, z, out) {
+  var P = MAMMOTH_PALETTE;
+  var t = mgClamp((y - 0.10) / 1.75, 0, 1);          // 0 = 발밑/배, 1 = 어깨 혹
+  var c = out;
+  if (name === 'tusk') {
+    var tb = mgClamp((y - 0.75) / 1.0, 0, 1);
+    c.copy(mgHex(P.tuskBase)).lerp(mgHex(P.tusk), tb);
+  } else if (name === 'eye') {
+    c.copy(mgHex(P.eye));
+  } else if (name === 'foot') {
+    c.copy(mgHex(P.foot)).lerp(mgHex(P.dark), mgClamp((y - 0.05) / 0.25, 0, 1) * 0.6);
+  } else if (name === 'hide_leg') {
+    c.copy(mgHex(P.darkest)).lerp(mgHex(P.flank), mgClamp((y - 0.10) / 1.10, 0, 1));
+  } else if (name === 'hide_trunk') {
+    c.copy(mgHex(P.belly)).lerp(mgHex(P.dark), mgClamp((0.9 - y) / 0.9, 0, 1) * 0.35);
+  } else if (name === 'hide_ear') {
+    c.copy(mgHex(P.flank)).lerp(mgHex(P.belly), 0.30);
+  } else if (name === 'hide_tail') {
+    c.copy(mgHex(P.darkest)).lerp(mgHex(P.dark), t);
+  } else if (name === 'fur_hump') {
+    c.copy(mgHex(P.dark)).lerp(mgHex(P.flank), t * 0.45);
+  } else if (name === 'hide_head') {
+    c.copy(mgHex(P.belly)).lerp(mgHex(P.flank), mgClamp((t - 0.55) / 0.45, 0, 1) * 0.7);
+  } else {
+    /* hide_torso */
+    c.copy(mgHex(P.belly)).lerp(mgHex(P.flank), t * 0.85);
+    if (t > 0.62) c.lerp(mgHex(P.back), mgClamp((t - 0.62) / 0.38, 0, 1));
+  }
+  /* 털 얼룩 — 정점 단위 얼룩 + 세로 결(같은 열은 비슷한 밝기) */
+  var strand = mgHash3(Math.round(x * 26) * 0.37, 1.7, Math.round(z * 26) * 0.29);
+  var patch = mgHash3(Math.round(x * 5) * 1.3, Math.round(y * 5) * 0.7, Math.round(z * 5) * 1.1);
+  if (name !== 'tusk' && name !== 'eye') {
+    var k = 0.90 + 0.13 * strand + 0.10 * patch;
+    c.r = mgClamp(c.r * k, 0, 1); c.g = mgClamp(c.g * k, 0, 1); c.b = mgClamp(c.b * k, 0, 1);
+    /* 배 쪽은 볕에 바랜 톤으로 살짝 밝힌다 */
+    if (y < 0.55) c.lerp(mgHex(P.light), (0.55 - y) * 0.16);
+  }
+  return c;
+}
+
+/* 스킨드 메시 병합(같은 골격·같은 속성) */
+function mammothMergeSkinned(meshes, mat, name) {
+  var keys = ['position', 'normal', 'color', 'skinIndex', 'skinWeight'];
+  var i, k, m;
+  var totalV = 0, totalI = 0;
+  for (i = 0; i < meshes.length; i++) {
+    var g = meshes[i].geometry;
+    totalV += g.attributes.position.count;
+    totalI += g.index ? g.index.count : g.attributes.position.count;
+  }
+  var out = new THREE.BufferGeometry();
+  for (k = 0; k < keys.length; k++) {
+    var key = keys[k];
+    var src0 = meshes[0].geometry.attributes[key];
+    if (!src0) continue;
+    var isz = src0.itemSize;
+    var Arr = src0.array.constructor;
+    var buf = new Arr(totalV * isz);
+    var off = 0;
+    for (m = 0; m < meshes.length; m++) {
+      var a = meshes[m].geometry.attributes[key];
+      var vc = meshes[m].geometry.attributes.position.count;
+      if (a) buf.set(a.array, off);
+      off += vc * isz;
+    }
+    out.setAttribute(key, new THREE.BufferAttribute(buf, isz));
+  }
+  var IdxArr = totalV > 65535 ? Uint32Array : Uint16Array;
+  var idx = new IdxArr(totalI);
+  var io = 0, vo = 0;
+  for (m = 0; m < meshes.length; m++) {
+    var geo = meshes[m].geometry;
+    var n = geo.attributes.position.count;
+    if (geo.index) {
+      var ia = geo.index.array;
+      for (i = 0; i < ia.length; i++) idx[io++] = ia[i] + vo;
+    } else {
+      for (i = 0; i < n; i++) idx[io++] = i + vo;
+    }
+    vo += n;
+  }
+  out.setIndex(new THREE.BufferAttribute(idx, 1));
+  out.computeBoundingSphere();
+  out.computeBoundingBox();
+
+  var base = meshes[0];
+  var mesh = new THREE.SkinnedMesh(out, mat);
+  mesh.name = name;
+  mesh.bindMode = base.bindMode;
+  mesh.bind(base.skeleton, base.bindMatrix);
+  mesh.castShadow = true;
+  mesh.receiveShadow = false;
+  mesh.frustumCulled = false;
+  return mesh;
+}
+
+/* 털 결 텍스처 — UV 가 없는 에셋이라 셰이더에서 트라이플래너로 입힌다 */
+var MAMMOTH_FUR_MAP = null;
+function mammothFurMap() {
+  if (MAMMOTH_FUR_MAP) return MAMMOTH_FUR_MAP;
+  var S = 256;
+  var cv = document.createElement('canvas');
+  cv.width = S; cv.height = S;
+  var g = cv.getContext('2d');
+  g.fillStyle = 'rgb(213,206,196)';
+  g.fillRect(0, 0, S, S);
+  /* 아래로 흘러내리는 긴 털 한 올씩 — 위아래로 이어지게 9번 반복해 그린다 */
+  for (var i = 0; i < 1700; i++) {
+    var x = Math.random() * S, y = Math.random() * S;
+    var len = 16 + Math.random() * 54;
+    var drift = (Math.random() - 0.5) * 9;
+    var v = 118 + Math.random() * 137;
+    g.strokeStyle = 'rgba(' + (v | 0) + ',' + ((v * 0.94) | 0) + ',' + ((v * 0.86) | 0) + ',0.55)';
+    g.lineWidth = 0.8 + Math.random() * 1.9;
+    for (var ox = -S; ox <= S; ox += S) {
+      for (var oy = -S; oy <= S; oy += S) {
+        g.beginPath();
+        g.moveTo(x + ox, y + oy);
+        g.quadraticCurveTo(x + ox + drift, y + oy + len * 0.5, x + ox + drift * 1.9, y + oy + len);
+        g.stroke();
+      }
+    }
+  }
+  /* 굵은 골 — 털 다발 사이 그늘 */
+  for (var k = 0; k < 120; k++) {
+    var bx = Math.random() * S, by = Math.random() * S;
+    var bw = 6 + Math.random() * 26, bl = 20 + Math.random() * 70;
+    for (var ox2 = -S; ox2 <= S; ox2 += S) {
+      for (var oy2 = -S; oy2 <= S; oy2 += S) {
+        var grd = g.createRadialGradient(bx + ox2, by + oy2, 1, bx + ox2, by + oy2, Math.max(bw, bl));
+        grd.addColorStop(0, 'rgba(96,82,66,.16)');
+        grd.addColorStop(1, 'rgba(96,82,66,0)');
+        g.fillStyle = grd;
+        g.beginPath();
+        g.ellipse(bx + ox2, by + oy2, bw * 0.6, bl * 0.7, 0, 0, Math.PI * 2);
+        g.fill();
+      }
+    }
+  }
+  var t = new THREE.CanvasTexture(cv);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.anisotropy = 4;
+  MAMMOTH_FUR_MAP = t;
+  return t;
+}
+
+/* 털 결 셰이더 — 트라이플래너 투영 + 미세 노이즈로 세로 결을 만든다 */
+var MAMMOTH_FUR_KEY = 0;
+function mammothFurHook(mat) {
+  MAMMOTH_FUR_KEY++;
+  var furTex = mammothFurMap();
+  mat.onBeforeCompile = function (sh) {
+    sh.uniforms.uMgFur = { value: furTex };
+    sh.uniforms.uMgFurScale = { value: 2.9 };
+    sh.vertexShader = sh.vertexShader
+      .replace('#include <common>', '#include <common>\nvarying vec3 vMgPos;\nvarying vec3 vMgNrm;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvMgPos = position;')
+      .replace('#include <beginnormal_vertex>', '#include <beginnormal_vertex>\nvMgNrm = objectNormal;');
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <common>', [
+        '#include <common>',
+        'varying vec3 vMgPos;',
+        'varying vec3 vMgNrm;',
+        'uniform sampler2D uMgFur;',
+        'uniform float uMgFurScale;',
+        'float mgHash(vec3 p) { return fract(sin(dot(p, vec3(12.9898, 78.233, 37.719))) * 43758.5453); }',
+        'float mgNoise(vec3 p) {',
+        '  vec3 i = floor(p); vec3 f = fract(p); f = f * f * (3.0 - 2.0 * f);',
+        '  float n000 = mgHash(i); float n100 = mgHash(i + vec3(1.0, 0.0, 0.0));',
+        '  float n010 = mgHash(i + vec3(0.0, 1.0, 0.0)); float n110 = mgHash(i + vec3(1.0, 1.0, 0.0));',
+        '  float n001 = mgHash(i + vec3(0.0, 0.0, 1.0)); float n101 = mgHash(i + vec3(1.0, 0.0, 1.0));',
+        '  float n011 = mgHash(i + vec3(0.0, 1.0, 1.0)); float n111 = mgHash(i + vec3(1.0, 1.0, 1.0));',
+        '  float nx00 = mix(n000, n100, f.x); float nx10 = mix(n010, n110, f.x);',
+        '  float nx01 = mix(n001, n101, f.x); float nx11 = mix(n011, n111, f.x);',
+        '  return mix(mix(nx00, nx10, f.y), mix(nx01, nx11, f.y), f.z);',
+        '}'
+      ].join('\n'))
+      .replace('#include <color_fragment>', [
+        '#include <color_fragment>',
+        'vec3 mgN = normalize(vMgNrm);',
+        'vec3 mgB = abs(mgN); mgB /= max(0.0001, mgB.x + mgB.y + mgB.z);',
+        'vec3 mgP = vec3(vMgPos.x, vMgPos.y * 0.55, vMgPos.z) * uMgFurScale;',
+        'float mgTx = texture2D(uMgFur, mgP.zy).r;',
+        'float mgTy = texture2D(uMgFur, mgP.xz).r;',
+        'float mgTz = texture2D(uMgFur, mgP.xy).r;',
+        'float mgFur = mgTx * mgB.x + mgTy * mgB.y + mgTz * mgB.z;',
+        'float mgStreak = mgNoise(vec3(vMgPos.x * 12.0, vMgPos.y * 2.0, vMgPos.z * 12.0));',
+        'float mgShade = (mgFur * 1.30 - 0.11) * (0.92 + 0.16 * mgStreak);',
+        'diffuseColor.rgb *= mgShade;',
+        'diffuseColor.rgb += vec3(0.020, 0.013, 0.008) * pow(mgStreak, 2.0);'
+      ].join('\n'));
+  };
+  mat.customProgramCacheKey = function () { return 'mammothFur' + MAMMOTH_FUR_KEY; };
+  return mat;
+}
+
+/* ---------- 1) 로드 & 준비 ---------- */
+function mammothGLBPrepare(gltf) {
+  var root = gltf.scene || gltf.scenes[0];
+  var src = [];
+  root.traverse(function (o) { if (o.isMesh && o.material) src.push(o); });
+  if (!src.length) throw new Error('mammoth glb: no mesh');
+
+  /* 부위 이름별로 모으고, 갑옷은 버린다 */
+  var groups = {};
+  var col = new THREE.Color();
+  var armorHidden = 0;
+  for (var i = 0; i < src.length; i++) {
+    var o = src[i];
+    var mname = (o.material && o.material.name) || '';
+    if (mname === 'armor') { armorHidden++; o.parent.remove(o); continue; }
+    var geo = o.geometry;
+    var posA = geo.attributes.position;
+    if (!geo.attributes.color) {
+      var carr = new Float32Array(posA.count * 3);
+      geo.setAttribute('color', new THREE.BufferAttribute(carr, 3));
+    }
+    var ca = geo.attributes.color;
+    for (var v = 0; v < posA.count; v++) {
+      mammothBakeColor(mname, posA.getX(v), posA.getY(v), posA.getZ(v), col);
+      ca.setXYZ(v, col.r, col.g, col.b);
+    }
+    ca.needsUpdate = true;
+    if (!groups[mname]) groups[mname] = [];
+    groups[mname].push(o);
+  }
+
+  /* 3개 재질로 병합 — 몸(털) / 엄니 / 눈 */
+  var matBody = mammothFurHook(new THREE.MeshPhongMaterial({
+    vertexColors: true, specular: new THREE.Color(0x241c14), shininess: 6,
+    emissive: new THREE.Color(0x0a0806), skinning: true
+  }));
+  var matTusk = new THREE.MeshPhongMaterial({
+    vertexColors: true, specular: new THREE.Color(0x55503f), shininess: 46,
+    emissive: new THREE.Color(0x08070a), skinning: true
+  });
+  var matEye = new THREE.MeshPhongMaterial({
+    vertexColors: true, specular: new THREE.Color(0xffffff), shininess: 90, skinning: true
+  });
+
+  var bodyNames = ['hide_torso', 'fur_hump', 'hide_head', 'hide_leg', 'hide_trunk', 'hide_tail', 'hide_ear', 'foot'];
+  var bodyMeshes = [];
+  for (var b = 0; b < bodyNames.length; b++) {
+    var arr = groups[bodyNames[b]];
+    if (arr) bodyMeshes = bodyMeshes.concat(arr);
+  }
+  var parent = bodyMeshes.length ? bodyMeshes[0].parent : src[0].parent;
+  var made = [];
+  if (bodyMeshes.length) made.push({ mesh: mammothMergeSkinned(bodyMeshes, matBody, 'mammothBody'), srcs: bodyMeshes });
+  if (groups.tusk) made.push({ mesh: mammothMergeSkinned(groups.tusk, matTusk, 'mammothTusk'), srcs: groups.tusk });
+  if (groups.eye) made.push({ mesh: mammothMergeSkinned(groups.eye, matEye, 'mammothEye'), srcs: groups.eye });
+
+  for (var j = 0; j < made.length; j++) {
+    for (var s = 0; s < made[j].srcs.length; s++) {
+      var sm = made[j].srcs[s];
+      if (sm.parent) sm.parent.remove(sm);
+      if (sm.geometry) sm.geometry.dispose();
+    }
+    parent.add(made[j].mesh);
+  }
+
+  /* 크기·접지 — 기존 매머드와 같은 4.78 높이로 맞추고 발바닥을 y=0 에 붙인다 */
+  root.updateMatrixWorld(true);
+  var box = new THREE.Box3().setFromObject(root);
+  var rawH = Math.max(0.01, box.max.y - box.min.y);
+  var k = MAMMOTH_GLB.dims.height / rawH;
+  root.scale.setScalar(k);
+  root.position.y = -box.min.y * k;
+  root.updateMatrixWorld(true);
+
+  var box2 = new THREE.Box3().setFromObject(root);
+  var tris = 0;
+  root.traverse(function (o) { if (o.isMesh && o.geometry.index) tris += o.geometry.index.count / 3; });
+
+  /* 등 높이 실측 — 등 중앙(z≈0.3m 지점) 정점의 최고점 */
+  var backTop = 0;
+  var bodyMesh = made.length ? made[0].mesh : null;
+  if (bodyMesh) {
+    var pa = bodyMesh.geometry.attributes.position;
+    for (var p2 = 0; p2 < pa.count; p2++) {
+      var zz = pa.getZ(p2);
+      if (Math.abs(zz - 0.35) < 0.45) backTop = Math.max(backTop, pa.getY(p2));
+    }
+    backTop *= k;
+  }
+
+  MAMMOTH_GLB.proto = root;
+  MAMMOTH_GLB.info.clipNames = (gltf.animations || []).map(function (a) { return a.name; });
+  MAMMOTH_GLB.info.tris = Math.round(tris);
+  MAMMOTH_GLB.info.meshes = made.length;
+  MAMMOTH_GLB.info.sourceMeshes = src.length;
+  MAMMOTH_GLB.info.armorHidden = armorHidden;
+  MAMMOTH_GLB.info.bbox = { min: [box2.min.x, box2.min.y, box2.min.z], max: [box2.max.x, box2.max.y, box2.max.z] };
+  MAMMOTH_GLB.info.height = box2.max.y;
+  MAMMOTH_GLB.info.scale = k;
+  MAMMOTH_GLB.info.backTop = backTop;
+  MAMMOTH_GLB.info.animations = (gltf.animations || []).map(function (a) { return { name: a.name, dur: +a.duration.toFixed(3), tracks: a.tracks.length }; });
+  MAMMOTH_GLB.clips = gltf.animations || [];
+  return MAMMOTH_GLB.proto;
+}
+
+/* ---------- 2) 인스턴스 생성 ---------- */
+function mammothGLBBuild() {
+  if (!MAMMOTH_GLB.ready || !MAMMOTH_GLB.proto) return null;
+  var root = THREE.SkeletonUtils.clone(MAMMOTH_GLB.proto);
+  var outer = new THREE.Group();
+  outer.add(root);
+
+  var mixer = new THREE.AnimationMixer(root);
+  var acts = {};
+  var names = MAMMOTH_GLB.clips.map(function (c) { return c.name; });
+  for (var i = 0; i < MAMMOTH_GLB.clips.length; i++) {
+    var clip = MAMMOTH_GLB.clips[i];
+    var a = mixer.clipAction(clip);
+    a.enabled = true;
+    a.setLoop(THREE.LoopRepeat, Infinity);
+    a.clampWhenFinished = false;
+    a.setEffectiveWeight(0);
+    acts[clip.name] = a;
+  }
+  if (acts.idle) { acts.idle.setEffectiveWeight(1); acts.idle.play(); }
+
+  /* 개체별 색 지터 — 재질을 복제해 아주 약한 톤 차이를 준다 */
+  var tint = 0.94 + Math.random() * 0.12;
+  var hueJit = (Math.random() - 0.5) * 0.02;
+  root.traverse(function (o) {
+    if (!o.isMesh) return;
+    var m = o.material.clone();
+    m.skinning = true;
+    m.color.setRGB(tint * (1 + hueJit), tint * (1 - hueJit * 0.4), tint * (1 - hueJit));
+    o.material = m;
+    o.castShadow = true;
+  });
+
+  var bones = [];
+  root.traverse(function (o) { if (o.isBone) bones.push(o); });
+
+  var bodyMesh = null;
+  root.traverse(function (o) { if (!bodyMesh && o.isMesh && o.name === 'mammothBody') bodyMesh = o; });
+
+  var D = MAMMOTH_GLB.dims;
+  /* 등 높이(backTop 4.74) 위에 사람이 앉으려면 좌석은 그보다 0.9m 낮은 3.42 —
+     기존 절차 생성 매머드와 같은 값이라 탑승 자세·카메라가 그대로 맞는다 */
+  var seat = D.seatY;
+
+  return {
+    group: outer, mesh: bodyMesh, body: bodyMesh, bones: {}, boneList: bones,
+    legs: [], head: null, tail: null,
+    height: D.height, backY: D.backY, backZ: D.backZ, seatY: seat, radius: D.radius,
+    skinned: true, tune: null, glb: true,
+    glbAnim: { mixer: mixer, acts: acts, cur: 'idle', atkOn: 0, root: root, skeleton: (bodyMesh && bodyMesh.skeleton) || null }
+  };
+}
+
+/* ---------- 3) 이미 스폰된 개체에 적용 ---------- */
+function mammothGLBApply(d) {
+  if (!d || d.kind !== 'mammoth' || d.glbAnim) return false;
+  var gb = mammothGLBBuild();
+  if (!gb) return false;
+  /* 이름표·체력바 스프라이트는 남기고 형체만 교체 */
+  for (var i = d.group.children.length - 1; i >= 0; i--) {
+    var c = d.group.children[i];
+    if (c.isSprite) continue;
+    d.group.remove(c);
+  }
+  d.group.add(gb.group);
+
+  var sc = d.scale || 1;
+  if (d.parts && d.parts.mesh && d.parts.mesh.geometry) d.parts.mesh.geometry.dispose();
+  gb.height *= sc; gb.radius *= sc; gb.backY *= sc; gb.seatY *= sc;
+  d.parts = gb;
+  d.skinned = true;
+  d.glbAnim = gb.glbAnim;
+  if (d.speciesTag) d.speciesTag.position.y = gb.height + 0.9;
+  if (d.tag) d.tag.position.y = gb.height + (d.tag.scale.y * 0.45);
+  if (d.hpBg) d.hpBg.position.y = (d.tag ? d.tag.position.y : gb.height + 1.2) + 0.30;
+  if (d.hpFill) d.hpFill.position.y = (d.hpBg ? d.hpBg.position.y : gb.height + 1.5) + 0.02;
+  return true;
+}
+
+function mammothGLBRetrofit() {
+  if (typeof dinos === 'undefined' || !dinos) return 0;
+  var n = 0;
+  for (var i = 0; i < dinos.length; i++) {
+    if (dinos[i].kind === 'mammoth' && mammothGLBApply(dinos[i])) n++;
+  }
+  return n;
+}
+
+function mammothGLBStart() {
+  if (MAMMOTH_GLB.started) return;
+  MAMMOTH_GLB.started = true;
+  try {
+    if (typeof location !== 'undefined' && /[?&]mammoth=proc/.test(location.search)) {
+      MAMMOTH_GLB.enabled = false;
+    }
+  } catch (e) { }
+  if (!MAMMOTH_GLB.enabled) return;
+  if (typeof THREE === 'undefined' || typeof THREE.GLTFLoader !== 'function') {
+    MAMMOTH_GLB.failed = true;
+    console.warn('[mammoth-glb] GLTFLoader 없음 — 절차 생성 모델 유지');
+    return;
+  }
+  var loader = new THREE.GLTFLoader();
+  loader.load(MAMMOTH_GLB.url, function (gltf) {
+    try {
+      mammothGLBPrepare(gltf);
+      MAMMOTH_GLB.ready = true;
+      MAMMOTH_GLB.info.retrofitted = mammothGLBRetrofit();
+    } catch (e) {
+      MAMMOTH_GLB.failed = true;
+      MAMMOTH_GLB.err = String(e && e.message || e);
+      console.warn('[mammoth-glb] prepare 실패', e);
+    }
+  }, undefined, function (err) {
+    MAMMOTH_GLB.failed = true;
+    MAMMOTH_GLB.err = String(err && err.message || err);
+    console.warn('[mammoth-glb] 로드 실패 — 절차 생성 모델 유지', err);
+  });
+}
+
+/* ---------- 4) 애니메이션 상태 머신 ---------- */
+function mammothGLBClip(g, name, fade) {
+  if (g.cur === name) return;
+  var next = g.acts[name];
+  if (!next) return;
+  var prev = g.acts[g.cur];
+  next.reset();
+  next.enabled = true;
+  next.setEffectiveWeight(1);
+  next.fadeIn(fade);
+  next.play();
+  if (prev && prev !== next) prev.fadeOut(fade);
+  g.cur = name;
+}
+
+function mammothGLBAnimate(d, dt, t) {
+  var g = d.glbAnim;
+  if (!g) return;
+  var st = d.cstate || 'idle';
+  var attacking = (d.atkT > 0);
+  if (attacking) d.atkT = Math.max(0, d.atkT - dt);
+
+  var spd = (d.glbWalkSpeed !== undefined && d.glbWalkSpeed !== null) ? d.glbWalkSpeed : (d.animSpeed || 0);
+  var want = 'idle';
+  if (attacking || st === 'attack' || st === 'bite' || st === 'windup' || st === 'pounce' || st === 'threat') want = 'attack';
+  else if (st === 'walk' || st === 'chase' || st === 'flee' || st === 'charge' || spd > 0.35) want = 'move';
+
+  if (want === 'attack') {
+    if (!g.atkOn) {
+      g.atkOn = 1;
+      var clip = g.acts.attack ? g.acts.attack.getClip() : null;
+      if (clip) g.acts.attack.timeScale = clip.duration / Math.max(0.45, d.atkDur || 0.85);
+      mammothGLBClip(g, 'attack', 0.10);
+      if (g.acts.attack) g.acts.attack.time = 0;
+    }
+  } else {
+    if (g.atkOn) g.atkOn = 0;
+    mammothGLBClip(g, want, want === 'move' ? 0.24 : 0.34);
+  }
+  if (g.acts.move) {
+    g.acts.move.timeScale = mgClamp(0.55 + spd * 0.42, 0.55, 2.0);
+  }
+  g.mixer.update(dt);
+
+  /* 피격 움찔 — 아주 짧게 몸을 뒤로 젖힌다 */
+  if (d.hurt > 0 && g.root) {
+    g.root.rotation.x = -Math.min(1, d.hurt / 0.35) * 0.05;
+  } else if (g.root && g.root.rotation.x !== 0) {
+    g.root.rotation.x = 0;
   }
 }
 
@@ -23255,6 +23782,8 @@ function revive() {
 function initWorld() {
   if (worldReady) return;
   worldReady = true;
+  /* 🦣 v3.3 — 외부 GLB 매머드 에셋을 미리 불러 둔다(로드 완료 시 이미 스폰된 개체에도 적용) */
+  if (typeof mammothGLBStart === 'function') mammothGLBStart();
   PACKS.length = 0;
   makePlayer();
   var px = S.px || 0, pz = S.pz || 0;
@@ -25719,6 +26248,36 @@ window.__game = {
     };
   },
   eatNow: function () { eatOrInfo(bestFood()); return { hp: Math.round(S.hp), hunger: Math.round(S.hunger), food: bestFood() }; },
+  /* 🦣 v3.3 — GLB 매머드 걷기/공격 클립 검수용(첫 매머드의 재생 속도를 고정) */
+  mammothDemo: function (clip, speed) {
+    var d = null;
+    for (var i = 0; i < dinos.length; i++) if (dinos[i].kind === 'mammoth' && !d) d = dinos[i];
+    if (!d) return 'no mammoth';
+    if (!d.glbAnim) return 'procedural';
+    d.frozen = true; d.walking = 0;
+    d.cstate = (clip === 'move' ? 'walk' : (clip === 'attack' ? 'attack' : 'idle'));
+    d.atkT = (clip === 'attack') ? 9 : 0;
+    d.atkDur = 0.85;
+    d.glbWalkSpeed = (clip === 'move') ? (speed === undefined ? 2.6 : speed) : 0;
+    return { clip: d.glbAnim.cur, st: d.cstate, spd: d.glbWalkSpeed };
+  },
+  /* 🦣 v3.3 — GLB 매머드 적용 상태 검수용 */
+  mammothGLB: function () {
+    var out = { ready: MAMMOTH_GLB.ready, failed: MAMMOTH_GLB.failed, err: MAMMOTH_GLB.err || null, info: MAMMOTH_GLB.info, dinos: [] };
+    for (var i = 0; i < dinos.length; i++) {
+      var d = dinos[i];
+      if (d.kind !== 'mammoth') continue;
+      var meshes = 0;
+      d.group.traverse(function (o) { if (o.isMesh) meshes++; });
+      out.dinos.push({
+        glb: !!d.glbAnim, meshes: meshes, st: d.cstate, clip: d.glbAnim ? d.glbAnim.cur : null,
+        height: +((d.parts.height) || 0).toFixed(2), seatY: +((d.parts.seatY) || 0).toFixed(2),
+        backY: +((d.parts.backY) || 0).toFixed(2), radius: +((d.parts.radius) || 0).toFixed(2),
+        scale: +(d.scale || 1).toFixed(3), bones: (d.parts.boneList || []).length
+      });
+    }
+    return out;
+  },
   creatures: function (kind) {
     var out = [];
     for (var i = 0; i < dinos.length; i++) {
