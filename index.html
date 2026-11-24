@@ -1449,6 +1449,22 @@
   .hexBtn.big .hl{top:38px;font-size:8.5px}
   .hexBtn:active{filter:brightness(1.3)}
   .hexBtn.deny .hxFill{stroke:rgba(214,110,90,.55)}
+  /* 🦴 v3.3 — 공룡 시체 도축 육각 링 (구조물 육각 메뉴와 같은 결, 바깥 테두리는 붉은 띠) */
+  #butchMenu{position:absolute;left:0;top:0;width:0;height:0;pointer-events:none;z-index:9;
+    display:none}
+  #butchMenu.on{display:block}
+  #butchMenu .hexBtn{transform:translate(var(--x),var(--y)) scale(.62)}
+  #butchMenu.on .hexBtn{transform:translate(var(--x),var(--y)) scale(1);opacity:1}
+  #butchMenu .hxFill{fill:rgba(10,11,12,.80);stroke:rgba(236,226,206,.44);stroke-width:1.5}
+  #butchMenu .hxIn{stroke:rgba(255,235,210,.16)}
+  #butchMenu .hexBtn.big .hxFill{fill:rgba(30,12,10,.86);stroke:rgba(255,150,110,.62)}
+  #butchMenu .hl{color:#F6EEDF}
+  #butchMenu .hl em{font-style:normal;color:#FFCFA6;font-size:7.5px;font-weight:900}
+  #butchMenu .hexBtn.gone{opacity:.28;pointer-events:none;filter:grayscale(1)}
+  #butchTitle{position:absolute;left:0;top:0;transform:translate(-50%,-50%) translateY(-58px);padding:3px 9px;border-radius:7px;
+    background:rgba(12,10,10,.80);border:1px solid rgba(255,150,120,.32);color:#FFEDE2;
+    font-size:9.5px;font-weight:900;white-space:nowrap;pointer-events:none;letter-spacing:-.01em}
+  #butchTitle i{font-style:normal;color:#ffb08a;font-size:8.5px;font-weight:800;margin-left:5px}
   #hexName{position:absolute;left:0;top:0;transform:translate(-50%,-50%);padding:2px 7px;border-radius:6px;
     background:rgba(14,16,18,.72);border:1px solid rgba(236,232,220,.20);color:#F4EFE2;
     font-size:9px;font-weight:800;white-space:nowrap;pointer-events:none;letter-spacing:-.01em}
@@ -1596,6 +1612,8 @@
   <!-- 🛠 구조물 육각 방사형 메뉴 -->
   <div id="hexMenu" aria-hidden="true"></div>
   <div class="toasts" id="toasts"></div>
+  <!-- 🦴 v3.3 공룡 시체 도축 육각 링 -->
+  <div id="butchMenu" aria-hidden="true"></div>
   <div id="targetBar" aria-hidden="true">
     <div class="tbTop"><b class="tbName" id="tbName">공룡</b><i class="tbLv" id="tbLv">Lv.1</i><b class="tbNum" id="tbNum">0 / 0</b></div>
     <div class="tbTrack"><i id="tbFill"></i></div>
@@ -1674,7 +1692,7 @@
       </div>
       <div class="startSaveLine" id="startSaveLine"><span>저장 없음 · 새로 시작해요</span></div>
     </div>
-    <div class="startFoot" id="startFoot">WILD LIFE · v3.2 &nbsp;|&nbsp; 왼쪽 조이스틱으로 걷고 오른쪽 버튼으로 채집·공격 · 빨간 예고선은 💨 구르기로 피하기</div>
+    <div class="startFoot" id="startFoot">WILD LIFE · v3.3 &nbsp;|&nbsp; 왼쪽 조이스틱으로 걷고 오른쪽 버튼으로 채집·공격 · 빨간 예고선은 💨 구르기로 피하기</div>
   </div>
 
   <div class="slotPanel" id="slotPanel">
@@ -1933,7 +1951,7 @@ function defaultState() {
       campfire: 0, cabin: 0, workbench: 0, chair: 0, table: 0, planter: 0, hatchNest: 0, chest: 0,
       woodBox: 0, metalBox: 0, premiumBox: 0,
       dryingRack: 0, loom: 0, dyeVat: 0, tailorBench: 0, smithBench: 0, leatherRug: 0, leatherCanopy: 0,
-      fence: 0, bed: 0, lantern: 0
+      fence: 0, barn: 0, bed: 0, lantern: 0
     },
     structures: [],
     tamed: [],
@@ -2500,6 +2518,8 @@ var RECIPES = [
   { id: 'hatchNest', tab: 'basic', made: true, name: '부화 둥지', icon: '🪺', desc: '모닥불(6m) 곁에 놓고 익룡 알을 품는 거점', cost: { stick: 4, reed: 3, fiber: 4 } },
   /* ⛵ v3.0 — 공룡 울타리 · 생활 가구 */
   { id: 'fence', tab: 'basic', made: true, name: '공룡 울타리', icon: '🪵', desc: '길들인 공룡 3마리까지 맡겨 두고 회복·교대하는 울타리', cost: { wood: 22, stick: 14, fiber: 10, hideThin: 3 } },
+  /* 🏠 v3.3 — 축사: 한 채에 펫 1마리. 등록해 둔 펫만 데리고 다닐 수 있다 */
+  { id: 'barn', tab: 'basic', made: true, name: '축사', icon: '🏠', desc: '펫 1마리 등록 · 등록한 펫만 동행', cost: { wood: 24, stick: 16, fiber: 8, hideThin: 4 } },
   { id: 'bed', tab: 'basic', made: true, name: '가죽 침낭', icon: '🛏', desc: '옆에 서면 체력·허기가 빨리 차오르는 침낭 (밤엔 더 빠르게)', cost: { hideThin: 4, fiber: 6, stick: 2 } },
   { id: 'lantern', tab: 'basic', made: true, name: '등불', icon: '🏮', desc: '밤을 밝히는 따뜻한 등불 · 곁에서 쉬면 회복이 조금 빨라져요', cost: { wood: 4, stick: 3, stone: 2, iron: 1 } },
   /* 💧 v3.1 — 물을 길어 다니는 가죽 수통 (가죽 + 끈) */
@@ -9274,8 +9294,9 @@ function spawnDino(kind, x, z, opt) {
   var need = kind === 'compy' ? 0.55 : 0.9;
   while (terrainH(x, z) < need && guard < 24) { x *= 0.88; z *= 0.88; guard++; }
   var built = DINO_MAKE[kind]();
-  /* 🦣 v3.3 — 매머드는 외부 GLB(리깅+애니메이션) 모델이 준비되면 그것으로 스폰한다 */
-  if (kind === 'mammoth' && typeof mammothGLBBuild === 'function') {
+  /* 🦣 v3.3 — 매머드는 기본으로 절차 생성 모델을 쓴다(?mammoth=glb 일 때만 외부 GLB) */
+  if (kind === 'mammoth' && typeof mammothGLBBuild === 'function' &&
+      (typeof MAMMOTH_GLB === 'undefined' || MAMMOTH_GLB.enabled)) {
     var gbBuilt = mammothGLBBuild();
     if (gbBuilt) built = gbBuilt;
   }
@@ -9305,6 +9326,8 @@ function spawnDino(kind, x, z, opt) {
     d.exp = Math.max(0, opt.exp | 0);
     d.companion = !!opt.companion;
     d.penned = !!opt.penned;
+    d.barned = !!opt.barned;      /* 🏠 v3.3 — 축사 등록 여부 */
+    d.foeLock = null;
     d.max = Math.round(st.hp * (1 + 0.10 * (d.lv - 1)));
     if (!opt.hp) d.hp = d.max;
   }
@@ -12694,12 +12717,14 @@ function animateCreature(d, dt, t) {
    4) 인스턴스마다 SkeletonUtils.clone + AnimationMixer, 상태(idle/move/attack)에
       맞춰 크로스페이드. 게임의 체력·공격·타겟바·탑승 좌표계(parts.height/seatY/…)는
       기존 절차 생성 모델과 동일한 값을 그대로 넘겨준다.
-   ?mammoth=proc 로 열면 기존 코드 기반 매머드를 그대로 쓴다(비교용 스위치).
+   ?mammoth=glb 로 열면 외부 GLB 매머드를 시험용으로 쓴다.
+   v3.3 — 기본값은 기존 절차 생성 매머드(위로 휘어 오른 상아 + 털 질감)다.
+   GLB 는 위에서 내려다볼 때 상아가 사슴벌레 집게처럼 보여 기본에서 뺐다.
    ========================================================= */
 
 var MAMMOTH_GLB = {
   url: './assets/dinos/mammoth_frost.glb',
-  enabled: true,
+  enabled: false,          /* v3.3 — 기본은 절차 모델 · ?mammoth=glb 일 때만 켠다 */
   ready: false, failed: false, started: false,
   proto: null,
   info: { clipNames: [], tris: 0, meshes: 0, sourceMeshes: 0, bbox: null, height: 0, scale: 1 },
@@ -13117,8 +13142,8 @@ function mammothGLBStart() {
   if (MAMMOTH_GLB.started) return;
   MAMMOTH_GLB.started = true;
   try {
-    if (typeof location !== 'undefined' && /[?&]mammoth=proc/.test(location.search)) {
-      MAMMOTH_GLB.enabled = false;
+    if (typeof location !== 'undefined' && /[?&]mammoth=glb/.test(location.search)) {
+      MAMMOTH_GLB.enabled = true;
     }
   } catch (e) { }
   if (!MAMMOTH_GLB.enabled) return;
@@ -14277,6 +14302,81 @@ function makeFence() {
   return g;
 }
 
+/* 🏠 v3.3 축사 — 판벽과 박공지붕이 있는 작은 우리. 한 칸에 펫 한 마리.
+   울타리보다 네모반듯하고 지붕이 있어 '집'처럼 보이게 만들었다. */
+function makeBarn() {
+  var g = new THREE.Group();
+  var W = 3.6, D = 3.2, H = 1.95;      /* 가로 · 깊이 · 벽 높이 */
+  var hw = W / 2, hd = D / 2;
+  var DOOR = 1.25;                     /* 앞문 폭 */
+  /* 바닥 — 흙 + 깔린 짚 */
+  var floor = new THREE.Mesh(new THREE.BoxGeometry(W + 0.4, 0.14, D + 0.4), MAT.soil);
+  floor.position.y = 0.04;
+  g.add(floor);
+  var straw = new THREE.Mesh(GEO.ico1, MAT.dryGrass ? MAT.dryGrass : MAT.reedPlume);
+  straw.position.set(0.2, 0.13, 0.15);
+  straw.scale.set(1.15, 0.05, 0.95);
+  g.add(straw);
+  /* 판벽 — 안쪽에서 잎이 보이도록 네 벽을 세운다 */
+  function plank(x, y, z, w, h, d, mat) {
+    var m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+    m.position.set(x, y, z);
+    g.add(m);
+    return m;
+  }
+  plank(0, H / 2, -hd, W, H, 0.16, MAT.planksD);                 // 뒤벽
+  plank(-hw, H / 2, 0, 0.16, H, D, MAT.cabinDark);               // 왼벽
+  plank(hw, H / 2, 0, 0.16, H, D, MAT.cabinDark);                // 오른벽
+  var frontW = (W - DOOR) / 2;
+  plank(-(DOOR / 2 + frontW / 2), H / 2, hd, frontW, H, 0.16, MAT.planksD);   // 앞벽 좌
+  plank((DOOR / 2 + frontW / 2), H / 2, hd, frontW, H, 0.16, MAT.planksD);    // 앞벽 우
+  plank(0, H - 0.14, hd, DOOR + 0.3, 0.28, 0.16, MAT.barkD);     // 문 상인방
+  /* 벽 기둥 — 모서리 로그 */
+  var corners = [[-hw, -hd], [hw, -hd], [-hw, hd], [hw, hd]];
+  for (var c = 0; c < corners.length; c++) {
+    var post = new THREE.Mesh(GEO.cabinLog, c % 2 ? MAT.bark : MAT.barkD);
+    post.scale.set(0.62, H + 0.34, 0.62);
+    post.position.set(corners[c][0], (H + 0.34) / 2, corners[c][1]);
+    g.add(post);
+  }
+  /* 박공지붕 — 두 판넬을 마주 세우고 용마루 통나무로 덮는다 */
+  var roofL = new THREE.Mesh(new THREE.BoxGeometry(W + 0.8, 0.13, D * 0.60), MAT.planksD);
+  roofL.position.set(0, H + 0.42, -D * 0.26);
+  roofL.rotation.x = 0.42;
+  g.add(roofL);
+  var roofR = new THREE.Mesh(new THREE.BoxGeometry(W + 0.8, 0.13, D * 0.60), MAT.planksD);
+  roofR.position.set(0, H + 0.42, D * 0.26);
+  roofR.rotation.x = -0.42;
+  g.add(roofR);
+  var ridge = new THREE.Mesh(GEO.cabinLog, MAT.barkP);
+  ridge.scale.set(0.22, W + 0.9, 0.22);
+  ridge.rotation.z = Math.PI / 2;
+  ridge.position.set(0, H + 0.63, 0);
+  g.add(ridge);
+  var thatch = new THREE.Mesh(GEO.ico1, MAT.dryGrass ? MAT.dryGrass : MAT.reedPlume);
+  thatch.scale.set(2.0, 0.10, 1.9);
+  thatch.position.set(0, H + 0.60, 0);
+  g.add(thatch);
+  /* 여물통 · 건초 · 물통 */
+  var trough = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.34, 0.55), MAT.planksD);
+  trough.position.set(0.0, 0.30, -hd + 0.62);
+  g.add(trough);
+  var hay = new THREE.Mesh(GEO.ico1, MAT.dryGrass ? MAT.dryGrass : MAT.reedPlume);
+  hay.position.set(0.0, 0.50, -hd + 0.62);
+  hay.scale.set(0.58, 0.14, 0.22);
+  g.add(hay);
+  var bucket = new THREE.Mesh(new THREE.CylinderGeometry(0.21, 0.17, 0.28, 8), MAT.barkD);
+  bucket.position.set(-hw + 0.55, 0.25, hd - 0.7);
+  g.add(bucket);
+  var water = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.14, 0.05, 8), MAT.waterDrop);
+  water.position.set(-hw + 0.55, 0.37, hd - 0.7);
+  g.add(water);
+  addShadows(g);
+  flattenGroup(g, null, MAT.prop, true);
+  g.userData = { type: 'barn' };
+  return g;
+}
+
 /* 🛏 가죽 침낭 — 바닥에 깐 두툼한 가죽 요와 베개·담요 */
 function makeBed() {
   var g = new THREE.Group();
@@ -15196,6 +15296,8 @@ var STRUCT_DEF = {
   leatherCanopy: { name: '가죽 지붕', icon: '⛺', make: makeLeatherCanopy, r: 1.3, gap: 2.8, dist: 3.0 },
   /* ⛵ v3.0 — 공룡 울타리 · 생활 가구 */
   fence: { name: '공룡 울타리', icon: '🪵', make: makeFence, r: 2.55, gap: 5.4, dist: 5.6 },
+  /* 🏠 v3.3 — 축사: 펫 1마리를 등록해 두고, 등록한 펫만 동행할 수 있다 */
+  barn: { name: '축사', icon: '🏠', make: makeBarn, r: 2.35, gap: 5.6, dist: 5.0 },
   bed: { name: '가죽 침낭', icon: '🛏', make: makeBed, r: 0.9, gap: 1.7, dist: 2.6, flat: false },
   lantern: { name: '등불', icon: '🏮', make: makeLantern, r: 0.42, gap: 1.4, dist: 2.4 }
 };
@@ -17314,6 +17416,20 @@ function nearestNode(maxD) {
   }
   return best;
 }
+/* 🦴 v3.3 — 가장 가까운 도축 가능 시체 */
+function nearestCorpse(maxD) {
+  var best = null, bd = maxD * maxD;
+  for (var i = 0; i < dinos.length; i++) {
+    var d = dinos[i];
+    if (!corpseOf(d)) continue;
+    if (d.dying > 0) continue;
+    var dx = d.x - player.pos.x, dz = d.z - player.pos.z;
+    var dd = dx * dx + dz * dz;
+    if (dd < bd) { bd = dd; best = d; }
+  }
+  return best;
+}
+
 function nearestHostile(maxD) {
   var best = null, bd = maxD * maxD;
   for (var i = 0; i < dinos.length; i++) {
@@ -17467,6 +17583,18 @@ function computeContext() {
   if (cooking) return { type: 'busy', label: '요리 중…' };
   if (placing) return { type: 'place', label: ghostOk ? '설치' : '자리 좁아요' };
   if (rideDino) return { type: 'dismount', label: '내리기' };
+  /* 🪓 v3.3 — 캐는 리듬 중에는 다른 행동을 받지 않는다 */
+  if (GATHER.n) return { type: 'busy', label: '탁. 탁. 탁' };
+  /* 🎯 v3.3 — 교전 락온 중에는 채집·탑승보다 공격이 먼저다 */
+  var _lk = activeLock();
+  if (_lk) {
+    var _ldp = Math.hypot(_lk.x - player.pos.x, _lk.z - player.pos.z);
+    if (bowEquipped() && _ldp > 4.8) return { type: 'shoot', d: _lk, lock: 1, label: '활 쏘기' };
+    return { type: 'attack', d: _lk, lock: 1, label: _lk.kind === 'compy' ? '사냥' : '공격' };
+  }
+  /* 🦴 v3.3 — 시체 앞에서는 도축 */
+  var _cp = nearestCorpse(3.6);
+  if (_cp) return { type: 'butcher', d: _cp, label: '🦴 도축' };
   var _nest = nearestStruct('hatchNest', 3.8);
   if (_nest && (!_nest.egg || _nest.egg.done) && (S.inv.pteroEgg || 0) > 0) {
     return { type: 'putEgg', nst: _nest, label: '🥚 알 넣기' };
@@ -17545,7 +17673,27 @@ function doAction() {
   if (c.type === 'place') { confirmPlace(); return; }
   if (c.type === 'putEgg') { putEggInNest(c.nst); return; }
   if (c.type === 'dismount') { dismount(); return; }
-  if (c.type === 'attack') { attackDino(c.d); return; }
+  if (c.type === 'attack') {
+    var _ad = c.d;
+    if (_ad && !_ad.dead) {
+      var _add = Math.hypot(_ad.x - player.pos.x, _ad.z - player.pos.z);
+      var _areach = Math.max(3.4, (_ad.reach || 3.7) + 0.2);
+      if (_add > _areach) {
+        /* 락온한 적이 조금 멀면 한 걸음 파고들어 벤다 — 버튼을 누를 때마다 다가간다 */
+        var _aa = Math.atan2(_ad.x - player.pos.x, _ad.z - player.pos.z);
+        player.facing = _aa;
+        var _step = Math.min(_add - _areach + 0.45, 1.2);
+        var _nx = player.pos.x + Math.sin(_aa) * _step, _nz = player.pos.z + Math.cos(_aa) * _step;
+        if (terrainH(_nx, _nz) > 0.32) {
+          player.pos.set(_nx, groundY(_nx, _nz), _nz);
+          player.group.position.copy(player.pos);
+        }
+        if (_add - _step > _areach) { sfx('miss'); return; }
+      }
+    }
+    attackDino(c.d); return;
+  }
+  if (c.type === 'butcher') { openButchMenu(c.d); return; }
   if (c.type === 'shoot') { shootArrow(c.d); return; }
   if (c.type === 'chest') { openChest(c.st); return; }
   if (c.type === 'station') {
@@ -17584,7 +17732,75 @@ var NODE_LABEL = {
   metalVein: '금속 광맥 캐기', rareHerb: '희귀 약초 뽑기', giantMushroom: '큰 버섯 따기',
   frostVein: '빙정 광맥 캐기'
 };
-function gatherNode(n) {
+/* ---------------- 🪓 v3.3 채집 리듬 ----------------
+   즉시 한 번에 캐지고 끝나던 것을, 도구를 휘두르는 모션과 함께
+   「탁. 탁. 탁.」 2~3타의 리듬으로 바꿨다. 마지막 타격에 자원이 들어온다.
+   맞는 도구를 들면 간격이 짧아지고, 맨손은 한 박자 더 느리다. */
+var GATHER = { n: null, i: 0, need: 0, t: 0, iv: 0.56, started: 0 };
+var GATHER_HITS = {
+  tree: 3, pine: 3, rock: 3, ore: 3, ice: 3, metalVein: 3, frostVein: 3, bamboo: 2,
+  herb: 1, mushroom: 1, bush: 2, dryBush: 2, reed: 2, wheat: 2, cactus: 2, cotton: 2,
+  flower: 1, fern: 2, lavender: 1, banana: 2, pineapple: 2, rareHerb: 1, giantMushroom: 2,
+  frostHerb: 1, nest: 1
+};
+function gatherHitsFor(kind) { return GATHER_HITS[kind] || 2; }
+function gatherHitSound(kind) {
+  if (kind === 'tree' || kind === 'pine' || kind === 'bamboo' || kind === 'dryBush') return 'hitwood';
+  if (kind === 'rock' || kind === 'ore' || kind === 'ice' || kind === 'metalVein' || kind === 'frostVein') return 'hitrock';
+  return 'pick';
+}
+function gatherAnimKind() {
+  var wk = weaponKind();
+  if (wk === 'axe' || wk === 'stonePick' || wk === 'stoneSickle') return wk;
+  return wk === 'bow' ? 'fist' : wk;
+}
+function startGather(n) {
+  if (!n || n.dead) return;
+  var need = gatherHitsFor(n.kind);
+  if (need <= 1) { gatherYield(n); return; }
+  var b = gatherBoostFor(n.kind);
+  GATHER.n = n;
+  GATHER.i = 0;
+  GATHER.need = need;
+  GATHER.iv = (0.60 - (b > 1 ? 0.16 : 0)) * (0.92 + Math.random() * 0.16);
+  GATHER.t = 0.04;
+  GATHER.started = worldT;
+  player.facing = Math.atan2(n.x - player.pos.x, n.z - player.pos.z);
+}
+function gatherTap(n, last) {
+  var wk = gatherAnimKind();
+  var cb = startSwing(wk, last ? 0.36 : 0.30);
+  swingFx(wk, cb);
+  var y = terrainH(n.x, n.z);
+  var hh = (n.kind === 'tree' || n.kind === 'pine' || n.kind === 'bamboo') ? 1.9 : 0.6;
+  sfx(gatherHitSound(n.kind));
+  spawnBurst(n.x, y + hh, n.z, n.kind === 'rock' || n.kind === 'ore' || n.kind === 'ice' ? 0x9aa19a : 0x8a5d3a,
+    last ? 9 : 4, last ? 1 : 0.55);
+  n.shake = last ? 0.42 : 0.22;
+  if (player.pos && n) {
+    var fx2 = Math.sin(player.facing), fz2 = Math.cos(player.facing);
+    spawnBurst(player.pos.x + fx2 * 0.6, groundY(player.pos.x, player.pos.z) + 0.9, player.pos.z + fz2 * 0.6,
+      0xd8c7a6, 3, 0.35);
+  }
+}
+function updateGather(dt) {
+  var n = GATHER.n;
+  if (!n) return;
+  if (n.dead) { GATHER.n = null; return; }
+  var dd = Math.hypot(n.x - player.pos.x, n.z - player.pos.z);
+  if (dd > 4.4) { GATHER.n = null; return; }
+  GATHER.t -= dt;
+  if (GATHER.t > 0) return;
+  GATHER.i++;
+  var last = GATHER.i >= GATHER.need;
+  gatherTap(n, last);
+  if (last) { GATHER.n = null; gatherYield(n); }
+  else GATHER.t = GATHER.iv;
+}
+
+function gatherNode(n) { startGather(n); }
+
+function gatherYield(n) {
   var y = terrainH(n.x, n.z);
   var got = [];
   // 맞는 도구를 들고 있으면 채집량 2배 (b=2) — 아래 수량에 모두 곱한다
@@ -18293,31 +18509,128 @@ function wakeDino(d) {
   }
 }
 
+/* =========================================================
+   🦴 v3.3 — 공룡 시체 · 듀랑고식 도축
+   ---------------------------------------------------------
+   · 죽은 공룡은 아이템이 톡 튀어나오지 않고, 바닥에 옆으로 쓰러진
+     시체로 58초 남는다. 근처에서 「도축」을 누르거나 시체를 탭하면
+     다크 반투명 육각 링 메뉴가 열려 부위별로 골라 챙긴다.
+   ========================================================= */
+var CORPSE_LIFE = 58;
+var BUTCHER_GROUPS = {
+  meat: { label: '고기 채집', short: '고기', icon: 'meat', keys: ['meat', 'fineMeat', 'bulkMeat'] },
+  hide: { label: '가죽 벗기기', short: '가죽', icon: 'hide', keys: ['hideThin', 'hideTough', 'hideThick', 'hideBeast', 'hideGiant', 'tyrantLeather', 'mammothFur'] },
+  trophy: { label: '뼈·발톱·뿔', short: '뼈·발톱', icon: 'bone', keys: ['fang', 'trikeClaw', 'tyrantFang', 'spinoSail', 'feather'] }
+};
+var BUTCHER_ORDER = ['meat', 'hide', 'trophy'];
+function corpsePartsOf(d) {
+  var meta = DINO_META[d.kind] || DINO_META.trike;
+  var drops = meta.drops || [['meat', meta.drop || 2]];
+  var parts = [];
+  for (var g = 0; g < BUTCHER_ORDER.length; g++) {
+    var id = BUTCHER_ORDER[g], def = BUTCHER_GROUPS[id], items = [], names = [];
+    for (var i = 0; i < drops.length; i++) {
+      if (def.keys.indexOf(drops[i][0]) < 0) continue;
+      items.push({ k: drops[i][0], n: drops[i][1], taken: 0 });
+      names.push((ITEMS[drops[i][0]] ? ITEMS[drops[i][0]].icon + ' ' + ITEMS[drops[i][0]].name : drops[i][0]) + ' +' + drops[i][1]);
+    }
+    if (!items.length) continue;
+    parts.push({ id: id, label: def.label, icon: def.icon, items: items, names: names.join(' · '), n: items.length });
+  }
+  return parts;
+}
+function corpseOf(d) { return (d && d.corpse && !d.corpse.gone) ? d.corpse : null; }
+function corpseTakenAll(d) {
+  var c = corpseOf(d);
+  if (!c) return true;
+  for (var i = 0; i < c.parts.length; i++) if (!c.taken[c.parts[i].id]) return false;
+  return true;
+}
+/* 부위 하나를 가방에 넣는다 — 가방이 가득 차면 남은 개수는 그 자리에 남겨 둔다 */
+function corpseTakePart(d, partId, silent) {
+  var c = corpseOf(d);
+  if (!c) return 0;
+  var part = null;
+  for (var i = 0; i < c.parts.length; i++) if (c.parts[i].id === partId) part = c.parts[i];
+  if (!part || c.taken[partId]) return 0;
+  var got = 0, left = 0, gotNames = [];
+  for (var j = 0; j < part.items.length; j++) {
+    var it = part.items[j];
+    var want = it.n - (it.taken || 0);
+    var add = 0;
+    while (add < want && bagCanAdd(it.k, 1)) { addItem(it.k, 1); add++; }
+    it.taken = (it.taken || 0) + add;
+    got += add;
+    left += want - add;
+    if (add > 0) gotNames.push((ITEMS[it.k] ? ITEMS[it.k].icon + ' ' + ITEMS[it.k].name : it.k) + ' +' + add);
+  }
+  chipsDirty = true;
+  var gy = terrainH(d.x, d.z) + (d.parts.height || 1.6) * 0.45;
+  spawnBurst(d.x, gy, d.z, part.id === 'meat' ? 0xd8583c : (part.id === 'hide' ? 0xa87a4a : 0xece2c4), 10, 1.0);
+  sfx(part.id === 'hide' ? 'knife' : 'pick');
+  if (left > 0) {
+    toast('🎒 가방이 가득 찼어요 · ' + part.label + ' ' + got + '개만 챙겼어요', 'warn');
+  } else {
+    c.taken[partId] = true;
+    if (!silent && gotNames.length) toast('🦴 ' + gotNames.join(' · '), 'good');
+  }
+  if (corpseTakenAll(d)) finishCorpse(d);
+  return got;
+}
+function finishCorpse(d) {
+  var c = corpseOf(d);
+  if (c) c.gone = true;
+  if (BUTCH.d === d) closeButchMenu();
+  if (d.group) d.group.visible = false;
+  d.deadAt = Math.min(d.deadAt || (worldT + 1), worldT + 0.8);
+  spawnBurst(d.x, terrainH(d.x, d.z) + 0.5, d.z, 0x9a8f7a, 10, 0.9);
+  sfx('demolish');
+}
+/* 시간이 다 된 시체 — 남은 부위를 흩어진 채로 챙겨 준다(사냥의 보상을 놓치지 않게) */
+function corpseTimeout(d) {
+  var c = corpseOf(d);
+  if (c) {
+    var names = [];
+    for (var i = 0; i < c.parts.length; i++) {
+      var part = c.parts[i];
+      if (c.taken[part.id]) continue;
+      for (var j = 0; j < part.items.length; j++) {
+        var it = part.items[j], left = it.n - (it.taken || 0);
+        if (left > 0 && bagCanAdd(it.k, 1)) {
+          addItem(it.k, left);
+          names.push((ITEMS[it.k] ? ITEMS[it.k].name : it.k) + ' +' + left);
+        }
+      }
+    }
+    c.gone = true;
+    if (names.length) toast('🦴 시체가 흩어지며 남은 부위를 챙겼어요 · ' + names.join(' · '), undefined);
+  }
+  if (d.group) d.group.visible = false;
+}
+
 function killDino(d) {
-  if (!d || d.tamed) return;          // 아군이 죽는 일이 없도록 마지막 안전장치
-  d.dead = true; d.deadAt = worldT + 50;
+  if (!d || d.tamed || d.dead) return;   // 아군이 죽는 일이 없도록 마지막 안전장치
+  d.dead = true;
+  /* 🦴 v3.3 — 아이템은 바로 나오지 않는다. 시체가 남아 도축해야 나온다 */
+  d.corpse = { parts: corpsePartsOf(d), taken: {}, at: worldT, gone: false };
+  d.deadAt = worldT + CORPSE_LIFE;
   /* 💨 v2.8 — 예고선·기절 별을 함께 정리한다 */
   killTelegraphOf(d);
   removeStars(d);
   d.groggy = 0; d.groggyT = 0; d.exhaustT = 0; d.hornT = 0; d.chgT = 0;
-  d.tailT = 0; d.flankT = 0; d.roar2T = 0;
-  /* v2.7 — 바로 사라지지 않고 옆으로 무겁게 쓰러진 뒤 사라진다 */
+  d.tailT = 0; d.flankT = 0; d.roar2T = 0; d.kickT = 0; d.fleeT = 0;
+  /* v2.7 — 바로 사라지지 않고 옆으로 무겁게 쓰러진 뒤 시체로 남는다 */
   d.dying = 1.25; d.dyingMax = 1.25;
   d.deathDir = Math.random() < 0.5 ? -1 : 1;
   d.group.visible = true;
+  d.aggro = 0; d.provoked = 0; d.petTarget = null;
   var meta = DINO_META[d.kind] || DINO_META.trike;
-  var drops = meta.drops || [['meat', meta.drop || 2]];
-  var names = [];
-  for (var i = 0; i < drops.length; i++) {
-    var k = drops[i][0], n = drops[i][1];
-    addItem(k, n);
-    names.push(ITEMS[k].name + ' +' + n);
-  }
   chipsDirty = true;
   sfx('roar');
   var gy = terrainH(d.x, d.z);
-  toast(meta.name + ' 사냥 성공! ' + names.join(' · '), 'good');
+  toast(meta.name + '이(가) 쓰러졌어요! 🦴 다가가서 도축하세요', 'good');
   spawnBurst(d.x, gy + (d.parts.height || 1.2) * 0.5, d.z, 0xffcf7a, 12, 1.3);
+  spawnFloatText(d.x, gy + (d.parts.height || 1.6) * 0.85, d.z, '도축', '#ffe0b0', 1.05);
   if (typeof petKillExp === 'function') petKillExp(d);      // 🐾 동행도 함께 자란다
   if (typeof dexMarkKill === 'function') dexMarkKill(d.kind);   // 📖 v3.1 도감 등재
   if (rideDino === d) dismount();
@@ -18413,6 +18726,9 @@ function attackDino(d) {
   var push = d.kind === 'brachio' ? 0.10 : 0.45;
   if (terrainH(d.x + kx / kl * push, d.z + kz / kl * push) > 0.4) { d.x += kx / kl * push; d.z += kz / kl * push; }
   wakeDino(d);
+  /* 🐾 v3.3 — 내가 때린 적에게 동행이 먼저 달려들도록 표시해 둔다 */
+  var _cpAtk = (typeof companionPet === 'function') ? companionPet() : null;
+  if (_cpAtk) _cpAtk.foeLock = d;
   if (d.kind === 'compy') compStartle(d, d.x - player.pos.x, d.z - player.pos.z, 2.4);
   if (d.hp <= 0) { killDino(d); return; }
   toast((crit ? '🎯 ' : '') + '-' + dmg + ' · ' + Math.max(0, Math.round(d.hp)) + '/' + d.max, crit ? 'good' : undefined);
@@ -18584,33 +18900,58 @@ function updateArrows(dt) {
 }
 
 /* ---------------- taming & riding ---------------- */
+/* 🐾 v3.3 — 길들이기 난이도 상향
+   · 기운이 넘치는(체력 55% 초과) 야생은 먹이를 받지 않는다 → 먼저 몸을 지치게 해야 한다
+   · 기절(그로기) 상태면 한 번에 크게 열리고, 체력이 낮을수록 천천히 열린다
+   · 먹이 사이에 1초의 틈이 있어 연타로 길들일 수 없다 */
+var TAME = { need: 100, cd: 1.0, weakFrac: 0.55 };
+function tameGate(d) {
+  if (!d) return null;
+  if ((d.groggyT || 0) > 0) return 'groggy';
+  if (d.hp <= d.max * TAME.weakFrac) return 'weak';
+  if ((d.taming | 0) > 0) return 'progress';
+  return null;
+}
 function tameDino(d) {
   if (!d || d.tamed) return;
   if (!d.tameStep) { sfx('deny'); toast('이 공룡은 길들일 수 없어요', 'warn'); return; }
+  if ((d.feedCd || 0) > 0) { sfx('deny'); return; }
+  var gate = tameGate(d);
+  if (!gate) {
+    sfx('deny');
+    toast('🦴 ' + petSpeciesName(d) + '이(가) 아직 기운이 넘쳐요 · 체력 55% 아래로 깎거나 기절시킨 뒤 먹이를 주세요', 'warn');
+    return;
+  }
   var food = tameFoodOf(d);
   if ((S.inv[food] || 0) <= 0) {
-    sfx('deny');
-    toast((ITEMS[food] ? ITEMS[food].name : food) + '이(가) 필요해요 · ' + (food === 'berry' ? '덤불에서 채집' : '고기를 구해서 먹여 보세요'), 'warn');
+    sfx('deny'); toast((ITEMS[food] ? ITEMS[food].name : food) + '이(가) 필요해요 · ' + (food === 'berry' ? '덤불에서 채집' : '고기를 구해서 먹여 보세요'), 'warn');
     return;
   }
   S.inv[food]--;
-  d.taming += d.tameStep;
+  d.feedCd = TAME.cd;
+  /* 기절 30% · 지친 몸 18% · 이미 길들어가는 중 9% */
+  var gain = gate === 'groggy' ? 30 : (gate === 'weak' ? 18 : 9);
+  d.taming = Math.min(100, (d.taming | 0) + gain);
   chipsDirty = true;
-  spawnHearts(d.x, terrainH(d.x, d.z) + d.parts.height * 0.8, d.z, 5);
+  spawnHearts(d.x, terrainH(d.x, d.z) + d.parts.height * 0.8, d.z, gate === 'groggy' ? 7 : 4);
   sfx('pop');
   if (d.taming >= 100) {
     d.tamed = true; d.taming = 100;
+    d.feedCd = 0;
     d.petName = ''; d.name = '';
     d.pid = newPetId();
+    d.hp = Math.max(d.hp, Math.round(d.max * 0.25));
     addNameTag(d);
     sfx('tame');
     toast(petSpeciesName(d) + ' 마음을 열었어요! 🐾', 'good');
     if (typeof dexMarkTame === 'function') dexMarkTame(d.kind);   // 📖 v3.1 도감 포획 등재
     S.tamed.push({ kind: d.kind, x: Math.round(d.x), z: Math.round(d.z), name: '', petName: '', pid: d.pid, hp: Math.round(d.hp) });
-    hint('🐾 「펫」 버튼에서 이름을 지어 주면 나를 따라와요 · 이름이 없으면 그 자리에 머물러요', 5400);
+    hint('🏠 「축사」를 지어 한 마리를 등록하면 그 펫만 데리고 다닐 수 있어요', 5400);
+    syncTamedData();
     saveState();
   } else {
-    toast('길들이는 중… ' + d.taming + '%', undefined);
+    toast('길들이는 중… ' + d.taming + '%' + (gate === 'groggy' ? ' · 기절한 틈에 크게 열렸어요!' : ''), gate === 'groggy' ? 'good' : undefined);
+    hint('🐾 먹이 사이에 틈이 필요해요 · 체력을 더 깎거나 기절시키면 빨리 열려요', 2600);
   }
 }
 
@@ -18644,7 +18985,7 @@ function syncTamedData() {
     S.tamed.push({
       kind: nd.kind, x: Math.round(nd.x), z: Math.round(nd.z), name: nd.name || '',
       petName: nd.petName || '', pid: pid, hp: Math.round(nd.hp), lv: petLvOf(nd), exp: Math.round(nd.exp || 0),
-      isle: nd.isle || ISLE.cur, penned: !!nd.penned
+      isle: nd.isle || ISLE.cur, penned: !!nd.penned, barned: !!nd.barned
     });
   }
   for (i = 0; i < S.tamed.length; i++) {
@@ -18660,6 +19001,7 @@ function syncTamedData() {
     t.exp = Math.round(dd.exp || 0);
     t.companion = dd.pid === S.companion ? 1 : 0;
     t.penned = !!dd.penned;
+    t.barned = !!dd.barned;
     t.isle = dd.isle || ISLE.cur;
   }
 }
@@ -19156,7 +19498,7 @@ function doPackStruct(st) {
   if (!st || !st.type) return;
   var def = STRUCT_DEF[st.type];
   if (!def) return;
-  if (st.type === 'fence') releaseFencePets(st);      // 🪵 맡긴 공룡은 먼저 꺼내 준다
+  if (isPenType(st.type)) releaseFencePets(st);      // 🪵🏠 맡긴 공룡은 먼저 꺼내 준다
   if (st.type === 'cabin' && insideCabin(st, player.pos.x, player.pos.z, 0.1)) {
     sfx('deny'); toast('🏚️ 오두막 밖으로 나온 뒤 포장할 수 있어요', 'warn'); return;
   }
@@ -19255,7 +19597,7 @@ function confirmDemolish() {
   var st = demolishSt;
   if (!st) { closeSheet(); return; }
   var type = st.type, def = STRUCT_DEF[type];
-  if (type === 'fence') releaseFencePets(st);      // 🪵 맡긴 공룡은 먼저 밖으로
+  if (isPenType(type)) releaseFencePets(st);      // 🪵🏠 맡긴 공룡은 먼저 밖으로
   var refund = structRefund(type), got = [], lost = [];
   for (var k in refund) { var n = addItem(k, refund[k]); if (n > 0) got.push((ITEMS[k] ? ITEMS[k].icon + ' ' : '') + (ITEMS[k] ? ITEMS[k].name : k) + ' +' + n); if (n < refund[k]) lost.push(ITEMS[k] ? ITEMS[k].name : k); }
   if (type === 'hatchNest') {
@@ -19315,6 +19657,7 @@ function openSheet(mode) {
   else if (mode === 'dye') { sheetTitle.textContent = '🎨 염색대'; sheetSub.textContent = '꽃 염료로 옷·신발·오두막 지붕을 물들여요'; }
   else if (mode === 'cabinUp') { sheetTitle.textContent = '🏠 집 증축'; sheetSub.textContent = '1×1 오두막 → 2×2 큰 집'; }
   else if (mode === 'fence') { sheetTitle.textContent = '🪵 공룡 울타리'; sheetSub.textContent = '최대 3마리 보관 · 교대 · 회복'; }
+  else if (mode === 'barn') { sheetTitle.textContent = '🏠 축사'; sheetSub.textContent = '한 칸에 1마리 · 등록한 펫만 동행'; }
   else { sheetTitle.textContent = '설정'; sheetSub.textContent = ''; }
   closeHexMenu();
   renderSheet();
@@ -20520,6 +20863,10 @@ function renderSheet() {
     renderFence();
     return;
   }
+  if (sheetMode === 'barn') {
+    renderBarn();
+    return;
+  }
   if (sheetMode === 'craft') {
     /* ── 🏭 시설 전용 창 (v2.3e) — 앞에 선 그 시설의 레시피만 단독으로 ── */
     var _sdOnly = (craftStation && STATIONS[craftStation]) ? STATIONS[craftStation] : null;
@@ -20665,7 +21012,7 @@ function renderSheet() {
       sheetBody.appendChild(it);
     }
   } else if (sheetMode === 'build') {
-    var keys = ['campfire', 'cabin', 'workbench', 'dryingRack', 'loom', 'dyeVat', 'tailorBench', 'smithBench', 'chest', 'woodBox', 'metalBox', 'premiumBox', 'leatherRug', 'leatherCanopy', 'hatchNest', 'chair', 'table', 'planter', 'fence', 'bed', 'lantern'];
+    var keys = ['campfire', 'cabin', 'workbench', 'dryingRack', 'loom', 'dyeVat', 'tailorBench', 'smithBench', 'chest', 'woodBox', 'metalBox', 'premiumBox', 'leatherRug', 'leatherCanopy', 'hatchNest', 'chair', 'table', 'planter', 'barn', 'fence', 'bed', 'lantern'];
     /* 한 줄 짧은 설명 — 긴 설명은 title 툴팁으로 */
     var STRUCT_SHORT = {
       campfire: '요리 · 휴식', cabin: '내 집 · 휴식', workbench: '기초 제작',
@@ -20674,7 +21021,7 @@ function renderSheet() {
       chest: '보관함', woodBox: '보관함', metalBox: '보관함', premiumBox: '보관함',
       leatherRug: '바닥 러그', leatherCanopy: '천막 지붕', hatchNest: '익룡 알 품기',
       chair: '의자 소품', table: '테이블 소품', planter: '화분 소품',
-      fence: '공룡 3마리 보관', bed: '빠른 휴식', lantern: '밤 등불'
+      fence: '공룡 3마리 보관', barn: '펫 1마리 · 동행 등록', bed: '빠른 휴식', lantern: '밤 등불'
     };
     var STRUCT_DESC = {
       campfire: '불꽃·요리·휴식 · 5분마다 장작 필요',
@@ -20696,6 +21043,7 @@ function renderSheet() {
       table: '오두막 앞에 놓는 소품',
       planter: '꽃을 심은 돌 화분',
       fence: '길들인 공룡 3마리까지 맡겨 두고 교대 · 쉬면서 회복 · 앞에서 「울타리」',
+      barn: '한 채에 펫 1마리 등록 · 등록한 펫만 「데리고 가기」로 동행 · 쉬면서 회복',
       bed: '가죽 침낭 · 곁에 서면 체력·허기 회복이 2배 이상 (밤엔 더)',
       lantern: '밤을 밝히는 등불 · 곁에서 쉬면 회복이 조금 빨라져요'
     };
@@ -21831,6 +22179,8 @@ function updateStars(d, t) {
 }
 function startGroggy(d) {
   if (!d || d.dead) return;
+  d.kickT = 0; d.kickCd = 0; d.fleeT = 0;
+  d.group.rotation.x = 0;
   d.groggyT = 2.0;
   d.groggyMax = 2.0;
   d.groggy = 0;
@@ -21850,7 +22200,11 @@ function startGroggy(d) {
 /* ---------------- 🦖 종별 고유 패턴 테이블 ---------------- */
 var V28 = {
   raptor: { flank: 1, flankCd: 4.4 },
-  trike: { charge: 1, chgSpeed: 8.6, chgDur: 0.86, chgLane: 11.5, chgWid: 2.5, chgDmg: 16, exhaust: 1.5 },
+  trike: { charge: 1, chgSpeed: 8.6, chgDur: 0.86, chgLane: 11.5, chgWid: 2.5, chgDmg: 16, exhaust: 1.5, kick: 1, kickCd: 5.4 },
+  /* 🦵 v3.3 — 꼬리가 짧은 초식은 등 뒤·옆구리를 노리면 뒷발질로 걷어찬다 */
+  pachy: { kick: 1, kickCd: 4.6 },
+  para: { kick: 1, kickCd: 5.0 },
+  brachio: { kick: 1, kickCd: 6.2 },
   trex: { tail: 1, roar: 1, tailCd: 7.5, roarCd: 15 },
   allo: { tail: 1, roar: 1, tailCd: 6.5, roarCd: 0 },
   carno: { tail: 1, roar: 0, tailCd: 6.5 },
@@ -21876,6 +22230,60 @@ function dinoTailStrike(d, A) {
     spawnBurst(player.pos.x, terrainH(player.pos.x, player.pos.z) + 1.0, player.pos.z, 0xd8583c, 8, 1.1);
   } else sfx('miss');
 }
+/* 🦵 v3.3 — 뒷발질: 등 뒤·옆구리에 붙은 사냥꾼을 뒷다리로 걷어찬다.
+   예고선(후방 부채꼴)이 끝나는 순간에만 맞으므로 앞으로 돌아서면 피할 수 있다. */
+function dinoKickStrike(d, A) {
+  var toP = Math.atan2(player.pos.x - d.x, player.pos.z - d.z);
+  var rel = Math.abs(v28AngDiff(toP, d.rot + Math.PI));
+  var reach = A.hitR + 0.95;
+  sfx('tail');
+  spawnFxRing(d.x, terrainH(d.x, d.z) + 0.07, d.z, 0xff7a3a, 0.28, 3.6);
+  d.kickFx = 0.3;
+  if (rideDino) return;
+  if (Math.hypot(player.pos.x - d.x, player.pos.z - d.z) <= reach && rel < 1.15) {
+    hurtPlayer(Math.round(A.atkDmg * 0.75), d);
+    var kx = player.pos.x - d.x, kz = player.pos.z - d.z, kl = Math.hypot(kx, kz) || 1;
+    player.kx = kx / kl * 12.0; player.kz = kz / kl * 12.0;
+    player.knockT = 0.30;
+    spawnBurst(player.pos.x, terrainH(player.pos.x, player.pos.z) + 0.9, player.pos.z, 0xffb066, 9, 1.1);
+    spawnFloatText(player.pos.x, terrainH(player.pos.x, player.pos.z) + 1.9, player.pos.z, '뒷발질!', '#ffd0a0', 0.9);
+  } else sfx('miss');
+}
+/* 초식 뒷발질 패턴 — 몸을 앞으로 숙이며 한쪽 뒷다리를 크게 걷어찬다 */
+function v28KickStep(d, A, dt, dp) {
+  var v = V28[d.kind];
+  if (!v || !v.kick) return false;
+  /* 🦵 체력이 낮아진 개체는 더 자주 걷어찬다 */
+  var low = d.hp <= d.max * 0.4;
+  if (d.kickT > 0) {
+    d.kickT -= dt;
+    d.cstate = 'attack';
+    d.atkT = Math.max(d.atkT || 0, 0.3); d.atkDur = 0.5;
+    d.animSpeed = 0; d.walking = 0;
+    d.group.rotation.x = -0.14 - Math.sin(clamp(1 - d.kickT / 0.58, 0, 1) * Math.PI) * 0.16;
+    if (d.kickT <= 0) {
+      d.group.rotation.x = 0;
+      killTelegraphOf(d);
+      dinoKickStrike(d, A);
+      d.kickCd = (v.kickCd || 5.4) * (low ? 0.7 : 1);
+    }
+    return true;
+  }
+  d.kickCd = Math.max(0, (d.kickCd || 0) - dt);
+  var toP = Math.atan2(player.pos.x - d.x, player.pos.z - d.z);
+  var relP = Math.abs(v28AngDiff(toP, d.rot));
+  if (d.kickCd <= 0 && d.provoked > 0 && dp < A.atkR + 1.15 && relP > 1.10) {
+    d.kickT = 0.58;
+    d.kickCd = 99;
+    d.rot = Math.atan2(player.pos.x - d.x, player.pos.z - d.z);   // 몸은 사냥꾼 쪽으로 돌린 채 뒷발만
+    d.tele = spawnTelegraph({ kind: 'fan', owner: d, yawOff: Math.PI, rad: A.hitR + 1.0, half: 76, dur: 0.58, follow: 0 });
+    showDinoAlert(d, 0.75);
+    sfx('growl');
+    return true;
+  }
+  return false;
+}
+
 /* 위압 포효 — 넓은 원형 경고 뒤, 반경 안이면 밀려나고 잠시 느려진다 */
 function dinoRoarBlast(d, A, rad) {
   sfx('roar');
@@ -22652,6 +23060,7 @@ function animateDino(d, dt, t) {
 }
 
 function moveDino(d, tx, tz, speed, dt) {
+  if (d.limpMul && d.limpMul !== 1) speed *= d.limpMul;   // 🦖 v3.3 절뚝거리는 개체는 느리다
   var dx = tx - d.x, dz = tz - d.z;
   var dd2 = dx * dx + dz * dz;
   if (dd2 < 0.0225) return true;
@@ -23139,6 +23548,35 @@ function updateCreatureAI(d, dt, t, dp) {
   }
   var homeD = Math.sqrt((d.x - d.homeX) * (d.x - d.homeX) + (d.z - d.homeZ) * (d.z - d.homeZ));
 
+  /* 🦖 v3.3 — 체력 25% 이하: 절뚝거리며 걸어 다니고, 때에 따라 도망친다 */
+  if (!d.tamed) {
+    var lowHp = d.hp > 0 && d.hp <= d.max * 0.25;
+    if (lowHp) {
+      d.limpMul = 0.62;
+      if (d.walking) d.group.rotation.z = 0.055 + Math.sin(worldT * 8.0) * 0.06;   // 절뚝 절뚝
+      d.fleeCd = Math.max(0, (d.fleeCd || 0) - dt);
+      if ((d.aggro || d.provoked > 0) && !isSafeZone(d.x, d.z)) {
+        if (d.fleeT > 0) {
+          d.fleeT -= dt;
+          d.cstate = 'flee';
+          var _ax = Math.atan2(d.x - player.pos.x, d.z - player.pos.z);
+          moveDino(d, d.x + Math.sin(_ax) * 6.0, d.z + Math.cos(_ax) * 6.0, A.run * 0.92, dt);
+          if (d.fleeT <= 0) d.fleeCd = 8 + Math.random() * 5;
+          return;
+        }
+        if (d.fleeCd <= 0 && dp > 1.2 && Math.random() < dt * 0.55) {
+          d.fleeT = 2.6;
+          d.atkCd = Math.max(d.atkCd, 0.6);
+          d.petTarget = null;
+          spawnFloatText(d.x, terrainH(d.x, d.z) + (d.parts.height || 2) * 0.9, d.z, '도주!', '#ffd0a0', 1.0);
+          return;
+        }
+      }
+    } else {
+      d.limpMul = 1;
+    }
+  }
+
   // 🐾 길들인 개체 — 이름을 지어준 공룡만 주인을 따라오고, 이름이 없으면 그 자리에 머둔다
   if (d.tamed) {
     if (d.penned) { d.walking = 0; d.animSpeed = 0; d.cstate = 'idle'; return; }
@@ -23161,7 +23599,8 @@ function updateCreatureAI(d, dt, t, dp) {
       var foe0 = companionFoe(d);
       if (foe0) { petCombatTick(d, foe0, dt); return; }
     }
-    if (!d.petName && !d.companion) {
+    /* 🐾 v3.3 — 나를 따라오는 건 축사에서 데려온 동행 한 마리뿐. 다른 펫은 제자리에 머문다 */
+    if (!d.companion) {
       d.walking = Math.max(0, (d.walking || 0) - dt * 3);
       d.animSpeed = 0;
       if (d.idle > 0) d.idle -= dt;
@@ -23321,6 +23760,8 @@ function updateCreatureAI(d, dt, t, dp) {
     }
     // 🦏 v2.8 트리케라톱스 뿔 돌진 — 기 모으기(직선 레인) → 돌진 → 숨 고르기 빈틈
     if (v28TrikeStep(d, A, dt, dp)) return;
+    // 🦵 v3.3 뒷발질 — 등 뒤·옆구리를 노리면 걷어찬다
+    if (v28KickStep(d, A, dt, dp)) return;
     // 🦕 꼬리 달린 초식(스테고·안킬로·매머드) — 등 뒤로 돌면 꼬리를 후린다
     if (v28CarnStep(d, A, dt, dp)) return;
     // 초식 반격도 고개를 들고 쏙쏙거린 뒤 돌진한다
@@ -23380,9 +23821,13 @@ function updateDinos(dt, t) {
       continue;
     }
     if (d.dead) {
+      /* 🦴 v3.3 — 시체로 남아 있는 동안은 자세를 그대로 두고, 시간이 다 되면
+         남은 부위를 챙긴 뒤에 사라져 새 개체로 돌아간다 */
+      if (d.corpse && !d.corpse.gone && worldT > d.deadAt) corpseTimeout(d);
       if (worldT > d.deadAt) {
         d.dead = false; d.hp = d.max; d.group.visible = true;
         d.group.rotation.z = 0; d.dying = 0;   // 쓰러진 자세 초기화
+        d.corpse = null;
         d.aggro = 0; d.provoked = 0;
         var a = Math.random() * TAU, r = rnd(24, 144);
         d.x = Math.cos(a) * r; d.z = Math.sin(a) * r;
@@ -23402,6 +23847,7 @@ function updateDinos(dt, t) {
     d.group.position.set(d.x, terrainH(d.x, d.z) + (d.airY || 0), d.z);
     d.group.rotation.y = d.rot;
     d.group.rotation.z = d.flying ? Math.sin(worldT * 1.6 + (d.phase || 0)) * 0.10 : 0;
+    if (d.feedCd > 0) d.feedCd = Math.max(0, d.feedCd - dt);   // 🐾 먹이 주는 틈
     updateDinoCry(d, dt);
     if (d.hurt > 0) {
       d.hurt -= dt;
@@ -23479,9 +23925,19 @@ function updateDinos(dt, t) {
     }
 
     if (d.tamed) {
-      if (d.petName && dp > 5.5 && !d.downed) moveDino(d, player.pos.x, player.pos.z, 3.6, dt);
+      /* 🐾 v3.3 — 절차 모델(비 skinned) 동행도 어그로·몸빵을 똑같이 한다 */
+      if (d.companion && !d.mounted && !d.downed) {
+        var _cf = companionFoe(d);
+        if (_cf) {
+          petCombatTick(d, _cf, dt);
+          if (d.lunge > 0) d.lunge -= dt;
+          animateDino(d, dt, t);
+          continue;
+        }
+      }
+      if (d.companion && dp > 5.5 && !d.downed) moveDino(d, player.pos.x, player.pos.z, 3.6, dt);
       else if (d.idle > 0) { d.idle -= dt; d.walking = Math.max(0, (d.walking || 0) - dt * 3); }
-      else if (!d.petName) { d.walking = Math.max(0, (d.walking || 0) - dt * 3); d.cstate = 'idle'; }
+      else if (!d.companion) { d.walking = Math.max(0, (d.walking || 0) - dt * 3); d.cstate = 'idle'; }
       else if (moveDino(d, d.tx, d.tz, 1.1, dt)) { pickWander(d); d.tx = player.pos.x + rnd(-6, 6); d.tz = player.pos.z + rnd(-6, 6); }
     } else {
       if (d.idle > 0) { d.idle -= dt; d.walking = Math.max(0, (d.walking || 0) - dt * 3); }
@@ -23965,22 +24421,21 @@ function initWorld() {
     var _pn = (tm.petName !== undefined) ? tm.petName : (tm.name || '');
     var _d = spawnDino(tm.kind, tx, tz, {
       tamed: true, name: _pn, petName: _pn, pid: tm.pid, hp: tm.hp, scale: 1,
-      lv: tm.lv, exp: tm.exp, companion: S.companion && S.companion === tm.pid, penned: !!tm.penned
+      lv: tm.lv, exp: tm.exp, companion: S.companion && S.companion === tm.pid, penned: !!tm.penned,
+      barned: !!tm.barned
     });
     if (!_d.pid) { _d.pid = newPetId(); tm.pid = _d.pid; }
   }
-  /* 🐾 저장된 동행이 없으면 이름 지은 공룡을 첫 동행으로 삼는다 */
-  if (!S.companion) {
-    for (var ci = 0; ci < dinos.length; ci++) {
-      var cd = dinos[ci];
-      if (cd.tamed && cd.petName && !cd.penned && !cd.dead) { S.companion = cd.pid; break; }
-    }
+  /* 🏠 v3.3 — 동행은 축사에 등록한 펫 한 마리뿐. 등록되지 않은 펫은 동행에서 내린다 */
+  if (S.companion) {
+    var _reg = petIsBarned(S.companion);
+    if (!_reg) S.companion = '';
   }
   refreshCompanion();
   /* 🪵 울타리 목록에 있는 공룡은 숨겨 둔다 */
   for (var pi2 = 0; pi2 < structures.length; pi2++) {
     var sf = structures[pi2];
-    if (sf.type !== 'fence') continue;
+    if (!isPenType(sf.type)) continue;
     var pl = penList(sf);
     for (var pj = 0; pj < pl.length; pj++) {
       var pd = petByPid(pl[pj]);
@@ -24122,6 +24577,10 @@ var HEX_ICONS = {
   up: '<path d="M12 20V5.4"/><path d="M6.4 11 12 5.4 17.6 11"/><path d="M4 20.4h16"/>',
   bed: '<path d="M3.4 18.4v-6.2h17.2v6.2"/><path d="M3.4 15.4h17.2"/><path d="M3.4 12.2V8.4"/><path d="M7.4 12.2V9.6h3.4v2.6"/>',
   pen: '<path d="M4.4 20.4V7.6M12 20.4V7.6M19.6 20.4V7.6"/><path d="M4.4 10.4h15.2M4.4 15.4h15.2"/>',
+  meat: '<path d="M15.6 4.6c2.4.4 4.0 2.4 3.8 4.8-.2 2.2-2 3.6-4.0 3.4l-4.6 4.6c.3 1.5-.6 2.9-2.1 3.3-1.7.5-3.4-.6-3.9-2.3-.5-1.7.5-3.4 2.2-3.9l4.6-4.6c-.3-2.1 1.6-4.3 4.0-4.0z"/><path d="M16.4 8.4h.01"/>',
+  hide: '<path d="M6.2 4.4h11.6l-1.4 5.0 2.2 5.2c-2.6 2.6-8.6 4.4-13.2 0l2.4-5.2z"/><path d="M9.4 13.4h5.2"/>',
+  bone: '<path d="M7.2 16.8c-1.3 1.3-3.2 1.1-4.2.1s-1.2-2.9.1-4.2c.8-.8 1.9-1 2.8-.6l6.7-6.7c-.4-.9-.2-2 .6-2.8 1.3-1.3 3.2-1.1 4.2-.1s1.2 2.9-.1 4.2c-.8.8-1.9 1-2.8.6l-6.7 6.7c.4.9.2 2-.6 2.8z"/>',
+  all: '<path d="M4.6 9.4 12 4.4l7.4 5"/><path d="M6.4 10.8v7.6h11.2v-7.6"/><path d="M12 9.8v6.4M9.4 13h5.2"/>',
   take: '<path d="M12 4.2v10.4"/><path d="M7.6 10.6 12 15l4.4-4.4"/><path d="M4.6 17.6v1.6a1.2 1.2 0 0 0 1.2 1.2h12.4a1.2 1.2 0 0 0 1.2-1.2v-1.6"/>'
 };
 function hexActionsFor(st) {
@@ -24148,6 +24607,8 @@ function hexActionsFor(st) {
     if ((st.lv | 0) < 2) acts.push({ a: 'upgrade', icon: 'up', label: '증축' });
   } else if (t === 'fence') {
     acts.push({ a: 'pen', icon: 'pen', label: '울타리', big: true });
+  } else if (t === 'barn') {
+    acts.push({ a: 'barn', icon: 'pen', label: '축사', big: true });
   } else if (t === 'bed') {
     acts.push({ a: 'rest', icon: 'bed', label: '휴식', big: true });
   } else if (t === 'hatchNest') {
@@ -24237,6 +24698,140 @@ function positionHexMenu() {
   sy = clamp(sy, 100, window.innerHeight - 110);
   hexEl.style.transform = 'translate(' + sx.toFixed(1) + 'px,' + sy.toFixed(1) + 'px)';
 }
+/* =========================================================
+   🦴 v3.3 — 시체 도축 육각 링 메뉴 (듀랑고 스타일)
+   다크 반투명 육각 버튼 3~4개가 시체 위에 떠서 부위별로 고른다.
+   ========================================================= */
+var butchEl = $id('butchMenu');
+var BUTCH = { d: null, on: false, el: null, ids: '' };
+function butchSignature(d) {
+  var c = corpseOf(d);
+  if (!c) return '';
+  var t = '';
+  for (var i = 0; i < c.parts.length; i++) t += c.taken[c.parts[i].id] ? '1' : '0';
+  return d.kind + '|' + d.x.toFixed(1) + ',' + d.z.toFixed(1) + '|' + t + '|' + Math.ceil(d.deadAt - worldT);
+}
+function corpsePartTotals(part) {
+  var out = [], n = 0;
+  for (var i = 0; i < part.items.length; i++) {
+    var it = part.items[i], left = it.n - (it.taken || 0);
+    if (left <= 0) continue;
+    n += left;
+    out.push((ITEMS[it.k] ? ITEMS[it.k].name : it.k) + ' ' + left);
+  }
+  return { n: n, text: out.join(' · ') };
+}
+function buildButchMenu(d) {
+  if (!butchEl) return;
+  butchEl.innerHTML = '';
+  var c = corpseOf(d);
+  if (!c) return;
+  var meta = DINO_META[d.kind] || {};
+  var title = document.createElement('div');
+  title.id = 'butchTitle';
+  var left = Math.max(0, Math.ceil(d.deadAt - worldT));
+  title.innerHTML = escHtml(meta.name || '공룡') + '<i>🦴 ' + left + '초</i>';
+  butchEl.appendChild(title);
+  BUTCH.el = title;
+  var parts = c.parts;
+  var angles = parts.length >= 3 ? [-172, -118, -64] : (parts.length === 2 ? [-160, -80] : [-120]);
+  for (var i = 0; i < parts.length; i++) {
+    (function (p, idx) {
+      var tot = corpsePartTotals(p);
+      var taken = !!c.taken[p.id];
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'hexBtn' + (taken ? ' gone' : '');
+      var rad = 55;
+      var ang = angles[idx] * Math.PI / 180;
+      b.style.setProperty('--x', (Math.cos(ang) * rad).toFixed(1) + 'px');
+      b.style.setProperty('--y', (Math.sin(ang) * rad - 8).toFixed(1) + 'px');
+      b.innerHTML = '<svg class="hxBg" viewBox="0 0 100 112">' +
+        '<polygon class="hxFill" points="' + HEX_POLY + '"></polygon>' +
+        '<polygon class="hxIn" points="' + HEX_POLY_IN + '"></polygon></svg>' +
+        '<span class="hi"><svg viewBox="0 0 24 24">' + (HEX_ICONS[p.icon] || HEX_ICONS.meat) + '</svg></span>' +
+        '<span class="hl">' + (p.short || p.label) + (tot.n ? ' ' + tot.n : ' ✓') + '</span>';
+      b.setAttribute('aria-label', p.label + (taken ? ' (완료)' : ' ' + tot.text));
+      b.title = p.label + (taken ? ' · 이미 챙겼어요' : ' · ' + tot.text);
+      b.addEventListener('click', function (e) {
+        e.stopPropagation();
+        audioInit();
+        corpseTakePart(d, p.id);
+        buildButchMenu(d);
+      });
+      butchEl.appendChild(b);
+    })(parts[i], i);
+  }
+  /* 전부 챙기기 — 큰 육각 하나 */
+  var all = document.createElement('button');
+  all.type = 'button';
+  all.className = 'hexBtn big';
+  all.style.setProperty('--x', '52px');
+  all.style.setProperty('--y', '34px');
+  all.innerHTML = '<svg class="hxBg" viewBox="0 0 100 112">' +
+    '<polygon class="hxFill" points="' + HEX_POLY + '"></polygon>' +
+    '<polygon class="hxIn" points="' + HEX_POLY_IN + '"></polygon></svg>' +
+    '<span class="hi"><svg viewBox="0 0 24 24">' + HEX_ICONS.all + '</svg></span>' +
+    '<span class="hl">전부 챙기기</span>';
+  all.setAttribute('aria-label', '전부 챙기기');
+  all.addEventListener('click', function (e) {
+    e.stopPropagation();
+    audioInit();
+    butchAll(d);
+  });
+  butchEl.appendChild(all);
+  BUTCH.ids = butchSignature(d);
+}
+function openButchMenu(d) {
+  if (!butchEl || !corpseOf(d)) return;
+  BUTCH.d = d;
+  if (!BUTCH.on || butchSignature(d) !== BUTCH.ids) buildButchMenu(d);
+  BUTCH.on = true;
+  butchEl.style.opacity = '';
+  butchEl.classList.add('on');
+  butchEl.setAttribute('aria-hidden', 'false');
+  positionButchMenu();
+  sfx('pop');
+  hint('🦴 원하는 부위의 육각 버튼을 누르세요 · 「전부 챙기기」로 한 번에', 3000);
+}
+function closeButchMenu() {
+  if (!butchEl) return;
+  BUTCH.on = false;
+  BUTCH.d = null;
+  BUTCH.ids = '';
+  butchEl.classList.remove('on');
+  butchEl.setAttribute('aria-hidden', 'true');
+}
+var _butchV = null;
+function positionButchMenu() {
+  if (!BUTCH.on || !BUTCH.d) return;
+  if (!_butchV) _butchV = new THREE.Vector3();
+  var d = BUTCH.d;
+  var h = d.parts && d.parts.height ? d.parts.height : 1.6;
+  _butchV.set(d.x, terrainH(d.x, d.z) + Math.min(1.7, h * 0.55), d.z).project(camera);
+  butchEl.style.opacity = '';
+  var sx = (_butchV.x * 0.5 + 0.5) * window.innerWidth;
+  var sy = (-_butchV.y * 0.5 + 0.5) * window.innerHeight;
+  sx = clamp(sx, 84, window.innerWidth - 84);
+  sy = clamp(sy, 104, window.innerHeight - 150);
+  butchEl.style.transform = 'translate(' + sx.toFixed(1) + 'px,' + sy.toFixed(1) + 'px)';
+}
+function butchAll(d) {
+  var c = corpseOf(d);
+  if (!c) return 0;
+  var got = {}, names = [];
+  for (var i = 0; i < c.parts.length; i++) {
+    if (c.taken[c.parts[i].id]) continue;
+    corpseTakePart(d, c.parts[i].id, true);
+  }
+  chipsDirty = true;
+  if (corpseOf(d)) {
+    toast('🎒 가방이 가득 차 일부만 챙겼어요 · 부위를 골라 나머지를 챙기세요', 'warn');
+    buildButchMenu(d);
+  }
+  return 1;
+}
+
 function structInReach(st) {
   if (!st) return false;
   var dx = st.x - player.pos.x, dz = st.z - player.pos.z;
@@ -24272,6 +24867,8 @@ function doHexAction(st, act) {
     cabinUpSt = st; openSheet('cabinUp'); closeHexMenu();
   } else if (act === 'pen') {
     fenceSt = st; openSheet('fence'); closeHexMenu();
+  } else if (act === 'barn') {
+    barnSt = st; openSheet('barn'); closeHexMenu();
   } else if (act === 'rest') {
     closeHexMenu();
     hint('🛏 침낭 곁에 서 있으면 체력·허기가 빠르게 차올라요', 2800);
@@ -24310,6 +24907,23 @@ function pickStructureAt(clientX, clientY) {
   }
   return null;
 }
+/* 🎯 v3.3 — 화면 속 공룡을 탭하면 그 개체로 타겟 전환(시체는 도축 메뉴) */
+function pickDinoAt(clientX, clientY) {
+  if (!renderer) return null;
+  _ndc.x = (clientX / window.innerWidth) * 2 - 1;
+  _ndc.y = -(clientY / window.innerHeight) * 2 + 1;
+  _ray.setFromCamera(_ndc, camera);
+  var groups = [];
+  for (var i = 0; i < dinos.length; i++) if (dinos[i].group && dinos[i].group.visible) groups.push(dinos[i].group);
+  var hits = _ray.intersectObjects(groups, true);
+  if (!hits.length) return null;
+  var obj = hits[0].object;
+  while (obj) {
+    for (var j = 0; j < dinos.length; j++) if (dinos[j].group === obj) return dinos[j];
+    obj = obj.parent;
+  }
+  return null;
+}
 (function bindStageTap() {
   var stage = $id('stage');
   if (!stage) return;
@@ -24323,11 +24937,29 @@ function pickStructureAt(clientX, clientY) {
     if (!started || placing || cooking) return;
     if (_tap.moved || performance.now() - _tap.t > 700) return;
     var st = pickStructureAt(e.clientX, e.clientY);
-    if (!st) return;
-    var dx = st.x - player.pos.x, dz = st.z - player.pos.z;
-    if (Math.sqrt(dx * dx + dz * dz) > 16) { hint('🚶 너무 멀어요 · ' + (STRUCT_DEF[st.type] ? STRUCT_DEF[st.type].name : '구조물') + ' 가까이 가 주세요', 1800); return; }
-    openHexMenu(st);
-    sfx('pop');
+    if (st) {
+      var dx = st.x - player.pos.x, dz = st.z - player.pos.z;
+      if (Math.sqrt(dx * dx + dz * dz) > 16) { hint('🚶 너무 멀어요 · ' + (STRUCT_DEF[st.type] ? STRUCT_DEF[st.type].name : '구조물') + ' 가까이 가 주세요', 1800); return; }
+      openHexMenu(st);
+      sfx('pop');
+      return;
+    }
+    /* 공룡을 탭 — 살아 있으면 타겟 전환, 쓰러진 시체면 도축 메뉴 */
+    var _dn = pickDinoAt(e.clientX, e.clientY);
+    if (!_dn) return;
+    var _ddx = _dn.x - player.pos.x, _ddz = _dn.z - player.pos.z;
+    var _dd2 = Math.sqrt(_ddx * _ddx + _ddz * _ddz);
+    if (corpseOf(_dn)) {
+      if (_dd2 > 7) { hint('🚶 시체 가까이 가서 도축하세요', 1800); return; }
+      openButchMenu(_dn);
+      return;
+    }
+    if (_dn.tamed) { if (_dd2 <= 6) { hint('🐾 내 공룡 · 「타기」로 올라타요', 1600); } return; }
+    if (_dd2 > 18) { hint('🎯 조금 더 가까이 가야 조준할 수 있어요', 1600); return; }
+    lockOn(_dn);
+    setTarget(_dn);
+    sfx('pick');
+    hint('🎯 ' + ((DINO_META[_dn.kind] || {}).name || '공룡') + ' 락온 · 버튼이 공격으로 고정돼요', 1800);
   });
 })();
 
@@ -24360,10 +24992,77 @@ function updateBuffHUD() {
    이름 · Lv · 붉은 체력바 · 현재/최대 HP 를 보여 준다.
    ========================================================= */
 var TGT = { d: null, t: 0, dead: 0, el: null };
+/* =========================================================
+   🎯 v3.3 — 타겟 락온
+   교전 중인 공룡을 기억해 두고, 발및에 얇고 선명한 붉은 링을 그린다.
+   락온 중에는 메인 버튼이 무조건 공격/활 쏘기로 고정된다
+   (교전 끝·죽음·약 17m 이탈 시 풀림, 다른 공룡을 탭하면 전환).
+   ========================================================= */
+var LOCK = { d: null, t: 0, ring: null, ring2: null, mats: [] };
+function lockOn(d) {
+  if (!d || d.tamed || d.mounted || d.dead) return;
+  LOCK.d = d; LOCK.t = 9.0;
+}
+function lockRelease() {
+  LOCK.d = null; LOCK.t = 0;
+  if (LOCK.ring) LOCK.ring.visible = false;
+  if (LOCK.ring2) LOCK.ring2.visible = false;
+}
+function activeLock() {
+  var d = LOCK.d;
+  if (!d) return null;
+  if (d.dead || d.tamed || d.mounted) { lockRelease(); return null; }
+  var dd = Math.hypot(d.x - player.pos.x, d.z - player.pos.z);
+  /* 🎯 v3.3 — 도망쳐 17m 이상 벌어지면 교전 종료(락온 해제) → 다시 채집·탑승 가능 */
+  if (dd > 16.5) { lockRelease(); return null; }
+  if (LOCK.t <= 0 && !(d.aggro || d.provoked > 0 || d.cstate === 'attack' || d.cstate === 'chase')) { lockRelease(); return null; }
+  return d;
+}
+function ensureLockRing() {
+  if (LOCK.ring || typeof scene === 'undefined' || !scene) return;
+  var g1 = new THREE.RingGeometry(0.905, 1.0, 64);
+  var m1 = new THREE.MeshBasicMaterial({ color: 0xff2a12, transparent: true, opacity: 0.9, side: THREE.DoubleSide, depthWrite: false });
+  var r1 = new THREE.Mesh(g1, m1);
+  r1.rotation.x = -Math.PI / 2;
+  r1.renderOrder = 7;
+  r1.visible = false;
+  scene.add(r1);
+  var g2 = new THREE.RingGeometry(1.04, 1.075, 64);
+  var m2 = new THREE.MeshBasicMaterial({ color: 0xff6a3a, transparent: true, opacity: 0.34, side: THREE.DoubleSide, depthWrite: false });
+  var r2 = new THREE.Mesh(g2, m2);
+  r2.rotation.x = -Math.PI / 2;
+  r2.renderOrder = 6;
+  r2.visible = false;
+  scene.add(r2);
+  LOCK.ring = r1; LOCK.ring2 = r2; LOCK.mats = [m1, m2];
+}
+function updateLockRing(dt) {
+  var d = activeLock();
+  ensureLockRing();
+  if (!LOCK.ring) return;
+  if (!d) {
+    LOCK.ring.visible = false;
+    LOCK.ring2.visible = false;
+    return;
+  }
+  if (LOCK.t > 0) LOCK.t = Math.max(0, LOCK.t - dt);
+  var gy = terrainH(d.x, d.z);
+  var r = Math.max(0.95, (d.parts.height || 1.6) * 0.44);
+  var pulse = 1 + Math.sin(worldT * 5.2) * 0.035;
+  LOCK.ring.visible = true;
+  LOCK.ring2.visible = true;
+  LOCK.ring.position.set(d.x, gy + 0.055, d.z);
+  LOCK.ring.scale.setScalar(r * pulse);
+  LOCK.ring2.position.set(d.x, gy + 0.075, d.z);
+  LOCK.ring2.scale.setScalar(r * (1.03 + Math.sin(worldT * 3.1) * 0.02));
+  LOCK.mats[0].opacity = 0.58 + Math.abs(Math.sin(worldT * 4.4)) * 0.34;
+  LOCK.mats[1].opacity = 0.20 + Math.abs(Math.sin(worldT * 2.6)) * 0.16;
+}
 function setTarget(d) {
   if (!d || d.tamed || d.mounted) return;
   TGT.d = d; TGT.t = 6.0;
   if (d.dead) TGT.dead = 0;
+  lockOn(d);
 }
 function targetBarAuto() {
   var best = null, bd = 17 * 17;
@@ -24381,6 +25080,14 @@ function updateTargetBar(dt) {
   if (!el) return;
   var d = TGT.d;
   if (TGT.t > 0) TGT.t -= dt;
+  /* 🎯 v3.3 — 락온이 비었을 때 나를 쫓는 개체가 12m 안에 있으면 자동으로 물린다 */
+  if (!LOCK.d || LOCK.d.dead) {
+    var _autoL = targetBarAuto();
+    if (_autoL && Math.hypot(_autoL.x - player.pos.x, _autoL.z - player.pos.z) < 12.0) {
+      LOCK.d = _autoL; LOCK.t = 1.6;
+      if (!d) { d = TGT.d = _autoL; TGT.t = Math.max(TGT.t, 0.6); }
+    }
+  }
   if ((!d || d.dead) && TGT.t <= 0) {
     var auto = targetBarAuto();
     if (auto) { d = TGT.d = auto; TGT.t = Math.max(TGT.t, 0.35); }
@@ -24555,8 +25262,14 @@ function updateHUD(dt) {
   setText(actLabel, CTX.label);
   btnAct.classList.toggle('dim', CTX.type === 'none');
   // 🔥 모닥불 굽기 진행을 메인 버튼 링에 표시 (기다리지 않아도 되지만 상태는 보이게)
+  // 🪓 v3.3 — 채집 리듬이 돌면 버튼 링이 탁.탁.탁 진행을 보여 준다
   var _nfRing = nearestFire(4.6);
-  if (_nfRing && _nfRing.queue && _nfRing.queue.length && _nfRing.lit !== false) {
+  if (GATHER.n) {
+    var _gg = GATHER;
+    var _gp = (_gg.i + clamp(1 - Math.max(0, _gg.t) / Math.max(0.001, _gg.iv), 0, 1)) / Math.max(1, _gg.need);
+    actRing.style.setProperty('--p', (clamp(_gp, 0, 1) * 360).toFixed(0) + 'deg');
+    btnAct.classList.add('busy');
+  } else if (_nfRing && _nfRing.queue && _nfRing.queue.length && _nfRing.lit !== false) {
     var _q0 = _nfRing.queue[0];
     actRing.style.setProperty('--p', (Math.max(0, Math.min(1, 1 - _q0.t / Math.max(0.001, _q0.total))) * 360) + 'deg');
     btnAct.classList.add('busy');
@@ -24834,6 +25547,7 @@ function loop(now) {
   if (started && !FREEZE_SIM) {
     updatePlayer(dt);
     updateDinos(dt, t);
+    updateGather(dt);
     updatePens(dt);
     updateArrows(dt);
     updateVenom(dt);
@@ -24910,7 +25624,13 @@ function loop(now) {
 
   if (started) updateHUD(dt);
   if (started) updateTargetBar(dt);
+  if (started) updateLockRing(dt);
   if (HEX.on) positionHexMenu();
+  if (BUTCH.on) {
+    var _bd = BUTCH.d;
+    if (!corpseOf(_bd) || Math.hypot(_bd.x - player.pos.x, _bd.z - player.pos.z) > 6.2) closeButchMenu();
+    else positionButchMenu();
+  }
   updateCamera(dt);
   updateOcclusion(dt);
 
@@ -25337,9 +26057,15 @@ function renderCabinUp() {
 
 /* =========================================================
    🪵 v3.0 — 공룡 울타리 (3마리까지 보관 · 교대 · 회복)
+   🏠 v3.3 — 축사 추가 (한 채에 1마리 · 등록한 펫만 동행 가능)
    ========================================================= */
 var fenceSt = null;
+var barnSt = null;
 var FENCE_MAX = 3;
+var BARN_MAX = 1;
+function isPenType(t) { return t === 'fence' || t === 'barn'; }
+function penCap(st) { return st && st.type === 'barn' ? BARN_MAX : FENCE_MAX; }
+function penLabel(st) { return st && st.type === 'barn' ? '축사' : '울타리'; }
 function penList(st) {
   if (!st) return [];
   if (!st.pens) st.pens = (st.rec && Array.isArray(st.rec.pens)) ? st.rec.pens.slice(0) : [];
@@ -25351,21 +26077,32 @@ function petByPid(pid) {
   for (var i = 0; i < dinos.length; i++) if (dinos[i].tamed && dinos[i].pid === pid && !dinos[i].dead) return dinos[i];
   return null;
 }
+/* 축사에 등록된(한 번이라도 들였던) 펫인지 — 동행 자격 */
+function petIsBarned(pid) {
+  var d = petByPid(pid);
+  return !!(d && d.barned);
+}
 function penPet(st, d) {
   if (!st || !d || !d.tamed) return false;
   var list = penList(st);
-  if (list.length >= FENCE_MAX) { sfx('deny'); toast('울타리가 가득 찼어요 (최대 ' + FENCE_MAX + '마리)', 'warn'); return false; }
+  var cap = penCap(st);
+  if (list.length >= cap) { sfx('deny'); toast(penLabel(st) + '가 가득 찼어요 (최대 ' + cap + '마리)', 'warn'); return false; }
   if (list.indexOf(d.pid) >= 0) return false;
   list.push(d.pid);
   d.penned = true;
   d.penT = 0;
+  if (st.type === 'barn') d.barned = true;      // 🏠 축사 등록 — 이 펫만 동행 가능
   d.walking = 0; d.animSpeed = 0; d.cstate = 'idle';
   if (rideDino === d) dismountNow();
   if (d.group) d.group.visible = false;
   if (S.companion === d.pid) { S.companion = ''; refreshCompanion(); }
   if (st.rec) st.rec.pens = list.slice(0);
   sfx('pop');
-  toast('🪵 ' + petLabel(d) + '을(를) 울타리에 들였어요 · 쉬면서 체력이 회복돼요', 'good');
+  if (st.type === 'barn') {
+    toast('🏠 ' + petLabel(d) + '을(를) 축사에 들였어요 · 「데리고 가기」를 누르면 이 한 마리만 동행해요', 'good');
+  } else {
+    toast('🪵 ' + petLabel(d) + '을(를) 울타리에 들였어요 · 쉬면서 체력이 회복돼요', 'good');
+  }
   syncTamedData();
   saveState();
   return true;
@@ -25378,8 +26115,8 @@ function unpenPet(st, d) {
   list.splice(i, 1);
   d.penned = false;
   var a = Math.random() * TAU;
-  var px = st.x + Math.cos(a) * (STRUCT_DEF.fence ? 3.4 : 3.0);
-  var pz = st.z + Math.sin(a) * 3.4;
+  var px = st.x + Math.cos(a) * ((STRUCT_DEF[st.type] || { r: 2.5 }).r + 0.9);
+  var pz = st.z + Math.sin(a) * ((STRUCT_DEF[st.type] || { r: 2.5 }).r + 0.9);
   if (terrainH(px, pz) < 0.4) { px = st.x; pz = st.z + 3.2; }
   d.x = px; d.z = pz;
   d.group.position.set(px, terrainH(px, pz), pz);
@@ -25387,32 +26124,95 @@ function unpenPet(st, d) {
   if (d.hp < d.max * 0.35) d.hp = Math.round(d.max * 0.35);
   if (st.rec) st.rec.pens = list.slice(0);
   sfx('pop');
-  toast('🐾 ' + petLabel(d) + '을(를) 울타리에서 꺼냈어요', 'good');
+  toast('🐾 ' + petLabel(d) + '을(를) ' + penLabel(st) + '에서 꺼냈어요', 'good');
   syncTamedData();
   saveState();
   return true;
 }
-/* 울타리 안의 공룡은 게임을 켜 둔 동안에도, 꺼 둔 동안에도 천천히 회복된다 */
+/* 🏠 축사에서 데리고 나가기 = 꺼내기 + 동행 지정 */
+function barnTake(st, d) {
+  if (!st || !d) return false;
+  d.barned = true;
+  var ok = unpenPet(st, d);
+  if (!ok) return false;
+  setCompanion(d.pid);
+  syncTamedData();
+  saveState();
+  return true;
+}
+/* 축사 · 울타리 안의 공룡은 게임을 켜 둔 동안에도 천천히 회복된다 */
 function updatePens(dt) {
   for (var i = 0; i < structures.length; i++) {
     var st = structures[i];
-    if (st.type !== 'fence') continue;
+    if (!isPenType(st.type)) continue;
+    var barn = st.type === 'barn';
     var list = penList(st);
     for (var j = 0; j < list.length; j++) {
       var d = petByPid(list[j]);
       if (!d) continue;
-      if (d.hp < d.max) d.hp = Math.min(d.max, d.hp + dt * Math.max(2.4, d.max * 0.035));
+      var rate = barn ? Math.max(4.0, d.max * 0.06) : Math.max(2.4, d.max * 0.035);
+      if (d.hp < d.max) d.hp = Math.min(d.max, d.hp + dt * rate);
       if (d.downed && d.hp > d.max * 0.30) { d.downed = false; d.downT = 0; }
     }
   }
 }
-function renderFence() {
-  var st = fenceSt;
-  if (!st) { sheetBody.innerHTML = '<div class="sheetNote">울타리를 찾지 못했어요.</div>'; return; }
+function penPetCard(d, st, inPen, cap, list) {
+  var isBarn = st && st.type === 'barn';
+  var hpPct = Math.max(0, Math.round(d.hp / Math.max(1, d.max) * 100));
+  var row = document.createElement('div');
+  row.className = 'petCard' + (inPen ? ' named' : '') + (d.downed ? ' down' : '');
+  row.innerHTML = '<div class="petHead"><span class="pi">🐾</span><b>' + escHtml(petLabel(d)) + '</b>' +
+    '<small>' + (DINO_META[d.kind] ? (DINO_META[d.kind].name || d.kind) : d.kind) + ' · Lv.' + petLvOf(d) + '</small>' +
+    '<em>' + (inPen ? (isBarn ? '🏠 축사 안' : '🪵 울타리 안') : (d.companion ? '🐾 동행 중' : (d.barned ? '🏠 축사 등록' : '제자리'))) + '</em></div>' +
+    '<div class="petHp"><i style="width:' + hpPct + '%"></i><span>' + Math.round(d.hp) + ' / ' + d.max + '</span></div>';
+  var acts = document.createElement('div');
+  acts.className = 'petActs';
+  if (inPen) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'petRide';
+    b.textContent = isBarn ? '🐾 데리고 가기' : '꺼내기';
+    b.addEventListener('click', function () {
+      audioInit();
+      if (isBarn) barnTake(st, d); else unpenPet(st, d);
+      renderSheet();
+    });
+    acts.appendChild(b);
+  } else {
+    var b2 = document.createElement('button');
+    b2.type = 'button';
+    b2.className = list.length >= cap ? 'petClear' : 'petFeed';
+    b2.textContent = isBarn ? (list.length >= cap ? '축사 가득' : '🏠 축사에 들이기') : (list.length >= FENCE_MAX ? '울타리 가득' : '울타리에 들이기');
+    b2.disabled = list.length >= cap;
+    b2.addEventListener('click', function () {
+      audioInit();
+      penPet(st, d);
+      renderSheet();
+    });
+    acts.appendChild(b2);
+    if (isBarn && d.companion) {
+      var b3 = document.createElement('button');
+      b3.type = 'button';
+      b3.className = 'petClear';
+      b3.textContent = '축사로';
+      b3.addEventListener('click', function () { audioInit(); penPet(st, d); renderSheet(); });
+      acts.appendChild(b3);
+    }
+  }
+  row.appendChild(acts);
+  return row;
+}
+function renderPen(st, isBarn) {
+  if (!st) { sheetBody.innerHTML = '<div class="sheetNote">' + (isBarn ? '축사' : '울타리') + '를 찾지 못했어요.</div>'; return; }
   var list = penList(st);
+  var cap = penCap(st);
   var head = document.createElement('div');
   head.className = 'sheetNote';
-  head.innerHTML = '🪵 <b>공룡 울타리</b> · ' + list.length + '/' + FENCE_MAX + '마리 · 들어온 공룡은 <b>쉬면서 체력이 회복</b>되고 쓰러져도 일어나요';
+  if (isBarn) {
+    head.innerHTML = '🏠 <b>축사</b> · ' + list.length + '/' + cap + '마리 · 여기 등록한 펫 <b>한 마리만</b> 데리고 다닐 수 있어요 · 들어 있으면 체력이 빨리 회복돼요';
+  } else {
+    head.innerHTML = '🪵 <b>공룡 울타리</b> · ' + list.length + '/' + cap + '마리 · 들어온 공룡은 <b>쉬면서 체력이 회복</b>되고 쓰러져도 일어나요';
+  }
   sheetBody.appendChild(head);
   var mine = [];
   for (var i = 0; i < dinos.length; i++) {
@@ -25423,50 +26223,27 @@ function renderFence() {
   if (!mine.length) {
     var e = document.createElement('div');
     e.className = 'sheetNote';
-    e.textContent = '길들인 공룡이 없어요 · 온순한 공룡에게 열매를 주면 마음을 열어요.';
+    e.textContent = '길들인 공룡이 없어요 · 온순한 공룡의 체력을 55% 아래로 깎거나 기절시킨 뒤 먹이를 주면 마음을 열어요.';
     sheetBody.appendChild(e);
     return;
   }
-  for (var j = 0; j < mine.length; j++) {
-    (function (d) {
-      var inp = list.indexOf(d.pid) >= 0;
-      var hpPct = Math.max(0, Math.round(d.hp / Math.max(1, d.max) * 100));
-      var row = document.createElement('div');
-      row.className = 'petCard' + (inp ? ' named' : '') + (d.downed ? ' down' : '');
-      row.innerHTML = '<div class="petHead"><span class="pi">🐾</span><b>' + escHtml(petLabel(d)) + '</b>' +
-        '<small>' + (DINO_META[d.kind] ? (DINO_META[d.kind].name || d.kind) : d.kind) + ' · Lv.' + petLvOf(d) + '</small>' +
-        '<em>' + (inp ? '🪵 울타리 안' : (d.companion ? '🐾 동행 중' : '제자리')) + '</em></div>' +
-        '<div class="petHp"><i style="width:' + hpPct + '%"></i><span>' + Math.round(d.hp) + ' / ' + d.max + '</span></div>';
-      var acts = document.createElement('div');
-      acts.className = 'petActs';
-      var b = document.createElement('button');
-      b.type = 'button';
-      b.className = inp ? 'petClear' : 'petFeed';
-      b.textContent = inp ? '꺼내기' : (list.length >= FENCE_MAX ? '울타리 가득' : '울타리에 들이기');
-      b.disabled = !inp && list.length >= FENCE_MAX;
-      b.addEventListener('click', function () {
-        audioInit();
-        if (inp) unpenPet(st, d); else penPet(st, d);
-        renderSheet();
-      });
-      acts.appendChild(b);
-      if (!inp && !d.companion) {
-        var cb = document.createElement('button');
-        cb.type = 'button';
-        cb.className = 'petRide';
-        cb.textContent = '🐾 동행 지정';
-        cb.addEventListener('click', function () { audioInit(); setCompanion(d.pid); renderSheet(); });
-        acts.appendChild(cb);
-      }
-      row.appendChild(acts);
-      sheetBody.appendChild(row);
-    })(mine[j]);
+  /* 축사에 들어 있는 펫을 먼저, 그다음 동행, 그다음 나머지 */
+  var rows = [], j;
+  for (j = 0; j < mine.length; j++) if (list.indexOf(mine[j].pid) >= 0) rows.push(mine[j]);
+  for (j = 0; j < mine.length; j++) if (list.indexOf(mine[j].pid) < 0 && mine[j].companion) rows.push(mine[j]);
+  for (j = 0; j < mine.length; j++) if (list.indexOf(mine[j].pid) < 0 && !mine[j].companion) rows.push(mine[j]);
+  for (j = 0; j < rows.length; j++) {
+    sheetBody.appendChild(penPetCard(rows[j], st, list.indexOf(rows[j].pid) >= 0, isBarn ? cap : FENCE_MAX, list));
   }
   var note = document.createElement('div');
   note.className = 'sheetNote tight';
-  note.textContent = '울타리 안 공룡은 시간이 지나면 체력이 회복되고, 쓰러져 있던 공룡도 스스로 일어나요.';
+  note.textContent = isBarn
+    ? '동행은 한 마리뿐이에요. 축사에 넣어 둔 펫은 회복되고, 쓰러져 있던 펫도 스스로 일어나요.'
+    : '울타리는 보관·회복용이에요. 데리고 다니려면 축사를 지어 그 펫을 등록하세요.';
   sheetBody.appendChild(note);
 }
+function renderFence() { renderPen(fenceSt, false); }
+function renderBarn() { renderPen(barnSt, true); }
 
 /* =========================================================
    🐾 v3.0 — 동행 공룡 · 레벨 · 보조 공격
@@ -25513,7 +26290,13 @@ function companionPet() {
 function setCompanion(pid) {
   var d = pid ? petByPid(pid) : null;
   if (!d) return false;
-  if (d.penned) { sfx('deny'); toast('울타리에서 먼저 꺼내 주세요', 'warn'); return false; }
+  if (d.penned) { sfx('deny'); toast('축사·울타리에 들어 있는 펫이에요 · 먼저 「데리고 가기」로 꺼내 주세요', 'warn'); return false; }
+  /* 🏠 v3.3 — 축사에 등록한 펫만 동행할 수 있다 */
+  if (!d.barned) {
+    sfx('deny');
+    toast('🏠 축사에 등록한 펫만 데리고 다닐 수 있어요 · 「축사」를 지어 이 펫을 들여 두세요', 'warn');
+    return false;
+  }
   if (!d.petName) {
     d.petName = d.petName || '';
   }
@@ -25537,6 +26320,12 @@ function refreshCompanion() {
 }
 /* 동행이 달려들 대상 — 나와 교전 중이거나 가까이 있는 야생 공룡 */
 function companionFoe(d) {
+  /* 🐾 v3.3 — 주인이 때린 적을 최우선으로 물러 간다(몸빵·어그로 유도) */
+  var lock = d.foeLock;
+  if (lock && !lock.dead && !lock.tamed && !lock.mounted) {
+    if (Math.hypot(lock.x - d.x, lock.z - d.z) < 22) return lock;
+  }
+  d.foeLock = null;
   var best = null, bd = 17 * 17;
   for (var i = 0; i < dinos.length; i++) {
     var o = dinos[i];
@@ -25572,8 +26361,12 @@ function petCombatTick(d, foe, dt) {
   foe.hp -= dmg;
   foe.hurt = 0.3;
   wakeDino(foe);
-  /* 어그로 분산 — 맞은 야생은 동행 쪽으로 고개를 돌린다 */
-  if (foe.cstate !== 'attack' && Math.random() < 0.55) { foe.petTarget = d; foe.aggro = 1; }
+  /* 🐾 v3.3 — 어그로 유도: 동행이 물면 야생은 동행을 상대로 돌아선다(몸빵) */
+  foe.petTarget = d;
+  if (!foe.aggro) {
+    foe.aggro = 1;
+    if (foe.cstate !== 'attack' && foe.cstate !== 'chase') { foe.cstate = 'alert'; foe.stateT = 0.45; }
+  }
   var gy = terrainH(foe.x, foe.z);
   spawnBurst(foe.x, gy + (foe.parts.height || 1.2) * 0.55, foe.z, 0xd8583c, 6, 0.8);
   spawnFloatText(foe.x, gy + (foe.parts.height || 1.2) * 0.9, foe.z, '-' + dmg + ' 🐾', '#a8e8a0', 0.85);
@@ -25974,6 +26767,49 @@ function namesOfRows(root) {
     out.push(b ? b.textContent : '?');
   }
   return out;
+}
+/* 📸 검수 샷용 — 이전 샷의 공룡·메뉴·토스트를 모두 걷어낸다 */
+function shotReset() {
+  lockRelease(); closeButchMenu(); closeHexMenu(); closeSheet();
+  TGT.d = null; TGT.t = 0; TGT.dead = 0;
+  for (var i = 0; i < dinos.length; i++) {
+    var d = dinos[i];
+    if (d.tamed) continue;
+    d.dead = true; d.corpse = null; d.dying = 0; d.deadAt = worldT + 9999;
+    d.aggro = 0; d.provoked = 0; d.petTarget = null; d.frozen = true;
+    if (d.group) d.group.visible = false;
+    if (d.speciesTag) d.speciesTag.visible = false;
+    if (d.nameTag) d.nameTag.visible = false;
+  }
+  if (toastsEl) toastsEl.innerHTML = '';
+  if (hintEl) hintEl.classList.remove('on');
+  if (document.body) document.body.classList.remove('targeting');
+  var tb = $id('targetBar');
+  if (tb) { tb.classList.remove('on'); tb.setAttribute('aria-hidden', 'true'); }
+  CAM_SHAKE.t = 0; CAM_SHAKE.amp = 0;
+}
+/* 📸 검수 샷용 — 대상 주변 나무·돌·덤불을 잠시 숨겨 시야를 비운다 */
+function shotClearProps(x, z, r) {
+  var n = 0, rr = (r || 14) * (r || 14);
+  for (var i = 0; i < nodes.length; i++) {
+    var nd = nodes[i];
+    if (!nd.group || !nd.group.visible) continue;
+    var dx = nd.x - x, dz = nd.z - z;
+    if (dx * dx + dz * dz > rr) continue;
+    nd.group.visible = false;
+    n++;
+  }
+  return n;
+}
+/* 안전지대 밖 아무 곳(검사용) */
+function wildSpot() {
+  var cand = [[0, 34], [34, 0], [-34, 0], [0, -34], [26, 26], [-26, 26], [26, -26], [-26, -26], [52, 0], [0, 52]];
+  for (var i = 0; i < cand.length; i++) {
+    if (isSafeZone(cand[i][0], cand[i][1])) continue;
+    if (terrainH(cand[i][0], cand[i][1]) < 1.1) continue;
+    return { x: cand[i][0], z: cand[i][1] };
+  }
+  return { x: 60, z: 60 };
 }
 window.__game = {
   S: S, player: player,
@@ -28516,6 +29352,419 @@ window.__game = {
     player.pos.set(st.x - 1.1, groundY(st.x - 1.1, st.z - 1.1), st.z - 1.1);
     player.group.position.copy(player.pos);
     return { type: st.type, x: +st.x.toFixed(1), z: +st.z.toFixed(1), ctx: computeContext().type };
+  },
+  /* ================= 📸 v3.3 스크린샷 훅 ================= */
+  shotReset: function () { shotReset(); return 1; },
+  clearProps: function (x, z, r) { return shotClearProps(x, z, r); },
+  butcherShot: function (kind) {
+    kind = kind || 'trike';
+    shotReset();
+    this.teleport(0, 97);
+    this.freezeAll(true);
+    player.facing = 0.6;
+    var d = spawnDino(kind, player.pos.x + 2.2, player.pos.z + 3.4, {});
+    d.hp = d.max * 0.2;
+    player.atkCd = 0;
+    killDino(d);
+    d.dying = 0; d.dead = true; d.frozen = true;
+    d.group.rotation.z = 1.35 * (d.deathDir || 1);
+    d.group.position.set(d.x, terrainH(d.x, d.z) - 0.18, d.z);
+    /* 시체를 정면에 두고 3.4m 뒤에 선다 (도축 메뉴가 닫히지 않는 거리) */
+    this.teleport(d.x + 1.4, d.z + 3.1);
+    player.group.visible = false;
+    shotClearProps(d.x, d.z, 12);
+    openButchMenu(d);
+    this.viewAt(d.x, d.z, 18, 7.2, 3.1, 0.55);
+    return { kind: kind, x: +d.x.toFixed(1), z: +d.z.toFixed(1), parts: (corpseOf(d) ? corpseOf(d).parts.length : 0), menu: BUTCH.on };
+  },
+  barnShot: function () {
+    shotReset();
+    this.teleport(0, 97);
+    this.freezeAll(true);
+    player.facing = 0.5;
+    var st = placeStructure('barn', player.pos.x + 1.2, player.pos.z + 5.0, 0.35);
+    var d = spawnDino('trike', st.x + 3.4, st.z + 1.6, { tamed: true, petName: '콩이' });
+    d.max = petMaxHpOf('trike', 3); d.hp = Math.round(d.max * 0.86); d.lv = 3; d.exp = 12;
+    d.barned = true;
+    syncTamedData();
+    penPet(st, d);
+    barnTake(st, d);
+    d.x = st.x + 3.4; d.z = st.z + 1.6;
+    d.group.position.set(d.x, terrainH(d.x, d.z), d.z);
+    d.group.visible = true;
+    d.rot = -0.9; d.group.rotation.y = d.rot;
+    d.frozen = true; d.walking = 0;
+    addNameTag(d);
+    this.teleport(st.x + 6.0, st.z + 7.6);
+    player.group.visible = false;
+    shotClearProps(st.x, st.z, 13);
+    openHexMenu(st);
+    this.viewAt(st.x + 0.6, st.z + 0.2, 22, 13.0, 5.4, 1.5);
+    return { barn: [+st.x.toFixed(1), +st.z.toFixed(1)], companion: S.companion === d.pid, pens: penCount(st) };
+  },
+  /* 🎯 락온 스크린샷 — 랩터와 마주 보고 때린 직후 상태 유지 */
+  lockShot: function () {
+    shotReset();
+    this.teleport(0, 76);
+    this.freezeAll(true);
+    var d = spawnDino('raptor', player.pos.x + 0.6, player.pos.z + 3.6, {});
+    d.hp = d.max * 0.72; d.aggro = 1; d.provoked = 10; d.cstate = 'alert'; d.stateT = 8;
+    d.frozen = true;
+    d.rot = Math.PI; d.group.rotation.y = Math.PI;
+    player.facing = 0;
+    var ox = player.pos.x, oz = player.pos.z;
+    player.atkCd = 0;
+    attackDino(d);
+    player.pos.set(ox, groundY(ox, oz), oz);
+    player.group.position.copy(player.pos);
+    player.group.visible = false;
+    shotClearProps(d.x, d.z, 12);
+    this.viewAt(d.x, d.z, 6, 8.6, 3.6, 1.0);
+    updateLockRing(0.016);
+    CTX = computeContext();
+    setText(actLabel, CTX.label);
+    btnAct.classList.remove('dim');
+    return { ctx: CTX.type + '/' + CTX.label, lock: !!activeLock(), ring: !!(LOCK.ring && LOCK.ring.visible) };
+  },
+  mobileShot: function () {
+    shotReset();
+    this.teleport(0, 76);
+    var d = spawnDino('raptor', player.pos.x + 1.0, player.pos.z + 3.4, {});
+    d.hp = d.max * 0.7; d.aggro = 1; d.provoked = 10; d.frozen = false;
+    d.rot = Math.PI;
+    player.atkCd = 0;
+    lockOn(d); setTarget(d);
+    attackDino(d);
+    player.facing = 0;
+    CTX = computeContext();
+    setText(actLabel, CTX.label);
+    btnAct.classList.remove('dim');
+    updateLockRing(0.016);
+    this.viewAt(player.pos.x, player.pos.z + 1.4, 8, 8.0, 3.2, 1.1);
+    return { ctx: CTX.type + '/' + CTX.label, lock: !!activeLock(), ring: !!(LOCK.ring && LOCK.ring.visible) };
+  },
+  /* ================= 🦖 v3.3 검수 훅 ================= */
+  /* 🎯 락온 — 채집물이 코앞에 있어도 버튼이 공격으로 고정되고,
+     17m 도망치면 풀려 다시 채집/탑승이 잡히는지 */
+  lockTest: function (kind) {
+    kind = kind || 'raptor';
+    var i, d = null, n = null, bd = 1e9;
+    for (i = 0; i < dinos.length; i++) {
+      var o = dinos[i];
+      if (o.tamed || o.dead || o.kind !== kind) continue;
+      var dd = Math.hypot(o.x - player.pos.x, o.z - player.pos.z);
+      if (dd < bd) { bd = dd; d = o; }
+    }
+    if (!d) d = spawnDino(kind, player.pos.x + 2.6, player.pos.z + 0.6, {});
+    /* 코앞에 채집물을 하나 갖다 놓는다 — 예전엔 이 때문에 '채집'이 잡혔다 */
+    for (i = 0; i < nodes.length; i++) {
+      var nd = nodes[i];
+      if (nd.dead) continue;
+      var d2 = Math.hypot(nd.x - player.pos.x, nd.z - player.pos.z);
+      if (d2 < 1.6) { n = nd; break; }
+    }
+    if (!n) {
+      for (i = 0; i < nodes.length; i++) {
+        if (!nodes[i].dead && nodes[i].kind === 'rock') { n = nodes[i]; break; }
+      }
+      if (n) {
+        player.pos.set(n.x + 0.8, groundY(n.x + 0.8, n.z + 0.4), n.z + 0.4);
+        player.group.position.copy(player.pos);
+      }
+    }
+    d.x = player.pos.x + 2.4; d.z = player.pos.z + 0.4;
+    d.group.position.set(d.x, terrainH(d.x, d.z), d.z);
+    d.hp = d.max; d.frozen = true;
+    player.atkCd = 0;
+    attackDino(d);
+    updateLockRing(0.016);
+    var ctx = computeContext();
+    var near = {
+      ctx: ctx.type, label: ctx.label,
+      lock: !!activeLock(), ring: !!(LOCK.ring && LOCK.ring.visible),
+      nodeNear: !!n
+    };
+    /* 19m 도망 */
+    var ox = player.pos.x, oz = player.pos.z;
+    var nx2 = d.x + 20.0, nz2 = d.z;
+    player.pos.set(nx2, groundY(nx2, nz2), nz2);
+    player.group.position.copy(player.pos);
+    updateLockRing(0.5);
+    var ctx2 = computeContext();
+    var far = { ctx: ctx2.type, label: ctx2.label, lock: !!activeLock(), ring: !!(LOCK.ring && LOCK.ring.visible), dist: +Math.hypot(d.x - player.pos.x, d.z - player.pos.z).toFixed(1) };
+    player.pos.set(ox, groundY(ox, oz), oz);
+    player.group.position.copy(player.pos);
+    d.frozen = false;
+    /* 다음 검사에 끼어들지 않게 시험용 개체는 멀리 치운다 */
+    d.x = player.pos.x + 90; d.z = player.pos.z + 90;
+    d.aggro = 0; d.provoked = 0; d.petTarget = null;
+    d.group.position.set(d.x, terrainH(d.x, d.z), d.z);
+    lockRelease();
+    return { near: near, far: far };
+  },
+  /* 🪓 채집 리듬 — 한 번에 캐지지 않고 탁.탁.탁 여러 타 후에 자원이 들어오는지 */
+  gatherTest: function (kind) {
+    kind = kind || 'rock';
+    lockRelease(); closeButchMenu();
+    var n = null, bd = 1e9, i;
+    for (i = 0; i < nodes.length; i++) {
+      var o = nodes[i];
+      if (o.dead || o.kind !== kind) continue;
+      var dd = Math.hypot(o.x - player.pos.x, o.z - player.pos.z);
+      if (dd < bd) { bd = dd; n = o; }
+    }
+    if (!n) return { ok: false, why: 'no node' };
+    player.pos.set(n.x + 0.8, groundY(n.x + 0.8, n.z + 0.5), n.z + 0.5);
+    player.group.position.copy(player.pos);
+    var before = {};
+    for (var k in S.inv) before[k] = S.inv[k] | 0;
+    var ctx0 = computeContext();
+    CTX = ctx0;
+    var need = gatherHitsFor(n.kind);
+    doAction();
+    var ctx1 = computeContext();
+    var iv = GATHER.iv;
+    var t = 0, frames = 0;
+    while (GATHER.n && t < 9) { updateGather(0.06); t += 0.06; frames++; }
+    var got = {};
+    for (var k2 in S.inv) if ((S.inv[k2] | 0) > (before[k2] | 0)) got[k2] = (S.inv[k2] | 0) - (before[k2] | 0);
+    return {
+      ok: true, kind: kind, ctx0: ctx0.type + '/' + ctx0.label, ctxDuring: ctx1.type + '/' + ctx1.label,
+      hits: need, interval: +iv.toFixed(2), tookSec: +t.toFixed(2), frames: frames, got: got,
+      nodeDead: !!n.dead, nodeHp: n.hp
+    };
+  },
+  /* 🦴 도축 — 죽은 공룡이 시체로 남고, 육각 메뉴에서 부위별로 챙기는지 */
+  butcherTest: function (kind, all) {
+    kind = kind || 'trike';
+    lockRelease(); closeButchMenu();
+    var d = spawnDino(kind, player.pos.x + 2.0, player.pos.z + 0.6, {});
+    killDino(d);
+    d.dying = 0; d.dead = true;
+    var c = corpseOf(d);
+    var parts = c ? c.parts.map(function (p) { return { id: p.id, label: p.label, names: p.names }; }) : [];
+    var ctx = computeContext();
+    openButchMenu(d);
+    var menu = { on: BUTCH.on, btns: butchEl ? butchEl.querySelectorAll('.hexBtn').length : 0, title: (butchEl && butchEl.querySelector('#butchTitle')) ? butchEl.querySelector('#butchTitle').textContent : '' };
+    var before = {};
+    for (var k in S.inv) before[k] = S.inv[k] | 0;
+    if (all) {
+      butchAll(d);
+    } else if (c) {
+      for (var i = 0; i < c.parts.length; i++) corpseTakePart(d, c.parts[i].id);
+    }
+    var got = {};
+    for (var k2 in S.inv) if ((S.inv[k2] | 0) > (before[k2] | 0)) got[k2] = (S.inv[k2] | 0) - (before[k2] | 0);
+    return {
+      ctx: ctx.type + '/' + ctx.label, corpseAlive: !!corpseOf(d), visible: !!d.group.visible,
+      parts: parts, menu: menu, got: got, menuOpenAfter: BUTCH.on
+    };
+  },
+  /* 🏠 축사 — 1마리 등록 · 데리고 가기 · 다른 펫은 따라오지 않음 · 어그로 몸빵 */
+  barnTest: function () {
+    var st = placeStructure('barn', player.pos.x + 4.2, player.pos.z + 2.4, 0);
+    var d = spawnDino('trike', st.x + 2.0, st.z + 2.0, { tamed: true, petName: '축사테스트' });
+    d.max = petMaxHpOf('trike', 1); d.hp = Math.round(d.max * 0.5); d.lv = 1; d.exp = 0;
+    syncTamedData();
+    var penIn = penPet(st, d);
+    var hidden = !d.group.visible;
+    var hp0 = d.hp;
+    for (var t = 0; t < 180; t++) updatePens(1 / 60);
+    var healed = +(d.hp - hp0).toFixed(1);
+    var d2 = spawnDino('para', st.x + 2.6, st.z + 2.6, { tamed: true, petName: '둘째' });
+    d2.max = petMaxHpOf('para', 1); d2.hp = d2.max; d2.lv = 1;
+    syncTamedData();
+    var secondBlocked = !penPet(st, d2);
+    var take = barnTake(st, d);
+    var comp = S.companion === d.pid;
+    /* 20m 떨어졌을 때 — 동행만 따라오고 둘째는 제자리 */
+    var ox = player.pos.x, oz = player.pos.z;
+    var nx = ox + 20, nz = oz + 6;
+    player.pos.set(nx, groundY(nx, nz), nz);
+    player.group.position.copy(player.pos);
+    for (var f = 0; f < 240; f++) updateDinos(1 / 60, f / 60);
+    var compDist = +Math.hypot(d.x - player.pos.x, d.z - player.pos.z).toFixed(1);
+    var secondDist = +Math.hypot(d2.x - player.pos.x, d2.z - player.pos.z).toFixed(1);
+    /* 🌿 야생을 때리면 동행이 달려들어 어그로를 끄는지 (안전지대 밖에서) */
+    var foe = null;
+    for (var i = 0; i < dinos.length; i++) {
+      var o = dinos[i];
+      if (o === d || o === d2 || o.tamed || o.dead) continue;
+      if (!DINO_AI[o.kind] || DINO_AI[o.kind].type !== 'carn') continue;
+      foe = o; break;
+    }
+    var aggro = null;
+    var ws = wildSpot();
+    player.pos.set(ws.x, groundY(ws.x, ws.z), ws.z);
+    player.group.position.copy(player.pos);
+    d.x = ws.x + 2.6; d.z = ws.z + 1.2;
+    d.group.position.set(d.x, terrainH(d.x, d.z), d.z);
+    d.hp = d.max; d.downed = false; d.petAtkCd = 0;
+    if (foe) {
+      foe.dead = false; foe.hp = foe.max; foe.group.visible = true; foe.frozen = false;
+      foe.x = ws.x - 2.4; foe.z = ws.z + 0.4;
+      foe.homeX = foe.x; foe.homeZ = foe.z;
+      foe.group.position.set(foe.x, terrainH(foe.x, foe.z), foe.z);
+      player.atkCd = 0;
+      attackDino(foe);
+      var foeHp0 = foe.hp;
+      for (var f2 = 0; f2 < 480; f2++) updateDinos(1 / 60, f2 / 60);
+      aggro = {
+        foe: foe.kind, petTarget: foe.petTarget === d, foeState: foe.cstate,
+        petHp: Math.round(d.hp), petHpMax: d.max,
+        foeDmg: Math.round(foeHp0 - foe.hp),
+        petDist: +Math.hypot(foe.x - d.x, foe.z - d.z).toFixed(1)
+      };
+    }
+    player.pos.set(ox, groundY(ox, oz), oz);
+    player.group.position.copy(player.pos);
+    return {
+      penIn: penIn, hidden: hidden, healed: healed, secondBlocked: secondBlocked, cap: penCap(st),
+      take: take, companion: comp, compDist: compDist, secondDist: secondDist, aggro: aggro
+    };
+  },
+  /* 🐾 펫 공격 1회 직접 호출 점검 */
+  dbgPetFight: function () {
+    var pet = companionPet();
+    if (!pet) return { why: 'no companion' };
+    var foe = null, i;
+    for (i = 0; i < dinos.length; i++) {
+      var o = dinos[i];
+      if (o === pet || o.tamed || o.dead) continue;
+      if (!DINO_AI[o.kind] || DINO_AI[o.kind].type !== 'carn') continue;
+      foe = o; break;
+    }
+    if (!foe) return { why: 'no foe' };
+    foe.dead = false; foe.hp = foe.max; foe.group.visible = true;
+    foe.x = pet.x + 2.0; foe.z = pet.z;
+    pet.petAtkCd = 0;
+    var hp0 = foe.hp;
+    var pre = { petAtkCd: pet.petAtkCd, dd: Math.hypot(foe.x - pet.x, foe.z - pet.z), reach: (pet.reach || 3.4) + 0.9, atk: petAtkOf(pet), companion: !!pet.companion, mounted: !!pet.mounted, downed: !!pet.downed, pennned: !!pet.penned };
+    petCombatTick(pet, foe, 0.016);
+    var post = { hp0: Math.round(hp0), hp1: Math.round(foe.hp), petAtkCd: +pet.petAtkCd.toFixed(2), petTarget: foe.petTarget === pet, foeHpMax: foe.max };
+    return { pre: pre, post: post };
+  },
+  /* 안전지대 밖 아무 곳(검사용) */
+  wildSpot: function () {
+    var cand = [[0, 34], [34, 0], [-34, 0], [0, -34], [26, 26], [-26, 26], [26, -26], [-26, -26], [52, 0], [0, 52]];
+    for (var i = 0; i < cand.length; i++) {
+      if (isSafeZone(cand[i][0], cand[i][1])) continue;
+      if (terrainH(cand[i][0], cand[i][1]) < 1.1) continue;
+      return { x: cand[i][0], z: cand[i][1] };
+    }
+    return { x: 60, z: 60 };
+  },
+  /* 🐾 어그로/몸빵 디버그 — 프레임별 상태 */
+  petAggroDebug: function (kind) {
+    kind = kind || 'raptor';
+    var st = barnSt || placeStructure('barn', player.pos.x + 4.2, player.pos.z + 2.4, 0);
+    var pet = companionPet();
+    if (!pet) return { why: 'no companion' };
+    var foe = null, i;
+    for (i = 0; i < dinos.length; i++) {
+      var o = dinos[i];
+      if (o === pet || o.tamed || o.dead) continue;
+      if (!DINO_AI[o.kind] || DINO_AI[o.kind].type !== 'carn') continue;
+      foe = o; break;
+    }
+    if (!foe) return { why: 'no foe' };
+    var ws = wildSpot();
+    player.pos.set(ws.x, groundY(ws.x, ws.z), ws.z);
+    player.group.position.copy(player.pos);
+    pet.x = ws.x + 2.4; pet.z = ws.z + 1.0;
+    pet.group.position.set(pet.x, terrainH(pet.x, pet.z), pet.z);
+    foe.dead = false; foe.hp = foe.max; foe.group.visible = true; foe.frozen = false;
+    foe.x = pet.x - 4.0; foe.z = pet.z;
+    foe.homeX = foe.x; foe.homeZ = foe.z;
+    foe.group.position.set(foe.x, terrainH(foe.x, foe.z), foe.z);
+    pet.hp = pet.max; pet.downed = false; pet.foeLock = foe;
+    var log = [];
+    for (var f = 0; f < 240; f++) {
+      updateDinos(1 / 60, f / 60);
+      if (f % 20 === 0) log.push({
+        f: f, petX: +pet.x.toFixed(1), petZ: +pet.z.toFixed(1), foeX: +foe.x.toFixed(1),
+        dd: +Math.hypot(foe.x - pet.x, foe.z - pet.z).toFixed(2), state: pet.cstate,
+        petTarget: foe.petTarget === pet, foeState: foe.cstate, petHp: Math.round(pet.hp), foeHp: Math.round(foe.hp)
+      });
+    }
+    return { pet: pet.kind, companion: !!pet.companion, pennned: !!pet.penned, foe: foe.kind, foeLock: pet.foeLock === foe, log: log };
+  },
+  /* 🦵 뒷발질 · 🦖 절뚝거림/도주 */
+  combatTest: function (kind) {
+    kind = kind || 'trike';
+    var ws = wildSpot();
+    player.pos.set(ws.x, groundY(ws.x, ws.z), ws.z);
+    player.group.position.copy(player.pos);
+    var d = spawnDino(kind, player.pos.x + 2.4, player.pos.z + 0.4, {});
+    d.provoked = 30; d.aggro = 1; d.hp = d.max * 0.22; d.atkCd = 99; d.chargeCd = 99; d.frozen = false;
+    /* 등 뒤로 붙는다 */
+    var a = (d.rot || 0) + Math.PI;
+    var px = d.x + Math.sin(a) * 2.0, pz = d.z + Math.cos(a) * 2.0;
+    player.pos.set(px, groundY(px, pz), pz);
+    player.group.position.copy(player.pos);
+    S.hp = 100;
+    var tele = null, kickSeen = 0, fleeSeen = 0, limpSamples = [], hpDrop = 0;
+    for (var f = 0; f < 420; f++) {
+      if (d.tele && !tele) tele = d.tele.kind || 'tele';
+      if ((d.kickT || 0) > 0) kickSeen++;
+      if ((d.fleeT || 0) > 0) fleeSeen++;
+      if (f % 30 === 0) limpSamples.push(+(d.group.rotation.z || 0).toFixed(2));
+      updateCreatureAI(d, 1 / 60, f / 60, Math.hypot(d.x - player.pos.x, d.z - player.pos.z));
+      if (S.hp < 100 && !hpDrop) hpDrop = Math.round(100 - S.hp);
+      /* 플레이어가 계속 등 뒤에 붙어 있는 상태를 유지 */
+      var aa = (d.rot || 0) + Math.PI;
+      player.pos.set(d.x + Math.sin(aa) * 2.0, groundY(d.x + Math.sin(aa) * 2.0, d.z + Math.cos(aa) * 2.0), d.z + Math.cos(aa) * 2.0);
+    }
+    /* 걷는 동안의 절뚝임 확인 — 도주·뒷발질을 잠시 잠그고 플레이어가 8m 앞에서 유인 */
+    d.kickT = 0; d.kickCd = 99; d.fleeT = 0; d.fleeCd = 99; d.atkCd = 99;
+    var wx = d.x + 8.0;
+    player.pos.set(wx, groundY(wx, d.z), d.z);
+    var walkSamples = [], walkFrames = 0;
+    for (var f2 = 0; f2 < 90; f2++) {
+      updateCreatureAI(d, 1 / 60, f2 / 60, Math.hypot(d.x - player.pos.x, d.z - player.pos.z));
+      if (d.walking) walkFrames++;
+      if (f2 % 15 === 0) walkSamples.push(+(d.group.rotation.z || 0).toFixed(2));
+    }
+    return {
+      kind: kind, telegraph: tele, kickFrames: kickSeen, fleeFrames: fleeSeen,
+      limp: +((d.limpMul || 1)).toFixed(2), rotationSamples: limpSamples, damageTaken: hpDrop,
+      walkFrames: walkFrames, walkSamples: walkSamples,
+      hp: Math.round(d.hp), max: d.max
+    };
+  },
+  /* 🐘 매머드 기본 모델 — v3.2 절차 모델(상아·털)인지 */
+  mammothInfo: function () {
+    var d = null, i;
+    for (i = 0; i < dinos.length; i++) if (dinos[i].kind === 'mammoth' && !dinos[i].dead) { d = dinos[i]; break; }
+    if (!d) d = spawnDino('mammoth', player.pos.x + 12, player.pos.z + 2, {});
+    return {
+      found: !!d, glb: !!(d && d.glbAnim), skinned: !!(d && d.skinned),
+      glbEnabled: (typeof MAMMOTH_GLB !== 'undefined') ? !!MAMMOTH_GLB.enabled : null,
+      height: d ? +(d.parts.height || 0).toFixed(2) : 0,
+      tusks: d && d.parts.tusks ? d.parts.tusks.length : null
+    };
+  },
+  /* 🐾 길들이기 난이도 — 기운이 넘치면 거절, 지친 몸/기절이면 진행 */
+  tameTest: function (kind) {
+    kind = kind || 'trike';
+    var d = spawnDino(kind, player.pos.x + 2.2, player.pos.z + 0.6, {});
+    S.inv.berry = Math.max(10, S.inv.berry | 0);
+    d.hp = d.max;
+    var t0 = d.taming | 0;
+    tameDino(d);
+    var fullBlocked = (d.taming | 0) === t0;
+    d.hp = Math.round(d.max * 0.4); d.feedCd = 0;
+    tameDino(d);
+    var weakGain = (d.taming | 0) - t0;
+    var spamBlocked = false;
+    tameDino(d);
+    var same = (d.taming | 0) === t0 + weakGain;
+    if (same) spamBlocked = true;
+    d.feedCd = 0;
+    d.hp = 1; d.groggyT = 2;
+    tameDino(d);
+    var groggyGain = (d.taming | 0) - (t0 + weakGain);
+    return { kind: kind, fullBlocked: fullBlocked, weakGain: weakGain, spamBlocked: spamBlocked, groggyGain: groggyGain, taming: d.taming };
   },
   boatInfo: function () {
     var bar = $id('travelBar');
