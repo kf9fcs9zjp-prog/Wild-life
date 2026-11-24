@@ -2346,6 +2346,273 @@ body.targeting .toasts{top:calc(env(safe-area-inset-top) + 172px) !important}
 }
 
 /* @@/V37CSS@@ */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* @@V38CSS@@ */
+/* ==========================================================================
+   WILD LIFE v3.8 — 심플 유연 제작창(3분할·2열 카드) · 물가 행동 바
+   ========================================================================== */
+#sheet.v37c .sheetBody{flex-direction:column}
+.c38{
+  flex:1 1 auto;min-height:0;width:100%;
+  display:grid;grid-template-columns:196px minmax(0,1fr) 300px;
+  grid-template-areas:'cat mid det';
+  background:rgba(10,12,16,.30);
+}
+.c38 *{min-width:0}
+
+/* ───── 좌: 카테고리 (2열 사각 그리드) ───── */
+.c38cat{grid-area:cat;border-right:1px solid var(--d37-line2);padding:8px;display:flex;flex-direction:column;gap:6px;overflow-y:auto}
+.c38catGrid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.c38catBtn{
+  position:relative;height:62px;padding:5px 3px;border:1px solid var(--d37-line2);border-radius:2px;
+  background:rgba(255,255,255,.018);color:#cfcbc0;font-family:inherit;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;
+  line-height:1.15;text-align:center;letter-spacing:-.02em;
+}
+.c38catBtn > span{font-size:18px;line-height:1;filter:grayscale(.2)}
+.c38catBtn > em{font-style:normal;font-size:9.5px;font-weight:800;word-break:keep-all}
+.c38catBtn:hover{background:rgba(255,255,255,.05)}
+.c38catBtn.on{background:rgba(234,179,8,.10);border-color:rgba(234,179,8,.55);color:#fff8e0}
+.c38catBtn.on::before,.c38catBtn.on::after{content:'';position:absolute;width:9px;height:9px;border-color:var(--d37-gold);border-style:solid}
+.c38catBtn.on::before{left:-1px;top:-1px;border-width:2px 0 0 2px}
+.c38catBtn.on::after{right:-1px;top:-1px;border-width:2px 0 0 2px}
+.c38catBtn .n{position:absolute;right:3px;top:3px;font-size:8px;font-weight:900;color:#1b1a14;background:var(--d37-gold);border-radius:6px;padding:0 4px;line-height:12px;font-style:normal}
+.c38skill{margin-top:auto;border-top:1px solid var(--d37-line2);padding-top:6px}
+.c38skill h5{font-size:9px;font-weight:900;color:var(--d37-txt2);letter-spacing:.06em;margin-bottom:4px}
+.c38skillRow{display:flex;align-items:center;gap:5px;font-size:9.5px;font-weight:800;color:#d5d0c4;margin-bottom:3px}
+.c38skillRow em{margin-left:auto;color:var(--d37-gold);font-style:normal;font-weight:900}
+.c38skillBar{height:3px;background:rgba(255,255,255,.09);flex:1;border-radius:2px;overflow:hidden}
+.c38skillBar i{display:block;height:100%;background:var(--d37-gold);width:0}
+
+/* ───── 중: 검색 + 카드 2열 ───── */
+.c38mid{grid-area:mid;display:flex;flex-direction:column;min-height:0;border-right:1px solid var(--d37-line2)}
+.c38search{display:flex;align-items:center;gap:6px;padding:8px 10px;border-bottom:1px solid var(--d37-line2)}
+.c38search input{
+  flex:1;height:28px;background:rgba(255,255,255,.05);border:1px solid var(--d37-line2);border-radius:2px;
+  color:#f0ede3;font-size:11px;padding:0 8px;font-family:inherit;outline:none;-webkit-appearance:none;
+}
+.c38search input::placeholder{color:#7d7a72}
+.c38search b{font-size:9.5px;color:var(--d37-txt2);font-weight:800;white-space:nowrap}
+.c38clear{
+  height:28px;padding:0 7px;border:1px solid var(--d37-line2);border-radius:2px;background:rgba(255,255,255,.04);
+  color:#c9c4b8;font-family:inherit;font-size:9px;font-weight:900;cursor:pointer;white-space:nowrap;
+}
+.c38clear:hover{background:rgba(255,255,255,.09)}
+.c38cards{flex:1;overflow-y:auto;padding:2px 4px 16px;-webkit-overflow-scrolling:touch}
+.c38grp{
+  display:flex;align-items:center;gap:7px;margin:9px 4px 5px;padding:0 2px;
+  font-size:9.5px;font-weight:900;color:#b9b3a6;letter-spacing:.05em;
+}
+.c38grp::before,.c38grp::after{content:'';flex:1 1 auto;height:1px;background:var(--d37-line2)}
+.c38grp i{font-style:normal;font-size:8.5px;color:#6f6b62;font-weight:800}
+.c38grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:0 2px}
+.c38card{
+  position:relative;display:flex;align-items:center;gap:7px;min-height:46px;padding:5px 7px;
+  border:1px solid transparent;border-radius:2px;background:rgba(255,255,255,.022);
+  color:#ded9cd;font-family:inherit;cursor:pointer;text-align:left;
+}
+.c38card:hover,.c38card:active{background:rgba(255,255,255,.06)}
+.c38card .ic{
+  flex:0 0 auto;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:17px;
+  background:rgba(255,255,255,.05);border:1px solid var(--d37-line2);border-radius:2px;font-style:normal;
+}
+.c38card .tx{display:flex;flex-direction:column;gap:1px;overflow:hidden}
+.c38card .tx b{font-size:10.5px;font-weight:800;letter-spacing:-.02em;line-height:1.25;color:#eae5d8;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.c38card .tx em{font-style:normal;font-size:8.5px;font-weight:700;color:#8f8a80;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.c38card.sel{background:rgba(234,179,8,.10);border-color:rgba(234,179,8,.38)}
+.c38card.sel::before,.c38card.sel::after{content:'';position:absolute;width:9px;height:9px;border-color:var(--d37-gold);border-style:solid}
+.c38card.sel::before{left:-1px;top:-1px;border-width:2px 0 0 2px}
+.c38card.sel::after{right:-1px;top:-1px;border-width:2px 0 0 2px}
+.c38card.sel .tx b{color:#fff6db}
+.c38card.locked .ic{filter:grayscale(1) brightness(.5);opacity:.65}
+.c38card.locked .tx b{color:#8a857b}
+.c38back{
+  display:block;width:calc(100% - 8px);margin:6px 4px 2px;height:28px;
+  border:1px solid var(--d37-line);border-radius:2px;background:rgba(38,42,50,.9);
+  color:#e8e3d6;font-family:inherit;font-size:10px;font-weight:900;cursor:pointer;
+}
+.c38empty{padding:20px 12px;text-align:center;font-size:10.5px;color:#8a857b;font-weight:800;line-height:1.6}
+.c38empty b{color:#e2dccd}
+
+/* ───── 우: 상세 ───── */
+.c38det{grid-area:det;display:flex;flex-direction:column;min-height:0;background:rgba(9,11,15,.34)}
+.c38detHead{
+  padding:8px 11px;display:flex;align-items:center;gap:7px;
+  background:linear-gradient(180deg,rgba(234,179,8,.16),rgba(234,179,8,.05));
+  border-bottom:1px solid var(--d37-line);
+}
+.c38detHead .star{color:var(--d37-gold);font-size:11px;flex:0 0 auto}
+.c38detHead b{font-size:12.5px;font-weight:900;color:#fff3c9;letter-spacing:-.02em;line-height:1.2}
+.c38detHead .c38tag{
+  margin-left:auto;font-style:normal;font-size:8px;font-weight:900;letter-spacing:.06em;
+  color:#1b1a14;background:var(--d37-gold);border-radius:2px;padding:1px 5px;flex:0 0 auto;
+}
+.c38detBody{flex:1;overflow-y:auto;padding:9px 11px 12px;font-size:10px;color:#cfcbc0;-webkit-overflow-scrolling:touch}
+.c38desc{font-size:10px;line-height:1.5;color:#b7b2a7;margin-bottom:9px}
+.c38kv{display:flex;align-items:baseline;gap:6px;font-size:9.5px;font-weight:800;color:#a9a49a;margin-bottom:4px}
+.c38kv > span{flex:0 0 auto}
+.c38kv b{margin-left:auto;color:#e6e1d4;font-weight:900;text-align:right}
+.c38kv b.gold{color:var(--d37-gold)}
+.c38sec{margin-top:10px;padding-top:7px;border-top:1px solid var(--d37-line2)}
+.c38sec > h6{font-size:9.5px;font-weight:900;color:#d8d2c4;letter-spacing:.05em;margin-bottom:5px}
+/* 재료 선택 */
+.c38slot{margin-bottom:7px}
+.c38slotLb{display:flex;align-items:baseline;gap:5px;font-size:9.5px;font-weight:900;color:#a9a49a;margin-bottom:4px}
+.c38slotLb b{color:var(--d37-gold);font-weight:900}
+.c38slotLb em{font-style:normal;color:#8f8a80;font-weight:800}
+.c38opts{display:flex;flex-wrap:wrap;gap:4px}
+.c38opt{
+  position:relative;display:flex;align-items:center;gap:4px;height:26px;padding:0 6px;
+  border:1px solid var(--d37-line2);border-radius:2px;background:rgba(255,255,255,.03);
+  color:#d8d3c6;font-family:inherit;font-size:9.5px;font-weight:800;cursor:pointer;white-space:nowrap;
+}
+.c38opt i{font-style:normal;font-size:11px}
+.c38opt em{font-style:normal}
+.c38opt b{color:#7f9f6a;font-weight:900;font-size:9px}
+.c38opt:hover{background:rgba(255,255,255,.07)}
+.c38opt.on{background:rgba(234,179,8,.14);border-color:rgba(234,179,8,.6);color:#fff6dc}
+.c38opt.on b{color:var(--d37-gold)}
+.c38opt.lack:not(.on){opacity:.62}
+.c38opt.lack b{color:#c9866f}
+.c38opt.non{border-style:dashed;color:#8f8a80;cursor:default}
+/* 재료 행 */
+.c38mat{
+  display:flex;align-items:center;gap:6px;font-size:10px;font-weight:800;color:#ccc7bb;
+  padding:5px 4px;border-radius:2px;cursor:pointer;
+}
+.c38mat:hover,.c38mat.open{background:rgba(255,255,255,.05)}
+.c38mat .mk{color:#8fcf72;font-size:10px;width:10px;flex:0 0 auto}
+.c38mat.lack .mk{color:#e0836c}
+.c38mat .mn{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c38mat b{color:#efe9db;font-weight:900;flex:0 0 auto}
+.c38mat.lack b{color:#ff9f83}
+.c38mat .ji{font-style:normal;color:#7d7a72;font-size:9px;flex:0 0 auto}
+.c38mat.open .ji{color:var(--d37-gold)}
+.c38pop{
+  margin:2px 0 6px 16px;padding:7px 8px;border:1px solid rgba(234,179,8,.28);
+  border-radius:2px;background:rgba(28,24,14,.72);
+}
+.c38pop .ph{font-size:8.5px;font-weight:900;color:var(--d37-gold);letter-spacing:.06em;margin-bottom:3px}
+.c38pop .pw{font-size:9.5px;font-weight:800;color:#e3ddcd;line-height:1.5}
+.c38pop .pn{font-size:9px;font-weight:800;color:#a9a49a;margin-top:4px}
+.c38prop{font-size:9px;color:#8f8a80;font-weight:700;line-height:1.45;margin:3px 0 0 2px}
+.c38prev{display:flex;align-items:center;gap:7px;padding:5px 6px;border:1px solid var(--d37-line2);border-radius:2px;background:rgba(255,255,255,.03)}
+.c38prev i{font-style:normal;font-size:18px}
+.c38prev b{font-size:11px;font-weight:900;color:#fff6db;letter-spacing:-.02em}
+.c38chips{display:flex;flex-wrap:wrap;gap:3px;margin-top:5px}
+.c38chips span{font-size:9px;font-weight:800;color:#e2dccd;background:rgba(255,255,255,.06);
+  border:1px solid var(--d37-line2);border-radius:2px;padding:2px 5px}
+.c38attrs{margin-top:5px;display:flex;flex-direction:column;gap:2px}
+.c38attr{font-size:9px;font-weight:800;color:#d8cba2}
+.c38lockmsg{font-size:9.5px;color:#ffcf9a;font-weight:800;background:rgba(180,110,40,.14);
+  border:1px solid rgba(210,140,60,.28);padding:5px 7px;border-radius:2px;line-height:1.45}
+.c38detFoot{padding:9px 11px calc(9px + env(safe-area-inset-bottom));border-top:1px solid var(--d37-line);background:rgba(12,14,18,.9);flex:0 0 auto}
+.c38btn{
+  width:100%;height:42px;border:1px solid #f0c531;border-radius:2px;cursor:pointer;
+  background:linear-gradient(180deg,#f2c62a,#d9a306);color:#17150e;font-family:inherit;
+  font-size:13.5px;font-weight:900;letter-spacing:.01em;box-shadow:0 3px 0 rgba(120,90,0,.45);
+}
+.c38btn:active{transform:translateY(1px);box-shadow:0 2px 0 rgba(120,90,0,.45)}
+.c38btn.off{background:linear-gradient(180deg,#3a3d44,#282b31);border-color:rgba(150,160,170,.22);
+  color:#9b978c;box-shadow:none;cursor:default}
+.c38ghost{
+  width:100%;height:30px;margin-top:5px;border:1px solid var(--d37-line);border-radius:2px;
+  background:rgba(38,42,50,.9);color:#e8e3d6;font-family:inherit;font-size:10.5px;font-weight:900;cursor:pointer;
+}
+.c38ghost.sm{height:26px;font-size:10px}
+
+/* ───── 물가 행동 바 ───── */
+#wl38water{
+  position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom) + 26px);transform:translateX(-50%) translateY(8px);
+  display:none;align-items:center;gap:6px;z-index:12;
+  padding:5px 6px;border:1px solid rgba(150,170,190,.30);border-radius:3px;
+  background:rgba(12,16,22,.82);box-shadow:0 6px 22px rgba(0,0,0,.45);
+  opacity:0;transition:opacity .18s ease,transform .18s ease;pointer-events:none;
+}
+#wl38water.on{display:flex;opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
+#wl38water .wbtn{
+  display:flex;align-items:center;gap:5px;height:32px;padding:0 9px;
+  border:1px solid rgba(150,170,190,.22);border-radius:2px;background:rgba(30,38,48,.85);
+  color:#e8eefa;font-family:inherit;font-size:11px;font-weight:900;cursor:pointer;white-space:nowrap;
+}
+#wl38water .wbtn i{font-style:normal;font-size:13px}
+#wl38water .wbtn:active{background:rgba(52,66,84,.95)}
+#wl38water .wbtn.dim{opacity:.55}
+#wl38water .wbtn.on{border-color:rgba(120,200,255,.6);color:#d8f2ff}
+
+/* ───── 반응형 (모바일 세로) ───── */
+@media (max-width:760px){
+  #sheet.v37c{height:93vh;max-height:93vh}
+  .c38{grid-template-columns:1fr;grid-template-rows:auto auto minmax(0,1fr);
+    grid-template-areas:'cat' 'mid' 'det'}
+  .c38cat{border-right:0;border-bottom:1px solid var(--d37-line2);padding:5px 6px;display:block;overflow:visible}
+  .c38catGrid{grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
+  .c38catBtn{height:44px;gap:2px;padding:3px 1px}
+  .c38catBtn > span{font-size:14px}
+  .c38catBtn > em{font-size:8px}
+  .c38skill{display:none}
+  .c38mid{border-right:0;border-bottom:1px solid var(--d37-line2);max-height:30vh}
+  .c38search{padding:5px 7px;gap:5px}
+  .c38search input{height:24px;font-size:10.5px}
+  .c38clear{height:24px;font-size:8.5px;padding:0 5px}
+  .c38grp{margin:5px 3px 3px;font-size:9px}
+  .c38grid{gap:3px;padding:0 1px}
+  .c38card{min-height:40px;padding:4px 5px;gap:5px}
+  .c38card .ic{width:24px;height:24px;font-size:14px}
+  .c38card .tx b{font-size:9.5px}
+  .c38card .tx em{font-size:8px}
+  .c38cards{padding:0 3px 10px}
+  .c38detHead{padding:6px 9px}
+  .c38detHead b{font-size:11.5px}
+  .c38detBody{font-size:9.5px;padding:7px 9px}
+  .c38btn{height:38px;font-size:12.5px}
+  .c38detFoot{padding:7px 9px calc(7px + env(safe-area-inset-bottom))}
+  .c38opt{height:24px;font-size:9px}
+  #wl38water{bottom:calc(env(safe-area-inset-bottom) + 196px);gap:4px;padding:4px}
+  #wl38water .wbtn{height:30px;padding:0 7px;font-size:10px;gap:4px}
+  #wl38water .wbtn i{font-size:12px}
+}
+@media (max-width:380px){
+  .c38catBtn > em{font-size:7.5px}
+  #wl38water .wbtn{font-size:9px;padding:0 5px}
+}
+
+/* @@/V38CSS@@ */
 </style>
 </head>
 <body>
@@ -2498,7 +2765,7 @@ body.targeting .toasts{top:calc(env(safe-area-inset-top) + 172px) !important}
       </div>
       <div class="startSaveLine" id="startSaveLine"><span>저장 없음 · 새로 시작해요</span></div>
     </div>
-    <div class="startFoot" id="startFoot">WILD LIFE · v3.7.2 &nbsp;|&nbsp; 왼쪽 조이스틱으로 걷고 오른쪽 버튼으로 채집·공격 · 빨간 예고선은 구르기로 피하기</div>
+    <div class="startFoot" id="startFoot">WILD LIFE · v3.8 &nbsp;|&nbsp; 왼쪽 조이스틱으로 걷고 오른쪽 버튼으로 채집·공격 · 빨간 예고선은 구르기로 피하기</div>
   </div>
 
   <div class="slotPanel" id="slotPanel">
@@ -31092,6 +31359,7 @@ function tribeFriendlyTick(t, dt, time) {
           var fy = terrainH(foe.x, foe.z);
           spawnBurst(foe.x, fy + 0.8, foe.z, 0xd8583c, 5, 0.7);
           if (foe.hp <= 0) {
+            foe.v38tribeKill = 1;      /* v3.8 — 부족의 사냥감(플레이어 전리품 아님) */
             killDino(foe);
             m.carry = 'meat'; m.carryN = 2;
             m.state = 'toChest';
@@ -38002,6 +38270,7 @@ function v37MemberFight(m, foe, t, dt) {
     spawnFloatText(foe.x, fy + (foe.parts.height || 1.4) * 0.9, foe.z, '-' + dmg, '#ffd8a0', 0.9);
     m.v37dealt = (m.v37dealt || 0) + dmg;
     if (foe.hp <= 0 && !foe.dead) {
+      foe.v38tribeKill = 1;            /* v3.8 — 부족의 사냥감(플레이어 전리품 아님) */
       killDino(foe);
       m.v37expT = 30 + Math.random() * 25;
       if (!t.hostile) toast('⚔️ ' + (t.name || '부족') + ' ' + (m.roleName || m.name) + '이(가) 침입한 ' +
@@ -38828,6 +39097,1601 @@ if (window.__game && window.__game.v37) {
 }
 
 /* @@/V37JS@@ */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* @@V38JS@@ */
+/* ==========================================================================
+   WILD LIFE v3.8 — 재료 조합 동적 제작 엔진 (듀랑고식 유연 제작)
+   --------------------------------------------------------------------------
+   ① 재료 속성 DB(단단함·뾰족함·질긴 섬유 …) — 듀랑고 attributes.json 의 효과식을
+      이 게임에 실제로 존재하는 스탯(공격·방어·이동·채집)으로 옮겼다.
+   ② 같은 계열의 하위 레시피를 하나로 합치고(껍질 벗기기 3종 → 1종),
+      상세창에서 쓸 재료를 고르면 결과물 이름·스탯이 그 자리에서 만들어진다.
+      예) 한손 검 + 트리케라톱스 뿔 + 강철 → "트리케라톱스 뿔 강철 검"
+   ③ 만들어진 물건은 S.v38.dyn 에 정의가 남아 저장/불러오기 뒤에도 그대로 쓴다.
+   ========================================================================== */
+var V38 = { ver: '3.8', ready: false };
+if (!S.v38 || typeof S.v38 !== 'object') S.v38 = {};
+if (!S.v38.dyn || typeof S.v38.dyn !== 'object') S.v38.dyn = {};
+if (!S.v38.pick || typeof S.v38.pick !== 'object') S.v38.pick = {};
+
+/* ── v3.8 신규 기본 재료 ── */
+(function v38AddItems() {
+  var A = {
+    charcoal: ['숯', '⚫', '나무를 태워 만든 숯 · 용광로 연료와 강철 제련에 쓴다'],
+    steel: ['강철 주괴', '🔩', '철을 숯과 함께 녹여 만든 강철 · 단단하고 날이 잘 선다'],
+    trikeHorn: ['트리케라톱스 뿔', '📐', '트리케라톱스의 단단하고 뾰족한 뿔']
+  };
+  for (var k in A) if (!ITEMS[k]) ITEMS[k] = { name: A[k][0], icon: A[k][1], desc: A[k][2] };
+  var ord = ['charcoal', 'steel', 'trikeHorn'];
+  for (var i = 0; i < ord.length; i++) if (ITEM_ORDER.indexOf(ord[i]) < 0) ITEM_ORDER.push(ord[i]);
+})();
+/* 트리케라톱스 도축 — 뿔이 함께 나온다 (뼈·발톱·뿔 묶음) */
+(function v38HornDrop() {
+  try {
+    var d = DINO_META.trike;
+    if (d && d.drops) {
+      var has = false;
+      for (var i = 0; i < d.drops.length; i++) if (d.drops[i][0] === 'trikeHorn') has = true;
+      if (!has) d.drops.push(['trikeHorn', 1]);
+    }
+    if (BUTCHER_GROUPS.trophy && BUTCHER_GROUPS.trophy.keys.indexOf('trikeHorn') < 0) {
+      BUTCHER_GROUPS.trophy.keys.push('trikeHorn');
+    }
+  } catch (e) { }
+})();
+
+/* ── 재료 속성표 ──
+   듀랑고 attribute 문법을 이 게임 스탯으로: firm/soft=공격, pointy/sharp=공격·관통,
+   dense=무게·방어, tough=방어, light/elastic=이동·채집 속도, fluffy=방한 */
+var V38_ATTR = {
+  firm: { name: '단단함', atk: 3.3 },
+  soft: { name: '무름', atk: -3.3 },
+  pointy: { name: '뾰족함', atk: 5 },
+  sharp: { name: '날카로움', atk: 2, gather: 1 },
+  dense: { name: '고밀도', atk: 1, def: 2, spd: -0.01 },
+  heavy: { name: '무거움', atk: 1, spd: -0.03 },
+  light: { name: '가벼움', spd: 0.04, gatherSpd: 0.05 },
+  tough: { name: '질긴 섬유', def: 2 },
+  fluffy: { name: '푹신함', def: 1, warm: 1 },
+  elastic: { name: '신축성', gatherSpd: 0.06 }
+};
+/* 재료별 속성 · 획득처 */
+var V38_M = {
+  logOak: { short: '참나무', wood: 'oak', at: { firm: 1, dense: 1 }, where: '숲의 참나무 곁에서 베기' },
+  logWillow: { short: '버드나무', wood: 'willow', at: { light: 2, elastic: 1 }, where: '강가·들판의 버드나무 곁에서 베기' },
+  logPine: { short: '소나무', wood: 'pine', at: { firm: 1, light: 1 }, where: '고원·북쪽의 소나무 곁에서 베기' },
+  bark: { short: '나무껍질', at: { tough: 1 }, where: '통나무 껍질 벗기기 부산물' },
+  stone: { short: '돌', at: { firm: 1, heavy: 1 }, where: '바위·돌무더기 캐기' },
+  iron: { short: '철', at: { firm: 2, dense: 1 }, where: '철광석 캐기 · 용광로에서 금속 광석 제련' },
+  steel: { short: '강철', at: { firm: 3, sharp: 1 }, where: '용광로에서 철 2 + 숯 1 제련' },
+  trikeHorn: { short: '트리케라톱스 뿔', at: { pointy: 2, firm: 1 }, where: '트리케라톱스 도축(뼈·발톱·뿔) 후 챙기기' },
+  trikeClaw: { short: '트리케라톱스 발톱', at: { sharp: 2 }, where: '트리케라톱스 도축(뼈·발톱·뿔)' },
+  fang: { short: '맹수 송곳니', at: { pointy: 1, sharp: 1 }, where: '알로사우루스·랩터 도축(뼈·발톱·뿔)' },
+  tyrantFang: { short: '폭군 송곳니', at: { pointy: 3, firm: 1 }, where: '티라노사우루스 도축(뼈·발톱·뿔)' },
+  hideThin: { short: '얇은 가죽', at: { tough: 1, elastic: 1 }, where: '파라사우롤로푸스·소형 공룡 가죽 벗기기' },
+  hideTough: { short: '랩터 가죽', at: { tough: 2 }, where: '벨로시랩터 가죽 벗기기' },
+  hideThick: { short: '두꺼운 가죽', at: { tough: 2, dense: 1 }, where: '트리케라톱스 가죽 벗기기' },
+  hideBeast: { short: '맹수 가죽', at: { tough: 3 }, where: '알로사우루스 등 맹수 가죽 벗기기' },
+  mammothFur: { short: '매머드 털가죽', at: { tough: 2, fluffy: 2 }, where: '매머드 가죽 벗기기' },
+  fiber: { short: '섬유', at: { tough: 1 }, where: '풀·덤불·갈대 채집' },
+  twine: { short: '꼰 끈', at: { tough: 1 }, where: '식물 직조대에서 식물 섬유 2개로 끈 꼬기' },
+  wood: { short: '통나무', at: { firm: 1 }, where: '나무·전나무·대나무 베기' },
+  stick: { short: '나뭇가지', at: { light: 1 }, where: '나무를 베면 함께 떨어지거나 마른 가지를 줍기' }
+};
+/* 획득처를 아직 못 적은 재료도 안내가 비지 않게 */
+var V38_SRC_FALLBACK = '가방·도축·채집으로 얻을 수 있어요';
+
+/* ── 속성 계산 ── */
+function v38MatDef(id) {
+  if (!id) return null;
+  if (V38_M[id]) return V38_M[id];
+  var d = S.v38.dyn[id];
+  if (d) return { short: d.n, wood: d.w || '', at: d.at || {} };
+  var it = ITEMS[id];
+  return it ? { short: it.name, at: {} } : { short: id, at: {} };
+}
+function v38AddAttrs(acc, at) {
+  for (var k in at) {
+    if (!at[k]) continue;
+    acc[k] = (acc[k] || 0) + at[k];
+  }
+}
+function v38AttrText(k, lv) {
+  var a = V38_ATTR[k];
+  if (!a) return '';
+  var bits = [];
+  if (a.atk) bits.push('공격 ' + (a.atk > 0 ? '+' : '−') + Math.abs(+(a.atk * lv).toFixed(1)));
+  if (a.def) bits.push('방어 ' + (a.def > 0 ? '+' : '−') + Math.abs(+(a.def * lv).toFixed(1)));
+  if (a.spd) bits.push('이동 ' + (a.spd > 0 ? '+' : '−') + Math.abs(Math.round(a.spd * lv * 100)) + '%');
+  if (a.gatherSpd) bits.push('채집 속도 +' + Math.round(a.gatherSpd * lv * 100) + '%');
+  if (a.gather) bits.push('채집 +' + a.gather * lv);
+  if (a.warm) bits.push('방한 +' + a.warm * lv);
+  return a.name + ' Lv.' + lv + ' · ' + bits.join(' · ');
+}
+function v38AttrList(at) {
+  var out = [];
+  for (var k in at) if (at[k]) out.push({ k: k, lv: at[k], text: v38AttrText(k, at[k]) });
+  return out;
+}
+
+/* ==========================================================================
+   유연 레시피 정의
+   naming: 'prefix'  → 재료 이름 + 품목명        (참나무 판재)
+           'compose' → 보강 + 날 + 품목명        (트리케라톱스 뿔 강철 검)
+   ========================================================================== */
+var V38_FLEX = {};
+(function v38DefineFlex() {
+  var F = V38_FLEX;
+  /* ───────── 목재 가공 (목재 작업대·제재소) ───────── */
+  F.f38peel = {
+    id: 'f38peel', name: '껍질 벗기기', noun: '민목재', icon: '🪵', station: 'woodStand', cat: 'process', grp: '목재 가공',
+    desc: '통나무를 골라 껍질을 벗긴다 · 수피는 따로 챙긴다',
+    naming: 'prefix', style: 'strip', fam: 'woodStripped', skill: 'wood', xp: 4, time: 14,
+    slots: [{ key: 'm', label: '통나무', ids: ['logOak', 'logWillow', 'logPine'], qty: 1 }],
+    bonusBy: { logOak: { bark: 2 }, logWillow: { bark: 1 }, logPine: { bark: 3 } },
+    note: '참나무=단단함, 버드나무=가벼움·유연, 소나무=수지(불쏘시개)'
+  };
+  F.f38split = {
+    id: 'f38split', name: '목재 쪼개기', noun: '쪼갠 목재', icon: '🪓', station: 'woodStand', cat: 'process', grp: '목재 가공',
+    desc: '민목재를 결을 따라 쪼갠다 (도끼 필요)', naming: 'prefix', fam: 'woodSplit',
+    skill: 'wood', xp: 4, time: 16, tool: 'axe', lock: { skill: 'wood', lv: 1 },
+    slots: [{ key: 'm', label: '민목재', fam: 'woodStripped', legacy: ['woodStripped'], qty: 2 }]
+  };
+  F.f38plank = {
+    id: 'f38plank', name: '판재 켜기', noun: '판재', icon: '🟧', station: 'woodStand', cat: 'process', grp: '목재 가공',
+    desc: '쪼갠 목재를 고르게 켠다 (톱 필요)', naming: 'prefix', fam: 'woodPlank',
+    skill: 'wood', xp: 7, time: 24, tool: 'saw', lock: { skill: 'wood', lv: 2 },
+    slots: [{ key: 'm', label: '쪼갠 목재', fam: 'woodSplit', legacy: ['woodSplit'], qty: 2 }]
+  };
+  F.f38cut = {
+    id: 'f38cut', name: '목재 깎기', noun: '깎은 목재', icon: '🪵', station: 'woodStand', cat: 'process', grp: '목재 가공',
+    desc: '판재의 모서리를 깎아 맞춤 부품으로', naming: 'prefix', fam: 'woodCut',
+    skill: 'wood', xp: 7, time: 22, tool: 'saw', lock: { skill: 'wood', lv: 2 },
+    slots: [{ key: 'm', label: '판재', fam: 'woodPlank', legacy: ['woodPlank'], qty: 1 }]
+  };
+  F.f38join = {
+    id: 'f38join', name: '목재 결합', noun: '결합 목재', icon: '🧱', station: 'woodStand', cat: 'process', grp: '목재 가공',
+    desc: '판재를 끈으로 단단히 엮는다', naming: 'prefix', fam: 'woodJoined',
+    skill: 'wood', xp: 9, time: 26, lock: { skill: 'wood', lv: 2 }, cost: { twine: 1 },
+    slots: [{ key: 'm', label: '판재', fam: 'woodPlank', legacy: ['woodPlank'], qty: 2 }]
+  };
+  F.f38fine = {
+    id: 'f38fine', name: '정밀 목재 가공', noun: '정밀 목재', icon: '✨', station: 'lumberMill', cat: 'process', grp: '목재 가공',
+    desc: '결합 목재와 깎은 목재를 맞물려 정밀하게 다듬는다', naming: 'prefix', fam: 'woodFine',
+    skill: 'wood', xp: 14, time: 40, tool: 'saw', lock: { skill: 'wood', lv: 3 },
+    slots: [
+      { key: 'm', label: '결합 목재', fam: 'woodJoined', legacy: ['woodJoined'], qty: 1 },
+      { key: 'n', label: '깎은 목재', fam: 'woodCut', legacy: ['woodCut'], qty: 1 }
+    ]
+  };
+
+  /* ───────── 무기 (대장간) ───────── */
+  var EDGE = { key: 'edge', label: '날', ids: ['stone', 'iron', 'steel'], qty: 1 };
+  var RE = { key: 're', label: '보강', ids: ['', 'trikeHorn', 'fang', 'tyrantFang', 'trikeClaw'], qty: 1, allowNone: true };
+  var GRIP = { key: 'grip', label: '손잡이', ids: ['logOak', 'logWillow', 'logPine'], qty: 1 };
+  function weapon(id, noun, icon, kind, baseAtk, time, extra) {
+    var r = {
+      id: id, noun: noun, icon: icon, station: 'smithBench', cat: 'weapon', grp: '한손 ' + noun,
+      desc: '날·보강재·손잡이를 골라 ' + noun + '을(를) 벼린다 · 고른 재료에 따라 이름과 성능이 달라진다',
+      naming: 'compose', nameOrder: ['re', 'edge'], kind: kind, baseAtk: baseAtk,
+      skill: 'wood', xp: 12, time: time, cost: { fiber: 2 },
+      slots: [
+        { key: 'edge', label: EDGE.label, ids: EDGE.ids.slice(0), qty: 1 },
+        { key: 're', label: RE.label, ids: RE.ids.slice(0), qty: 1, allowNone: true },
+        { key: 'grip', label: GRIP.label, ids: GRIP.ids.slice(0), qty: 1 }
+      ],
+      gatherKind: ''
+    };
+    if (extra) for (var k in extra) r[k] = extra[k];
+    F[id] = r;
+  }
+  weapon('f38sword', '검', '🗡', 'knife', 12, 120);
+  weapon('f38spear', '창', '🔱', 'spear', 20, 140);
+  weapon('f38axe', '도끼', '🪓', 'axe', 10, 90, { gatherKind: 'axe', note: '맞는 날이면 나무 채집 +1' });
+  weapon('f38pick', '곡괭이', '⛏', 'pick', 9, 90, { gatherKind: 'pick', note: '맞는 날이면 바위·광석 채집 +1' });
+  weapon('f38sickle', '낫', '🌾', 'sickle', 8, 80, { gatherKind: 'sickle', note: '맞는 날이면 풀·덩굴 채집 +1' });
+  /* 목록에 보이는 이름은 '한손 검' 처럼 — 결과물 이름과 구분된다 */
+  for (var wk in F) if (F[wk].cat === 'weapon' && F[wk].noun) F[wk].name = '한손 ' + F[wk].noun;
+
+  /* ───────── 가죽 갑옷 (의상 작업대) ───────── */
+  F.f38armor = {
+    id: 'f38armor', name: '가죽 갑옷', noun: '갑옷', icon: '🦺', station: 'tailorBench', cat: 'clothing', grp: '가죽 갑옷',
+    desc: '가죽을 골라 두르는 갑옷 · 두꺼울수록 단단하고, 얇을수록 가볍다',
+    naming: 'prefix', skill: 'plant', xp: 10, time: 150, baseDef: 2,
+    slots: [{ key: 'm', label: '가죽', ids: ['hideThin', 'hideTough', 'hideThick', 'hideBeast'], qty: 3 }],
+    cost: { fiber: 2 }, gearSlot: 'armor'
+  };
+})();
+
+/* 정의된 유연 레시피에 공통 필드를 채운다 (목록·필터·잠금이 한 곳을 보게) */
+(function v38NormalizeFlex() {
+  for (var id in V38_FLEX) {
+    var r = V38_FLEX[id];
+    r.v38flex = 1;
+    r.v38cat = r.cat || 'process';
+    r.v38grp = r.grp || '가공';
+    r.v38skill = r.skill || '';
+    r.v37lock = r.lock || null;
+    r.v37tool = r.tool || '';
+    if (!r.name) r.name = r.noun || id;
+    if (!r.icon) r.icon = '🔨';
+  }
+})();
+
+/* 가죽 → 갑옷 외형(3D) 매핑 */
+var V38_ARMOR_VIS = { hideThin: 'hideVest', hideTough: 'thickArmor', hideThick: 'beastCoat', hideBeast: 'beastCoat' };
+
+/* ── 슬롯 옵션 목록 ── */
+function v38SlotOptions(slot) {
+  var out = [], i, k;
+  if (slot.ids) {
+    for (i = 0; i < slot.ids.length; i++) {
+      k = slot.ids[i];
+      out.push({ id: k, name: k ? ((V38_M[k] && V38_M[k].short) || (ITEMS[k] ? ITEMS[k].name : k)) : '없음', icon: k ? ((ITEMS[k] && ITEMS[k].icon) || '❔') : '⛔', have: k ? (S.inv[k] | 0) : 1, none: !k });
+    }
+  }
+  if (slot.fam) {
+    var seen = {};
+    for (var id in S.v38.dyn) {
+      var d = S.v38.dyn[id];
+      if (!d || d.f !== slot.fam) continue;
+      if ((S.inv[id] | 0) <= 0) continue;
+      seen[id] = 1;
+      out.push({ id: id, name: d.n, icon: d.i || '❔', have: S.inv[id] | 0, dyn: 1, short: d.w ? (V38_M[{ oak: 'logOak', willow: 'logWillow', pine: 'logPine' }[d.w]] || {}).short : '' });
+    }
+    if (slot.legacy) {
+      for (i = 0; i < slot.legacy.length; i++) {
+        k = slot.legacy[i];
+        if ((S.inv[k] | 0) <= 0) continue;
+        out.push({ id: k, name: ITEMS[k] ? ITEMS[k].name : k, icon: (ITEMS[k] && ITEMS[k].icon) || '❔', have: S.inv[k] | 0, legacy: 1 });
+      }
+    }
+  }
+  return out;
+}
+
+/* ── 선택 상태 ── */
+function v38PicksFor(rec) {
+  var saved = S.v38.pick[rec.id] || {};
+  var out = {};
+  for (var i = 0; i < rec.slots.length; i++) {
+    var s = rec.slots[i];
+    var opts = v38SlotOptions(s);
+    var pick = saved[s.key];
+    var ok = false;
+    if (pick) for (var j = 0; j < opts.length; j++) if (opts[j].id === pick) ok = true;
+    if (pick && !ok) pick = '';
+    if (!pick) {
+      if (s.allowNone) { pick = ''; }
+      else {
+        /* 보유분이 있는 첫 후보 → 없으면 첫 후보 */
+        var best = null, bestHave = 0;
+        for (var q = 0; q < opts.length; q++) {
+          if (opts[q].none) continue;
+          if (opts[q].have > bestHave) { bestHave = opts[q].have; best = opts[q]; }
+        }
+        if (!best && opts.length) best = opts[0];
+        pick = best ? best.id : '';
+        /* 보유분이 하나도 없어도 목록의 첫 재료를 미리 보여 준다 */
+        if (!pick && s.ids && s.ids.length) pick = s.ids[0];
+      }
+    }
+    out[s.key] = pick;
+  }
+  return out;
+}
+function v38SetPick(rec, key, id) {
+  var p = S.v38.pick[rec.id] || {};
+  p[key] = id;
+  S.v38.pick[rec.id] = p;
+}
+
+/* ── 결과물 이름 ── */
+function v38ShortOf(matId) {
+  if (!matId) return '';
+  var m = v38MatDef(matId);
+  if (!m) return '';
+  if (m.wood) {
+    var w = { oak: '참나무', willow: '버드나무', pine: '소나무' }[m.wood];
+    if (w) return w;
+  }
+  return m.short || (ITEMS[matId] ? ITEMS[matId].name : matId);
+}
+function v38FlexName(rec, picks) {
+  var parts = [];
+  if (rec.naming === 'compose') {
+    var order = rec.nameOrder || [];
+    for (var i = 0; i < order.length; i++) {
+      var id = picks[order[i]];
+      if (!id) continue;
+      parts.push(v38ShortOf(id));
+    }
+  } else if (rec.naming === 'prefix') {
+    /* 주 재료(첫 슬롯)의 이름을 앞에 붙인다 */
+    var main = picks[rec.slots[0].key];
+    /* 정밀 목재처럼 두 재료를 섞으면 앞 재료의 나무 이름을 쓴다 */
+    var sh = v38ShortOf(main);
+    if (sh) parts.push(sh);
+  }
+  var nm = parts.join(' ') + (parts.length ? ' ' : '') + rec.noun;
+  return nm.replace(/\s+/g, ' ').trim();
+}
+
+/* ── 결과물 스탯 ── */
+function v38FlexStats(rec, picks) {
+  var at = {}, i, k;
+  for (i = 0; i < rec.slots.length; i++) {
+    var id = picks[rec.slots[i].key];
+    if (!id) continue;
+    var m = v38MatDef(id);
+    if (m && m.at) v38AddAttrs(at, m.at);
+  }
+  var atk = rec.baseAtk || 0, def = rec.baseDef || 0, spd = 0, gspd = 0, gather = 0, warm = 0;
+  for (k in at) {
+    var A = V38_ATTR[k];
+    if (!A) continue;
+    if (A.atk) atk += A.atk * at[k];
+    if (A.def) def += A.def * at[k];
+    if (A.spd) spd += A.spd * at[k];
+    if (A.gatherSpd) gspd += A.gatherSpd * at[k];
+    if (A.gather) gather += A.gather * at[k];
+    if (A.warm) warm += A.warm * at[k];
+  }
+  return {
+    at: at, atk: Math.max(1, Math.round(atk)), def: Math.max(0, Math.round(def)),
+    spd: Math.max(-0.2, Math.min(0.3, +spd.toFixed(3))), gspd: Math.min(0.3, gspd),
+    gather: gather, warm: warm
+  };
+}
+
+/* ── 비용·결과 묶음 ── */
+function v38Build(rec, picks) {
+  var cost = {}, i, k;
+  for (k in (rec.cost || {})) cost[k] = (cost[k] || 0) + rec.cost[k];
+  for (i = 0; i < rec.slots.length; i++) {
+    var s = rec.slots[i], id = picks[s.key];
+    if (!id) continue;
+    cost[id] = (cost[id] || 0) + (s.qty || 1);
+  }
+  var lack = [], lackNames = [];
+  for (k in cost) {
+    var have = S.inv[k] | 0;
+    if (have < cost[k]) { lack.push(k); lackNames.push((ITEMS[k] ? ITEMS[k].name : k) + ' ' + have + '/' + cost[k]); }
+  }
+  var st = v38FlexStats(rec, picks);
+  var name = v38FlexName(rec, picks);
+  var id = v38DynId(rec, picks);
+  var woodKey = '';
+  var mainMat = picks[rec.slots[0].key];
+  var md = mainMat ? v38MatDef(mainMat) : null;
+  if (md && md.wood) woodKey = md.wood;
+  var def = {
+    n: name, i: rec.icon, at: st.at, ds: rec.desc,
+    f: rec.fam || '', w: woodKey
+  };
+  if (rec.kind) {
+    def.a = st.atk; def.k = rec.kind; def.g = rec.gatherKind || ''; def.gs = st.gspd;
+    def.sp = st.spd;
+    if (rec.kind === 'bow') def.ar = 30 + Math.round(st.atk * 1.2);
+  }
+  if (rec.gearSlot) {
+    def.d = st.def; def.s = rec.gearSlot; def.sp = st.spd; def.vis = V38_ARMOR_VIS[mainMat] || 'hideVest';
+    if (st.warm > 0) def.wm = st.warm;
+  }
+  return {
+    cost: cost, lack: lack, lackNames: lackNames, ok: !lack.length,
+    out: { id: id, name: name, icon: rec.icon, def: def }, st: st
+  };
+}
+function v38DynId(rec, picks) {
+  var s = rec.id;
+  for (var i = 0; i < rec.slots.length; i++) s += '|' + (picks[rec.slots[i].key] || '-');
+  return 'q38' + v38Hash(s);
+}
+function v38Hash(s) {
+  var h = 5381;
+  for (var i = 0; i < s.length; i++) h = ((h * 33) ^ s.charCodeAt(i)) >>> 0;
+  return h.toString(36);
+}
+
+/* ── 동적 아이템 등록 ── */
+function v38Register(id) {
+  var d = S.v38.dyn[id];
+  if (!d) return false;
+  var it = ITEMS[id] || {};
+  it.name = d.n; it.icon = d.i || '❔';
+  if (d.ds) it.desc = d.ds;
+  it.v38dyn = 1;
+  if (d.a) {
+    it.weapon = id;
+    WEAPONS[id] = {
+      name: d.n, icon: d.i || '⚔', kind: d.k || 'knife', atk: d.a, arrow: d.ar || 0,
+      tier: 3, v38dyn: 1, attrs: d.at || {}, gatherKind: d.g || '', gs: d.gs || 0, spd: d.sp || 0, desc: d.n
+    };
+  }
+  if (d.d !== undefined) {
+    it.gear = id;
+    GEAR[id] = {
+      slot: d.s || 'armor', name: d.n, icon: d.i || '🦺', def: d.d, spd: d.sp || 0,
+      v38dyn: 1, attrs: d.at || {}, vis: d.vis || '', warm: (d.wm || 0) > 0 ? 1 : 0
+    };
+  }
+  ITEMS[id] = it;
+  if (ITEM_ORDER.indexOf(id) < 0) ITEM_ORDER.push(id);
+  return true;
+}
+(function v38RestoreDyn() {
+  for (var id in S.v38.dyn) { try { v38Register(id); } catch (e) { } }
+})();
+
+/* ── 저장/불러오기 ── */
+var _v38PackState = packState;
+packState = function () {
+  var d = _v38PackState();
+  d.v38 = { dyn: S.v38.dyn, pick: S.v38.pick };
+  return d;
+};
+var _v38ApplyData = applyData;
+applyData = function (d) {
+  var v = (d && d.v38 && typeof d.v38 === 'object') ? d.v38 : null;
+  /* 불러오기 전에 동적 아이템을 먼저 등록한다.
+     (장비 착용 복원은 applyData 안에서 WEAPONS/GEAR 를 보고 판단하기 때문에,
+      늦게 등록하면 저장해 둔 동적 무기가 벗겨진다) */
+  if (v && v.dyn && typeof v.dyn === 'object') {
+    for (var pid in v.dyn) { if (v.dyn[pid]) S.v38.dyn[pid] = v.dyn[pid]; }
+    for (var pid2 in v.dyn) { try { v38Register(pid2); } catch (e) { } }
+  }
+  _v38ApplyData(d);
+  if (!S.v38 || typeof S.v38 !== 'object') S.v38 = {};
+  S.v38.dyn = (v && v.dyn && typeof v.dyn === 'object') ? v.dyn : {};
+  S.v38.pick = (v && v.pick && typeof v.pick === 'object') ? v.pick : {};
+  for (var id in S.v38.dyn) { try { v38Register(id); } catch (e) { } }
+  try { refreshTool(); } catch (e) { }
+};
+
+/* ── v3.8 정적 레시피(용광로 금속·제련) ── */
+(function v38StaticRecipes() {
+  var R = [
+    {
+      id: 'q38charcoal', tab: 'process', out: 'charcoal', qty: 1, station: 'furnace',
+      name: '숯 만들기', icon: '⚫', desc: '통나무 2개를 태워 숯을 만든다 · 강철 제련의 연료',
+      cost: { wood: 2 }, v38cat: 'process', v38grp: '금속 · 제련', v38skill: 'wood', v38xp: 3
+    },
+    {
+      id: 'q38steel', tab: 'process', out: 'steel', qty: 1, station: 'furnace',
+      name: '강철 제련', icon: '🔩', desc: '철 2 + 숯 1 → 강철 주괴 · 단단하고 날이 선 상급 금속',
+      cost: { iron: 2, charcoal: 1 }, v38cat: 'process', v38grp: '금속 · 제련', v38skill: 'stone', v38xp: 8
+    }
+  ];
+  for (var i = 0; i < R.length; i++) if (!findRecipe(R[i].id)) RECIPES.push(R[i]);
+  CRAFT_T.q38charcoal = 25; CRAFT_T.q38steel = 45;
+  /* 금속 광석 제련은 용광로 일로 옮긴다 (대장간 겸용 해제) */
+  var sm = findRecipe('ironSmelt');
+  if (sm) {
+    sm.station = 'furnace';
+    sm.benchCompat = false;
+    sm.desc = '금속 광석 1 + 돌 1 → 철광석 3 (용광로에서 제련)';
+  }
+  /* 제재소는 판재 대신 끈으로 묶은 통나무를 쓴다 (동적 판재와 충돌 방지) */
+  var lm = findRecipe('lumberMill');
+  if (lm && lm.cost && lm.cost.woodPlank !== undefined) {
+    lm.cost = { wood: 20, stone: 6, twine: 2 };
+    lm.desc = '2단계 목재 가공 · 정밀 목재·대량 판재';
+  }
+  /* 합쳐진 목재 레시피는 목록에서 뺀다 (유연 레시피가 대신한다) */
+  var drop = ['v37BarkOak', 'v37BarkWillow', 'v37BarkPine', 'v37WoodSplit', 'v37WoodPlank', 'v37WoodCut', 'v37WoodJoin', 'v37WoodFine'];
+  for (var j = RECIPES.length - 1; j >= 0; j--) {
+    if (drop.indexOf(RECIPES[j].id) >= 0) RECIPES.splice(j, 1);
+  }
+})();
+
+/* ── findRecipe: 동적 결과 레시피까지 찾는다 ── */
+var V38_REC = {};
+var _v38FindRecipe = findRecipe;
+findRecipe = function (id) {
+  if (V38_REC[id]) return V38_REC[id];
+  return _v38FindRecipe(id);
+};
+
+/* ── 유연 제작 실행 ── */
+function v38CraftFlex(recId) {
+  var rec = V38_FLEX[recId];
+  if (!rec) { sfx('deny'); return false; }
+  var picks = v38PicksFor(rec);
+  var b = v38Build(rec, picks);
+  if (!b.ok) {
+    sfx('deny');
+    toast('재료가 부족해요 · ' + b.lackNames.join(' · '), 'warn');
+    return false;
+  }
+  if (!S.v38.dyn[b.out.id]) S.v38.dyn[b.out.id] = b.out.def;
+  v38Register(b.out.id);
+  var rid = 'q38r_' + b.out.id;
+  var rr = {
+    id: rid, out: b.out.id, qty: 1, name: b.out.name, icon: b.out.icon,
+    station: rec.station || '', tab: rec.tab || 'process', cost: b.cost,
+    v37skill: rec.skill, v37xp: rec.xp, v37lock: rec.lock, v37tool: rec.tool,
+    v38flex: 1, desc: rec.desc
+  };
+  if (rec.bonusBy) {
+    var bn = rec.bonusBy[picks[rec.slots[0].key]];
+    if (bn) rr.bonus = bn;
+  }
+  V38_REC[rid] = rr;
+  CRAFT_T[rid] = rec.time || 20;
+  S.v38.pick[rec.id] = picks;          /* 마지막에 쓴 조합을 기억한다 */
+  craft(rid);
+  return true;
+}
+
+/* ── v3.8: 가벼운 재료로 만든 무기는 들고 있으면 걸음이 조금 빨라진다 ── */
+var _v38GearSpeed = gearSpeed;
+gearSpeed = function () {
+  var s = _v38GearSpeed();
+  try {
+    var w = equippedWeapon(), W = w && WEAPONS[w];
+    if (W && W.v38dyn && W.spd) s += W.spd;
+  } catch (e) { }
+  return s;
+};
+
+/* ── v3.8: 동적 무기 손 모델 — 종류에 맞는 기본 메시를 보여 준다 ── */
+var _v38RefreshTool = refreshTool;
+refreshTool = function () {
+  _v38RefreshTool();
+  try {
+    var w = equippedWeapon();
+    var W = w && WEAPONS[w];
+    if (!W || !W.v38dyn || !player || !player.axe) return;
+    var k = W.kind;
+    if (player.axe) player.axe.visible = (k === 'axe');
+    if (player.spear) player.spear.visible = (k === 'spear');
+    if (player.knife) player.knife.visible = (k === 'knife');
+    if (player.bow) player.bow.visible = (k === 'bow');
+    if (player.sickle) player.sickle.visible = (k === 'sickle');
+    if (player.pick) player.pick.visible = (k === 'pick');
+  } catch (e) { }
+};
+
+/* ── v3.8: 동적 갑옷 외형 — 같은 계열의 기본 옷 메시를 입는다 ── */
+var _v38UpdateOutfit = updateOutfit;
+updateOutfit = function () {
+  try {
+    var a = S.equip.armor;
+    var G = a && GEAR[a];
+    if (G && G.v38dyn && G.vis && player.armorSets) {
+      for (var kk in player.armorSets) player.armorSets[kk].visible = (kk === G.vis);
+      if (player.hat) player.hat.visible = (S.equip.hat !== 'furHat');
+      if (player.hatSets) for (var h in player.hatSets) player.hatSets[h].visible = (S.equip.hat === h);
+      for (var b in player.bootSets) {
+        var s = player.bootSets[b];
+        var on = (S.equip.boots === b);
+        if (s.set) s.set(on); else s.visible = on;
+      }
+      if (player.packSets) for (var p in player.packSets) player.packSets[p].visible = (S.equip.backpack === p);
+      if (typeof updateDyeOutfit === 'function') updateDyeOutfit();
+      return;
+    }
+  } catch (e) { }
+  _v38UpdateOutfit();
+};
+
+/* ── v3.8: 퀵슬롯에 동적 무기도 넣는다 ── */
+var _v38QuickSlotItems = quickSlotItems;
+quickSlotItems = function () {
+  var out = _v38QuickSlotItems();
+  for (var id in S.inv) {
+    var W = WEAPONS[id];
+    if (!W || !W.v38dyn) continue;
+    if ((S.inv[id] | 0) <= 0) continue;
+    if (out.indexOf(id) >= 0) continue;
+    out.push(id);
+  }
+  return out;
+};
+
+/* ── v3.8: 아이템 성능 칩에 속성 표시 ── */
+var _v38ItemStatChips = itemStatChips;
+itemStatChips = function (outId) {
+  var chips = _v38ItemStatChips(outId);
+  var d = S.v38.dyn[outId];
+  if (d && d.at) {
+    var list = v38AttrList(d.at);
+    for (var i = 0; i < list.length && i < 3; i++) chips.push('✦ ' + V38_ATTR[list[i].k].name + ' ' + list[i].lv);
+  }
+  return chips;
+};
+
+/* ==========================================================================
+   WILD LIFE v3.8 — 심플 유연 제작/건설 UI (정통 3분할)
+   좌 2열 카테고리 8 · 중 2열 아이템 카드 · 우 상세/재료/노란 CTA
+   작업대 앞에서는 그 작업대 전용 레시피만, HUD 제작(맨손)은 맨손·간이만.
+   ========================================================================== */
+var V38_CATS = [
+  { id: 'all', name: '전체', icon: '🔍' },
+  { id: 'process', name: '재료 가공', icon: '🪚' },
+  { id: 'cook', name: '요리', icon: '🍲' },
+  { id: 'clothing', name: '의류', icon: '👕' },
+  { id: 'weapon', name: '무기·도구', icon: '⚔' },
+  { id: 'decor', name: '설치·장식', icon: '🏕' },
+  { id: 'rest', name: '휴식·주거', icon: '🛏' },
+  { id: 'store', name: '보관·작업대', icon: '📦' }
+];
+var V38_UI = { cat: 'all', q: '', sel: '', peek: '', openMat: '' };
+
+/* ── 카테고리 분류 ── */
+var V38_REST_IDS = ['campfire', 'cabin', 'bed', 'lantern', 'torchStand'];
+var V38_DECOR_IDS = ['planter', 'fence', 'barn', 'hatchNest', 'leatherRug', 'leatherCanopy'];
+function v38CatOf(r) {
+  if (!r) return 'weapon';
+  if (r.v38cat) return r.v38cat;
+  var id = r.id, out = r.out || r.id;
+  if (r.v38flex) return 'process';
+  if (r.made) {
+    if (V38_REST_IDS.indexOf(id) >= 0) return 'rest';
+    if (V38_DECOR_IDS.indexOf(id) >= 0) return 'decor';
+    return 'store';
+  }
+  if (r.tab === 'cook') return 'cook';
+  if (r.tab === 'clothes') return 'clothing';
+  if (r.tab === 'process') return 'process';
+  if (r.tab === 'weapon') return 'weapon';
+  if (GEAR[out]) return 'clothing';
+  if (WEAPONS[out] || id === 'saw') return 'weapon';
+  if (ITEMS[out] && ITEMS[out].food) return 'cook';
+  return 'weapon';
+}
+var V38_GRP_ORDER = ['목재 가공', '석재 가공', '식물 가공', '금속 · 제련',
+  '가공 시설 1단계', '가공 시설 2단계', '제작 시설', '가공·제작 시설',
+  '요리도구', '상위 요리', '활', '한손 검', '창', '도끼', '곡괭이', '낫', '가죽 갑옷',
+  '방어구 티어', '도구', '기본 무기', '무기', '옷', '신발', '배낭',
+  '조명 · 휴식', '주거', '보관함', '가구', '작업대 · 시설', '소품', '농경지 · 길', '둥지', '기초'];
+function v38GrpOf(r) {
+  if (r.v38grp) return r.v38grp;
+  if (r.grp) return r.grp;
+  if (r.v38flex) return '가공';
+  if (r.made) {
+    if (V38_REST_IDS.indexOf(r.id) >= 0) return '조명 · 휴식';
+    if (r.id === 'cabin') return '주거';
+    if (r.id === 'planter' || r.id === 'fence' || r.id === 'barn' || r.id === 'hatchNest') return '농경지 · 길';
+    if (r.id === 'chair' || r.id === 'table') return '가구';
+    if (r.id === 'chest' || r.id === 'woodBox' || r.id === 'metalBox' || r.id === 'premiumBox') return '보관함';
+    return '작업대 · 시설';
+  }
+  if (r.tab === 'weapon') return '무기';
+  if (r.tab === 'clothes') return '옷';
+  if (r.tab === 'process') return '가공';
+  if (r.out && GEAR[r.out]) return '옷';
+  if (r.out && WEAPONS[r.out]) return '기본 무기';
+  return '기초';
+}
+
+/* ── 작업대 전용 필터 ──
+   맨손/간이(HUD 제작 아이콘) = 작업대가 필요 없는 레시피만.
+   단, 간이 작업대(workbench) 앞에서는 예전처럼 옷·무기 벤치 호환 레시피도 연다. */
+function v38StationMatch(r, st) {
+  if (r && r.v38flex) {
+    if (!st) return !r.station;
+    return r.station === st;
+  }
+  if (!st) {
+    if (!r.station) return true;
+    if (typeof nearWorkbench === 'function' && nearWorkbench()) {
+      if (r.benchCompat || r.station === 'workbench' || r.station === 'tailorBench' || r.station === 'smithBench') return true;
+    }
+    return false;
+  }
+  if (r.station === st) return true;
+  return false;
+}
+function v38AllEntries() {
+  var out = [], i;
+  for (i = 0; i < RECIPES.length; i++) out.push(RECIPES[i]);
+  for (var k in V38_FLEX) out.push(V38_FLEX[k]);
+  return out;
+}
+function v38StationLabel(st) {
+  if (!st) return { name: '맨손 · 간이 제작', icon: '🧍', desc: '작업대 없이 손으로 만드는 것만 보여요' };
+  var s = STATIONS[st];
+  if (!s) return { name: st, icon: '🛠', desc: '' };
+  return { name: s.name, icon: s.icon, desc: s.desc || '' };
+}
+
+/* ── 잠금 판정 (v37 규칙 + v3.8 유연 레시피) ── */
+function v38LockOf(r) {
+  if (!r) return '';
+  if (r.v37lock && !v37Unlocked(r)) return v37LockReason(r);
+  if (r.unlock && !recipeUnlocked(r)) {
+    var it = ITEMS[r.unlock];
+    return (it ? it.name : r.unlock) + '을(를) 한 번 얻으면 열려요';
+  }
+  return '';
+}
+function v38Unlocked(r) { return !v38LockOf(r); }
+function v38ToolOf(r) { return r.v37tool || r.tool || ''; }
+
+/* ==========================================================================
+   렌더
+   ========================================================================== */
+var _v38RenderSheet = renderSheet;
+renderSheet = function () {
+  if (typeof V37_SKIP_RENDER !== 'undefined' && V37_SKIP_RENDER) return;
+  if (sheetMode === 'craft') {
+    try { v38RenderCraft(); } catch (e) {
+      try { console.error('[v38] craft render', e); } catch (e2) { }
+      var sh = document.getElementById('sheet');
+      if (sh) sh.classList.add('on');
+    }
+    return;
+  }
+  return _v38RenderSheet();
+};
+
+function v38RenderCraft() {
+  var sh = document.getElementById('sheet');
+  if (sh && !sh.classList.contains('v37c')) sh.classList.add('v37c');
+  var st = craftStation || null;
+  var lab = v38StationLabel(st);
+  sheetTitle.textContent = st ? (lab.icon + ' ' + lab.name) : '제작/건설';
+  sheetSub.textContent = st ? (lab.desc || (lab.name + ' 전용 레시피')) : '맨손·간이 제작 · 작업대 앞에서 그 전용 레시피가 열려요';
+  sheetBody.innerHTML = '';
+
+  /* 진행 중 작업 (v3.7.2 계승) */
+  var liveJobs = (typeof v37LiveJobs === 'function') ? v37LiveJobs() : [];
+  if (liveJobs.length) {
+    var jb = document.createElement('div');
+    jb.className = 'c37jobs';
+    for (var ji = 0; ji < liveJobs.length; ji++) {
+      var row = v37JobRow(liveJobs[ji]);
+      if (row) jb.appendChild(row);
+    }
+    sheetBody.appendChild(jb);
+  }
+
+  var wrap = document.createElement('div');
+  wrap.className = 'c38';
+  sheetBody.appendChild(wrap);
+
+  /* ───── 좌: 카테고리 2열 ───── */
+  var catCol = document.createElement('div');
+  catCol.className = 'c38cat';
+  var grid = document.createElement('div');
+  grid.className = 'c38catGrid';
+  var all = v38AllEntries().filter(function (r) { return v38StationMatch(r, st); });
+  for (var c = 0; c < V38_CATS.length; c++) {
+    (function (C) {
+      var n = C.id === 'all' ? all.length : all.filter(function (r) { return v38CatOf(r) === C.id; }).length;
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'c38catBtn' + (V38_UI.cat === C.id && !V38_UI.peek ? ' on' : '');
+      b.setAttribute('data-cat', C.id);
+      b.innerHTML = '<span>' + C.icon + '</span><em>' + C.name + '</em>' + (n ? '<i class="n">' + n + '</i>' : '');
+      b.addEventListener('click', function () {
+        V38_UI.cat = C.id; V38_UI.sel = ''; V38_UI.peek = ''; V38_UI.openMat = '';
+        v38RenderCraft();
+      });
+      grid.appendChild(b);
+    })(V38_CATS[c]);
+  }
+  catCol.appendChild(grid);
+  /* 숙련도 */
+  var sk = document.createElement('div');
+  sk.className = 'c38skill';
+  sk.innerHTML = '<h5>숙련도</h5>';
+  var ks = ['wood', 'stone', 'plant', 'cook'];
+  for (var s = 0; s < ks.length; s++) {
+    var kk = ks[s];
+    var row2 = document.createElement('div');
+    row2.className = 'c38skillRow';
+    row2.innerHTML = '<span>' + V37_SKILL_ICON[kk] + '</span>' + V37_SKILL_NAME[kk] +
+      '<span class="c38skillBar"><i style="width:' + Math.round(v37SkillPct(kk) * 100) + '%"></i></span>' +
+      '<em>Lv.' + v37SkillLv(kk) + '</em>';
+    sk.appendChild(row2);
+  }
+  catCol.appendChild(sk);
+  wrap.appendChild(catCol);
+
+  /* ───── 중: 검색 + 2열 카드 ───── */
+  var mid = document.createElement('div');
+  mid.className = 'c38mid';
+  var search = document.createElement('div');
+  search.className = 'c38search';
+  var inp = document.createElement('input');
+  inp.type = 'search';
+  inp.placeholder = '검색';
+  inp.value = V38_UI.q;
+  var cnt = document.createElement('b');
+  var clr = document.createElement('button');
+  clr.type = 'button';
+  clr.className = 'c38clear';
+  clr.textContent = '⟲ 재료';
+  clr.title = '재료 선택을 기본값으로';
+  clr.addEventListener('click', function () {
+    var r = V38_UI.sel ? V38_FLEX[V38_UI.sel] : null;
+    if (r) { delete S.v38.pick[r.id]; V38_UI.openMat = ''; v38RenderCraft(); }
+  });
+  search.appendChild(inp);
+  search.appendChild(cnt);
+  search.appendChild(clr);
+  mid.appendChild(search);
+  var cards = document.createElement('div');
+  cards.className = 'c38cards';
+  mid.appendChild(cards);
+  wrap.appendChild(mid);
+
+  /* ───── 우: 상세 ───── */
+  var det = document.createElement('div');
+  det.className = 'c38det';
+  wrap.appendChild(det);
+
+  var rowsEl = cards;
+
+  function filtered() {
+    var q = String(V38_UI.q || '').replace(/\s+/g, '').toLowerCase();
+    var out = [];
+    for (var i = 0; i < all.length; i++) {
+      var r = all[i];
+      if (V38_UI.cat !== 'all' && v38CatOf(r) !== V38_UI.cat) continue;
+      if (q) {
+        var hay = (r.name + ' ' + (r.desc || '') + ' ' + (ITEMS[r.out || r.id] ? ITEMS[r.out || r.id].name : '')).replace(/\s+/g, '').toLowerCase();
+        if (hay.indexOf(q) < 0) continue;
+      }
+      out.push(r);
+    }
+    return out;
+  }
+
+  function renderDetail(r) {
+    det.innerHTML = '';
+    if (!r) {
+      var e = document.createElement('div');
+      e.className = 'c38empty';
+      e.textContent = '왼쪽에서 만들 것을 골라 주세요';
+      det.appendChild(e);
+      return;
+    }
+    var flex = !!r.v38flex;
+    var un = v38Unlocked(r);
+    var picks = flex ? v38PicksFor(r) : null;
+    var built = flex ? v38Build(r, picks) : null;
+    var outName = flex ? built.out.name : r.name;
+    var head = document.createElement('div');
+    head.className = 'c38detHead';
+    head.innerHTML = '<span class="star">★</span><b>' + (un ? outName : '??? (잠김)') + '</b>' +
+      (flex ? '<i class="c38tag">유연</i>' : '');
+    det.appendChild(head);
+
+    var body = document.createElement('div');
+    body.className = 'c38detBody';
+    var outId = flex ? built.out.id : (r.out || r.id);
+    var html = '';
+    html += '<div class="c38desc">' + (un ? (r.desc || '') : '아직 해금되지 않았어요. 조건을 채우면 실루엣이 열립니다.') + '</div>';
+
+    /* 기본 정보 */
+    var lvNeed = flex ? 1 : recipeLv(r);
+    html += '<div class="c38kv"><span>최대 레벨</span><b>Lv.' + lvNeed + '</b></div>';
+    var skKey = r.skill || r.v38skill || r.v37skill;
+    var skillName = skKey ? (V37_SKILL_NAME[skKey] + ' Lv.' + v37SkillLv(skKey)) : '제작';
+    html += '<div class="c38kv"><span>관련 숙련도</span><b class="gold">' + skillName + '</b></div>';
+    var toolId = v38ToolOf(r);
+    var toolOk = toolId ? (S.inv[toolId] | 0) > 0 : true;
+    var stOk = st ? true : (r.station ? false : true);
+    html += '<div class="c38kv"><span>필요 도구</span><b>' + (toolId ? v37ToolName(toolId) + (toolOk ? ' ✓' : ' ✗') : '맨손') + '</b></div>';
+    var stName = r.station ? ((STATIONS[r.station] ? STATIONS[r.station].icon + ' ' + STATIONS[r.station].name : r.station)) : '없음(손작업)';
+    html += '<div class="c38kv"><span>작업대</span><b>' + stName + (r.station ? (stationOk(r) ? ' ✓' : ' ✗') : '') + '</b></div>';
+    html += '<div class="c38kv"><span>제작 시간</span><b>' + craftTimeLabel(flex ? (r.time || 20) : craftTimeSec(r)) + '</b></div>';
+
+    /* 재료 선택 (유연) */
+    if (flex) {
+      html += '<div class="c38sec"><h6>재료 선택</h6>';
+      for (var si = 0; si < r.slots.length; si++) {
+        var sl = r.slots[si];
+        var opts = v38SlotOptions(sl);
+        var sel = picks[sl.key];
+        html += '<div class="c38slot" data-slot="' + sl.key + '"><div class="c38slotLb">' + sl.label +
+          ' <b>' + (sel ? (opts.filter(function (o) { return o.id === sel; })[0] || {}).name || v38ShortOf(sel) : '없음') + '</b>' +
+          (sl.qty > 1 ? ' <em>×' + sl.qty + '</em>' : '') + '</div><div class="c38opts">';
+        if (!opts.length) html += '<span class="c38opt non">가진 재료가 없어요</span>';
+        for (var oi = 0; oi < opts.length; oi++) {
+          var o = opts[oi];
+          var on = sel === o.id;
+          var lack = !o.none && (o.have | 0) < (sl.qty || 1);
+          html += '<button type="button" class="c38opt' + (on ? ' on' : '') + (lack ? ' lack' : '') +
+            '" data-slot="' + sl.key + '" data-k="' + o.id + '">' +
+            '<i>' + o.icon + '</i><em>' + (o.none ? '없음' : o.name) + '</em><b>' + (o.none ? '' : (o.have | 0)) + '</b></button>';
+        }
+        html += '</div></div>';
+      }
+      html += '</div>';
+    }
+
+    /* 재료 */
+    var cost = flex ? built.cost : (r.cost || {});
+    html += '<div class="c38sec"><h6>재료</h6>';
+    var any = false;
+    for (var ck in cost) {
+      any = true;
+      var have = S.inv[ck] | 0, need = cost[ck];
+      var it = ITEMS[ck] || { name: ck, icon: '❔' };
+      var open = V38_UI.openMat === ck;
+      html += '<div class="c38mat' + (have < need ? ' lack' : '') + (open ? ' open' : '') + '" data-k="' + ck + '" role="button">' +
+        '<span class="mk">' + (have >= need ? '✔' : '✕') + '</span>' +
+        '<span class="mn">' + it.icon + ' ' + it.name + '</span>' +
+        '<b>' + have + ' / ' + need + '</b><i class="ji">ⓘ</i></div>';
+      if (open) {
+        var src = (V38_M[ck] && V38_M[ck].where) || V38_SRC_FALLBACK;
+        var prod = v38ProducerOf(ck);
+        if (prod) {
+          var pst = prod.station ? ((STATIONS[prod.station] ? STATIONS[prod.station].name : prod.station)) : '손작업';
+          src = pst + '에서 <b>' + prod.name + '</b>';
+        }
+        html += '<div class="c38pop"><div class="ph">획득처</div><div class="pw">' + src + '</div>';
+        if (prod) {
+          if (prod.station && prod.station !== st) {
+            html += '<div class="pn">지금은 다른 작업대 앞이라 바로 만들 수 없어요 · 레시피를 보여 줄게요</div>' +
+              '<button type="button" class="c38ghost sm" data-jump="' + prod.id + '">레시피 보기</button>';
+          } else {
+            html += '<button type="button" class="c38ghost sm" data-jump="' + prod.id + '">이 재료 레시피로 이동</button>';
+          }
+        }
+        html += '</div>';
+      }
+    }
+    if (!any) html += '<div class="c38prop">재료 없이 만드는 물건이에요</div>';
+    html += '</div>';
+
+    /* 가공 특성 / 결과 미리보기 */
+    if (flex) {
+      var stt = built.st;
+      html += '<div class="c38sec"><h6>결과 미리보기</h6>';
+      html += '<div class="c38prev"><i>' + r.icon + '</i><b>' + built.out.name + '</b></div>';
+      var chips = [];
+      if (r.kind) chips.push('⚔ 공격 ' + stt.atk);
+      if (r.kind === 'bow') chips.push('🏹 화살 ' + built.out.def.ar);
+      if (r.gearSlot) chips.push('🛡 방어 +' + stt.def);
+      if (stt.spd && (r.kind || r.gearSlot)) chips.push('🏃 이동 ' + (stt.spd > 0 ? '+' : '') + Math.round(stt.spd * 100) + '%');
+      if (stt.gather) chips.push('⚡ 채집 +' + stt.gather);
+      if (stt.gspd) chips.push('💨 채집 속도 +' + Math.round(stt.gspd * 100) + '%');
+      if (chips.length) html += '<div class="c38chips">' + chips.map(function (x) { return '<span>' + x + '</span>'; }).join('') + '</div>';
+      var alist = v38AttrList(stt.at);
+      if (alist.length) {
+        html += '<div class="c38attrs">';
+        for (var ai = 0; ai < alist.length; ai++) html += '<div class="c38attr">✦ ' + alist[ai].text + '</div>';
+        html += '</div>';
+      } else {
+        html += '<div class="c38prop">속성 없는 재료 — 평범한 성능이에요</div>';
+      }
+      if (r.note) html += '<div class="c38prop">' + r.note + '</div>';
+      html += '</div>';
+    } else {
+      var stats = itemStatChips(outId);
+      if (stats.length) html += '<div class="c38sec"><h6>성능</h6><div class="c38chips">' + stats.map(function (x) { return '<span>' + x + '</span>'; }).join('') + '</div></div>';
+    }
+
+    /* 잠금 사유 */
+    var lk = v38LockOf(r);
+    if (lk) html += '<div class="c38sec"><div class="c38lockmsg">🔒 ' + lk + '</div></div>';
+
+    /* 보유 */
+    if (flex) {
+      html += '<div class="c38sec"><h6>보유</h6><div class="c38kv"><span>가방</span><b>' + (S.inv[built.out.id] | 0) + '개</b></div></div>';
+    } else if (r.made) {
+      html += '<div class="c38sec"><h6>보관 중</h6><div class="c38kv"><span>설치 대기</span><b>' + (S.made[r.id] | 0) + '개</b></div></div>';
+    } else {
+      html += '<div class="c38sec"><h6>보유</h6><div class="c38kv"><span>가방</span><b>' + (S.inv[outId] | 0) + '개</b></div></div>';
+    }
+    body.innerHTML = html;
+    det.appendChild(body);
+
+    /* ── 이벤트 ── */
+    var optEls = body.querySelectorAll('.c38opt');
+    for (var q1 = 0; q1 < optEls.length; q1++) {
+      optEls[q1].addEventListener('click', function (e) {
+        var slotKey = this.getAttribute('data-slot'), id = this.getAttribute('data-k');
+        v38SetPick(r, slotKey, id);
+        V38_UI.openMat = '';
+        v38RenderCraft();
+      });
+    }
+    var matEls = body.querySelectorAll('.c38mat');
+    for (var q2 = 0; q2 < matEls.length; q2++) {
+      matEls[q2].addEventListener('click', function (e) {
+        if (e.target && e.target.getAttribute && e.target.getAttribute('data-jump')) return;
+        var k2 = this.getAttribute('data-k');
+        V38_UI.openMat = (V38_UI.openMat === k2) ? '' : k2;
+        v38RenderCraft();
+      });
+    }
+    var jumpEls = body.querySelectorAll('[data-jump]');
+    for (var q3 = 0; q3 < jumpEls.length; q3++) {
+      jumpEls[q3].addEventListener('click', function (e) {
+        e.stopPropagation();
+        v38JumpTo(this.getAttribute('data-jump'));
+      });
+    }
+
+    /* ── CTA ── */
+    var foot = document.createElement('div');
+    foot.className = 'c38detFoot';
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'c38btn';
+    var label = '제작' + (r.made ? ' · 건설' : '');
+    var off = false;
+    if (!un) { label = '잠금'; off = true; }
+    else if (!toolOk) { label = v37ToolName(toolId) + ' 필요'; off = true; }
+    else if (!stationOk(r)) { label = '작업대 앞에서'; off = true; }
+    else if (flex && !built.ok) { label = '재료 부족'; off = true; }
+    else if (!flex && !costAllOk(r)) { label = '재료 부족'; off = true; }
+    else if (!flex && !r.made && !bagCanAdd(outId, r.qty || 1)) { label = '가방 가득'; off = true; }
+    if (off) btn.className += ' off';
+    btn.textContent = label;
+    btn.setAttribute('data-act', 'craft');
+    btn.addEventListener('click', function () {
+      if (off) { sfx('deny'); return; }
+      var now = Date.now();
+      if (btn.__last && now - btn.__last < 240) return;
+      btn.__last = now;
+      if (flex) v38CraftFlex(r.id);
+      else craft(r.id);
+    });
+    foot.appendChild(btn);
+    det.appendChild(foot);
+  }
+
+  function renderCards() {
+    rowsEl.innerHTML = '';
+    /* 재료 점프 — 그 레시피 하나만 보여 준다 */
+    if (V38_UI.peek) {
+      var pk = V38_FLEX[V38_UI.peek] || findRecipe(V38_UI.peek);
+      var back = document.createElement('button');
+      back.type = 'button';
+      back.className = 'c38back';
+      back.textContent = '← 목록으로';
+      back.addEventListener('click', function () { V38_UI.peek = ''; v38RenderCraft(); });
+      rowsEl.appendChild(back);
+      if (pk) {
+        var g1 = document.createElement('div');
+        g1.className = 'c38grp';
+        g1.textContent = '이 재료로 만드는 레시피';
+        rowsEl.appendChild(g1);
+        var box1 = document.createElement('div');
+        box1.className = 'c38grid';
+        box1.appendChild(cardOf(pk, true));
+        rowsEl.appendChild(box1);
+        cnt.textContent = '1종';
+        renderDetail(pk);
+      }
+      return;
+    }
+    var list = filtered();
+    cnt.textContent = list.length + '종';
+    if (!list.length) {
+      var e2 = document.createElement('div');
+      e2.className = 'c38empty';
+      e2.innerHTML = st ? ('<b>' + lab.icon + ' ' + lab.name + '</b>에서는 만들 수 있는 것이 아직 없어요') :
+        '작업대 없이 만드는 것만 보여요 · 다른 작업대 앞에서 전용 레시피가 열려요';
+      rowsEl.appendChild(e2);
+      renderDetail(null);
+      return;
+    }
+    /* 그룹 */
+    var groups = {}, order = [];
+    for (var i = 0; i < list.length; i++) {
+      var g = v38GrpOf(list[i]);
+      if (!groups[g]) { groups[g] = []; order.push(g); }
+      groups[g].push(list[i]);
+    }
+    order.sort(function (a, b) {
+      var ia = V38_GRP_ORDER.indexOf(a), ib = V38_GRP_ORDER.indexOf(b);
+      if (ia < 0) ia = 90; if (ib < 0) ib = 90;
+      return ia - ib;
+    });
+    var firstAvail = null;
+    for (var oi = 0; oi < order.length; oi++) {
+      var gname = order[oi], arr = groups[gname];
+      arr.sort(function (a, b) { return (v38Unlocked(a) ? 0 : 1) - (v38Unlocked(b) ? 0 : 1); });
+      var h = document.createElement('div');
+      h.className = 'c38grp';
+      h.innerHTML = '<span>' + gname + '</span><i>' + arr.length + '</i>';
+      rowsEl.appendChild(h);
+      var gridEl = document.createElement('div');
+      gridEl.className = 'c38grid';
+      for (var j = 0; j < arr.length; j++) {
+        var r = arr[j];
+        if (!firstAvail && v38Unlocked(r)) firstAvail = r.id;
+        gridEl.appendChild(cardOf(r, false));
+      }
+      rowsEl.appendChild(gridEl);
+    }
+    var cur = V38_UI.sel ? (V38_FLEX[V38_UI.sel] || findRecipe(V38_UI.sel)) : null;
+    if (!cur && firstAvail) { cur = V38_FLEX[firstAvail] || findRecipe(firstAvail); }
+    if (cur) {
+      V38_UI.sel = cur.id;
+      var selEl = rowsEl.querySelector('.c38card[data-id="' + cur.id + '"]');
+      if (selEl) selEl.classList.add('sel');
+    }
+    renderDetail(cur || null);
+  }
+
+  function cardOf(r, forceSel) {
+    var un = v38Unlocked(r);
+    var flex = !!r.v38flex;
+    var sub = '';
+    if (flex) {
+      try { sub = v38Build(r, v38PicksFor(r)).out.name; } catch (e) { sub = '재료 조합'; }
+    } else if (r.made) sub = '설치';
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'c38card' + (V38_UI.sel === r.id ? ' sel' : '') + (un ? '' : ' locked');
+    b.setAttribute('data-id', r.id);
+    b.innerHTML = '<i class="ic">' + (un ? r.icon : '🔒') + '</i>' +
+      '<span class="tx"><b>' + (un ? r.name : '???') + '</b>' +
+      '<em>' + (un ? (flex ? ('→ ' + sub) : (r.desc || '').slice(0, 18)) : '잠김') + '</em></span>';
+    b.addEventListener('click', function () {
+      V38_UI.sel = r.id;
+      V38_UI.openMat = '';
+      v38RenderCraft();
+    });
+    return b;
+  }
+
+  renderCards();
+  try { if (typeof v37UpdateJobRows === 'function') v37UpdateJobRows(); } catch (e) { }
+}
+
+/* ── 재료의 생산 레시피 찾기 (원탭 점프) ── */
+function v38ProducerOf(k) {
+  if (!k) return null;
+  var d = S.v38.dyn[k];
+  if (d && d.f) {
+    for (var fid in V38_FLEX) {
+      if (V38_FLEX[fid].fam === d.f) {
+        return { id: fid, station: V38_FLEX[fid].station || '', name: V38_FLEX[fid].name || V38_FLEX[fid].noun || fid };
+      }
+    }
+  }
+  var LEG = { woodStripped: 'f38peel', woodSplit: 'f38split', woodPlank: 'f38plank', woodCut: 'f38cut', woodJoined: 'f38join', woodFine: 'f38fine' };
+  if (LEG[k]) return { id: LEG[k], station: V38_FLEX[LEG[k]].station || '', name: V38_FLEX[LEG[k]].name };
+  for (var i = 0; i < RECIPES.length; i++) {
+    if (RECIPES[i].out === k) return { id: RECIPES[i].id, station: RECIPES[i].station || '', name: RECIPES[i].name };
+  }
+  return null;
+}
+function v38JumpTo(id) {
+  if (!id) return;
+  var r = V38_FLEX[id] || findRecipe(id);
+  if (!r) return;
+  V38_UI.peek = id;
+  V38_UI.sel = id;
+  V38_UI.openMat = '';
+  v38RenderCraft();
+}
+
+/* ── v3.8: 제작창을 열 때 선택 초기화 ── */
+var _v38OpenCraftHome = openCraftHome;
+openCraftHome = function () {
+  V38_UI.peek = ''; V38_UI.openMat = '';
+  V38_UI.sel = '';
+  V38_UI.cat = 'all';
+  return _v38OpenCraftHome();
+};
+var _v38OpenStationCraft = openStationCraft;
+openStationCraft = function (id) {
+  V38_UI.peek = ''; V38_UI.openMat = '';
+  V38_UI.sel = '';
+  V38_UI.cat = 'all';
+  return _v38OpenStationCraft(id);
+};
+
+/* ==========================================================================
+   WILD LIFE v3.8 — 듀랑고 편의성 플레이 UI
+   ① 도구 자동 스위칭 — 창·활을 들고 있어도 채집하면 가방에서 도끼/곡괭이/낫을 꺼낸다
+   ② 물가 상황 액션 — 물 마시기 · 몸 씻기(상쾌) · 물 담기
+   ③ 부족 전리품 분리 — 부족이 처치한 시체는 흩어질 때 플레이어 가방으로 오지 않는다
+   ========================================================================== */
+
+/* ── ① 도구 자동 스위칭 ── */
+var V38_AT = { active: false, was: '', id: '', t: 0, told: false };
+function v38ToolScore(k) {
+  var W = WEAPONS[k];
+  if (!W) return -1;
+  var s = 1;
+  if (W.v38dyn) s += 6;
+  if (W.attrs && W.attrs.sharp) s += 2 + W.attrs.sharp;
+  if (W.attrs && W.attrs.firm) s += 1;
+  return s;
+}
+function v38BestToolFor(kindName) {
+  var best = '', bs = -1;
+  for (var k in WEAPONS) {
+    var W = WEAPONS[k];
+    if (!W || W.kind !== kindName) continue;
+    if ((S.inv[k] | 0) <= 0) continue;
+    var s = v38ToolScore(k);
+    if (s > bs) { bs = s; best = k; }
+  }
+  return best;
+}
+function v38AutoToolOn(n) {
+  if (!n || n.dead) return false;
+  var need = gatherToolFor(n.kind);
+  if (!need) return false;
+  if (weaponKind() === need) return false;
+  var id = v38BestToolFor(need);
+  if (!id) return false;
+  if (V38_AT.active && V38_AT.id === id) { V38_AT.t = 3.0; return true; }
+  V38_AT.was = S.equip.weapon || '';
+  V38_AT.id = id;
+  V38_AT.active = true;
+  V38_AT.t = 3.0;
+  S.equip.weapon = id;
+  refreshTool();
+  chipsDirty = true;
+  sfx('pick');
+  if (!V38_AT.told) {
+    V38_AT.told = true;
+    toast('🔁 ' + (WEAPONS[id] ? WEAPONS[id].name : '도구') + '을(를) 가방에서 꺼내 들었어요', 'good');
+    hint('🪓 채집이 끝나면 원래 무기로 돌아가요', 2600);
+  }
+  return true;
+}
+function v38AutoToolRestore() {
+  if (!V38_AT.active) return false;
+  var back = V38_AT.was || '';
+  var cur = S.equip.weapon || '';
+  var aid = V38_AT.id;
+  V38_AT.active = false;
+  V38_AT.id = '';
+  /* 그사이 제작 완성 등으로 다른 무기를 들었으면 그대로 둔다 */
+  if (cur === aid || !cur) {
+    S.equip.weapon = (back && (S.inv[back] | 0) > 0) ? back : '';
+    refreshTool();
+    chipsDirty = true;
+  }
+  return true;
+}
+var _v38StartGather = startGather;
+startGather = function (n) {
+  if (n && !n.dead) v38AutoToolOn(n);
+  var r = _v38StartGather(n);
+  /* 가벼운/신축성 재료 도구는 채집 리듬이 조금 빨라진다 */
+  try {
+    var w = equippedWeapon(), W = w && WEAPONS[w];
+    if (W && W.v38dyn && W.gs && GATHER.n) GATHER.iv = Math.max(0.30, GATHER.iv * (1 - W.gs));
+  } catch (e) { }
+  return r;
+};
+setInterval(function () {
+  try {
+    if (!V38_AT.active) return;
+    if (GATHER.n) { V38_AT.t = 3.0; return; }
+    V38_AT.t -= 0.25;
+    if (V38_AT.t <= 0) v38AutoToolRestore();
+  } catch (e) { }
+}, 250);
+
+/* 단단한 날 속성 — 채집 결과가 한 개 더 (같은 자원) */
+var V38_GB = { on: false, used: false };
+var _v38AddItem = addItem;
+addItem = function (k, n) {
+  if (V38_GB.on && !V38_GB.used) { V38_GB.used = true; n = (n === undefined || n === null ? 1 : n) + 1; }
+  return _v38AddItem(k, n);
+};
+var _v38GatherYield = gatherYield;
+gatherYield = function (n) {
+  var bonus = 0;
+  try {
+    var w = equippedWeapon(), W = w && WEAPONS[w];
+    var need = gatherToolFor(n.kind);
+    if (W && W.v38dyn && W.attrs && W.attrs.sharp && need && W.kind === need) bonus = W.attrs.sharp;
+  } catch (e) { bonus = 0; }
+  if (bonus > 0) { V38_GB.on = true; V38_GB.used = false; }
+  try { return _v38GatherYield(n); }
+  finally { V38_GB.on = false; V38_GB.used = false; }
+};
+
+/* ── ② 물가 상황 액션 ── */
+BUFFS.clean = { name: '상쾌', icon: '🚿', dur: 240, color: '#9fd8ff' };
+var _v38WaterDrain = waterDrainRate;
+waterDrainRate = function () {
+  var v = _v38WaterDrain();
+  return buffOn('clean') ? v * 0.75 : v;
+};
+var _v38DodgeCd = dodgeCdSec;
+dodgeCdSec = function () {
+  var v = _v38DodgeCd();
+  return buffOn('clean') ? v * 0.75 : v;
+};
+/* 씻고 나면 체온이 고르게 유지된다 — 냉기 피해 20% 감소 */
+var _v38WarmScale = warmDamageScale;
+warmDamageScale = function () {
+  var v = _v38WarmScale();
+  return buffOn('clean') ? v * 0.8 : v;
+};
+function v38Wash() {
+  audioInit();
+  if (!started) return false;
+  var sp = waterSpotNear();
+  if (!sp) { sfx('deny'); toast('물가에서만 몸을 씻을 수 있어요', 'warn'); return false; }
+  var gy = terrainH(sp.x, sp.z);
+  applyBuff('clean', '몸 씻기');
+  updateBuffHUD();
+  sfx('fill');
+  spawnSplash(sp.x, gy + 0.10, sp.z, 10);
+  spawnFxRing(player.pos.x, groundY(player.pos.x, player.pos.z) + 0.05, player.pos.z, 0xbfe8ff, 0.4, 2.2);
+  spawnBurst(player.pos.x, terrainH(player.pos.x, player.pos.z) + 1.4, player.pos.z, 0xd8f2ff, 10, 0.9);
+  toast('🚿 물로 몸을 씻었어요 · 상쾌 4분 (체온 안정 · 구르기 쿨 −25% · 수분 소모 −25%)', 'good');
+  saveState();
+  return true;
+}
+function v38FillSkin() {
+  var sp = waterSpotNear();
+  if (!sp) { sfx('deny'); toast('물가에서만 물을 담을 수 있어요', 'warn'); return false; }
+  if ((S.inv.waterskin | 0) <= 0) {
+    sfx('deny');
+    toast('물을 담을 통이 없어요 · 가죽 수통(가죽 3 + 끈 4)을 만들면 5회분을 담아 다닐 수 있어요', 'warn');
+    return false;
+  }
+  return fillSkin(sp);
+}
+function v38Drink() {
+  var sp = waterSpotNear();
+  if (!sp) {
+    if ((S.inv.waterskin | 0) > 0 && (S.skin | 0) > 0) return drinkWater();
+    sfx('deny'); toast('물가에 서야 물을 마실 수 있어요', 'warn'); return false;
+  }
+  if ((S.inv.waterskin | 0) > 0 && (S.skin | 0) > 0) return drinkWater();
+  return fillSkin(sp);
+}
+/* 물가 상황 버튼 3종 */
+var V38_WATER = { el: null, on: false, last: '' };
+function v38WaterEl() {
+  if (V38_WATER.el && V38_WATER.el.parentNode) return V38_WATER.el;
+  var hud = document.getElementById('hud') || document.body;
+  var d = document.createElement('div');
+  d.id = 'wl38water';
+  d.setAttribute('role', 'group');
+  d.setAttribute('aria-label', '물가 행동');
+  d.innerHTML =
+    '<button type="button" class="wbtn" data-w="drink"><i>💧</i><span>물 마시기</span></button>' +
+    '<button type="button" class="wbtn" data-w="wash"><i>🚿</i><span>몸 씻기</span></button>' +
+    '<button type="button" class="wbtn" data-w="fill"><i>🫗</i><span>물 담기</span></button>';
+  hud.appendChild(d);
+  V38_WATER.el = d;
+  d.addEventListener('click', function (e) {
+    var b = e.target && e.target.closest ? e.target.closest('.wbtn') : null;
+    if (!b) return;
+    e.preventDefault();
+    e.stopPropagation();
+    var w = b.getAttribute('data-w');
+    if (w === 'drink') v38Drink();
+    else if (w === 'wash') v38Wash();
+    else if (w === 'fill') v38FillSkin();
+    v38WaterTick(true);
+  });
+  return d;
+}
+function v38WaterTick(force) {
+  var d = v38WaterEl();
+  var show = false;
+  try {
+    show = !!(started && !placing && !rideDino && waterSpotNear());
+    if (show && sheet && sheet.classList.contains('on')) show = false;   /* 창 열였을 땐숨긴다 */
+    if (show && typeof MAP !== 'undefined' && MAP.open) show = false;
+  } catch (e) { show = false; }
+  if (force) show = show || false;
+  if (V38_WATER.on !== show) {
+    V38_WATER.on = show;
+    d.classList.toggle('on', show);
+  }
+  if (!show) return;
+  /* 버튼별 상태 표시 */
+  var hasSkin = (S.inv.waterskin | 0) > 0;
+  var sig = (hasSkin ? 1 : 0) + ':' + (S.skin | 0) + ':' + (S.water | 0) + ':' + (buffOn('clean') ? 1 : 0);
+  if (sig === V38_WATER.last) return;
+  V38_WATER.last = sig;
+  var bd = d.querySelector('[data-w="drink"]');
+  var bf = d.querySelector('[data-w="fill"]');
+  var bw = d.querySelector('[data-w="wash"]');
+  if (bd) {
+    bd.classList.toggle('dim', hasSkin && (S.skin | 0) <= 0);
+    bd.title = hasSkin ? ('수통 ' + (S.skin | 0) + '/5회분 · 수분 ' + Math.round(S.water) + '/100') : '손으로 한 모금 마시기';
+  }
+  if (bf) {
+    bf.classList.toggle('dim', (S.skin | 0) >= 5 && hasSkin);
+    bf.title = hasSkin ? ('가죽 수통에 담기 (' + (S.skin | 0) + '/5)') : '가죽 수통이 필요해요';
+  }
+  if (bw) bw.classList.toggle('on', buffOn('clean'));
+}
+var _v38UpdateHUD = updateHUD;
+updateHUD = function (dt) {
+  _v38UpdateHUD(dt);
+  try { v38WaterTick(); } catch (e) { }
+};
+/* rAF 가 느린 기기에서도 물가 버튼은 0.25초마다 확인한다 */
+setInterval(function () { try { v38WaterTick(); } catch (e) { } }, 260);
+
+/* ── ③ 부족 전리품 분리 ── */
+var _v38KillDino = killDino;
+killDino = function (d) {
+  var r = _v38KillDino(d);
+  try {
+    if (d && d.corpse && d.v38tribeKill) d.corpse.tribe = 1;   // 부족이 처치한 시체
+  } catch (e) { }
+  return r;
+};
+var _v38CorpseTimeout = corpseTimeout;
+corpseTimeout = function (d) {
+  var c = corpseOf(d);
+  if (c && c.tribe) {
+    /* 부족이 잡은 사냥감 — 플레이어 가방으로 챙기지 않는다 (토스트도 띄우지 않는다) */
+    c.gone = true;
+    removeCorpseMark(d);
+    if (d.group) d.group.visible = false;
+    return;
+  }
+  return _v38CorpseTimeout(d);
+};
+
+/* ── 검수용 API ── */
+window.__game = window.__game || {};
+window.__game.v38 = {
+  info: function () {
+    return {
+      ver: V38.ver,
+      station: craftStation || null,
+      cat: V38_UI.cat, sel: V38_UI.sel, peek: V38_UI.peek,
+      cards: document.querySelectorAll('.c38card').length,
+      cats: document.querySelectorAll('.c38catBtn').length,
+      groups: document.querySelectorAll('.c38grp').length,
+      cols: (function () {
+        var g = document.querySelector('.c38grid');
+        if (!g) return 0;
+        try { return getComputedStyle(g).gridTemplateColumns.split(' ').filter(Boolean).length; } catch (e) { return 0; }
+      })(),
+      water: (function () { var e = document.getElementById('wl38water'); return !!(e && e.classList.contains('on')); })(),
+      autotool: V38_AT.active ? { id: V38_AT.id, was: V38_AT.was } : null,
+      buffs: (S.buffs || []).map(function (b) { return b.k; })
+    };
+  },
+  openCraft: function (station) {
+    craftStation = station || null;
+    V38_UI.cat = 'all'; V38_UI.sel = ''; V38_UI.peek = '';
+    openSheet('craft');
+    return {
+      station: craftStation, cards: document.querySelectorAll('.c38card').length,
+      titles: Array.prototype.map.call(document.querySelectorAll('.c38card b'), function (e) { return e.textContent; })
+    };
+  },
+  flexInfo: function (id) {
+    var r = V38_FLEX[id];
+    if (!r) return null;
+    var picks = v38PicksFor(r);
+    var b = v38Build(r, picks);
+    return { id: id, picks: picks, name: b.out.name, outId: b.out.id, cost: b.cost, atk: b.st.atk, def: b.st.def, attrs: b.st.at };
+  },
+  pick: function (id, slot, mat) {
+    var r = V38_FLEX[id];
+    if (!r) return null;
+    v38SetPick(r, slot, mat);
+    if (sheetMode === 'craft') v38RenderCraft();
+    return this.flexInfo(id);
+  },
+  craftFlex: function (id) { return v38CraftFlex(id); },
+  /* 손작업 큐를 즉시 완성시킨다 (검수용) */
+  finishHand: function () {
+    var now = Date.now();
+    for (var i = 0; i < (S.hand || []).length; i++) S.hand[i].doneAt = now;
+    try { tickHandJobs(now); } catch (e) { }
+    return (S.hand || []).length;
+  },
+  inv: function (k) { return S.inv[k] | 0; },
+  water: function () { return { water: Math.round(S.water), skin: S.skin | 0, clean: buffOn('clean'), drain: +waterDrainRate().toFixed(3) }; },
+  wash: function () { return v38Wash(); },
+  fill: function () { return v38FillSkin(); },
+  drink: function () { return v38Drink(); },
+  atWater: function () { return !!waterSpotNear(); },
+  inputProbe: function () {
+    var down = [];
+    try { for (var k in keys) if (keys[k]) down.push(k); } catch (e) { }
+    return { down: down, walk: +(player.walk || 0).toFixed(2), x: +player.pos.x.toFixed(2), z: +player.pos.z.toFixed(2),
+      sheetOn: !!(sheet && sheet.classList.contains('on')), active: (document.activeElement && document.activeElement.tagName) || '' };
+  },
+  hudProbe: function () {
+    try { updateHUD(0.016); } catch (e) { return 'ERR:' + e.message; }
+    return { ctx: CTX.type, label: document.getElementById('actLabel').textContent };
+  },
+  tick: function () { try { v38WaterTick(true); } catch (e) { return 'ERR:' + e.message; } var e2 = document.getElementById('wl38water'); return e2 ? e2.className : 'none'; },
+  waterProbe: function () {
+    try {
+      return { started: !!started, placing: !!placing, ride: !!rideDino, spot: !!waterSpotNear(),
+        ctx: CTX.type, hud: !!document.getElementById('hud') };
+    } catch (e) { return 'ERR:' + e.message; }
+  },
+  autoTool: function () { return { active: V38_AT.active, id: V38_AT.id, was: V38_AT.was, weapon: S.equip.weapon || '' }; },
+  gatherState: function () { return { n: GATHER.n ? GATHER.n.kind : null, i: GATHER.i, need: GATHER.need, t: +GATHER.t.toFixed(2), dd: GATHER.n ? +Math.hypot(GATHER.n.x - player.pos.x, GATHER.n.z - player.pos.z).toFixed(2) : null, at: V38_AT }; },
+  gatherNode: function (kind) {
+    for (var i = 0; i < nodes.length; i++) {
+      var n = nodes[i];
+      if (n.dead || (kind && n.kind !== kind)) continue;
+      var dd = Math.hypot(n.x - player.pos.x, n.z - player.pos.z);
+      if (dd < 4) { startGather(n); return { kind: n.kind, dd: +dd.toFixed(2) }; }
+    }
+    return null;
+  },
+  nearestNodeKinds: function () {
+    var out = [];
+    for (var i = 0; i < nodes.length; i++) {
+      var n = nodes[i];
+      if (n.dead) continue;
+      var dd = Math.hypot(n.x - player.pos.x, n.z - player.pos.z);
+      if (dd < 26) out.push({ kind: n.kind, dd: +dd.toFixed(1), x: +n.x.toFixed(1), z: +n.z.toFixed(1) });
+    }
+    out.sort(function (a, b) { return a.dd - b.dd; });
+    return out.slice(0, 12);
+  },
+  /* 부족이 처치한 시체를 만든다 — 흩어질 때 가방에 들어오지 않는지 검수 */
+  tribeKill: function (kind) {
+    var d = spawnDino(kind || 'para', player.pos.x + 3.2, player.pos.z + 1.0, {});
+    if (!d) return null;
+    d.hp = 1;
+    d.v38tribeKill = 1;
+    killDino(d);
+    return { kind: d.kind, corpse: !!(d.corpse && !d.corpse.gone), tribe: !!(d.corpse && d.corpse.tribe) };
+  },
+  playerKill: function (kind) {
+    var d = spawnDino(kind || 'para', player.pos.x + 3.4, player.pos.z - 1.0, {});
+    if (!d) return null;
+    d.hp = 1;
+    killDino(d);
+    return { kind: d.kind, corpse: !!(d.corpse && !d.corpse.gone), tribe: !!(d.corpse && d.corpse.tribe) };
+  },
+  expireCorpse: function () {
+    var n = 0;
+    for (var i = 0; i < dinos.length; i++) {
+      var d = dinos[i];
+      if (d.dead && d.corpse && !d.corpse.gone) { corpseTimeout(d); n++; }
+    }
+    return n;
+  }
+};
+
+/* @@/V38JS@@ */
 })();
 
 </script>
