@@ -2615,6 +2615,179 @@ body.targeting .toasts{top:calc(env(safe-area-inset-top) + 172px) !important}
 }
 
 /* @@/V38CSS@@ */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* @@V39CSS@@ */
+/* ==========================================================================
+   WILD LIFE v3.9 — HUD 다이어트 · 점프 버튼 · 사운드 패널 · 개발자 메뉴
+   (선명도·디테일은 그대로, 겹침·수치 소음만 덜어낸다)
+   ========================================================================== */
+
+/* ── 1) 상단 HUD 다이어트 ───────────────────────────────────────────── */
+#hud .vitals{width:98px;gap:2px}
+#hud .bar{height:7px;border-radius:2px}
+#hud .bar span{display:none}                  /* 평소엔 숫자를 숨긴다 (위험할 때만) */
+#hud .bar.low span{display:block;font-size:7.5px}
+#hud .bar.hp.low{box-shadow:inset 0 0 0 1px rgba(255,120,100,.55)}
+#hud .statrow{display:none}                   /* 공격력·방어력 → 캐릭터 정보창 */
+#hud .dayrow{display:none}                    /* 시간·날씨 → 상단 작은 아이콘 */
+#hud .buffrow{margin-top:2px;max-width:120px}
+
+/* 상단 가운데: 날씨·온도·구역을 한 알약으로 압축 */
+#v39top{
+  position:absolute;left:50%;top:calc(env(safe-area-inset-top) + 4px);transform:translateX(-50%);
+  display:flex;align-items:center;gap:5px;height:19px;padding:0 9px;border-radius:10px;
+  background:rgba(14,19,22,.56);border:1px solid rgba(224,205,168,.20);
+  color:#eee8d8;font-size:9.5px;font-weight:900;letter-spacing:-.01em;white-space:nowrap;
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  box-shadow:0 2px 8px rgba(6,12,10,.22);pointer-events:auto;cursor:pointer;
+  transition:border-color .3s, color .3s;
+}
+#v39top i{font-style:normal;font-size:11px;line-height:1;opacity:.95}
+#v39top b{font-weight:900;font-variant-numeric:tabular-nums}
+#v39top em{font-style:normal;font-weight:800;opacity:.66;letter-spacing:0}
+#v39top.wild{border-color:rgba(226,150,98,.44);color:#ffe6cf}
+#v39top.wild em{opacity:.85;color:#ffc79a}
+#v39top.cold{border-color:rgba(150,205,240,.5);color:#e6f6ff}
+#v39top.hot{border-color:rgba(240,175,110,.5);color:#fff0da}
+#zonePill,#tempPill{display:none !important}
+
+/* 경험치 바 · 레벨 → 정보창으로. 하단은 얇은 선 하나만 */
+#expBar{height:4px;background:rgba(18,14,26,.34);box-shadow:none}
+#expBar b{display:none}
+#expBar.on b{display:block}
+
+/* 음악 재생 표시는 작은 점으로 (미니맵과 겹치지 않게) */
+#ytMini{top:calc(env(safe-area-inset-top) + 58px);right:9px;height:19px;padding:0 7px 0 6px;font-size:8px;gap:4px}
+#mmWrap{top:calc(env(safe-area-inset-top) + 80px)}
+@media (max-height:700px){ #mmWrap{top:calc(env(safe-area-inset-top) + 78px)} }
+/* 상단 중앙 타겟 바 — 미니맵과 겹치지 않게 폭을 줄인다 */
+@media (max-width:520px){ #targetBar{width:min(280px,46vw)} }
+
+/* ── 2) 점프 버튼 ───────────────────────────────────────────────────── */
+#btnJump{
+  position:absolute;right:2px;bottom:calc(env(safe-area-inset-bottom) + 156px);
+  width:50px;height:50px;border-radius:50%;padding:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+  border:2px solid rgba(226,240,208,.80);
+  background:radial-gradient(circle at 40% 30%,rgba(240,255,228,.98),rgba(146,200,116,.97) 58%,rgba(78,132,62,.97));
+  color:#13280f;font-family:inherit;font-size:8.5px;font-weight:900;letter-spacing:-.03em;
+  box-shadow:0 6px 16px rgba(20,50,20,.32), inset 0 -3px 8px rgba(30,70,26,.24);
+  cursor:pointer;pointer-events:auto;line-height:1;overflow:hidden;
+  transition:transform .09s, opacity .16s, filter .16s;
+}
+#btnJump svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2.05;stroke-linecap:round;stroke-linejoin:round}
+#btnJump:active{transform:scale(.9)}
+#btnJump.air{filter:saturate(.4) brightness(.92);opacity:.62}
+@media (max-height:720px){ #btnJump{bottom:calc(env(safe-area-inset-bottom) + 150px);width:46px;height:46px} #btnJump span{display:none} }
+@media (max-width:400px){ .qslot{bottom:calc(env(safe-area-inset-bottom) + 206px) !important} }
+
+/* ── 3) 사운드 설정 패널 ─────────────────────────────────────────────── */
+#v39snd,#v39dev{
+  position:fixed;inset:0;z-index:88;display:none;align-items:center;justify-content:center;
+  background:rgba(8,14,12,.52);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
+  padding:max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom));
+}
+#v39snd.on,#v39dev.on{display:flex}
+#v39snd .v39card,#v39dev .v39card{
+  width:min(420px,94vw);max-height:86dvh;overflow:auto;border-radius:16px;
+  background:linear-gradient(180deg,rgba(26,32,30,.98),rgba(16,21,20,.99));
+  border:1px solid rgba(224,205,168,.24);box-shadow:0 18px 48px rgba(4,10,8,.55);
+  color:#ece6d8;
+}
+#v39snd .v39hd,#v39dev .v39hd{
+  display:flex;align-items:center;gap:8px;padding:12px 14px 10px;
+  border-bottom:1px solid rgba(224,205,168,.14);
+}
+#v39snd .v39hd b,#v39dev .v39hd b{font-size:13.5px;font-weight:900;letter-spacing:-.02em;flex:1}
+#v39snd .v39hd small,#v39dev .v39hd small{font-size:9px;color:#93a09a;font-weight:800}
+#v39snd .v39x,#v39dev .v39x{
+  width:26px;height:26px;border-radius:9px;border:1px solid rgba(224,205,168,.22);
+  background:rgba(255,255,255,.04);color:#e8e2d2;font-size:13px;cursor:pointer;line-height:1;
+}
+#v39snd .v39body,#v39dev .v39body{padding:10px 14px 14px}
+#v39snd .v39row,#v39dev .v39row{
+  display:flex;align-items:center;gap:9px;padding:8px 0;
+  border-bottom:1px dashed rgba(224,205,168,.10);
+}
+#v39snd .v39row:last-child,#v39dev .v39row:last-child{border-bottom:0}
+#v39snd .v39row > span{width:82px;flex:0 0 auto;font-size:11px;font-weight:900;color:#dfd9c8}
+#v39snd .v39row > span i{font-style:normal;font-size:12px;margin-right:3px}
+#v39snd .v39row > b{width:30px;text-align:right;font-size:10.5px;font-weight:900;color:#e8be74;font-variant-numeric:tabular-nums}
+#v39snd input[type=range]{
+  flex:1 1 auto;-webkit-appearance:none;appearance:none;height:22px;background:transparent;
+}
+#v39snd input[type=range]::-webkit-slider-runnable-track{
+  height:5px;border-radius:3px;background:linear-gradient(90deg,#8fbf6e 0%,#e8be74 var(--p,50%),rgba(255,255,255,.13) var(--p,50%));
+}
+#v39snd input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;width:16px;height:16px;border-radius:50%;margin-top:-5.5px;
+  background:radial-gradient(circle at 38% 32%,#fffdf4,#e2cd9c 70%,#bfa46e);
+  border:1px solid rgba(60,44,20,.5);box-shadow:0 2px 6px rgba(0,0,0,.4);
+}
+#v39snd input[type=range]::-moz-range-track{height:5px;border-radius:3px;background:rgba(255,255,255,.14)}
+#v39snd input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;background:#e8dbbc;border:0}
+#v39snd .v39t,#v39dev .v39t{
+  margin-left:auto;height:26px;padding:0 11px;border-radius:9px;font-size:10px;font-weight:900;
+  border:1px solid rgba(224,205,168,.28);background:rgba(255,255,255,.05);color:#cfc8b6;cursor:pointer;
+}
+#v39snd .v39t.on{background:linear-gradient(180deg,#e9c983,#c39a45);color:#3a2a10;border-color:rgba(255,235,190,.6)}
+#v39snd .v39mute{
+  width:100%;height:34px;margin-top:10px;border-radius:10px;cursor:pointer;
+  border:1px solid rgba(226,150,120,.35);background:rgba(150,60,44,.20);color:#ffd9cd;
+  font-size:11.5px;font-weight:900;
+}
+#v39snd .v39mute.on{background:rgba(150,60,44,.42);color:#fff}
+#v39snd .v39note,#v39dev .v39note{margin-top:9px;font-size:9px;line-height:1.5;color:#8d9992;font-weight:700}
+#v39snd .v39chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
+#v39snd .v39chip{
+  height:24px;padding:0 9px;border-radius:8px;font-size:9.5px;font-weight:900;cursor:pointer;
+  border:1px solid rgba(224,205,168,.22);background:rgba(255,255,255,.04);color:#d8d2c2;
+}
+#v39snd .v39chip:active{background:rgba(232,190,116,.22)}
+
+/* 개발자 메뉴 */
+#v39dev .v39row > span{width:auto;flex:1 1 auto;display:flex;flex-direction:column;gap:2px}
+#v39dev .v39row small{font-size:9px;color:#8d9992;font-weight:700;line-height:1.4}
+#v39dev .v39badge{font-size:8.5px;font-weight:900;color:#12180f;background:#8fbf6e;border-radius:6px;padding:2px 6px;margin-left:6px}
+
+/* ── 4) 모바일 시각 편안함 ──────────────────────────────────────────── */
+#dmgFlash{background:radial-gradient(circle at 50% 56%,rgba(200,40,30,0) 42%,rgba(186,32,24,.46) 100%)}
+#stage::after{background:radial-gradient(120% 88% at 50% 44%, rgba(0,0,0,0) 56%, rgba(0,0,0,.30) 100%)}
+#v39fps{
+  position:absolute;right:8px;top:calc(env(safe-area-inset-top) + 4px);z-index:60;display:none;
+  font-size:9px;font-weight:900;color:#d9f2c8;background:rgba(10,16,12,.62);
+  border-radius:6px;padding:2px 5px;font-variant-numeric:tabular-nums;pointer-events:none;
+}
+#v39fps.on{display:block}
+/* /@@ V39CSS@@/ */
+
+/* @@/V39CSS@@ */
 </style>
 </head>
 <body>
@@ -2767,7 +2940,7 @@ body.targeting .toasts{top:calc(env(safe-area-inset-top) + 172px) !important}
       </div>
       <div class="startSaveLine" id="startSaveLine"><span>저장 없음 · 새로 시작해요</span></div>
     </div>
-    <div class="startFoot" id="startFoot">WILD LIFE · v3.8 &nbsp;|&nbsp; 왼쪽 조이스틱으로 걷고 오른쪽 버튼으로 채집·공격 · 빨간 예고선은 구르기로 피하기</div>
+    <div class="startFoot" id="startFoot">WILD LIFE · v3.9 &nbsp;|&nbsp; 왼쪽 조이스틱으로 걷고 오른쪽 버튼으로 채집·공격 · 빨간 예고선은 구르기로 피하기</div>
   </div>
 
   <div class="slotPanel" id="slotPanel">
@@ -3108,6 +3281,8 @@ var SAVE = { ready: false, db: null, recs: {}, active: 0, last: 0, playTime: 0, 
 function packState() {
   // 모닥불 연료·꺼짐 상태, 상자 내용물 같은 '살아 있는' 구조물 값을 저장 레코드에 맞춘다
   if (typeof syncStructData === 'function') syncStructData();
+  /* v3.9 — 사운드 설정도 이 슬롯에 저장한다 */
+  try { if (typeof SND !== 'undefined' && SND && !S.snd) S.snd = SND.export(); } catch (e) { }
   // 🐾 길들인 공룡의 이름·체력·위치도 저장 레코드에 맞춘다
   if (typeof syncTamedData === 'function') syncTamedData();
   return {
@@ -3140,6 +3315,7 @@ function packState() {
     heroV36: !!S.heroV36Edited,
     world: { dayT: (typeof DAY !== 'undefined') ? DAY.t : 0.36 },
     muted: !!S.muted,
+    v39: { snd: S.snd || null },
     seen: true,
     playTime: Math.round(SAVE.playTime)
   };
@@ -3253,6 +3429,9 @@ function applyData(d) {
   /* v3.6 — 재커마를 했는지. 플래그가 없는 옛 세이브는 아직 안 한 것으로 본다 */
   S.heroV36Edited = !!d.heroV36;
   S.muted = !!d.muted;
+  /* v3.9 — 슬롯에 저장된 사운드 설정 복원 */
+  S.snd = (d.v39 && d.v39.snd && typeof d.v39.snd === 'object') ? d.v39.snd : (S.snd || null);
+  try { if (typeof SND !== 'undefined' && S.snd) { SND.import(S.snd); sndApply(); } } catch (e) { }
   S.seen = true;
   if (typeof DAY !== 'undefined' && d.world && typeof d.world.dayT === 'number') DAY.t = d.world.dayT;
   SAVE.playTime = Number(d.playTime) || 0;
@@ -11220,6 +11399,11 @@ function spawnDino(kind, x, z, opt) {
         (typeof MAMMOTH_GLB === 'undefined' || MAMMOTH_GLB.enabled)) {
       var gbBuilt = mammothGLBBuild();
       if (gbBuilt) built = gbBuilt;
+    } else if (kind === 'trike' && typeof trikeGLBBuild === 'function' &&
+        (typeof TRIKE_GLB === 'undefined' || TRIKE_GLB.enabled)) {
+      /* 🦏 v3.9 — 트리케라톱스 PBR(GLb · 20본 · Idle/Walk/Run/Attack/Death) */
+      var tbBuilt = (TRIKE_GLB.ready ? trikeGLBBuild() : null);
+      if (tbBuilt) built = tbBuilt;
     }
   }
   var st = DINO_STAT[kind] || DINO_STAT.trike;
@@ -24961,7 +25145,7 @@ if (btnDemolish) btnDemolish.addEventListener('pointerdown', function (e) { e.pr
 if (btnPet) btnPet.addEventListener('pointerdown', function (e) { e.preventDefault(); audioInit(); openSheet('pet'); });
 $id('btnBag').addEventListener('click', function () { audioInit(); openSheet('bag'); });
 $id('btnBook').addEventListener('click', function () { audioInit(); openSheet('book'); });
-$id('btnSound').addEventListener('click', function () { audioInit(); toggleSound(); });
+$id('btnSound').addEventListener('click', function () { audioInit(); sndPanel(true); });
 $id('btnSet').addEventListener('click', function () { openSheet('set'); });
 $id('sheetClose').addEventListener('click', closeSheet);
 sheet.addEventListener('pointerdown', function (e) { if (e.target === sheet) closeSheet(); });
@@ -27621,7 +27805,7 @@ function hurtPlayer(n, src) {
   if (typeof heroHitReact === 'function') heroHitReact();
   sfx('hurt');
   var f = $id('stage');
-  f.style.boxShadow = 'inset 0 0 90px rgba(190,30,20,.55)';
+  f.style.boxShadow = 'inset 0 0 64px rgba(186,36,26,.34)';
   setTimeout(function () { f.style.boxShadow = 'none'; }, 220);
   var flash = $id('dmgFlash');
   if (flash) { flash.classList.remove('on'); void flash.offsetWidth; flash.classList.add('on'); }
@@ -40697,6 +40881,1755 @@ window.__game.v38 = {
 };
 
 /* @@/V38JS@@ */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* @@V39JS@@ */
+/* ==========================================================================
+   WILD LIFE v3.9 — ① 사운드 시스템 (섹션 13)
+   ----------------------------------------------------------
+   · Web Audio 물리 합성만 사용(외부 음원 파일 없음 · 라이선스 문제 없음)
+   · 12 카테고리: Environment · Character · Gathering · Crafting · Combat ·
+     Dinosaur · Wildlife · Building · Tribe · UI · Weather · Water
+   · 버스: 효과음(기존 sfx 포함) / 공룡·동물 / 환경음 → 전체 볼륨
+   · 3D: 카메라 기준 거리 감쇠(제곱) + 공기 흡수 로우패스 + 좌우 패닝
+   · iOS: 첫 터치에서 AudioContext.resume (캡처 단계 · 1회)
+   · 설정 UI: 전체·효과음·공룡·환경음·배경음 볼륨, 공간 음향, 음소거 (세이브/로컬 저장)
+   ========================================================================== */
+
+var SND = {
+  ready: false, muted: false, spatial: true,
+  vol: { master: 0.80, sfx: 0.85, dino: 0.90, env: 0.55, bgm: 0.55 },
+  buses: {}, out: null,
+  amb: null, ambSurf: null,
+  key: 'wildlife_snd_v39',
+  budget: 0, budgetT: 0,
+  lastPlay: {},
+  stat: { plays: 0, steps: 0, voices: 0 }
+};
+
+/* ── 버스 구성 ─────────────────────────────────────────────── */
+function sndInit() {
+  if (SND.ready) return true;
+  if (!AC) audioInit();
+  if (!AC) return false;
+  try {
+    var out = AC.createGain(); out.gain.value = 1; out.connect(AC.destination);
+    SND.out = out;
+    function bus() { var g = AC.createGain(); g.gain.value = 1; g.connect(out); return g; }
+    SND.buses.sfx = bus();
+    SND.buses.dino = bus();
+    SND.buses.env = bus();
+    /* 예전 효과음(MASTER)은 효과음 버스로 통과시킨다 — 전체/효과음 슬라이더가 먹는다 */
+    if (MASTER) {
+      try { MASTER.disconnect(); } catch (e) { }
+      MASTER.connect(SND.buses.sfx);
+      MASTER.gain.value = 1;
+    }
+    SND.ready = true;
+    sndApply();
+    return true;
+  } catch (e) {
+    if (window.__gameErrors) window.__gameErrors.push('snd:' + e.message);
+    return false;
+  }
+}
+
+function sndApply() {
+  if (!SND.ready) return;
+  var m = SND.muted ? 0 : SND.vol.master;
+  SND.buses.sfx.gain.value = m * SND.vol.sfx;
+  SND.buses.dino.gain.value = m * SND.vol.dino;
+  SND.buses.env.gain.value = m * SND.vol.env;
+  if (MASTER) MASTER.gain.value = 1;
+  muted = SND.muted;
+  var b = $id('btnSound');
+  if (b) b.classList.toggle('off', !!SND.muted);
+  sndYtVolume();
+  sndSave();
+}
+
+function sndSave() {
+  try {
+    localStorage.setItem(SND.key, JSON.stringify({ vol: SND.vol, spatial: SND.spatial, muted: SND.muted }));
+  } catch (e) { }
+  /* 슬롯 세이브에도 실어 둔다 (apply.py 가 packState 에 v39.snd 로 넣는다) */
+  try { if (typeof S !== 'undefined' && S) S.snd = SND.export(); } catch (e) { }
+}
+function sndLoad() {
+  var o = null;
+  try { var raw = localStorage.getItem(SND.key); if (raw) o = JSON.parse(raw); } catch (e) { }
+  if (!o && typeof S !== 'undefined' && S && S.snd) o = S.snd;
+  if (!o) return;
+  SND.import(o);
+  sndApply();
+}
+SND.export = function () {
+  return { vol: { master: SND.vol.master, sfx: SND.vol.sfx, dino: SND.vol.dino, env: SND.vol.env, bgm: SND.vol.bgm }, spatial: SND.spatial, muted: SND.muted };
+};
+SND.import = function (o) {
+  if (!o || typeof o !== 'object') return;
+  if (o.vol) for (var k in SND.vol) if (typeof o.vol[k] === 'number') SND.vol[k] = Math.max(0, Math.min(1, o.vol[k]));
+  if (typeof o.spatial === 'boolean') SND.spatial = o.spatial;
+  if (typeof o.muted === 'boolean') SND.muted = o.muted;
+};
+
+/* ── 3D 위치 계산 ─────────────────────────────────────────── */
+var _v39camF = new THREE.Vector3(), _v39pan = { gain: 1, pan: 0, lp: 1, d: 0 };
+function sndPos(ox, oz, maxD) {
+  maxD = maxD || 34;
+  var cx = player.pos.x, cz = player.pos.z;
+  if (camera) { cx = camera.position.x; cz = camera.position.z; }
+  var dx = ox - cx, dz = oz - cz;
+  var d = Math.sqrt(dx * dx + dz * dz);
+  _v39pan.d = d;
+  if (!SND.spatial) {
+    _v39pan.gain = d > maxD * 1.6 ? 0 : 0.9;
+    _v39pan.pan = 0; _v39pan.lp = 1;
+    return _v39pan;
+  }
+  var k = Math.max(0, 1 - d / maxD);
+  _v39pan.gain = k * k;
+  var f = 0;
+  if (camera && d > 0.001) {
+    camera.getWorldDirection(_v39camF);
+    var rx = -_v39camF.z, rz = _v39camF.x;
+    var rl = Math.sqrt(rx * rx + rz * rz) || 1;
+    f = (dx * rx + dz * rz) / (rl * d);
+  }
+  _v39pan.pan = Math.max(-0.85, Math.min(0.85, f * 0.85));
+  _v39pan.lp = 1600 + 6400 * Math.max(0, Math.min(1, 1 - d / maxD));
+  return _v39pan;
+}
+
+/* ── 합성 프리미티브 ──────────────────────────────────────── */
+function sndPanNode(pan) {
+  if (!pan || !AC.createStereoPanner) return null;
+  var p = AC.createStereoPanner();
+  p.pan.value = Math.max(-1, Math.min(1, pan));
+  return p;
+}
+function sndAttach(node, busName, pan) {
+  var bus = SND.buses[busName] || SND.buses.sfx;
+  var p = sndPanNode(pan);
+  if (p) { node.connect(p); p.connect(bus); } else node.connect(bus);
+}
+function sndOk(busName) {
+  if (!SND.ready || SND.muted) return false;
+  if (!AC || AC.state === 'closed') return false;
+  if (SND.budget > 9) return false;        /* 한 프레임에 너무 많이 만들지 않는다 */
+  SND.budget++;
+  SND.stat.plays++;
+  return true;
+}
+
+/* 필터 노이즈 — {dur,type,f0,f1,q,vol,atk,delay,rate,pan,lp,bus,gain} */
+function sNoise(o) {
+  if (o.bus === undefined) o.bus = 'sfx';
+  if (!sndOk(o.bus)) return;
+  var t0 = AC.currentTime + (o.delay || 0);
+  var dur = Math.max(0.02, o.dur || 0.1);
+  var src = AC.createBufferSource();
+  src.buffer = noiseBuf();
+  src.loop = true;
+  src.playbackRate.value = o.rate || 1;
+  var f = AC.createBiquadFilter();
+  f.type = o.type || 'bandpass';
+  f.frequency.setValueAtTime(Math.max(40, o.f0 || 800), t0);
+  if (o.f1) f.frequency.exponentialRampToValueAtTime(Math.max(40, o.f1), t0 + dur);
+  f.Q.value = o.q || 1;
+  var g = AC.createGain();
+  var vol = (o.vol == null ? 0.2 : o.vol) * (o.gain == null ? 1 : o.gain);
+  var atk = o.atk == null ? 0.004 : o.atk;
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.linearRampToValueAtTime(Math.max(0.0002, vol), t0 + atk);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + Math.max(atk + 0.02, dur));
+  src.connect(f); f.connect(g);
+  var tail = g;
+  if (o.lp) {
+    var lp = AC.createBiquadFilter();
+    lp.type = 'lowpass'; lp.frequency.value = o.lp;
+    g.connect(lp); tail = lp;
+  }
+  sndAttach(tail, o.bus, o.pan);
+  src.start(t0, Math.random() * 1.4);
+  src.stop(t0 + dur + 0.04);
+  SND.stat.voices++;
+}
+
+/* 오실레이터 — {type,f0,f1,dur,vol,atk,delay,cut,cut1,q,vib,vibAmt,pan,lp,bus} */
+function sOsc(o) {
+  if (o.bus === undefined) o.bus = 'sfx';
+  if (!sndOk(o.bus)) return;
+  var t0 = AC.currentTime + (o.delay || 0);
+  var dur = Math.max(0.03, o.dur || 0.2);
+  var osc = AC.createOscillator();
+  osc.type = o.type || 'sawtooth';
+  osc.frequency.setValueAtTime(Math.max(20, o.f0 || 120), t0);
+  if (o.f1) osc.frequency.exponentialRampToValueAtTime(Math.max(20, o.f1), t0 + dur * 0.94);
+  if (o.vib) {
+    var lfo = AC.createOscillator(), lg = AC.createGain();
+    lfo.frequency.value = o.vib; lg.gain.value = o.vibAmt || 6;
+    lfo.connect(lg); lg.connect(osc.frequency);
+    lfo.start(t0); lfo.stop(t0 + dur + 0.06);
+  }
+  var f = AC.createBiquadFilter();
+  f.type = o.lpType || 'lowpass';
+  f.frequency.setValueAtTime(Math.max(80, o.cut || 900), t0);
+  if (o.cut1) f.frequency.exponentialRampToValueAtTime(Math.max(80, o.cut1), t0 + dur);
+  f.Q.value = o.q || 0.8;
+  var g = AC.createGain();
+  var vol = (o.vol == null ? 0.2 : o.vol) * (o.gain == null ? 1 : o.gain);
+  var atk = o.atk == null ? 0.01 : o.atk;
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.linearRampToValueAtTime(Math.max(0.0002, vol), t0 + atk);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + Math.max(atk + 0.03, dur));
+  osc.connect(f); f.connect(g);
+  var tail = g;
+  if (o.lp) {
+    var lp = AC.createBiquadFilter();
+    lp.type = 'lowpass'; lp.frequency.value = o.lp;
+    g.connect(lp); tail = lp;
+  }
+  sndAttach(tail, o.bus, o.pan);
+  osc.start(t0); osc.stop(t0 + dur + 0.06);
+  SND.stat.voices++;
+}
+
+/* ── 지형 표면 ────────────────────────────────────────────── */
+function sndSurface(x, z) {
+  try {
+    var w = (typeof waterDepth === 'function') ? waterDepth(x, z) : 0;
+    if (w > 0.06) return w > 0.22 ? 'deep' : 'water';
+    var h = terrainH(x, z);
+    if (h < 1.15) return 'sand';
+    var b = (typeof biomeAt === 'function') ? biomeAt(x, z, h) : 'wilds';
+    if (b === 'desert') return 'sand';
+    if (b === 'tundra' || b === 'snow') return 'snow';
+    if (b === 'highland') return 'rock';
+    if (b === 'jungle' || b === 'forest') return 'grass';
+    if (b === 'meadow' || b === 'wilds') return 'grass';
+    return 'dirt';
+  } catch (e) { return 'grass'; }
+}
+
+/* ── 발소리 ───────────────────────────────────────────────── */
+function sndStep(surface, g, pan, heavy) {
+  var v = (heavy ? 1.25 : 0.62) * (g == null ? 1 : g);
+  if (surface === 'water' || surface === 'deep') {
+    sNoise({ dur: 0.13, type: 'highpass', f0: 2400, f1: 1100, vol: 0.09 * v, pan: pan, atk: 0.006 });
+    sNoise({ dur: 0.10, type: 'lowpass', f0: 800, f1: 260, vol: 0.06 * v, delay: 0.02, pan: pan });
+    return;
+  }
+  if (surface === 'sand') {
+    sNoise({ dur: 0.10, type: 'highpass', f0: 2200, f1: 1500, vol: 0.055 * v, pan: pan, atk: 0.012 });
+    sNoise({ dur: 0.07, type: 'lowpass', f0: 520, f1: 220, vol: 0.05 * v, pan: pan });
+    return;
+  }
+  if (surface === 'snow') {
+    sNoise({ dur: 0.13, type: 'highpass', f0: 3200, f1: 1900, vol: 0.052 * v, pan: pan, atk: 0.01 });
+    sNoise({ dur: 0.08, type: 'bandpass', f0: 900, q: 0.8, vol: 0.045 * v, delay: 0.015, pan: pan });
+    return;
+  }
+  if (surface === 'rock') {
+    sNoise({ dur: 0.055, type: 'bandpass', f0: 1900, f1: 900, q: 1.6, vol: 0.06 * v, pan: pan });
+    sNoise({ dur: 0.09, type: 'lowpass', f0: 420, f1: 160, vol: 0.055 * v, delay: 0.01, pan: pan });
+    return;
+  }
+  if (surface === 'dirt') {
+    sNoise({ dur: 0.09, type: 'lowpass', f0: 560, f1: 200, vol: 0.075 * v, pan: pan });
+    sNoise({ dur: 0.06, type: 'bandpass', f0: 1300, q: 1.1, vol: 0.028 * v, delay: 0.008, pan: pan });
+    return;
+  }
+  /* grass (기본) */
+  sNoise({ dur: 0.085, type: 'bandpass', f0: 1050, f1: 620, q: 0.85, vol: 0.055 * v, pan: pan, atk: 0.008 });
+  sNoise({ dur: 0.05, type: 'highpass', f0: 2600, f1: 1700, vol: 0.018 * v, delay: 0.012, pan: pan });
+}
+
+/* ── 공룡 체급 ────────────────────────────────────────────── */
+var V39_MASS = {
+  compy: 0.34, ptero: 0.42, raptor: 0.60, pachy: 0.82, para: 0.95, dilo: 0.72,
+  carno: 1.00, ankylo: 1.20, anky: 1.20, trike: 1.55, stego: 1.42, allo: 1.30,
+  spino: 1.70, trex: 1.95, brachio: 2.25, mammoth: 2.10
+};
+function sndDinoMass(d) {
+  var m = V39_MASS[d.kind] || 1.0;
+  if (d.scale) m *= Math.max(0.7, Math.min(1.3, d.scale));
+  return m;
+}
+function sndDinoStep(mass, g, pan) {
+  var f = 165 / Math.max(0.4, mass);          /* 체급이 클수록 낮고 무겁다 */
+  sOsc({ type: 'sine', f0: f * 1.6, f1: f * 0.7, dur: 0.16 + mass * 0.05, vol: 0.11 * g, atk: 0.006, cut: 320, pan: pan, bus: 'dino' });
+  sNoise({ dur: 0.10 + mass * 0.04, type: 'lowpass', f0: 420 + mass * 90, f1: 120, vol: 0.10 * g, pan: pan, bus: 'dino' });
+}
+/* mood: idle · alert · aggro · attack · pain · death */
+function sndDinoVoice(kind, mood, mass, g, pan) {
+  var base = 190 / Math.max(0.4, mass);
+  var v = g == null ? 1 : g;
+  if (mood === 'alert') {
+    sOsc({ type: 'sawtooth', f0: base * 1.15, f1: base * 0.86, dur: 0.30, vol: 0.10 * v, atk: 0.03, cut: 520 + mass * 120, cut1: 300, vib: 17, vibAmt: 4, pan: pan, bus: 'dino' });
+    sNoise({ dur: 0.20, type: 'bandpass', f0: 700, f1: 380, q: 1.1, vol: 0.045 * v, pan: pan, bus: 'dino' });
+  } else if (mood === 'aggro') {
+    sOsc({ type: 'sawtooth', f0: base * 0.95, f1: base * 0.62, dur: 0.72, vol: 0.13 * v, atk: 0.06, cut: 480 + mass * 100, cut1: 240, vib: 11, vibAmt: 7, pan: pan, bus: 'dino' });
+    sNoise({ dur: 0.62, type: 'lowpass', f0: 900, f1: 220, vol: 0.075 * v, atk: 0.05, pan: pan, bus: 'dino' });
+    sNoise({ dur: 0.30, type: 'bandpass', f0: 1500, q: 1.6, vol: 0.03 * v, delay: 0.12, pan: pan, bus: 'dino' });
+  } else if (mood === 'attack') {
+    sOsc({ type: 'sawtooth', f0: base * 1.35, f1: base * 0.75, dur: 0.26, vol: 0.11 * v, atk: 0.012, cut: 800, cut1: 320, vib: 24, vibAmt: 9, pan: pan, bus: 'dino' });
+    sNoise({ dur: 0.18, type: 'bandpass', f0: 1300, f1: 500, q: 0.9, vol: 0.06 * v, pan: pan, bus: 'dino' });
+  } else if (mood === 'pain') {
+    sOsc({ type: 'sawtooth', f0: base * 2.0, f1: base * 1.15, dur: 0.20, vol: 0.10 * v, atk: 0.006, cut: 1400, cut1: 600, vib: 30, vibAmt: 12, pan: pan, bus: 'dino' });
+    sNoise({ dur: 0.12, type: 'bandpass', f0: 1800, q: 1.3, vol: 0.05 * v, delay: 0.02, pan: pan, bus: 'dino' });
+  } else if (mood === 'death') {
+    sOsc({ type: 'sawtooth', f0: base * 1.5, f1: base * 0.45, dur: 1.25, vol: 0.12 * v, atk: 0.05, cut: 900, cut1: 210, vib: 7, vibAmt: 10, pan: pan, bus: 'dino' });
+    sNoise({ dur: 1.0, type: 'lowpass', f0: 700, f1: 140, vol: 0.07 * v, atk: 0.08, pan: pan, bus: 'dino' });
+    sNoise({ dur: 0.5, type: 'bandpass', f0: 420, f1: 180, q: 1.2, vol: 0.04 * v, delay: 0.30, pan: pan, bus: 'dino' });
+  } else { /* idle — 아주 가끔 새는 낮은 숨소리 */
+    sOsc({ type: 'triangle', f0: base * 0.8, f1: base * 0.62, dur: 0.36, vol: 0.055 * v, atk: 0.12, cut: 380, vib: 5, vibAmt: 3, pan: pan, bus: 'dino' });
+    sNoise({ dur: 0.32, type: 'lowpass', f0: 520, f1: 260, vol: 0.03 * v, atk: 0.10, pan: pan, bus: 'dino' });
+  }
+}
+
+/* ── 카테고리별 이름 → 소리 ───────────────────────────────── */
+function sndPlay(name, o) {
+  o = o || {};
+  var g = o.gain == null ? 1 : o.gain;
+  var pan = o.pan || 0;
+  var bus = o.bus || 'sfx';
+  if (name === 'step') { sndStep(o.surface || 'grass', g, pan, !!o.heavy); return; }
+  if (name === 'jump') {
+    sNoNoiseGuard();
+    sNoise({ dur: 0.16, type: 'bandpass', f0: 900, f1: 420, q: 0.8, vol: 0.10 * g, atk: 0.006, bus: bus });
+    sNoise({ dur: 0.10, type: 'highpass', f0: 2400, vol: 0.04 * g, delay: 0.02, bus: bus });
+    return;
+  }
+  if (name === 'land') {
+    var surf = o.surface || 'grass';
+    if (surf === 'water' || surf === 'deep') { sndStep('water', 1.6, 0, false); }
+    else if (surf === 'rock') { sNoise({ dur: 0.12, type: 'lowpass', f0: 460, f1: 120, vol: 0.14 * g, bus: bus }); sNoise({ dur: 0.06, type: 'bandpass', f0: 1800, q: 1.8, vol: 0.05 * g, bus: bus }); }
+    else { sNoise({ dur: 0.13, type: 'lowpass', f0: 520, f1: 150, vol: 0.15 * g, bus: bus }); sNoise({ dur: 0.07, type: 'bandpass', f0: 1200, q: 1.2, vol: 0.045 * g, delay: 0.01, bus: bus }); }
+    return;
+  }
+  if (name === 'uiTap') { sNoise({ dur: 0.035, type: 'highpass', f0: 2600, vol: 0.05 * g }); return; }
+  if (name === 'uiOpen') {
+    sOsc({ type: 'triangle', f0: 520, f1: 780, dur: 0.14, vol: 0.05 * g, atk: 0.004, cut: 2400 });
+    sNoise({ dur: 0.06, type: 'highpass', f0: 3200, vol: 0.02 * g });
+    return;
+  }
+  if (name === 'uiClose') {
+    sOsc({ type: 'triangle', f0: 640, f1: 380, dur: 0.12, vol: 0.045 * g, atk: 0.004, cut: 2200 });
+    return;
+  }
+  if (name === 'hitFlesh') {
+    sNoise({ dur: 0.10, type: 'lowpass', f0: 620, f1: 150, vol: 0.20 * g, pan: pan, bus: bus });
+    sNoise({ dur: 0.06, type: 'bandpass', f0: 1400, q: 1.2, vol: 0.08 * g, delay: 0.004, pan: pan, bus: bus });
+    return;
+  }
+  if (name === 'hitHorn') {
+    sOsc({ type: 'square', f0: 320, f1: 150, dur: 0.13, vol: 0.07 * g, atk: 0.002, cut: 1400, pan: pan, bus: bus });
+    sNoise({ dur: 0.16, type: 'lowpass', f0: 700, f1: 120, vol: 0.17 * g, pan: pan, bus: bus });
+    return;
+  }
+  if (name === 'thud') {
+    sOsc({ type: 'sine', f0: 92, f1: 48, dur: 0.30, vol: 0.20 * g, atk: 0.004, cut: 260, pan: pan, bus: bus });
+    sNoise({ dur: 0.20, type: 'lowpass', f0: 340, f1: 90, vol: 0.14 * g, pan: pan, bus: bus });
+    return;
+  }
+  if (name === 'dust') {
+    sNoise({ dur: 0.24, type: 'bandpass', f0: 1100, f1: 420, q: 0.7, vol: 0.075 * g, atk: 0.02, pan: pan, bus: bus });
+    return;
+  }
+  if (name === 'ring') {
+    sOsc({ type: 'sine', f0: 130, f1: 62, dur: 0.42, vol: 0.12 * g, atk: 0.006, cut: 300, pan: pan, bus: bus });
+    return;
+  }
+  if (name === 'dinoStep') { sndDinoStep(o.mass || 1, g, pan); return; }
+  if (name === 'dinoCall') { sndDinoVoice(o.kind || 'trike', o.mood || 'idle', o.mass || 1, g, pan); return; }
+  if (name === 'craft') { sNoise({ dur: 0.09, type: 'lowpass', f0: 520, f1: 180, vol: 0.11 * g }); return; }
+  if (name === 'build') {
+    sNoise({ dur: 0.12, type: 'lowpass', f0: 620, f1: 170, vol: 0.16 * g });
+    sNoise({ dur: 0.06, type: 'bandpass', f0: 1500, q: 1.4, vol: 0.05 * g, delay: 0.01 });
+    return;
+  }
+  if (name === 'chop') { sNoise({ dur: 0.10, type: 'lowpass', f0: 560, f1: 200, vol: 0.18 * g }); return; }
+  if (name === 'mine') { sNoise({ dur: 0.07, type: 'highpass', f0: 2000, f1: 900, vol: 0.14 * g }); return; }
+  if (name === 'gather') { sNoise({ dur: 0.07, type: 'highpass', f0: 2800, f1: 1900, vol: 0.055 * g }); return; }
+  if (name === 'splash') { sNoise({ dur: 0.18, type: 'highpass', f0: 2400, f1: 1300, vol: 0.12 * g }); return; }
+  if (name === 'wind') { sNoise({ dur: 1.4, type: 'lowpass', f0: 320, f1: 220, vol: 0.05 * g, atk: 0.4 }); return; }
+  if (name === 'bird') {
+    var n = 2 + Math.floor(Math.random() * 3);
+    for (var i = 0; i < n; i++) {
+      sOsc({ type: 'sine', f0: 2200 + Math.random() * 1400, f1: 2800 + Math.random() * 900, dur: 0.055, vol: 0.026 * g, delay: i * 0.085, atk: 0.004, cut: 6000, bus: 'env' });
+    }
+    return;
+  }
+  if (name === 'cricket') {
+    for (var c = 0; c < 3; c++) {
+      sOsc({ type: 'sine', f0: 4300, f1: 4100, dur: 0.028, vol: 0.012 * g, delay: c * 0.06, atk: 0.003, cut: 8000, bus: 'env' });
+    }
+    return;
+  }
+}
+/* (내부 실수 방지용 — 이름 오타로 예외가 나도 게임이 멈추지 않게) */
+function sNoNoiseGuard() { }
+
+/* 이름으로 재생 + 위치가 있으면 3D 감쇠 */
+SND.play = function (name, o) {
+  o = o || {};
+  if (!sndInit()) return;
+  if (SND.muted) return;
+  try {
+    if (o.x !== undefined && o.z !== undefined) {
+      var p = sndPos(o.x, o.z, o.max || 34);
+      if (p.gain <= 0.004) return;
+      var oo = {};
+      for (var k in o) oo[k] = o[k];
+      oo.gain = (o.gain == null ? 1 : o.gain) * p.gain;
+      oo.pan = (o.pan || 0) + p.pan;
+      if (p.lp && p.lp < 7000) oo.lp = Math.min(o.lp || 20000, p.lp);
+      sndPlay(name, oo);
+    } else {
+      sndPlay(name, o);
+    }
+  } catch (e) {
+    if (window.__gameErrors) window.__gameErrors.push('sndplay:' + e.message);
+  }
+};
+SND.at = function (name, x, z, o) {
+  o = o || {};
+  o.x = x; o.z = z;
+  SND.play(name, o);
+};
+
+/* ── 환경음(바람 · 파도 · 새 · 귀뚜라미) ─────────────────────── */
+function sndAmbStart() {
+  if (!sndInit() || SND.amb) return;
+  try {
+    var bus = SND.buses.env;
+    var src = AC.createBufferSource(); src.buffer = noiseBuf(); src.loop = true; src.playbackRate.value = 0.7;
+    var f = AC.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 380; f.Q.value = 0.5;
+    var g = AC.createGain(); g.gain.value = 0.0;
+    src.connect(f); f.connect(g); g.connect(bus); src.start(0);
+    var src2 = AC.createBufferSource(); src2.buffer = noiseBuf(); src2.loop = true; src2.playbackRate.value = 0.5;
+    var f2 = AC.createBiquadFilter(); f2.type = 'bandpass'; f2.frequency.value = 900; f2.Q.value = 0.6;
+    var g2 = AC.createGain(); g2.gain.value = 0.0;
+    src2.connect(f2); f2.connect(g2); g2.connect(bus); src2.start(0);
+    SND.amb = { src: src, f: f, g: g, t: 0 };
+    SND.ambSurf = { src: src2, f: f2, g: g2, t: 0 };
+  } catch (e) { }
+}
+
+var V39_AMB = { birdT: 4, cricketT: 3, gustT: 0 };
+function sndAmbTick(dt) {
+  if (!SND.ready || !SND.amb) return;
+  var V = V39_AMB;
+  V.birdT -= dt; V.cricketT -= dt; V.gustT -= dt;
+  var night = (typeof DAY !== 'undefined') ? DAY.night : 0;
+  var surf = 0;
+  try {
+    var h = terrainH(player.pos.x, player.pos.z);
+    surf = h < 1.35 ? Math.max(0, 1 - h / 1.35) : 0;
+  } catch (e) { }
+  /* 바람 — 밤·고지대에서 조금 더 */
+  var hh = 1;
+  try { hh = terrainH(player.pos.x, player.pos.z); } catch (e) { }
+  var windTarget = (0.026 + 0.022 * Math.min(1, Math.max(0, (hh - 1) / 6)) + 0.012 * night) * (SND.spatial ? 1 : 1);
+  var now = AC.currentTime;
+  try {
+    SND.amb.g.gain.setTargetAtTime(windTarget, now, 1.2);
+    SND.amb.f.frequency.setTargetAtTime(320 + 90 * Math.sin(now * 0.11) + 60 * night, now, 1.0);
+    SND.ambSurf.g.gain.setTargetAtTime(0.055 * surf, now, 0.9);
+    SND.ambSurf.f.frequency.setTargetAtTime(760 + 260 * Math.sin(now * 0.17), now, 0.8);
+  } catch (e) { }
+  /* 새 — 낮 · 숲/초원 */
+  if (V.birdT <= 0) {
+    V.birdT = 3.5 + Math.random() * 6;
+    if (night < 0.45 && (surf < 0.6)) SND.play('bird', { gain: 0.6 + Math.random() * 0.5 });
+  }
+  /* 귀뚜라미 — 밤 */
+  if (V.cricketT <= 0) {
+    V.cricketT = 1.1 + Math.random() * 2.2;
+    if (night > 0.55) SND.play('cricket', { gain: 0.5 + Math.random() * 0.5 });
+  }
+}
+
+/* ── 배경음악(유튜브 iframe) 볼륨 ────────────────────────────── */
+function sndYtVolume() {
+  try {
+    var f = document.querySelector('#ytHolder iframe');
+    if (!f || !f.contentWindow) return;
+    var v = Math.round((SND.muted ? 0 : SND.vol.bgm * SND.vol.master) * 100);
+    f.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'setVolume', args: [v] }), '*');
+  } catch (e) { }
+}
+/* 유튜브 임베드에 JS API 를 켠다(볼륨 조절용) */
+var _v39YtEmbed = (typeof ytEmbed === 'function') ? ytEmbed : null;
+if (_v39YtEmbed) {
+  ytEmbed = function (vid, autoplay) {
+    var u = _v39YtEmbed(vid, autoplay);
+    return u + (u.indexOf('?') >= 0 ? '&' : '?') + 'enablejsapi=1';
+  };
+}
+
+/* ── iOS/모바일 잠금 해제 (첫 터치) ─────────────────────────── */
+(function () {
+  var done = false;
+  function unlock() {
+    try {
+      audioInit();
+      if (AC && AC.state === 'suspended' && AC.resume) AC.resume();
+      if (sndInit()) { sndAmbStart(); sndApply(); }
+      if (AC && AC.state === 'running') done = true;
+    } catch (e) { }
+  }
+  function onFirst() {
+    unlock();
+    if (done) {
+      document.removeEventListener('pointerdown', onFirst, true);
+      document.removeEventListener('touchstart', onFirst, true);
+      document.removeEventListener('keydown', onFirst, true);
+    }
+  }
+  document.addEventListener('pointerdown', onFirst, true);
+  document.addEventListener('touchstart', onFirst, true);
+  document.addEventListener('keydown', onFirst, true);
+  /* 사파리는 화면 전환 후 suspended 로 돌아가는 경우가 있다 */
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden && AC && AC.state === 'suspended' && AC.resume) { try { AC.resume(); } catch (e) { } }
+  });
+})();
+
+/* ── 사운드 설정 패널 ────────────────────────────────────────── */
+var SND_ROWS = [
+  { k: 'master', em: '🔊', t: '전체' },
+  { k: 'sfx', em: '🪓', t: '효과음' },
+  { k: 'dino', em: '🦖', t: '공룡·동물' },
+  { k: 'env', em: '🌬', t: '환경음' },
+  { k: 'bgm', em: '🎵', t: '배경음악' }
+];
+function sndPanelBuild() {
+  var el = $id('v39snd');
+  if (el) return el;
+  el = document.createElement('div');
+  el.id = 'v39snd';
+  el.innerHTML = '<div class="v39card">' +
+    '<div class="v39hd"><b>🔊 사운드</b><small>세이브에 저장돼요</small><button class="v39x" aria-label="닫기">✕</button></div>' +
+    '<div class="v39body">' + SND_ROWS.map(function (r) {
+      return '<div class="v39row" data-k="' + r.k + '"><span><i>' + r.em + '</i>' + r.t + '</span>' +
+        '<input type="range" min="0" max="100" step="1" value="' + Math.round(SND.vol[r.k] * 100) + '">' +
+        '<b>' + Math.round(SND.vol[r.k] * 100) + '</b></div>';
+    }).join('') +
+    '<div class="v39row"><span><i>🧭</i>3D 공간 음향</span><button class="v39t' + (SND.spatial ? ' on' : '') + '" data-sp="1">' + (SND.spatial ? '켜짐' : '꺼짐') + '</button></div>' +
+    '<div class="v39row"><span><i>🎚</i>테스트</span><div class="v39chips">' +
+    '<button class="v39chip" data-test="step">발소리</button>' +
+    '<button class="v39chip" data-test="hit">타격</button>' +
+    '<button class="v39chip" data-test="call">공룡</button>' +
+    '<button class="v39chip" data-test="uiOpen">알림</button></div></div>' +
+    '<button class="v39mute' + (SND.muted ? ' on' : '') + '">' + (SND.muted ? '🔇 음소거 켜짐 — 눌러서 해제' : '🔊 소리 켜짐 — 눌러서 음소거') + '</button>' +
+    '<div class="v39note">아이폰은 <b>측면 무음 스위치</b>가 켜져 있으면 소리가 나지 않아요.<br>소리는 첫 터치에서 켜지고, 설정은 이 기기와 세이브에 저장됩니다.</div>' +
+    '</div></div>';
+  document.body.appendChild(el);
+  el.addEventListener('click', function (e) { if (e.target === el) sndPanel(false); });
+  el.querySelector('.v39x').addEventListener('click', function () { sndPanel(false); });
+  var ranged = el.querySelectorAll('input[type=range]');
+  for (var i = 0; i < ranged.length; i++) {
+    (function (inp) {
+      var row = inp.parentNode;
+      var key = row.getAttribute('data-k');
+      function paint() {
+        var v = inp.value | 0;
+        row.querySelector('b').textContent = v;
+        inp.style.setProperty('--p', v + '%');
+      }
+      paint();
+      inp.addEventListener('input', function () {
+        SND.vol[key] = (inp.value | 0) / 100;
+        paint();
+        sndApply();
+      });
+      inp.addEventListener('change', function () {
+        if (key === 'bgm') sndYtVolume();
+        else SND.play(key === 'env' ? 'bird' : (key === 'dino' ? 'dinoCall' : 'uiTap'), { gain: 1, kind: 'trike', mood: 'alert', mass: 1.2 });
+      });
+    })(ranged[i]);
+  }
+  var spBtn = el.querySelector('[data-sp]');
+  spBtn.addEventListener('click', function () {
+    SND.spatial = !SND.spatial;
+    spBtn.classList.toggle('on', SND.spatial);
+    spBtn.textContent = SND.spatial ? '켜짐' : '꺼짐';
+    sndApply();
+    SND.play('uiTap');
+  });
+  var tests = el.querySelectorAll('[data-test]');
+  for (var t = 0; t < tests.length; t++) {
+    (function (b) {
+      b.addEventListener('click', function () {
+        var k = b.getAttribute('data-test');
+        if (k === 'step') SND.play('step', { surface: sndSurface(player.pos.x, player.pos.z) });
+        else if (k === 'hit') SND.play('hitFlesh', { gain: 1 });
+        else if (k === 'call') SND.play('dinoCall', { kind: 'trike', mood: 'aggro', mass: 1.55 });
+        else SND.play(k);
+      });
+    })(tests[t]);
+  }
+  el.querySelector('.v39mute').addEventListener('click', function () { sndToggleMute(); });
+  return el;
+}
+function sndPanel(on) {
+  var el = sndPanelBuild();
+  if (on === undefined) on = !el.classList.contains('on');
+  el.classList.toggle('on', !!on);
+  if (on) { sndInit(); sndApply(); refreshSndPanel(); SND.play('uiOpen'); }
+  else SND.play('uiClose');
+}
+function refreshSndPanel() {
+  var el = $id('v39snd');
+  if (!el) return;
+  var ranged = el.querySelectorAll('input[type=range]');
+  for (var i = 0; i < ranged.length; i++) {
+    var k = ranged[i].parentNode.getAttribute('data-k');
+    ranged[i].value = Math.round(SND.vol[k] * 100);
+    ranged[i].parentNode.querySelector('b').textContent = ranged[i].value;
+    ranged[i].style.setProperty('--p', ranged[i].value + '%');
+  }
+  var m = el.querySelector('.v39mute');
+  if (m) {
+    m.classList.toggle('on', !!SND.muted);
+    m.textContent = SND.muted ? '🔇 음소거 켜짐 — 눌러서 해제' : '🔊 소리 켜짐 — 눌러서 음소거';
+  }
+}
+function sndToggleMute() {
+  SND.muted = !SND.muted;
+  if (SND.muted) { try { if (AC) AC.suspend(); } catch (e) { } }
+  else { try { if (AC && AC.resume) AC.resume(); } catch (e) { } }
+  sndApply();
+  refreshSndPanel();
+  if (!SND.muted) SND.play('uiOpen');
+  toast(SND.muted ? '🔇 소리 꺼짐' : '🔊 소리 켜짐', 'good');
+}
+
+/* ==========================================================================
+   WILD LIFE v3.9 — ② 트리케라톱스 PBR 실전 적용 (assets/triceratops_textured.glb)
+   ----------------------------------------------------------
+   · 20본 · 5클립(Idle/Walk/Run/Attack/Death) · 1024 basecolor/MR/normal
+   · 평소(Idle/Walk)는 묵직하고 느리게, 추격(chase)·돌진(charge)은 Run 클립을
+     배속해 빠르고 위압감 있게, Attack 은 클립의 실제 '내려찍기' 프레임(t≈0.86s)이
+     게임의 타격 타이밍(strikeT)과 맞도록 배속을 계산해 재생한다.
+   · Death 는 LoopOnce + clampWhenFinished 로 쓰러진 자세를 그대로 유지하고,
+     게임 공통 '그룹 90도 기울이기'는 이 종에서만 끈다(클립과 겹치지 않게).
+   · 로드 실패·미준비 시엔 기존 절차 모델을 그대로 쓴다(안전 폴백).
+   ========================================================================== */
+
+var TRIKE_GLB = {
+  url: './assets/triceratops_textured.glb',
+  enabled: true, started: false, ready: false, failed: false, err: '',
+  proto: null, dims: null, clips: [],
+  targetH: 2.50,          /* 정규화 목표 키 — spawnDino 의 개체 배율(1.10~1.16)이 곱해진다 */
+  impactT: 0.86,          /* Attack 클립에서 머리가 가장 낮게 내려꽂히는 시각(초) */
+  retrofitted: 0,
+  info: { tris: 0, verts: 0, bones: 0 }
+};
+
+/* ---------- 1) 로드 ---------- */
+function trikeGLBStart() {
+  if (TRIKE_GLB.started) return;
+  TRIKE_GLB.started = true;
+  try {
+    if (typeof location !== 'undefined' && /[?&]trike=proc/.test(location.search)) { TRIKE_GLB.enabled = false; return; }
+  } catch (e) { }
+  if (!TRIKE_GLB.enabled) return;
+  if (typeof THREE === 'undefined' || typeof THREE.GLTFLoader !== 'function' || !THREE.SkeletonUtils) {
+    TRIKE_GLB.failed = true;
+    TRIKE_GLB.err = 'no-loader';
+    return;
+  }
+  var L = new THREE.GLTFLoader();
+  L.load(TRIKE_GLB.url, function (g) {
+    try {
+      trikeGLBPrepare(g);
+      TRIKE_GLB.ready = true;
+      TRIKE_GLB.retrofitted = trikeGLBRetrofit();
+      if (window.__gameErrors) window.__gameErrors.push('trike-glb:ready:' + TRIKE_GLB.retrofitted);
+    } catch (e) {
+      TRIKE_GLB.failed = true;
+      TRIKE_GLB.err = String(e && e.message || e);
+      if (window.__gameErrors) window.__gameErrors.push('trike-glb:prep:' + TRIKE_GLB.err);
+    }
+  }, undefined, function (err) {
+    TRIKE_GLB.failed = true;
+    TRIKE_GLB.err = String(err && err.message || err);
+    if (window.__gameErrors) window.__gameErrors.push('trike-glb:load:' + TRIKE_GLB.err);
+  });
+}
+
+/* ---------- 2) 정규화 (발 y=0 · 중심 x/z=0 · targetH · +Z 정면) ---------- */
+function trikeGLBPrepare(gltf) {
+  var src = gltf.scene || (gltf.scenes && gltf.scenes[0]);
+  if (!src) throw new Error('no-scene');
+  var root = THREE.SkeletonUtils.clone(src);
+  root.updateMatrixWorld(true);
+  var box = new THREE.Box3().setFromObject(root);
+  var rawH = Math.max(0.0001, box.max.y - box.min.y);
+  var k = TRIKE_GLB.targetH / rawH;
+
+  var shift = new THREE.Group();
+  shift.add(root);
+  root.position.set(-(box.min.x + box.max.x) * 0.5, -box.min.y, -(box.min.z + box.max.z) * 0.5);
+
+  var scaled = new THREE.Group();
+  scaled.add(shift);
+  scaled.scale.setScalar(k);
+
+  var pose = new THREE.Group();          /* 내 연출용(숙임·젖힘) — 게임 회전과 분리 */
+  pose.name = 'v39pose';
+  pose.add(scaled);
+  pose.updateMatrixWorld(true);
+
+  /* 등 높이 실측 (z=0 띠) — 이름표·탑승 좌석·체력바 위치 */
+  var backTop = 0;
+  try { backTop = hqBackTopOf(pose, 0, Math.max(0.35, 0.5 * k)) || 0; } catch (e) { }
+  if (!(backTop > TRIKE_GLB.targetH * 0.4)) backTop = TRIKE_GLB.targetH * 0.78;
+
+  var dims = {
+    height: TRIKE_GLB.targetH,
+    backY: backTop,
+    backZ: 0,
+    seatY: Math.min(backTop - 0.26, TRIKE_GLB.targetH * 0.74),
+    radius: Math.max(0.55, TRIKE_GLB.targetH * 0.34)
+  };
+
+  var verts = 0, tris = 0;
+  var mats = [];
+  pose.traverse(function (o) {
+    if (o.isMesh || o.isSkinnedMesh) {
+      if (o.geometry && o.geometry.attributes && o.geometry.attributes.position) verts += o.geometry.attributes.position.count;
+      if (o.geometry && o.geometry.index) tris += o.geometry.index.count / 3;
+      if (o.material) mats.push(o.material);
+      o.castShadow = !MOBILE;
+      o.receiveShadow = false;
+      if (o.material && o.material.map) o.material.map.anisotropy = Math.min(4, (renderer && renderer.capabilities) ? renderer.capabilities.getMaxAnisotropy() : 4);
+    }
+  });
+  TRIKE_GLB.info.tris = Math.round(tris);
+  TRIKE_GLB.info.verts = verts;
+
+  var clips = gltf.animations || [];
+  var boneCount = 0;
+  pose.traverse(function (o) { if (o.isBone) boneCount++; });
+  TRIKE_GLB.info.bones = boneCount;
+
+  TRIKE_GLB.dims = dims;
+  TRIKE_GLB.clips = clips;
+  TRIKE_GLB.proto = { scene: pose, dims: dims };
+}
+
+/* ---------- 3) 개체용 빌드 ---------- */
+function trikeGLBBuild() {
+  if (!TRIKE_GLB.ready || !TRIKE_GLB.proto) return null;
+  var root = THREE.SkeletonUtils.clone(TRIKE_GLB.proto.scene);
+  var outer = new THREE.Group();
+  outer.add(root);
+  var poseG = null, body = null, bones = {};
+  root.traverse(function (o) {
+    if (o.name === 'v39pose') poseG = o;
+    if (o.isBone) bones[o.name] = o;
+    if (!body && (o.isSkinnedMesh || o.isMesh)) body = o;
+  });
+  var mixer = new THREE.AnimationMixer(root);
+  var acts = {};
+  var clips = TRIKE_GLB.clips;
+  for (var i = 0; i < clips.length; i++) {
+    var a = mixer.clipAction(clips[i]);
+    a.setLoop(THREE.LoopRepeat, Infinity);
+    a.clampWhenFinished = false;
+    a.setEffectiveWeight(0);
+    a.enabled = true;
+    acts[clips[i].name] = a;
+  }
+  if (acts.Idle) { acts.Idle.setEffectiveWeight(1); acts.Idle.setEffectiveTimeScale(V39_TS.idle); acts.Idle.play(); }
+  var D = TRIKE_GLB.dims;
+  return {
+    group: outer, mesh: body, body: body, bones: bones,
+    boneList: Object.keys(bones), legs: [], head: bones.head || null, tail: bones.tail1 || null,
+    height: D.height, backY: D.backY, backZ: D.backZ, seatY: D.seatY, radius: D.radius,
+    skinned: true, tune: null, glb: true, v39trike: true, pose: poseG,
+    glbAnim: {
+      mixer: mixer, acts: acts, cur: 'Idle', atkOn: 0, dead: 0, v39: 1,
+      stepPh: 0, stepN: 0, root: root, pose: poseG, bones: bones,
+      prevState: '', voiceT: 2 + Math.random() * 4
+    }
+  };
+}
+
+/* ---------- 4) 이미 서 있는 개체에 적용 ---------- */
+function trikeGLBApply(d) {
+  if (!d || d.kind !== 'trike' || d.v39trike) return false;
+  var built = trikeGLBBuild();
+  if (!built) return false;
+  for (var i = d.group.children.length - 1; i >= 0; i--) {
+    var c = d.group.children[i];
+    if (c.isSprite) continue;
+    d.group.remove(c);
+  }
+  var sc = d.scale || 1;
+  built.group.scale.setScalar(sc);
+  d.group.add(built.group);
+  built.height *= sc; built.radius *= sc; built.backY *= sc; built.seatY *= sc;
+  try {
+    if (d.parts && d.parts.mesh && d.parts.mesh.geometry && !d.parts.hq && !d.parts.glb) d.parts.mesh.geometry.dispose();
+  } catch (e) { }
+  d.parts = built;
+  d.skinned = true;
+  d.v39trike = 1;
+  d.glbAnim = built.glbAnim;
+  if (d.speciesTag) d.speciesTag.position.y = built.height + 0.9;
+  if (d.tag) d.tag.position.y = built.height + (d.tag.scale.y * 0.45);
+  if (d.hpBg) d.hpBg.position.y = (d.tag ? d.tag.position.y : built.height + 1.2) + 0.30;
+  if (d.hpFill) d.hpFill.position.y = (d.hpBg ? d.hpBg.position.y : built.height + 1.5) + 0.02;
+  return true;
+}
+
+function trikeGLBRetrofit() {
+  if (typeof dinos === 'undefined' || !dinos) return 0;
+  var n = 0;
+  for (var i = 0; i < dinos.length; i++) {
+    if (dinos[i].kind === 'trike') { if (trikeGLBApply(dinos[i])) n++; }
+  }
+  return n;
+}
+
+/* ---------- 4b) 월드 초기화 때 GLB 로드 시작 ---------- */
+function v39IsTrike(d) { return !!(d && d.glbAnim && d.glbAnim.v39 && d.glbAnim.mixer); }
+
+/* 스폰된 개체에 표식을 남긴다(새로 태어난 개체 포함) */
+if (typeof spawnDino === 'function') {
+  var _v39SpawnDino = spawnDino;
+  spawnDino = function (kind, x, z, opt) {
+    var d = _v39SpawnDino(kind, x, z, opt);
+    if (d && kind === 'trike' && d.parts && d.parts.v39trike) d.v39trike = 1;
+    if (d && v39IsTrike(d)) d.v39trike = 1;
+    return d;
+  };
+}
+
+/* 애니메이션 디스패치 — 트리케라톱스 GLB는 전용 5클립 컨트롤러가 맡는다 */
+if (typeof animateCreature === 'function') {
+  var _v39AnimateCreature = animateCreature;
+  animateCreature = function (d, dt, t) {
+    if (v39IsTrike(d)) { v39TrikeAnim(d, dt, t); return; }
+    return _v39AnimateCreature(d, dt, t);
+  };
+}
+
+/* 공격 클립의 실제 타격 프레임(t≈0.86s)에 게임 피해가 맞도록 타격 타이밍을 늘린다 */
+if (typeof beginDinoAttack === 'function') {
+  var _v39BeginAtk = beginDinoAttack;
+  beginDinoAttack = function (d, A) {
+    _v39BeginAtk(d, A);
+    if (d && v39IsTrike(d)) {
+      d.strikeT = 0.46;                       /* 클립 0.86s ÷ 배속 1.87 = 0.46s */
+      d.v39atkTs = 1.87;
+      d.atkT = Math.max(d.atkT || 0, 0.90);
+      d.atkDur = Math.max(d.atkDur || 0, 0.90);
+      d.stateT = Math.max(d.stateT || 0, 0.90);
+    }
+  };
+}
+
+if (typeof initWorld === 'function') {
+  var _v39InitWorld = initWorld;
+  initWorld = function () {
+    _v39InitWorld();
+    try { trikeGLBStart(); } catch (e) { }
+  };
+}
+
+/* ---------- 5) 클립 전환 ---------- */
+function trikeClip(g, name, fade) {
+  var next = g.acts[name];
+  if (!next) return false;
+  if (g.cur === name) return true;
+  var prev = g.acts[g.cur];
+  next.reset();
+  next.enabled = true;
+  next.setLoop(name === 'Death' ? THREE.LoopOnce : THREE.LoopRepeat, name === 'Death' ? 1 : Infinity);
+  next.clampWhenFinished = (name === 'Death');
+  next.setEffectiveWeight(1);
+  next.setEffectiveTimeScale(1);
+  next.fadeIn(fade === undefined ? 0.26 : fade);
+  next.play();
+  if (prev && prev !== next) prev.fadeOut(fade === undefined ? 0.26 : fade);
+  g.cur = name;
+  return true;
+}
+
+/* ---------- 6) 상태 → 모션 (핵심 연출) ---------- */
+var V39_TS = { idle: 0.86, walkMin: 0.62, walkMax: 1.05, runMin: 1.32, runMax: 2.05, atk: 1.85, death: 1.10 };
+
+function v39TrikeAnim(d, dt, t) {
+  var g = d.glbAnim;
+  if (!g) return;
+  var st = d.cstate || 'idle';
+  var spd = (typeof d.v39spd === 'number') ? d.v39spd : (d.animSpeed || 0);
+  if (d.atkT > 0) { d.atkT = Math.max(0, d.atkT - dt); }
+
+  /* ── 죽음: Death 클립은 후처리(updateDinos 훅)가 담당한다 ──
+     (쓰러지는 동안 게임은 animateCreature 를 부르지 않고 그룹을 기울이기만 한다) */
+  if (d.dead) return;
+  if (g.cur === 'Death' && g.acts.Death) {
+    /* 시체에서 되살아난 개체 — 자세 초기화 */
+    g.acts.Death.stop();
+    g.cur = '';
+  }
+
+  var charging = (st === 'charge') || (d.chgT > 0);
+  var chasing = charging || st === 'chase' || st === 'pounce' || st === 'flee' || st === 'flank';
+  var windup = (d.hornT > 0) || st === 'windup';
+  var attacking = (d.atkT > 0) || st === 'attack' || st === 'bite';
+
+  var want = 'Idle', ts = V39_TS.idle, fade = 0.30;
+
+  if (attacking) {
+    want = 'Attack';
+    ts = d.v39atkTs || V39_TS.atk;
+    fade = 0.10;
+  } else if (windup) {
+    want = 'Idle';
+    ts = 0.62;                 /* 뿔 낮추고 기 모으는 동안 아주 느린 호흡 */
+    fade = 0.20;
+  } else if (charging) {
+    want = 'Run';
+    ts = V39_TS.runMax;        /* 돌진 — 가장 빠른 배속 */
+    fade = 0.14;
+  } else if (spd > 2.45) {
+    want = 'Run';
+    ts = Math.max(V39_TS.runMin, Math.min(V39_TS.runMax, 1.30 + (spd - 2.5) * 0.14));
+    fade = 0.22;
+  } else if (spd > 0.22) {
+    want = 'Walk';
+    ts = Math.max(V39_TS.walkMin, Math.min(V39_TS.walkMax, 0.60 + spd * 0.16));
+    fade = 0.30;
+  }
+
+  var wasAtk = g.atkOn;
+  trikeClip(g, want, fade);
+  if (want === 'Attack' && !wasAtk) {
+    g.atkOn = 1;
+    if (g.acts.Attack) { g.acts.Attack.time = 0; g.acts.Attack.setEffectiveTimeScale(ts); }
+  } else if (want !== 'Attack') {
+    g.atkOn = 0;
+  }
+  if (want === 'Attack' && g.acts.Attack) g.acts.Attack.setEffectiveTimeScale(d.v39atkTs || V39_TS.atk);
+  if (want === 'Run' && g.acts.Run) g.acts.Run.setEffectiveTimeScale(ts);
+  if (want === 'Walk' && g.acts.Walk) g.acts.Walk.setEffectiveTimeScale(ts);
+  if (want === 'Idle' && g.acts.Idle) g.acts.Idle.setEffectiveTimeScale(ts);
+
+  g.mixer.update(dt);
+  v39TrikeOverlay(d, g, dt, t, st, spd, charging, windup);
+  v39TrikeSteps(d, g, dt, spd, charging);
+}
+
+/* 몸통 연출 — 숙임·젖힘·피격 움찔 (본 대신 '포즈 그룹'을 기울여 축 문제를 피한다) */
+function v39TrikeOverlay(d, g, dt, t, st, spd, charging, windup) {
+  var pose = g.pose;
+  if (!pose) return;
+  var wantX = 0, wantZ = 0;
+  if (charging) {
+    wantX = 0.075;                                  /* 앞으로 낮게 숙여 뿔을 세운다 */
+    wantZ = Math.sin(t * 13 + (d.phase || 0)) * 0.012;
+  } else if (windup) {
+    /* 뿔을 땅에 박듯 낮추고 앞발로 흙을 긁는다 */
+    var hk = d.hornT > 0 ? Math.min(1, (1.45 - d.hornT) / 0.5) : 1;
+    wantX = 0.085 * hk;
+    wantZ = Math.sin(t * 9.5 + (d.phase || 0)) * 0.020;
+  } else if (st === 'attack' || d.atkT > 0) {
+    wantX = 0.045;
+  } else if (st === 'graze' || st === 'browse') {
+    wantX = 0.03;
+  }
+  /* 피격 — 충격 반대쪽으로 짧게 젖힌다 */
+  if (d.hurt > 0) {
+    var hk2 = Math.min(1, d.hurt / 0.35);
+    wantX -= 0.10 * hk2;
+    wantZ += Math.sin((d.v39hurtPh || 0)) * 0.05 * hk2;
+  }
+  var k = Math.min(1, dt * 7);
+  pose.rotation.x += (wantX - pose.rotation.x) * k;
+  pose.rotation.z += (wantZ - pose.rotation.z) * Math.min(1, dt * 5);
+}
+
+/* 발소리 — 클립 시간이 반주기를 지날 때마다 체급에 맞는 무거운 발걸음 */
+function v39TrikeSteps(d, g, dt, spd, charging) {
+  if (!(spd > 0.3) && !charging) { g.stepPh = 0; return; }
+  var cycle = charging ? 0.31 : (spd > 2.45 ? 0.36 : 0.68);   /* 발 한 번 간격(초) */
+  g.stepPh += dt;
+  if (g.stepPh >= cycle) {
+    g.stepPh -= cycle;
+    if (Math.hypot(d.x - player.pos.x, d.z - player.pos.z) < 34) {
+      SND.play('dinoStep', { mass: 1.55, x: d.x, z: d.z, max: 30, gain: charging ? 1.25 : 0.95 });
+      if (charging) {
+        /* 돌진 — 발밑 흙먼지 + 지면 진동 링 */
+        var gy = terrainH(d.x, d.z);
+        spawnBurst(d.x, gy + 0.16, d.z, 0xd8c7a6, 5, 0.55);
+        if (Math.random() < 0.6) spawnFxRing(d.x, gy + 0.05, d.z, 0xc9b48c, 0.22, 1.9);
+      }
+    }
+  }
+}
+
+/* ==========================================================================
+   WILD LIFE v3.9 — ③ 점프 · 공룡 전투 타격 이펙트 7종 (섹션 16 & 18)
+   ----------------------------------------------------------
+   ① 뿔/돌진 먼지 파티클   ② 발 구르기 지면 진동 링   ③ 타격 시 미세 카메라 셰이크
+   ④ 피격 넉백             ⑤ 기절/그로기 연출         ⑥ 강타 전 붉은 예고(기존 예고선 강화)
+   ⑦ 타격 프레임 동기화 사운드 — 시각·소리·피격 반응 모두 모션의 실제 타격 순간에
+   ========================================================================== */
+
+/* ── 1) 점프 ─────────────────────────────────────────────────── */
+var V39P = { air: false, y: 0, v: 0, t: 0, landT: 0, base: 0 };
+var V39_JUMP = { v0: 6.35, g: 17.2 };
+
+function v39CanJump() {
+  return started && !rideDino && !(player.dodgeT > 0) && !V39P.air && S.hp > 0 && !CCP.on;
+}
+function v39Jump() {
+  if (!v39CanJump()) return false;
+  if (player.craftT > 0 && typeof endCraftMotion === 'function') { try { endCraftMotion(); } catch (e) { } }
+  V39P.air = true;
+  V39P.v = V39_JUMP.v0;
+  V39P.y = 0.02;
+  V39P.t = 0;
+  V39P.landT = 0;
+  V39P.base = player.pos.y;
+  var surf = sndSurface(player.pos.x, player.pos.z);
+  if (SND.ready) SND.play(surf === 'water' || surf === 'deep' ? 'splash' : 'jump', { gain: 0.9 });
+  else { try { sfx('dodge'); } catch (e) { } }
+  var gy = groundY(player.pos.x, player.pos.z);
+  spawnBurst(player.pos.x, gy + 0.06, player.pos.z, 0xd9cdb4, 5, 0.45);
+  if (typeof heroPlay === 'function') heroPlay('Jump_Start', { fade: 0.04, restart: true });
+  var jb = $id('btnJump');
+  if (jb) jb.classList.add('air');
+  return true;
+}
+function v39JumpTick(dt) {
+  if (V39P.landT > 0 && !V39P.air) V39P.landT = Math.max(0, V39P.landT - dt);
+  if (!V39P.air) return;
+  V39P.t += dt;
+  V39P.v -= V39_JUMP.g * dt;
+  V39P.y += V39P.v * dt;
+  if (V39P.y <= 0) {
+    V39P.y = 0; V39P.air = false; V39P.landT = 0.30;
+    var surf = sndSurface(player.pos.x, player.pos.z);
+    if (SND.ready) SND.play(surf === 'water' || surf === 'deep' ? 'splash' : 'land', { surface: surf, gain: 1 });
+    var gy = groundY(player.pos.x, player.pos.z);
+    spawnBurst(player.pos.x, gy + 0.05, player.pos.z, 0xd9cdb4, 7, 0.6);
+    if (surf === 'water' || surf === 'deep') spawnSplash(player.pos.x, gy + 0.02, player.pos.z, 5);
+    shakeCam(0.10);
+    var jb = $id('btnJump');
+    if (jb) jb.classList.remove('air');
+    if (typeof heroPlay === 'function' && HERO.actions && HERO.actions.Jump_Land) heroScrub('Jump_Land', 0, 0.05);
+  }
+  if (!rideDino) {
+    player.pos.y = groundY(player.pos.x, player.pos.z) + V39P.y;
+    player.group.position.y = player.pos.y;
+  }
+}
+
+/* 점프/착지 모션 — 이동 클립보다 우선한다 */
+var _v39HeroFrame = (typeof heroFrame === 'function') ? heroFrame : null;
+if (_v39HeroFrame) {
+  heroFrame = function (dt) {
+    if (!V39P.air && V39P.landT <= 0) return _v39HeroFrame(dt);
+    if (!HERO.ready || !HERO.mixer) return;
+    if (V39P.air) {
+      if (V39P.t < 0.18 && HERO.actions.Jump_Start) heroScrub('Jump_Start', V39P.t / 0.18, 0.03);
+      else if (HERO.actions.Jump_Loop) {
+        heroPlay('Jump_Loop', { fade: 0.10 });
+        HERO.actions.Jump_Loop.setEffectiveTimeScale(1.15);
+      }
+    } else if (HERO.actions.Jump_Land) {
+      heroScrub('Jump_Land', 1 - V39P.landT / 0.30, 0.05);
+    }
+    HERO.mixer.update(dt);
+    if (typeof heroApplyStance === 'function') heroApplyStance();
+  };
+}
+
+/* Space = 점프 (기존 Space=채집/공격은 캡처 단계에서 가로챈다 · 캔버스 클릭과 버튼은 그대로) */
+window.addEventListener('keydown', function (e) {
+  if (e.code !== 'Space') return;
+  var tg = e.target;
+  if (tg && (tg.tagName === 'INPUT' || tg.tagName === 'TEXTAREA')) return;
+  e.preventDefault();
+  if (e.repeat) { e.stopImmediatePropagation(); return; }
+  e.stopImmediatePropagation();
+  v39Jump();
+}, true);
+
+/* 모바일 점프 버튼 */
+(function () {
+  function make() {
+    if ($id('btnJump')) return;
+    var b = document.createElement('button');
+    b.id = 'btnJump';
+    b.setAttribute('aria-label', '점프');
+    b.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 19.5V5.2"/><path d="M6.2 11 12 5.2l5.8 5.8"/></svg><span>점프</span>';
+    var hud = $id('hud');
+    if (hud) hud.appendChild(b);
+    else document.body.appendChild(b);
+    b.addEventListener('pointerdown', function (e) {
+      e.preventDefault();
+      audioInit();
+      v39Jump();
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', make);
+  else make();
+})();
+
+/* ── 2) 카메라 셰이크 — 모바일은 강도를 낮춘다 (섹션 19: 과도한 흔들림 금지) ── */
+var _v39Shake = shakeCam;
+shakeCam = function (v) {
+  var k = MOBILE ? 0.58 : 1.0;
+  _v39Shake((v === undefined ? 1 : v) * k);
+};
+
+/* ── 3) 지면 진동 링 · 먼지 (①②) ──────────────────────────── */
+function v39GroundShock(x, z, power, color) {
+  var gy = terrainH(x, z);
+  var p = Math.max(0.2, Math.min(1.6, power || 1));
+  spawnFxRing(x, gy + 0.05, z, color === undefined ? 0xd9c6a4 : color, 0.30 + 0.16 * p, 2.4 + 2.4 * p);
+  if (p > 0.7) spawnFxRing(x, gy + 0.09, z, 0xe8dcc2, 0.42 + 0.14 * p, 3.2 + 2.2 * p);
+  spawnBurst(x, gy + 0.14, z, 0xd8c7a6, Math.round(6 + 8 * p), 0.7 + 0.5 * p);
+}
+function v39HornDust(d, side) {
+  if (!d) return;
+  var gy = terrainH(d.x, d.z);
+  var fx = Math.sin(d.rot || 0), fz = Math.cos(d.rot || 0);
+  var hx = d.x + fx * (d.parts && d.parts.height ? d.parts.height * 0.55 : 1.2);
+  var hz = d.z + fz * (d.parts && d.parts.height ? d.parts.height * 0.55 : 1.2);
+  spawnBurst(hx, gy + 0.35, hz, 0xcbb896, side ? 9 : 6, 0.85);
+  spawnBurst(d.x, gy + 0.12, d.z, 0xd8c7a6, 6, 0.6);
+  if (SND.ready) SND.play('dust', { x: d.x, z: d.z, max: 26, gain: 0.9 });
+}
+
+/* ── 4) 피격 넉백 (④) ──────────────────────────────────────── */
+function v39KnockCreature(d, fx, fz, power) {
+  if (!d || d.dead) return;
+  var mass = sndDinoMass(d);
+  var k = Math.max(0.18, Math.min(1.4, (power || 1) * 1.35 / mass));
+  var dx = d.x - fx, dz = d.z - fz;
+  var l = Math.hypot(dx, dz) || 1;
+  d.v39kb = { t: 0.26 + 0.10 * k, vx: dx / l * 5.2 * k, vz: dz / l * 5.2 * k, k: k };
+  d.v39hurtPh = Math.random() * TAU;
+}
+function v39KnockTick(d, dt, t) {
+  var kb = d.v39kb;
+  if (!kb || kb.t <= 0) return;
+  kb.t -= dt;
+  var nx = d.x + kb.vx * dt, nz = d.z + kb.vz * dt;
+  if (terrainH(nx, nz) > 0.42 || (typeof riverWalk === 'function' && riverWalk(nx, nz))) { d.x = nx; d.z = nz; }
+  kb.vx *= 0.86; kb.vz *= 0.86;
+  var w = Math.max(0, kb.t / 0.36);
+  if (!(d.groggyT > 0) && !d.flying) {
+    d.group.rotation.z = Math.sin(t * 26 + (d.v39hurtPh || 0)) * 0.055 * w * (d.kind === 'compy' ? 1.4 : 1);
+  }
+  if (kb.t <= 0) {
+    d.v39kb = null;
+    if (!(d.groggyT > 0) && !d.dead) d.group.rotation.z = 0;
+  }
+}
+
+/* ── 5) 타격 프레임 동기화 (⑦) ─────────────────────────────── */
+/* 플레이어 → 공룡 : 무기 종류별 타격음 + 먼지/고리 + 아주 짧은 셰이크 + 넉백 */
+var _v39AttackDino = attackDino;
+attackDino = function (d) {
+  var before = d ? d.hp : 0;
+  _v39AttackDino(d);
+  if (!d || d.dead || d.hp === before) return;
+  var wk = weaponKind();
+  var gy = terrainH(d.x, d.z);
+  var mass = sndDinoMass(d);
+  if (SND.ready) {
+    var horn = (d.kind === 'trike' || d.kind === 'anky' || d.kind === 'stego' || d.kind === 'pachy' || d.kind === 'mammoth');
+    SND.play(horn ? 'hitHorn' : 'hitFlesh', { x: d.x, z: d.z, max: 24, gain: 1 });
+  }
+  spawnBurst(d.x, gy + (d.parts.height || 1.4) * 0.5, d.z, 0xcdbb9a, 6, 0.7);
+  shakeCam(wk === 'fist' ? 0.06 : 0.10);
+  v39KnockCreature(d, player.pos.x, player.pos.z, wk === 'fist' ? 0.6 : 1.0);
+};
+var _v39HitByArrow = hitDinoByArrow;
+hitDinoByArrow = function (d, dmg, p, arrow) {
+  var before = d ? d.hp : 0;
+  _v39HitByArrow(d, dmg, p, arrow);
+  if (!d || d.dead || d.hp === before) return;
+  if (SND.ready) SND.play('hitFlesh', { x: d.x, z: d.z, max: 22, gain: 0.85 });
+  v39KnockCreature(d, p ? p.x : player.pos.x, p ? p.z : player.pos.z, 0.5);
+};
+
+/* 공룡 → 플레이어 : 실제로 닿은 순간에만 먼지·충격 링·셰이크 */
+var _v39DinoStrike = dinoStrike;
+dinoStrike = function (d, A, dp) {
+  var hit = (dp <= A.hitR);
+  _v39DinoStrike(d, A, dp);
+  if (!d) return;
+  var mass = sndDinoMass(d);
+  if (hit) {
+    var px = player.pos.x, pz = player.pos.z;
+    var gy = terrainH(px, pz);
+    spawnBurst(px, gy + 0.9, pz, 0xc9a882, 8, 0.9);
+    if (mass > 1.2) v39GroundShock(px, pz, 0.8, 0xd8b48a);
+    if (SND.ready) SND.play('thud', { gain: Math.min(1.25, 0.6 + mass * 0.28) });
+    shakeCam(0.10 + mass * 0.10);
+  } else {
+    /* 빗나감 — 발밑에 흙먼지만 */
+    var gy2 = terrainH(player.pos.x, player.pos.z);
+    spawnBurst(player.pos.x + Math.sin(player.facing) * 0.5, gy2 + 0.12, player.pos.z + Math.cos(player.facing) * 0.5, 0xd8c7a6, 4, 0.5);
+  }
+};
+
+/* 매머드 스톰프 — 발 구르기 지면 진동(②) 강화 */
+var _v39Stomp = (typeof mammothStompHit === 'function') ? mammothStompHit : null;
+if (_v39Stomp) {
+  mammothStompHit = function (d, A) {
+    _v39Stomp(d, A);
+    if (d) v39GroundShock(d.x, d.z, 1.5, 0xe0c9a4);
+  };
+}
+
+/* 기절/그로기(⑤) — 기존 별·경직에 지면 충격과 휘청임을 더한다 */
+var _v39Groggy = startGroggy;
+startGroggy = function (d) {
+  _v39Groggy(d);
+  if (!d) return;
+  v39GroundShock(d.x, d.z, 0.6, 0xffd76a);
+  if (SND.ready) SND.play('thud', { x: d.x, z: d.z, max: 24, gain: 0.8 });
+  d.v39hurtPh = Math.random() * TAU;
+};
+
+/* 사망 — 쓰러지는 순간 무게 있는 먼지와 체급별 울음 */
+var _v39KillDino = killDino;
+killDino = function (d) {
+  var wasDead = d && d.dead;
+  _v39KillDino(d);
+  if (!d || wasDead) return;
+  var mass = sndDinoMass(d);
+  v39GroundShock(d.x, d.z, mass > 1.3 ? 1.1 : 0.55, 0xcfbfa2);
+  if (SND.ready) SND.play('dinoCall', { kind: d.kind, mood: 'death', mass: mass, x: d.x, z: d.z, max: 40, gain: 1.0 });
+  if (mass > 1.3 && Math.hypot(d.x - player.pos.x, d.z - player.pos.z) < 12) shakeCam(0.22);
+};
+
+/* 돌진 시작 — 뿔 먼지 + 진동 링 (트리케라톱스) */
+var _v39TrikeStep = v28TrikeStep;
+v28TrikeStep = function (d, A, dt, dp) {
+  var hadHorn = d.hornT > 0, hadChg = d.chgT > 0;
+  var out = _v39TrikeStep(d, A, dt, dp);
+  if (!out || !d) return out;
+  if (hadHorn && !(d.hornT > 0) && d.chgT > 0) {
+    /* 뿔 낮추기 → 돌진 발동 순간 */
+    v39HornDust(d, true);
+    v39GroundShock(d.x, d.z, 0.9, 0xd8c7a6);
+  }
+  if (hadChg && !(d.chgT > 0)) {
+    /* 돌진 끝 — 지면에 브레이크 자국 */
+    v39GroundShock(d.x, d.z, 0.7, 0xcfc0a4);
+  }
+  return out;
+};
+
+/* ── 6) 공룡 상태별 소리 · 발소리 (Dinosaur 카테고리) ──────────── */
+function v39DinoVoices(dt, t) {
+  var px = player.pos.x, pz = player.pos.z;
+  for (var i = 0; i < dinos.length; i++) {
+    var d = dinos[i];
+    if (d.dead) continue;
+    var dx = d.x - px, dz = d.z - pz;
+    var dd = Math.sqrt(dx * dx + dz * dz);
+    /* 🦏 v3.9 원거리 LOD — PBR 트리케라톱스는 70k 삼각형이라 멀리선 끈다(모바일 60fps) */
+    if (d.glbAnim && d.glbAnim.v39 && d.parts && d.parts.group) {
+      var lodR = LOWSPEC.on ? 24 : (MOBILE ? 32 : 999);
+      var wantVis = !(dd > lodR) && !d.v39hide;
+      if (d.parts.group.visible !== wantVis) d.parts.group.visible = wantVis;
+    }
+    if (dd > 36) { d.v39stepT = 0; continue; }
+    var mass = sndDinoMass(d);
+    /* 발소리 */
+    var spd = d.animSpeed || 0;
+    if (spd > 0.35 && !d.flying) {
+      d.v39stepPh = (d.v39stepPh || 0) + dt;
+      var cyc = Math.max(0.24, Math.min(1.0, 0.62 / (0.7 + spd * 0.55)));
+      if (d.v39stepPh >= cyc) {
+        d.v39stepPh -= cyc;
+        if (dd < 30 && (i % 2 === 0 || mass > 1.1 || dd < 16)) {
+          SND.play('dinoStep', { mass: mass, x: d.x, z: d.z, max: 30, gain: 0.55 + mass * 0.12 });
+        }
+      }
+    } else {
+      d.v39stepPh = 0;
+    }
+    /* 상태 전환 음성 */
+    if (!d.glbAnim) {
+      var st = d.cstate || 'idle';
+      if (d.v39st !== st) {
+        d.v39st = st;
+        d.v39vT = (d.v39vT || 0);
+        if (st === 'alert' && Math.random() < 0.55) {
+          SND.play('dinoCall', { kind: d.kind, mood: 'alert', mass: mass, x: d.x, z: d.z, max: 32, gain: 0.8 });
+        } else if ((st === 'threat' || st === 'windup') && dd < 28) {
+          SND.play('dinoCall', { kind: d.kind, mood: 'aggro', mass: mass, x: d.x, z: d.z, max: 34, gain: 0.95 });
+        } else if (st === 'attack' && dd < 20) {
+          SND.play('dinoCall', { kind: d.kind, mood: 'attack', mass: mass, x: d.x, z: d.z, max: 26, gain: 0.9 });
+        }
+      }
+    }
+    /* 피격 — 짧은 비명 (쿨다운) */
+    d.v39vT = Math.max(0, (d.v39vT || 0) - dt);
+    if (d.hurt > 0 && d.v39vT <= 0 && dd < 22) {
+      d.v39vT = 1.1;
+      SND.play('dinoCall', { kind: d.kind, mood: 'pain', mass: mass, x: d.x, z: d.z, max: 26, gain: 0.7 });
+    }
+  }
+}
+
+/* ── 7) 매 프레임 후처리 — 넉백 이동 · 기울기 복구 ──────────────── */
+var _v39UpdateDinos = updateDinos;
+updateDinos = function (dt, t) {
+  _v39UpdateDinos(dt, t);
+  v39DinoVoices(dt, t);
+  for (var i = 0; i < dinos.length; i++) {
+    var d = dinos[i];
+    d.v39post = (d.v39post || 0) + 1;
+    v39KnockTick(d, dt, t);
+    /* 트리케라톱스 GLB — 쓰러짐은 Death 클립이 담당한다(그룹 기울이기 끔) */
+    if (d.glbAnim && d.glbAnim.v39) {
+      var g = d.glbAnim;
+      if (d.dead) {
+        if (g.cur !== 'Death') {
+          trikeClip(g, 'Death', 0.12);
+          if (g.acts.Death) { g.acts.Death.time = 0; g.acts.Death.setEffectiveTimeScale(V39_TS.death); }
+          if (SND.ready) SND.play('dinoCall', { kind: 'trike', mood: 'death', mass: 1.55, x: d.x, z: d.z, max: 40, gain: 1.0 });
+        }
+        if (g.pose) g.pose.rotation.x += (0 - g.pose.rotation.x) * Math.min(1, dt * 4);
+        if (g.mixer) g.mixer.update(dt);
+        d.group.rotation.z = 0;
+        d.group.position.y = terrainH(d.x, d.z);
+      } else if (!(d.groggyT > 0) && !(d.v39kb && d.v39kb.t > 0)) {
+        if (d.group.rotation.z !== 0) d.group.rotation.z = 0;
+      }
+    }
+  }
+};
+
+/* ── 8) 플레이어 발소리 (Character 카테고리) ────────────────────── */
+var V39_FOOT = { ph: 0, n: 0 };
+function v39FootTick(dt) {
+  if (!started || rideDino) { V39_FOOT.ph = 0; return; }
+  var spd = player.spd || 0;
+  if (spd < 0.5 || V39P.air) { V39_FOOT.ph = 0; return; }
+  V39_FOOT.ph += dt * (2.2 + spd * 1.05);
+  if (V39_FOOT.ph >= Math.PI) {
+    V39_FOOT.ph -= Math.PI;
+    var surf = sndSurface(player.pos.x, player.pos.z);
+    SND.play('step', { surface: surf, gain: 0.85 + Math.min(0.35, spd * 0.05) });
+    SND.stat.steps++;
+  }
+}
+
+/* ── 9) updatePlayer 감싸기 (점프 물리 · 발소리) ───────────────── */
+var _v39UpdatePlayer = updatePlayer;
+updatePlayer = function (dt) {
+  _v39UpdatePlayer(dt);
+  v39JumpTick(dt);
+  v39FootTick(dt);
+};
+
+/* ==========================================================================
+   WILD LIFE v3.9 — ④ HUD 다이어트 · 개발자 메뉴 분리 · 모바일 시각적 편안함
+   (섹션 17 & 19)
+   ========================================================================== */
+
+/* ── 1) 상단 한 줄 알약 (날씨·온도·구역) ─────────────────────── */
+var V39_TOP = { el: null, taps: 0, tapT: 0, last: '' };
+function v39TopBuild() {
+  if (V39_TOP.el) return V39_TOP.el;
+  var el = document.createElement('div');
+  el.id = 'v39top';
+  el.innerHTML = '<i>☀️</i><b>21°</b><em>아침</em>';
+  var hud = $id('hud');
+  if (hud) hud.appendChild(el);
+  else document.body.appendChild(el);
+  el.addEventListener('click', function () {
+    /* 숨은 개발자 메뉴 — 3초 안에 5번 톡톡 */
+    var now = performance.now();
+    if (now - V39_TOP.tapT > 3000) V39_TOP.taps = 0;
+    V39_TOP.tapT = now;
+    V39_TOP.taps++;
+    if (V39_TOP.taps >= 5) { V39_TOP.taps = 0; devPanel(true); }
+  });
+  V39_TOP.el = el;
+  return el;
+}
+
+/* ── 2) HUD 다이어트 반영 ─────────────────────────────────────── */
+function v39HudTick() {
+  var el = v39TopBuild();
+  var icon = '☀️', label = '낮';
+  try { var dp = dayPhase(); icon = dp[0]; label = dp[1]; } catch (e) { }
+  var temp = (tempVal && tempVal.textContent) ? tempVal.textContent : '';
+  var wild = (typeof ZONE !== 'undefined' && ZONE.cur !== 'home');
+  var isle = (typeof ISLE !== 'undefined') ? ISLE.cur : 'home';
+  var zoneTxt = wild ? (isle === 'jungle' ? '원시' : (isle === 'snow' ? '설원' : (isle === 'tundra' ? '툰드라' : '야생'))) : '주거';
+  var cls = 'v39top' + (wild ? ' wild' : '');
+  var tcls = tempPill ? tempPill.className : '';
+  if (tcls.indexOf('cold') >= 0) cls += ' cold';
+  if (tcls.indexOf('hot') >= 0) cls += ' hot';
+  var html = '<i>' + icon + '</i><b>' + (temp || '—') + '</b><em>' + label + (wild ? ' · ' + zoneTxt : '') + '</em>';
+  if (V39_TOP.last !== html + cls) {
+    el.innerHTML = html;
+    el.className = cls;
+    V39_TOP.last = html + cls;
+  }
+  /* 위험할 때만 숫자를 보여준다 */
+  var bar = hpFill ? hpFill.parentNode : null;
+  if (bar) bar.classList.toggle('low', S.hp < 35);
+  var hb = hgFill ? hgFill.parentNode : null;
+  if (hb) hb.classList.toggle('low', S.hunger < 25);
+  var wb = wlFill ? wlFill.parentNode : null;
+  if (wb) wb.classList.toggle('low', S.water < 25);
+  /* 레벨업 순간에만 경험치 글씨 */
+  var eb = $id('expBar');
+  if (eb) {
+    var up = (S.lv || 1) !== (V39_TOP.lv || 1);
+    if (up) { V39_TOP.lv = S.lv || 1; V39_TOP.lvT = 2.4; }
+    V39_TOP.lvT = Math.max(0, (V39_TOP.lvT || 0) - 0.1);
+    eb.classList.toggle('on', V39_TOP.lvT > 0);
+  }
+  /* 환경음(바람·새·귀뚜라미) */
+  if (started) { try { sndAmbTick(0.1); } catch (e) { } }
+}
+
+var _v39UpdateHUD = updateHUD;
+updateHUD = function (dt) {
+  _v39UpdateHUD(dt);
+  try { v39HudTick(); } catch (e) { }
+};
+
+/* ── 3) 설정 시트 정리 — 3D 에셋 관리를 개발자 메뉴로, 사운드 설정 추가 ── */
+var _v39RenderSheet = renderSheet;
+renderSheet = function () {
+  _v39RenderSheet();
+  try {
+    if (sheetMode !== 'set' || !sheetBody) return;
+    var recs = sheetBody.querySelectorAll('.rec');
+    for (var i = recs.length - 1; i >= 0; i--) {
+      var tx = recs[i].textContent || '';
+      if (tx.indexOf('3D 에셋 관리') >= 0) { if (recs[i].parentNode) recs[i].parentNode.removeChild(recs[i]); continue; }
+      if (tx.indexOf('효과음') >= 0) { if (recs[i].parentNode) recs[i].parentNode.removeChild(recs[i]); continue; }
+    }
+    /* 사운드 설정 */
+    var srow = document.createElement('div');
+    srow.className = 'rec';
+    srow.innerHTML = '<div class="ic">🔊</div><div class="txt"><b>사운드</b><small>' +
+      (SND.muted ? '음소거' : '전체 ' + Math.round(SND.vol.master * 100) + '% · 효과음 ' + Math.round(SND.vol.sfx * 100) + '%') + '</small></div>';
+    var sbtn = document.createElement('button');
+    sbtn.textContent = '설정';
+    sbtn.addEventListener('click', function () { closeSheet(); sndPanel(true); });
+    srow.appendChild(sbtn);
+    if (sheetBody.firstChild) sheetBody.insertBefore(srow, sheetBody.firstChild);
+    else sheetBody.appendChild(srow);
+
+    /* 레벨도 캐릭터 정보에 함께 (공격·방어는 원래 있던 줄) */
+    var sl = sheetBody.querySelector('.statline');
+    if (sl && !sl.querySelector('.v39lv')) {
+      var d = document.createElement('div');
+      d.className = 'stat v39lv';
+      d.innerHTML = '레벨 <b>Lv.' + (S.lv || 1) + ' · ' + Math.round(((S.exp || 0) / Math.max(1, (S.lv || 1) * 100)) * 100) + '%</b>';
+      sl.appendChild(d);
+    }
+    /* 저사양 모드 아래에 '그래픽 편안함' 안내 + 개발자 메뉴 입구(개발자일 때만) */
+    if (devAvailable() && !sheetBody.querySelector('.v39dev')) {
+      var drow = document.createElement('div');
+      drow.className = 'rec v39dev';
+      drow.innerHTML = '<div class="ic">🧪</div><div class="txt"><b>개발자 메뉴</b><small>3D 에셋 관리 · 테스트 도구</small></div>';
+      var dbtn = document.createElement('button');
+      dbtn.textContent = '열기';
+      dbtn.addEventListener('click', function () { closeSheet(); devPanel(true); });
+      drow.appendChild(dbtn);
+      sheetBody.appendChild(drow);
+    }
+  } catch (e) { }
+};
+
+/* ── 4) 개발자 메뉴 (숨김) ───────────────────────────────────── */
+var DEV39 = { on: false, fps: false };
+function devAvailable() {
+  if (DEV39.on) return true;
+  try { if (localStorage.getItem('wildlife_dev39') === '1') return true; } catch (e) { }
+  try { return /[?&]dev=1/.test(location.search); } catch (e) { }
+  return false;
+}
+function devPanelBuild() {
+  var el = $id('v39dev');
+  if (el) return el;
+  el = document.createElement('div');
+  el.id = 'v39dev';
+  el.innerHTML = '<div class="v39card">' +
+    '<div class="v39hd"><b>🧪 개발자 메뉴</b><small>일반 플레이 화면에는 나오지 않아요</small><button class="v39x">✕</button></div>' +
+    '<div class="v39body">' +
+    '<div class="v39row"><span>🦴 3D 에셋 관리<small>종별 GLB 교체 · 크기 · 접지 · 방향</small></span><button class="v39t" data-act="assets">열기</button></div>' +
+    '<div class="v39row"><span>🦏 트리케라톱스 PBR<small class="v39tri">상태 확인</small></span><button class="v39t" data-act="trike">검사</button></div>' +
+    '<div class="v39row"><span>⚡ 저사양 모드<small>그림자 끄기 · 시야 축소 · 픽셀비 1.0</small></span><button class="v39t" data-act="low">켜기</button></div>' +
+    '<div class="v39row"><span>🔊 사운드 테스트<small>카테고리별 볼륨 · 공간 음향</small></span><button class="v39t" data-act="sound">열기</button></div>' +
+    '<div class="v39row"><span>📈 프레임 표시<small>FPS · 드로우콜 · 삼각형</small></span><button class="v39t" data-act="fps">켜기</button></div>' +
+    '<div class="v39row"><span>🦘 점프 테스트<small>공중 상태 · 착지 판정</small></span><button class="v39t" data-act="jump">점프</button></div>' +
+    '<div class="v39row"><span>🗑 이 기기에서 개발자 플래그 지우기<small>숨김 메뉴를 다시 숨깁니다</small></span><button class="v39t" data-act="reset">지우기</button></div>' +
+    '<div class="v39note" id="v39devNote"></div>' +
+    '</div></div>';
+  document.body.appendChild(el);
+  el.addEventListener('click', function (e) { if (e.target === el) devPanel(false); });
+  el.querySelector('.v39x').addEventListener('click', function () { devPanel(false); });
+  var btns = el.querySelectorAll('[data-act]');
+  for (var i = 0; i < btns.length; i++) {
+    (function (b) {
+      b.addEventListener('click', function () {
+        var a = b.getAttribute('data-act');
+        var note = $id('v39devNote');
+        if (a === 'assets') { devPanel(false); closeSheet(); if (typeof openAssetStudio === 'function') openAssetStudio(); }
+        else if (a === 'trike') {
+          note.textContent = 'GLB: ' + (TRIKE_GLB.ready ? '준비됨' : (TRIKE_GLB.failed ? '실패(' + TRIKE_GLB.err + ')' : '로딩 중')) +
+            ' · 삼각형 ' + TRIKE_GLB.info.tris + ' · 본 ' + TRIKE_GLB.info.bones + ' · 클립 ' + TRIKE_GLB.clips.length +
+            ' · 적용 ' + TRIKE_GLB.retrofitted + '마리 · 키 ' + (TRIKE_GLB.dims ? TRIKE_GLB.dims.height.toFixed(2) : '-');
+        } else if (a === 'low') {
+          var on = setLowSpec(!LOWSPEC.on);
+          saveState();
+          b.textContent = LOWSPEC.on ? '끄기' : '켜기';
+          note.textContent = '저사양 모드 ' + (LOWSPEC.on ? '켜짐' : '꺼짐');
+        } else if (a === 'sound') { devPanel(false); sndPanel(true); }
+        else if (a === 'fps') {
+          DEV39.fps = !DEV39.fps;
+          b.textContent = DEV39.fps ? '끄기' : '켜기';
+          var f = $id('v39fps');
+          if (!f) { f = document.createElement('div'); f.id = 'v39fps'; ($id('hud') || document.body).appendChild(f); }
+          f.classList.toggle('on', DEV39.fps);
+        } else if (a === 'jump') {
+          note.textContent = '점프: ' + (v39Jump() ? '발동' : '지금은 불가(탑승·구르기·공중)') + ' · y=' + V39P.y.toFixed(2);
+        } else if (a === 'reset') {
+          try { localStorage.removeItem('wildlife_dev39'); } catch (e) { }
+          DEV39.on = false;
+          note.textContent = '플래그를 지웠어요 (이번 세션에서는 계속 열려 있음)';
+        }
+      });
+    })(btns[i]);
+  }
+  return el;
+}
+function devPanel(on) {
+  if (on && !devAvailable()) return;
+  DEV39.on = true;
+  var el = devPanelBuild();
+  if (on === undefined) on = !el.classList.contains('on');
+  el.classList.toggle('on', !!on);
+  if (on) {
+    var lb = el.querySelector('[data-act=low]');
+    if (lb) lb.textContent = LOWSPEC.on ? '끄기' : '켜기';
+    var fb = el.querySelector('[data-act=fps]');
+    if (fb) fb.textContent = DEV39.fps ? '끄기' : '켜기';
+    var nt = $id('v39devNote');
+    if (nt && !nt.textContent) nt.textContent = '숨김 메뉴: 상단 시계 알약을 3초 안에 5번 톡톡, 또는 설정 ⚙을 길게 눌러도 열려요.';
+  }
+}
+/* 설정 톱니 길게 누르기 → 개발자 메뉴 */
+(function () {
+  var btn = $id('btnSet');
+  if (!btn) return;
+  var tmr = null;
+  btn.addEventListener('pointerdown', function () {
+    tmr = setTimeout(function () { devPanel(true); }, 750);
+  });
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(function (ev) {
+    btn.addEventListener(ev, function () { if (tmr) { clearTimeout(tmr); tmr = null; } });
+  });
+})();
+
+/* 프레임 표시 갱신 */
+setInterval(function () {
+  if (!DEV39.fps || !started) return;
+  var f = $id('v39fps');
+  if (!f) return;
+  var info = renderer ? renderer.info.render : { calls: 0, triangles: 0 };
+  f.textContent = Math.round(fpsVal) + 'fps · ' + info.calls + 'c · ' + Math.round(info.triangles / 1000) + 'k';
+}, 500);
+
+/* ── 5) 모바일 시각적 편안함 (섹션 19) ───────────────────────── */
+function v39Comfort() {
+  try {
+    /* 살짝 낮춘 노출·완만한 대비 — 하이라이트가 타지 않고 눈이 편하다 */
+    LOOK.exp = 1.04;
+    LOOK.sunMul = 1.06;
+    LOOK.hemiMul = 1.17;
+    LOOK.ambMul = 1.26;
+    LOOK.fogTintAmt = 0.14;
+    if (renderer) {
+      renderer.toneMappingExposure = LOOK.exp;
+      if (THREE.PCFSoftShadowMap !== undefined) {
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;   /* 날카로운 그림자 대신 부드러운 접촉 그림자 */
+        renderer.shadowMap.needsUpdate = true;
+      }
+    }
+    if (typeof applySky === 'function') applySky();
+    /* 야간 최소 식별성 — 밤에도 실루엣은 보이게 */
+    if (typeof SKY_KEYS !== 'undefined' && SKY_KEYS.length) {
+      for (var i = 0; i < SKY_KEYS.length; i++) {
+        var k = SKY_KEYS[i];
+        if (k.night > 0.5) {
+          /* 달빛 아래에서도 땅·실루엣이 읽히게 (섹션 19: 야간 식별성 유지) */
+          k.ai = Math.max(k.ai, 0.15);
+          k.hi = Math.max(k.hi, 0.62);
+          k.si = Math.max(k.si, 0.34);
+        } else if (k.night > 0.30) {
+          k.ai = Math.max(k.ai, 0.10);
+          k.hi = Math.max(k.hi, 0.44);
+        }
+      }
+    }
+  } catch (e) { }
+}
+v39Comfort();
+
+/* ── 6) 부팅 시 사운드 설정 복원 ─────────────────────────────── */
+try { sndLoad(); } catch (e) { }
+
+/* ── 7) 시작 화면 안내 문구 (점프 안내 추가) ─────────────────── */
+(function () {
+  var f = $id('startFoot');
+  if (!f) return;
+  f.innerHTML = 'WILD LIFE · v3.9 &nbsp;|&nbsp; 조이스틱으로 걷고 오른쪽 버튼으로 채집·공격 · <b>점프</b>는 초록 버튼/Space · 빨간 예고선은 구르기로 피하기';
+})();
+
+/* ── 8) 검수 API ─────────────────────────────────────────────── */
+window.__game = window.__game || {};
+window.__game.v39 = {
+  snd: function () {
+    return {
+      ready: SND.ready, ctx: AC ? AC.state : 'none', muted: SND.muted,
+      vol: { master: SND.vol.master, sfx: SND.vol.sfx, dino: SND.vol.dino, env: SND.vol.env, bgm: SND.vol.bgm },
+      spatial: SND.spatial, plays: SND.stat.plays, voices: SND.stat.voices, steps: SND.stat.steps,
+      buses: Object.keys(SND.buses)
+    };
+  },
+  setSnd: function (o) { if (o) { SND.import(o); sndApply(); } if (o && o.muted !== undefined) { SND.muted = !!o.muted; sndApply(); } return window.__game.v39.snd(); },
+  sndPanel: function (on) { sndPanel(on); return !!($id('v39snd') && $id('v39snd').classList.contains('on')); },
+  play: function (name, opt) { SND.play(name, opt || {}); return { plays: SND.stat.plays, voices: SND.stat.voices }; },
+  pos: function (x, z, max) { var p = sndPos(x, z, max || 34); return { gain: +p.gain.toFixed(3), pan: +p.pan.toFixed(2), lp: Math.round(p.lp), d: +p.d.toFixed(1) }; },
+  atkTest: function (kind) {
+    kind = kind || 'trike';
+    var d = null;
+    for (var i = 0; i < dinos.length; i++) if (dinos[i].kind === kind && !dinos[i].dead) { d = dinos[i]; break; }
+    if (!d) return 'none';
+    if (d.frozen) d.frozen = false;
+    d.group.visible = true;
+    d.x = player.pos.x + 2.0; d.z = player.pos.z + 2.0;
+    d.group.position.set(d.x, terrainH(d.x, d.z), d.z);
+    beginDinoAttack(d, DINO_AI[kind] || DINO_AI.trike);
+    return { st: d.cstate, strikeT: +(d.strikeT || 0).toFixed(3), atkTs: +(d.v39atkTs || 0).toFixed(2), atkT: +(d.atkT || 0).toFixed(2), atkDur: +(d.atkDur || 0).toFixed(2), stateT: +(d.stateT || 0).toFixed(2) };
+  },
+  deathTest: function (kind) {
+    kind = kind || 'trike';
+    var d = null, di = -1;
+    for (var i = 0; i < dinos.length; i++) if (dinos[i].kind === kind && !dinos[i].dead) { d = dinos[i]; di = i; break; }
+    if (!d) return 'none';
+    d.hp = 1; d.frozen = true; d.group.visible = true;
+    d.x = player.pos.x + 2.6; d.z = player.pos.z - 2.6;
+    d.group.position.set(d.x, terrainH(d.x, d.z), d.z);
+    killDino(d);
+    return { i: di, dead: d.dead, dying: +(d.dying || 0).toFixed(2), clip: d.glbAnim ? d.glbAnim.cur : null, rotZ: +d.group.rotation.z.toFixed(3) };
+  },
+  dinoAt: function (i) {
+    var d = dinos[i];
+    if (!d) return 'none';
+    return { kind: d.kind, dead: !!d.dead, dying: +(d.dying || 0).toFixed(2), clip: d.glbAnim ? d.glbAnim.cur : null,
+      rotZ: +d.group.rotation.z.toFixed(3), y: +d.group.position.y.toFixed(2), gy: +terrainH(d.x, d.z).toFixed(2),
+      deathTime: d.glbAnim && d.glbAnim.acts && d.glbAnim.acts.Death ? +d.glbAnim.acts.Death.time.toFixed(2) : null };
+  },
+  fxCount: function () {
+    return { fx: (typeof fx !== 'undefined' && fx) ? fx.length : -1, teles: (typeof TELES !== 'undefined' && TELES) ? TELES.length : -1, floats: (typeof FLOATS !== 'undefined' && FLOATS) ? FLOATS.length : -1, shake: +(CAM_SHAKE.amp || 0).toFixed(3), shakeT: +(CAM_SHAKE.t || 0).toFixed(2) };
+  },
+  trike: function () {
+    var out = { ready: TRIKE_GLB.ready, failed: TRIKE_GLB.failed, err: TRIKE_GLB.err, clips: TRIKE_GLB.clips.length,
+      info: TRIKE_GLB.info, dims: TRIKE_GLB.dims, applied: 0, list: [] };
+    for (var i = 0; i < dinos.length; i++) {
+      var d = dinos[i];
+      if (d.kind !== 'trike') continue;
+      out.applied++;
+      var g = d.glbAnim || {};
+      out.list.push({ x: +d.x.toFixed(1), z: +d.z.toFixed(1), st: d.cstate, clip: g.cur || null,
+        ts: g.acts && g.acts[g.cur] ? +g.acts[g.cur].getEffectiveTimeScale().toFixed(2) : null,
+        spd: +(d.animSpeed || 0).toFixed(2), dead: !!d.dead, dying: +(d.dying || 0).toFixed(2) });
+    }
+    return out;
+  },
+  jump: function () { return { ok: v39Jump(), air: V39P.air, y: +V39P.y.toFixed(2), v: +V39P.v.toFixed(2) }; },
+  jumpState: function () { return { air: V39P.air, y: +V39P.y.toFixed(2), v: +V39P.v.toFixed(2), t: +V39P.t.toFixed(2), land: +V39P.landT.toFixed(2), heroClip: (typeof HERO !== 'undefined') ? HERO.curName : null, py: +player.pos.y.toFixed(2) }; },
+  hit: function (kind) {
+    kind = kind || 'trike';
+    var d = null, bd = 1e9;
+    for (var i = 0; i < dinos.length; i++) {
+      var o = dinos[i];
+      if (o.kind !== kind || o.dead) continue;
+      var dd = Math.hypot(o.x - player.pos.x, o.z - player.pos.z);
+      if (dd < bd) { bd = dd; d = o; }
+    }
+    if (!d) return 'none';
+    if (bd > 4) { d.x = player.pos.x + 1.6; d.z = player.pos.z + 1.4; }
+    d.group.position.set(d.x, terrainH(d.x, d.z), d.z);
+    player.facing = Math.atan2(d.x - player.pos.x, d.z - player.pos.z);
+    player.atkCd = 0;
+    attackDino(d);
+    return { kind: d.kind, hp: Math.round(d.hp), kb: !!d.v39kb, hurt: +(d.hurt || 0).toFixed(2), dist: +bd.toFixed(1) };
+  },
+  shake: function (v) { shakeCam(v === undefined ? 1 : v); return CAM_SHAKE.amp; },
+  dev: function (on) { if (on !== undefined) { DEV39.on = !!on; if (on) devPanel(true); else { var e = $id('v39dev'); if (e) e.classList.remove('on'); } } return { on: DEV39.on, avail: devAvailable(), panel: !!($id('v39dev') && $id('v39dev').classList.contains('on')) }; },
+  hud: function () {
+    var out = { top: $id('v39top') ? $id('v39top').textContent : null, statrow: null, expTxt: null, jumpBtn: !!$id('btnJump') };
+    var st = document.querySelector('.statrow');
+    if (st) out.statrow = getComputedStyle(st).display;
+    var eb = $id('expBar');
+    if (eb) out.expH = getComputedStyle(eb).height;
+    var hb = document.querySelector('.bar.hp');
+    if (hb) out.barH = getComputedStyle(hb).height;
+    var num = document.querySelector('.bar.hp span');
+    if (num) out.barNum = getComputedStyle(num).display;
+    return out;
+  },
+  look: function () { return { exp: LOOK.exp, sun: +sun.intensity.toFixed(2), hemi: +hemi.intensity.toFixed(2), amb: +amb.intensity.toFixed(2), shadow: renderer.shadowMap.type }; },
+  compat: function () { return { v38: !!(window.__game.v38), flex: !!(window.__game.v38 && window.__game.v38.openCraft), water: !!window.__game.v38, sheet: !!sheet, save: SAVE.schemaVersion || null }; }
+};
+
+/* @@/V39JS@@ */
 })();
 
 </script>
