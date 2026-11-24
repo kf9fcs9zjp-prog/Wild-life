@@ -25135,7 +25135,9 @@ function updatePlayer(dt) {
     }
   }
 
-  var speed = rideDino ? 8.6 * (1 + gearSpeed() * 0.5) : 4.5 * (1 + gearSpeed());
+  /* 🏃 v3.6.2 — 걸음이 답답하다는 피드백: 기본 이동 4.5 → 6.0 m/s (+33%).
+     탈것 속도는 그대로 두고 도보만 올린다(탈것은 이미 빠르다). */
+  var speed = rideDino ? 8.6 * (1 + gearSpeed() * 0.5) : 6.0 * (1 + gearSpeed());
   // 익룡 비행은 다른 지상 탈것보다 정확히 1.4배 빠르다
   if (rideDino && rideDino.flyer) speed = 8.6 * (1 + gearSpeed() * 0.5) * 1.4;
   // 얕은 강물·해안 물가에서는 걸음이 조금 느려지고 첨벙거린다
@@ -30118,7 +30120,7 @@ function spillLootFromDino(d) {
    · 영토 경계는 들어서는 순간 빨간 테두리가 번쩍 떴다가 서서히 사라진다.
    ========================================================= */
 var TRIBE_MODEL = { base: 'assets/humans/', cache: {}, loading: {}, failed: {} };
-var TRIBE_CLIPS = ['Idle_Loop', 'Idle_Talking_Loop', 'Walk_Loop', 'Jog_Fwd_Loop',
+var TRIBE_CLIPS = ['Idle_Loop', 'Idle_Talking_Loop', 'Idle_Torch_Loop', 'Walk_Loop', 'Jog_Fwd_Loop',
   'Punch_Jab', 'Sword_Attack', 'Fixing_Kneeling', 'Interact', 'PickUp_Table',
   'Sitting_Idle_Loop', 'Dance_Loop', 'Death01', 'Hit_Chest'];
 
@@ -30634,7 +30636,10 @@ function tribeFriendlyTick(t, dt, time) {
       if (tribeMove(m, dt, 1.25)) {
         m.state = 'cook'; m.workT = 6.5;
         tribeFace(m, t.fire.x, t.fire.z);
-        tribeAnim(m, 'Fixing_Kneeling', 0.2);
+        /* 🍳 v3.6.2 — 불 앞에서 'Fixing_Kneeling' 을 틀면 몸이 땅으로 뻗어 엎드린 자세가 됐다
+           (부족원 리깅에서는 이 클립의 힙 이동이 그대로 남아 몸이 앞으로 쏠린다).
+           불을 지키며 서서 젓는 'Idle_Torch_Loop' 로 바꿔 허리가 접히지 않게 한다. */
+        tribeAnim(m, 'Idle_Torch_Loop', 0.2);
       }
     } else if (m.state === 'cook') {
       m.workT -= dt;
@@ -31862,9 +31867,11 @@ function heroScrub(name, p, fade) {
   return true;
 }
 function heroLocoName(spd) {
-  if (spd < 0.35) return 'Idle_Loop';
-  if (spd < 1.7) return 'Walk_Loop';
-  if (spd < 3.2) return 'Jog_Fwd_Loop';
+  /* 🏃 v3.6.2 — 최고 속도를 6.0 m/s 로 올린 만큼 구간도 같은 비율(+33%)로 넓힌다.
+     (안 넓히면 조금만 밀어도 곧바로 전력 질주 자세가 된다) */
+  if (spd < 0.45) return 'Idle_Loop';
+  if (spd < 2.25) return 'Walk_Loop';
+  if (spd < 4.25) return 'Jog_Fwd_Loop';
   return 'Sprint_Loop';
 }
 /* v3.5 — 리타게팅된 클립이 다리를 벌린 채 고정돼 있어(쩍벌) 다리뼈를 안쪽으로 모아 준다 */
@@ -31880,11 +31887,17 @@ function heroApplyStance() {
   var b = HERO.bones;
   /* 🧍 v3.6 — 어깨 슬라이더 값은 클립이 본 스케일을 덮어쓰므로 매 프레임 다시 얹는다 */
   if (HERO.cfg) heroShapeBones(b, HERO.cfg);
-  /* 🦵 v3.6 — 개다리춤의 원인이던 다리 벌어짐(z) 오프셋을 없애고, 클립이 만든
-     좌우 벌어짐만 아주 작은 값으로 눌러 발을 나란히 둔다. 앞뒤 보폭(x)은 클립 애니메이션을
-     그대로 쓴다(직접 스윙을 넣으면 리깅 축과 어긋나 자세가 깨졌다). */
-  /* 클립 자체의 다리 각도가 정상이므로 회전을 덮어쓰지 않는다.
-     (예전 stance ±0.24 오프셋만 제거하면 발이 나란히 선다) */
+  /* 🦵 v3.6.2 — 다리 뒤집힘(다리가 등 뒤로 꺾여 물구나무처럼 보이던 버그)의 원인 정리.
+     ① 이 리깅의 허벅지 본은 로컬 축이 180° 말려 있다 (hero.glb UpperLeg.L rest 쿼터니언
+        x=0.707 · z=-0.707 · w=-0.015 ≒ 178°). 그래서 bone.rotation.x = 값 처럼 **오일러로
+        덮어쓰면** 축이 반 바퀴 어긋나 다리가 위로 뒤집힌다.
+     ② v3.6 초기 코드는 이동 속도에 맞춰 다리 앞뒤 스윙을 sin(walkPhase) 로 직접 넣었다
+        (heroGaitTick 의 gaitPh/gaitAmp). 그게 ①과 정면으로 부딪혀 걷기·활 대기·대기
+        모든 자세에서 다리가 뒤로 꺾였다.
+     ③ 지금은 클립(Idle/Walk/Jog/Sprint)이 다리 회전을 그대로 쓰게 두고, 여기서는
+        아무 회전도 덮어쓰지 않는다. 좌우 벌어짐만 HERO.stance(기본 0)로 미세 보정한다.
+     ※ 다시 스윙을 직접 넣고 싶다면 반드시 본의 로컬 축을 기준으로 quaternion 을
+       곱해야 한다(오일러 x 대입 금지). */
   if (HERO.stance) {
     if (b.legL) b.legL.rotation.z += HERO.stance;
     if (b.legR) b.legR.rotation.z -= HERO.stance;
@@ -31950,8 +31963,10 @@ function heroFrame(dt) {
   heroPlay(nm, { fade: 0.22 });
   var a2 = HERO.actions[nm];
   if (a2 && nm !== 'Idle_Loop') {
-    /* v3.5 — 클립이 실제 이동보다 빨라 발이 헛돌던 문제: 0.72배로 낮춰 보폭을 맞춘다 */
-    var ts = clamp(spd / ref, 0.42, 1.25) * 0.72;
+    /* v3.5 — 클립이 실제 이동보다 빨라 발이 헛돌던 문제: 0.72배로 낮춰 보폭을 맞춘다.
+       v3.6.2 — 이동 속도가 33% 빨라진 만큼 클립도 같은 비율로 빨라져야 발이 미끄러지지 않는다
+       (상한을 1.75 로 풀어 두면 6 m/s 에서 보행 주기가 약 1.17배로 올라 발이 땅을 딛는다) */
+    var ts = clamp(spd / ref, 0.42, 1.75) * 0.72;
     a2.setEffectiveTimeScale(ts);
   }
   HERO.mixer.update(dt);
