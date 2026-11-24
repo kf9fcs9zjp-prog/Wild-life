@@ -102,7 +102,7 @@ let mixer = null;
 const actions = {};
 let currentAction = null;
 
-new THREE.GLTFLoader().load('./assets/triceratops_rigged.glb?v=1', (gltf) => {
+new THREE.GLTFLoader().load('./assets/triceratops_rigged.glb?v=2', (gltf) => {
   const model = gltf.scene;
   model.traverse((o) => {
     if (o.isMesh) {
