@@ -131,6 +131,7 @@
   .chip.wear{background:rgba(226,240,248,.95);border-color:rgba(110,150,180,.45)}
   .chip.zero{display:none}
 
+  body.targeting .toasts{top:calc(env(safe-area-inset-top) + 168px)}
   .toasts{
     position:absolute;left:50%;top:calc(env(safe-area-inset-top) + 122px);transform:translateX(-50%);
     display:flex;flex-direction:column;align-items:center;gap:5px;width:100%;pointer-events:none;
@@ -157,6 +158,27 @@
   }
   #zonePill.home{background:rgba(96,150,88,.62);color:#f2ffe8}
   #zonePill.wild{background:rgba(158,88,50,.62);color:#ffeedd}
+  /* 🎯 v3.2 교전 중인 공룡 타겟 바 (상단 중앙) */
+  #targetBar{
+    position:absolute;left:50%;top:calc(env(safe-area-inset-top) + 118px);transform:translateX(-50%) translateY(-6px);
+    width:min(300px,52vw);padding:5px 9px 6px;border-radius:12px;pointer-events:none;
+    background:linear-gradient(180deg,rgba(30,16,14,.86),rgba(18,10,9,.9));
+    border:1px solid rgba(255,150,120,.34);box-shadow:0 6px 18px rgba(20,6,4,.42);
+    backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);
+    opacity:0;transition:opacity .18s ease, transform .18s ease;
+  }
+  #targetBar.on{opacity:1;transform:translateX(-50%) translateY(0)}
+  #targetBar .tbTop{display:flex;align-items:baseline;gap:5px;margin-bottom:3px}
+  #targetBar .tbName{font-size:10.5px;font-weight:900;color:#ffeae0;letter-spacing:-.02em;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1}
+  #targetBar .tbLv{font-size:9px;font-weight:900;color:#ffc08a;font-variant-numeric:tabular-nums}
+  #targetBar .tbNum{font-size:8.5px;font-weight:900;color:#ffd9c8;font-variant-numeric:tabular-nums}
+  #targetBar .tbTrack{position:relative;height:7px;border-radius:4px;overflow:hidden;
+    background:rgba(70,22,16,.9);box-shadow:inset 0 1px 2px rgba(0,0,0,.5)}
+  #targetBar .tbTrack i{position:absolute;left:0;top:0;bottom:0;width:100%;
+    background:linear-gradient(180deg,#ff6a4d,#c2200f 62%,#8e1206);
+    box-shadow:0 0 6px rgba(255,80,50,.5);transition:width .12s linear}
+  #targetBar.hurt .tbTrack i{background:linear-gradient(180deg,#fff0b8,#ff9a3d)}
   #zoneBanner{
     position:absolute;left:50%;top:34%;
     transform:translateX(-50%) scale(.94);
@@ -1574,6 +1596,10 @@
   <!-- 🛠 구조물 육각 방사형 메뉴 -->
   <div id="hexMenu" aria-hidden="true"></div>
   <div class="toasts" id="toasts"></div>
+  <div id="targetBar" aria-hidden="true">
+    <div class="tbTop"><b class="tbName" id="tbName">공룡</b><i class="tbLv" id="tbLv">Lv.1</i><b class="tbNum" id="tbNum">0 / 0</b></div>
+    <div class="tbTrack"><i id="tbFill"></i></div>
+  </div>
   <div id="zonePill" class="home">🏡 주거 구역</div>
   <div id="tempPill" class="temp"><span id="tempIcon">🌡</span><b id="tempVal">22°</b></div>
   <div id="hatchPill" class="hatch"><b id="hatchTxt">🥚 부화 0%</b></div>
@@ -1648,7 +1674,7 @@
       </div>
       <div class="startSaveLine" id="startSaveLine"><span>저장 없음 · 새로 시작해요</span></div>
     </div>
-    <div class="startFoot" id="startFoot">WILD LIFE · v3.1 &nbsp;|&nbsp; 왼쪽 조이스틱으로 걷고 오른쪽 버튼으로 채집·공격 · 빨간 예고선은 💨 구르기로 피하기</div>
+    <div class="startFoot" id="startFoot">WILD LIFE · v3.2 &nbsp;|&nbsp; 왼쪽 조이스틱으로 걷고 오른쪽 버튼으로 채집·공격 · 빨간 예고선은 💨 구르기로 피하기</div>
   </div>
 
   <div class="slotPanel" id="slotPanel">
@@ -8361,6 +8387,291 @@ var COMP_MAT = new THREE.MeshPhongMaterial({
 });
 COMP_MAT.skinning = true;
 
+/* =========================================================
+   🦖 v3.2 — 프로시저럴 야생 피부 질감
+   ---------------------------------------------------------
+   종 그룹별로 딱 한 장씩 만드는 CanvasTexture(색지도 + 노멀지도).
+     carn(육식) : 촘촘한 잔비늘 + 짙은 등 얼룩
+     herb(초식) : 두꺼운 가죽 주름 + 물집 같은 반점
+     fur(매머드): 덥수룩하게 흐트러진 털 결
+     wing(익룡): 얇은 날개막 + 핏줄
+   색지도는 거의 흰색(0.86~1.0)이라 버텍스 컬러의 등-배 그라데이션을
+   그대로 살리고 요철만 얹는다. 재질은 그룹당 1개 → 드로우콜 증가 없음.
+   ========================================================= */
+var SKIN_TILE = 0.62;                 // 텍스처 한 장이 덮는 실제 길이(m)
+var DINO_SKIN_CACHE = {};
+
+function skinWrapDraw(S, x, y, rad, fn) {
+  for (var dx = -1; dx <= 1; dx++) {
+    for (var dy = -1; dy <= 1; dy++) {
+      var px = x + dx * S, py = y + dy * S;
+      if (px + rad < 0 || px - rad > S) continue;
+      if (py + rad < 0 || py - rad > S) continue;
+      fn(px, py);
+    }
+  }
+}
+
+function skinPair(S) {
+  var c1 = document.createElement('canvas'); c1.width = c1.height = S;
+  var c2 = document.createElement('canvas'); c2.width = c2.height = S;
+  var g1 = c1.getContext('2d'), g2 = c2.getContext('2d');
+  g1.fillStyle = 'rgb(248,248,248)'; g1.fillRect(0, 0, S, S);
+  g2.fillStyle = 'rgb(128,128,128)'; g2.fillRect(0, 0, S, S);
+  return { S: S, c1: c1, c2: c2, g1: g1, g2: g2 };
+}
+
+/* 미세 그레인 — 완전히 매끈한 플라스틱 면을 없앤다 */
+function skinGrain(g, S, amt) {
+  var img = g.getImageData(0, 0, S, S), d = img.data;
+  for (var i = 0; i < d.length; i += 4) {
+    var n = (Math.random() - 0.5) * amt;
+    d[i] = clamp(d[i] + n, 0, 255);
+    d[i + 1] = clamp(d[i + 1] + n, 0, 255);
+    d[i + 2] = clamp(d[i + 2] + n, 0, 255);
+  }
+  g.putImageData(img, 0, 0);
+}
+
+/* 높이 지도 → 노멀 지도 (Sobel 1탭) */
+function skinNormalFromHeight(cv, S, strength) {
+  var src = cv.getContext('2d').getImageData(0, 0, S, S).data;
+  var out = document.createElement('canvas'); out.width = out.height = S;
+  var og = out.getContext('2d'), img = og.createImageData(S, S), d = img.data;
+  for (var y = 0; y < S; y++) {
+    for (var x = 0; x < S; x++) {
+      var xl = (x - 1 + S) % S, xr = (x + 1) % S, yu = (y - 1 + S) % S, yd = (y + 1) % S;
+      var dx = (src[(y * S + xr) * 4] - src[(y * S + xl) * 4]) / 255;
+      var dy = (src[(yd * S + x) * 4] - src[(yu * S + x) * 4]) / 255;
+      var nx = -dx * strength, ny = -dy * strength, nz = 1;
+      var l = Math.sqrt(nx * nx + ny * ny + nz * nz) || 1;
+      var i = (y * S + x) * 4;
+      d[i] = (nx / l * 0.5 + 0.5) * 255;
+      d[i + 1] = (ny / l * 0.5 + 0.5) * 255;
+      d[i + 2] = (nz / l * 0.5 + 0.5) * 255;
+      d[i + 3] = 255;
+    }
+  }
+  og.putImageData(img, 0, 0);
+  return out;
+}
+
+/* ── 육식 — 도마뱀·악어 같은 잔비늘 ── */
+function skinTexCarn() {
+  var P = skinPair(512), S = 512, g1 = P.g1, g2 = P.g2;
+  var cols = 24, rows = 24, cw = S / cols, ch = S / rows;
+  for (var r = 0; r < rows; r++) {
+    for (var c = 0; c < cols; c++) {
+      var cx = (c + (r % 2 ? 0.5 : 0)) * cw + rnd(-1.4, 1.4);
+      var cy = r * ch + rnd(-1.4, 1.4);
+      var rx = cw * rnd(0.54, 0.68), ry = ch * rnd(0.58, 0.72);
+      var v = 242 + rnd(-7, 11);
+      (function (cx, cy, rx, ry, v) {
+        skinWrapDraw(S, cx, cy, rx * 1.3, function (x, y) {
+          var grd = g1.createRadialGradient(x - rx * 0.26, y - ry * 0.32, 0.5, x, y, rx);
+          grd.addColorStop(0, 'rgb(255,255,255)');
+          grd.addColorStop(0.62, 'rgb(' + (v | 0) + ',' + (v | 0) + ',' + ((v - 4) | 0) + ')');
+          grd.addColorStop(1, 'rgb(' + ((v * 0.80) | 0) + ',' + ((v * 0.80) | 0) + ',' + ((v * 0.78) | 0) + ')');
+          g1.fillStyle = grd;
+          g1.beginPath(); g1.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); g1.fill();
+          var hg = g2.createRadialGradient(x, y, 0.5, x, y, rx);
+          hg.addColorStop(0, 'rgb(228,228,228)');
+          hg.addColorStop(0.66, 'rgb(176,176,176)');
+          hg.addColorStop(1, 'rgb(112,112,112)');
+          g2.fillStyle = hg;
+          g2.beginPath(); g2.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); g2.fill();
+        });
+      })(cx, cy, rx, ry, v);
+    }
+  }
+  /* 등쪽 짙은 얼룩 — 비늘 위에 흐릿하게 얹어 위장무늬처럼 */
+  for (var m = 0; m < 26; m++) {
+    var mx = Math.random() * S, my = Math.random() * S, mr = rnd(26, 62);
+    (function (mx, my, mr) {
+      skinWrapDraw(S, mx, my, mr, function (x, y) {
+        var grd = g1.createRadialGradient(x, y, mr * 0.12, x, y, mr);
+        grd.addColorStop(0, 'rgba(120,112,96,.38)');
+        grd.addColorStop(1, 'rgba(120,112,96,0)');
+        g1.fillStyle = grd;
+        g1.beginPath(); g1.arc(x, y, mr, 0, Math.PI * 2); g1.fill();
+      });
+    })(mx, my, mr);
+  }
+  skinGrain(g1, S, 16);
+  return { color: P.c1, height: P.c2, ns: 1.45, spec: 0x191919, shin: 22 };
+}
+
+/* ── 초식 — 두꺼운 가죽 주름 + 반점 ── */
+function skinTexHerb() {
+  var P = skinPair(512), S = 512, g1 = P.g1, g2 = P.g2;
+  /* 큰 가죽 판(비늘판) — 성기고 둥글다 */
+  var cols = 11, rows = 11, cw = S / cols, ch = S / rows;
+  for (var r = 0; r < rows; r++) {
+    for (var c = 0; c < cols; c++) {
+      var cx = (c + (r % 2 ? 0.5 : 0)) * cw + rnd(-3, 3);
+      var cy = r * ch + rnd(-3, 3);
+      var rx = cw * rnd(0.50, 0.64), ry = ch * rnd(0.50, 0.66);
+      var v = 236 + rnd(-8, 16);
+      (function (cx, cy, rx, ry, v) {
+        skinWrapDraw(S, cx, cy, rx * 1.4, function (x, y) {
+          var grd = g1.createRadialGradient(x, y, 1, x, y, rx);
+          grd.addColorStop(0, 'rgb(252,252,252)');
+          grd.addColorStop(0.74, 'rgb(' + (v | 0) + ',' + (v | 0) + ',' + (v | 0) + ')');
+          grd.addColorStop(1, 'rgb(' + ((v * 0.86) | 0) + ',' + ((v * 0.86) | 0) + ',' + ((v * 0.86) | 0) + ')');
+          g1.fillStyle = grd;
+          g1.beginPath(); g1.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); g1.fill();
+          var hg = g2.createRadialGradient(x, y, 1, x, y, rx);
+          hg.addColorStop(0, 'rgb(206,206,206)');
+          hg.addColorStop(0.80, 'rgb(150,150,150)');
+          hg.addColorStop(1, 'rgb(92,92,92)');
+          g2.fillStyle = hg;
+          g2.beginPath(); g2.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); g2.fill();
+        });
+      })(cx, cy, rx, ry, v);
+    }
+  }
+  /* 살갗 주름 — 구불구불한 골 */
+  for (var k = 0; k < 22; k++) {
+    var y0 = Math.random() * S, x0 = Math.random() * S;
+    var len = rnd(60, 190), wob = rnd(-26, 26);
+    g1.strokeStyle = 'rgba(120,112,98,.22)'; g1.lineWidth = rnd(1.2, 2.6);
+    g2.strokeStyle = 'rgb(70,70,70)'; g2.lineWidth = rnd(2.0, 3.6);
+    for (var w = -1; w <= 1; w++) {
+      g1.beginPath(); g1.moveTo(x0 + w * S, y0);
+      g1.quadraticCurveTo(x0 + len * 0.5 + w * S, y0 + wob, x0 + len + w * S, y0 + wob * 0.3);
+      g1.stroke();
+      g2.beginPath(); g2.moveTo(x0 + w * S, y0);
+      g2.quadraticCurveTo(x0 + len * 0.5 + w * S, y0 + wob, x0 + len + w * S, y0 + wob * 0.3);
+      g2.stroke();
+    }
+  }
+  /* 물집 같은 반점 */
+  for (var m = 0; m < 34; m++) {
+    var mx = Math.random() * S, my = Math.random() * S, mr = rnd(10, 30);
+    (function (mx, my, mr) {
+      skinWrapDraw(S, mx, my, mr, function (x, y) {
+        var grd = g1.createRadialGradient(x, y, 0.5, x, y, mr);
+        grd.addColorStop(0, 'rgba(112,104,84,.30)');
+        grd.addColorStop(0.72, 'rgba(112,104,84,.16)');
+        grd.addColorStop(1, 'rgba(112,104,84,0)');
+        g1.fillStyle = grd;
+        g1.beginPath(); g1.ellipse(x, y, mr, mr * 0.82, 0, 0, Math.PI * 2); g1.fill();
+      });
+    })(mx, my, mr);
+  }
+  skinGrain(g1, S, 13);
+  return { color: P.c1, height: P.c2, ns: 1.5, spec: 0x0d0d0d, shin: 10 };
+}
+
+/* ── 매머드 — 덥수룩한 긴 털 ── */
+function skinTexFur() {
+  var P = skinPair(512), S = 512, g1 = P.g1, g2 = P.g2;
+  /* 바탕의 어두운 골 — 털 사이 틈 */
+  for (var b = 0; b < 40; b++) {
+    var bx = Math.random() * S, by = Math.random() * S, br = rnd(20, 70);
+    (function (bx, by, br) {
+      skinWrapDraw(S, bx, by, br, function (x, y) {
+        var grd = g1.createRadialGradient(x, y, 1, x, y, br);
+        grd.addColorStop(0, 'rgba(88,74,56,.34)');
+        grd.addColorStop(1, 'rgba(88,74,56,0)');
+        g1.fillStyle = grd;
+        g1.beginPath(); g1.arc(x, y, br, 0, Math.PI * 2); g1.fill();
+      });
+    })(bx, by, br);
+  }
+  /* 털 한 올씩 — 아래로 흘러내리는 긴 곡선 */
+  for (var i = 0; i < 2600; i++) {
+    var x = Math.random() * S, y = Math.random() * S;
+    var ln = rnd(18, 66), dr = rnd(-9, 9), wd = rnd(1.2, 3.4);
+    var v = 176 + Math.random() * 79;
+    (function (x, y, ln, dr, wd, v) {
+      skinWrapDraw(S, x, y, ln, function (px, py) {
+        g1.strokeStyle = 'rgba(' + (v | 0) + ',' + ((v * 0.93) | 0) + ',' + ((v * 0.84) | 0) + ',.92)';
+        g1.lineWidth = wd;
+        g1.beginPath(); g1.moveTo(px, py);
+        g1.quadraticCurveTo(px + dr, py + ln * 0.55, px + dr * 1.7, py + ln);
+        g1.stroke();
+        var hv = 110 + (v - 190) * 1.6;
+        g2.strokeStyle = 'rgb(' + (hv | 0) + ',' + (hv | 0) + ',' + (hv | 0) + ')';
+        g2.lineWidth = wd;
+        g2.beginPath(); g2.moveTo(px, py);
+        g2.quadraticCurveTo(px + dr, py + ln * 0.55, px + dr * 1.7, py + ln);
+        g2.stroke();
+      });
+    })(x, y, ln, dr, wd, v);
+  }
+  skinGrain(g1, S, 18);
+  return { color: P.c1, height: P.c2, ns: 3.4, spec: 0x000000, shin: 2 };
+}
+
+/* ── 익룡 — 얇은 날개막 + 핏줄 ── */
+function skinTexWing() {
+  var P = skinPair(512), S = 512, g1 = P.g1, g2 = P.g2;
+  for (var i = 0; i < 9; i++) {
+    var a = (i / 9) * Math.PI * 2 + rnd(-0.12, 0.12), rr = rnd(120, 400);
+    var ex = 256 + Math.cos(a) * rr, ey = 256 + Math.sin(a) * rr;
+    g1.strokeStyle = 'rgba(120,108,96,.30)'; g1.lineWidth = rnd(2.0, 4.2);
+    g2.strokeStyle = 'rgb(72,72,72)'; g2.lineWidth = rnd(2.4, 4.6);
+    g1.beginPath(); g1.moveTo(256, 256); g1.quadraticCurveTo(256 + Math.cos(a + 0.22) * rr * 0.6, 256 + Math.sin(a + 0.22) * rr * 0.6, ex, ey); g1.stroke();
+    g2.beginPath(); g2.moveTo(256, 256); g2.quadraticCurveTo(256 + Math.cos(a + 0.22) * rr * 0.6, 256 + Math.sin(a + 0.22) * rr * 0.6, ex, ey); g2.stroke();
+    for (var k = 1; k <= 4; k++) {
+      var t = k / 5, bx = 256 + (ex - 256) * t, by = 256 + (ey - 256) * t;
+      var bl = rnd(24, 64), ba = a + (k % 2 ? 0.7 : -0.7);
+      g1.strokeStyle = 'rgba(120,108,96,.16)'; g1.lineWidth = 1.2;
+      g1.beginPath(); g1.moveTo(bx, by); g1.lineTo(bx + Math.cos(ba) * bl, by + Math.sin(ba) * bl); g1.stroke();
+    }
+  }
+  for (var m = 0; m < 26; m++) {
+    var mx = Math.random() * S, my = Math.random() * S, mr = rnd(14, 42);
+    (function (mx, my, mr) {
+      skinWrapDraw(S, mx, my, mr, function (x, y) {
+        var grd = g1.createRadialGradient(x, y, 1, x, y, mr);
+        grd.addColorStop(0, 'rgba(126,116,102,.20)');
+        grd.addColorStop(1, 'rgba(126,116,102,0)');
+        g1.fillStyle = grd;
+        g1.beginPath(); g1.arc(x, y, mr, 0, Math.PI * 2); g1.fill();
+      });
+    })(mx, my, mr);
+  }
+  skinGrain(g1, S, 10);
+  return { color: P.c1, height: P.c2, ns: 1.2, spec: 0x1a1a1a, shin: 30 };
+}
+
+function skinBuild(tex) {
+  var S = 512;
+  var map = new THREE.CanvasTexture(tex.color);
+  map.wrapS = map.wrapT = THREE.RepeatWrapping;
+  map.repeat.set(1 / SKIN_TILE, 1 / SKIN_TILE);
+  map.anisotropy = 4;
+  var nrm = new THREE.CanvasTexture(skinNormalFromHeight(tex.height, S, tex.ns));
+  nrm.wrapS = nrm.wrapT = THREE.RepeatWrapping;
+  nrm.repeat.copy(map.repeat);
+  nrm.anisotropy = 4;
+  var m = new THREE.MeshPhongMaterial({
+    vertexColors: true,
+    map: map, normalMap: nrm,
+    normalScale: new THREE.Vector2(1, 1),
+    specular: new THREE.Color(tex.spec), shininess: tex.shin,
+    emissive: 0x181c0a
+  });
+  m.skinning = true;
+  return m;
+}
+
+/* 그룹별 재질 1개씩 (지연 생성 · 모든 개체 공유) */
+function dinoSkinMat(key) {
+  key = key || 'herb';
+  if (DINO_SKIN_CACHE[key]) return DINO_SKIN_CACHE[key];
+  var tex;
+  if (key === 'carn') tex = skinTexCarn();
+  else if (key === 'fur') tex = skinTexFur();
+  else if (key === 'wing') tex = skinTexWing();
+  else tex = skinTexHerb();
+  var m = skinBuild(tex);
+  DINO_SKIN_CACHE[key] = m;
+  return m;
+}
+
 /* 뼈대: [이름, 부모, x, y, z] */
 var COMP_BONE_DEFS = [
   ['hip', null, 0, 0.500, -0.010],
@@ -8515,9 +8826,27 @@ function compLoft(secs, seg, cf) {
     idx.push(capA, k0, j);              // 시작 단면 (바깥 = -tangent)
     idx.push(capB, lo + j, lo + k0);    // 끝 단면 (바깥 = +tangent)
   }
+  var uvArr = new Float32Array((n * seg + 2) * 2);
+  var acc = 0, px0 = 0, py0 = 0, pz0 = 0;
+  for (i = 0; i < n; i++) {
+    var fs = frames[i];
+    if (i > 0) acc += Math.sqrt((fs.x - px0) * (fs.x - px0) + (fs.y - py0) * (fs.y - py0) + (fs.z - pz0) * (fs.z - pz0));
+    px0 = fs.x; py0 = fs.y; pz0 = fs.z;
+    // 둘레를 텍스처 타일 단위로 정수화 — 이음매가 생기지 않는다
+    var circ = Math.PI * (fs.w + fs.h);
+    var qn = Math.max(1, Math.round(circ / SKIN_TILE)) * SKIN_TILE;
+    for (j = 0; j < seg; j++) {
+      var uvi = (i * seg + j) * 2;
+      uvArr[uvi] = (j / seg) * qn;
+      uvArr[uvi + 1] = acc;
+    }
+  }
+  uvArr[capA * 2] = 0; uvArr[capA * 2 + 1] = 0;
+  uvArr[capB * 2] = 0; uvArr[capB * 2 + 1] = acc;
   var geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  geo.setAttribute('uv', new THREE.BufferAttribute(uvArr, 2));
   geo.setIndex(idx);
   geo.computeVertexNormals();
   return geo;
@@ -8551,9 +8880,10 @@ function compChain(axis, anchors) {
 var compFix = function (name) { return function () { return [name, name, 1]; }; };
 
 /* 모든 파트를 하나의 스킨 지오메트리로 굽는다 */
-function compBake(parts, bones, boneIdx, uvScale) {
+function compBake(parts, bones, boneIdx, uvScale, mat) {
   var i, v, o = 0, N = 0, gs = [];
   var uvs = uvScale || 3.6;
+  var material = mat || COMP_MAT;
   for (i = 0; i < parts.length; i++) {
     var g0 = parts[i].geo;
     var ng = g0.index ? g0.toNonIndexed() : g0;
@@ -8563,15 +8893,15 @@ function compBake(parts, bones, boneIdx, uvScale) {
   var P = new Float32Array(N * 3), NR = new Float32Array(N * 3), CO = new Float32Array(N * 3);
   var UV = new Float32Array(N * 2), SI = new Uint16Array(N * 4), SW = new Float32Array(N * 4);
   for (i = 0; i < gs.length; i++) {
-    var it = gs[i], pos = it.g.attributes.position, nr = it.g.attributes.normal, co = it.g.attributes.color;
+    var it = gs[i], pos = it.g.attributes.position, nr = it.g.attributes.normal, co = it.g.attributes.color, uvA = it.g.attributes.uv;
     for (v = 0; v < pos.count; v++, o++) {
       var x = pos.getX(v), y = pos.getY(v), z = pos.getZ(v);
       P[o * 3] = x; P[o * 3 + 1] = y; P[o * 3 + 2] = z;
       if (nr) { NR[o * 3] = nr.getX(v); NR[o * 3 + 1] = nr.getY(v); NR[o * 3 + 2] = nr.getZ(v); }
       if (co) { CO[o * 3] = co.getX(v); CO[o * 3 + 1] = co.getY(v); CO[o * 3 + 2] = co.getZ(v); }
       else { CO[o * 3] = CO[o * 3 + 1] = CO[o * 3 + 2] = 0.6; }
-      UV[o * 2] = x * uvs + z * uvs * 0.6;
-      UV[o * 2 + 1] = y * uvs - z * uvs * 0.25;
+      UV[o * 2] = uvA ? uvA.getX(v) : (x * uvs + z * uvs * 0.6);
+      UV[o * 2 + 1] = uvA ? uvA.getY(v) : (y * uvs - z * uvs * 0.25);
       var w = it.wf(x, y, z);
       SI[o * 4] = boneIdx[w[0]]; SI[o * 4 + 1] = boneIdx[w[1]];
       SW[o * 4] = w[2]; SW[o * 4 + 1] = 1 - w[2];
@@ -8586,7 +8916,7 @@ function compBake(parts, bones, boneIdx, uvScale) {
   geo.setAttribute('skinWeight', new THREE.BufferAttribute(SW, 4));
   geo.computeBoundingSphere();
   if (geo.boundingSphere) geo.boundingSphere.radius *= 1.4;
-  var mesh = new THREE.SkinnedMesh(geo, COMP_MAT);
+  var mesh = new THREE.SkinnedMesh(geo, material);
   mesh.castShadow = true;
   mesh.receiveShadow = false;   // 그림자 바이어스가 작은 몸체에 자체 음영을 만들기 때문에 받지 않는다
   var sk = new THREE.Skeleton(bones);
@@ -8785,7 +9115,7 @@ function makeComp() {
     add(compColor(st2, scuteCol), wTail);
   }
 
-  var mesh = compBake(parts, bones, boneIdx);
+  var mesh = compBake(parts, bones, boneIdx, 3.6, dinoSkinMat('carn'));
   var g = new THREE.Group();
   g.add(mesh);
 
@@ -8864,30 +9194,45 @@ function animateComp(d, dt, t) {
 }
 
 var DINO_MAKE = {
-  trike: makeTrike, para: makeParasaur, raptor: makeRaptor,
+  trike: makeTrike, para: makeParasaurPro, raptor: makeRaptor,
   allo: makeAllo, brachio: makeBrachio, compy: makeComp,
   trex: makeRex, spino: makeSpino, dilo: makeDilo, carno: makeCarno,
   mammoth: makeMammoth, anky: makeAnky, ptero: makePtero,
   stego: makeStego, pachy: makePachy
 };
 
+/* 🦖 v3.2 — 난이도 상향: 초입 소형(콤피·파라·파키)만 살짝,
+   중·대형과 육식은 보스급으로 크게 올렸다.
+   (v3.1 → v3.2 배율은 보고서의 비교표 참고) */
 var DINO_STAT = {
-  trike: { hp: 150, speed: 1.6 },
-  para: { hp: 130, speed: 1.5 },
-  raptor: { hp: 55, speed: 4.4 },
-  allo: { hp: 190, speed: 4.0 },
-  brachio: { hp: 420, speed: 1.15 },
-  compy: { hp: 22, speed: 3.4 },
-  trex: { hp: 340, speed: 4.6 },
-  spino: { hp: 260, speed: 4.0 },
-  dilo: { hp: 95, speed: 4.2 },
-  carno: { hp: 150, speed: 4.5 },
-  mammoth: { hp: 400, speed: 1.9 },
-  anky: { hp: 300, speed: 1.4 },
+  trike: { hp: 260, speed: 1.6 },
+  para: { hp: 160, speed: 1.5 },
+  raptor: { hp: 92, speed: 4.4 },
+  allo: { hp: 350, speed: 4.0 },
+  brachio: { hp: 700, speed: 1.15 },
+  compy: { hp: 26, speed: 3.4 },
+  trex: { hp: 640, speed: 4.6 },
+  spino: { hp: 470, speed: 4.0 },
+  dilo: { hp: 165, speed: 4.2 },
+  carno: { hp: 275, speed: 4.5 },
+  mammoth: { hp: 720, speed: 1.9 },
+  anky: { hp: 520, speed: 1.4 },
   ptero: { hp: 70, speed: 3.6 },
-  stego: { hp: 280, speed: 1.5 },
-  pachy: { hp: 110, speed: 4.3 }
+  stego: { hp: 470, speed: 1.5 },
+  pachy: { hp: 135, speed: 4.3 }
 };
+
+/* 🎯 v3.2 — 타겟 바에 표시하는 종별 기준 레벨 (섬 개체는 d.lvl 우선) */
+var DINO_LV = {
+  compy: 2, para: 4, pachy: 5, trike: 7, raptor: 8, dilo: 11, stego: 12,
+  carno: 13, anky: 14, allo: 15, mammoth: 16, brachio: 18, spino: 20, trex: 22, ptero: 9
+};
+function dinoLevelOf(d) {
+  if (!d) return 1;
+  if ((d.lvl | 0) > 0) return d.lvl | 0;
+  if (d.tamed && (d.lv | 0) > 0) return d.lv | 0;
+  return DINO_LV[d.kind] || 1;
+}
 
 /* 종별 메타 — 공격력/인식/리쉬/드랍/테이밍/컬링
    hostile: 플레이어를 먼저 공격하는 육식
@@ -8980,8 +9325,15 @@ function spawnDino(kind, x, z, opt) {
     var sc2 = 0.94 + Math.random() * 0.12;
     if (kind === 'trex') sc2 = 0.96 + Math.random() * 0.10;
     if (kind === 'ptero') sc2 = 1.34 + Math.random() * 0.10;   // 탈것다운 크기
+    /* 🦖 v3.2 — 거대 초식은 한 체급 더 크게 세워 위압감을 준다 */
+    if (kind === 'anky') sc2 = 1.24 + Math.random() * 0.06;
+    if (kind === 'stego') sc2 = 1.16 + Math.random() * 0.06;
+    if (kind === 'trike') sc2 = 1.10 + Math.random() * 0.06;
+    if (kind === 'mammoth') sc2 = 1.06 + Math.random() * 0.05;
     built.group.scale.setScalar(sc2);
     d.scale = sc2;
+    d.parts.height *= sc2;
+    d.parts.radius *= sc2;
   }
   built.group.position.set(x, terrainH(x, z), z);
   scene.add(built.group);
@@ -9339,7 +9691,8 @@ function dinoToes(add, o) {
 }
 
 function finishCreature(parts, rig, uv, dims, tune) {
-  var mesh = compBake(parts, rig.list, rig.idx, uv);
+  var mat = dinoSkinMat(tune && tune.skin);
+  var mesh = compBake(parts, rig.list, rig.idx, uv, mat);
   var g = new THREE.Group();
   g.add(mesh);
   var seat = dims.seatY !== undefined ? dims.seatY : dims.backY - 0.55;
@@ -9532,6 +9885,7 @@ function makeTrike() {
   }
 
   var tune = {
+    skin: 'herb',
     rate: 0.95, step: 0.34, knee: 0.22, ankle: 0.18, bob: 0.012,
     neckBones: ['neck1'], tailBones: ['tail1', 'tail2', 'tail3'],
     neckRest: 0.02, graze: 0.52,
@@ -9758,6 +10112,7 @@ function makeRaptor() {
   }
 
   var tune = {
+    skin: 'carn',
     rate: 1.15, step: 0.62, knee: 0.42, ankle: 0.26, bob: 0.010,
     neckBones: ['neck1', 'neck2'], tailBones: ['tail1', 'tail2', 'tail3'],
     neckRest: -0.06, graze: 0.55,
@@ -9972,6 +10327,7 @@ function makeAllo() {
   }
 
   var tune = {
+    skin: 'carn',
     rate: 1.0, step: 0.48, knee: 0.34, ankle: 0.24, bob: 0.016,
     neckBones: ['neck1', 'neck2'], tailBones: ['tail1', 'tail2', 'tail3'],
     neckRest: -0.04, graze: 0.62,
@@ -10135,6 +10491,7 @@ function makeBrachio() {
   }
 
   var tune = {
+    skin: 'herb',
     rate: 0.55, step: 0.26, knee: 0.16, ankle: 0.12, bob: 0.020,
     neckBones: ['neck1', 'neck2', 'neck3'], tailBones: ['tail1', 'tail2', 'tail3', 'tail4'],
     neckRest: -0.02, graze: 0.45, browse: -0.20, sway: 0.055,
@@ -10348,6 +10705,7 @@ function makeRex() {
   }
 
   var tune = {
+    skin: 'carn',
     rate: 0.95, step: 0.50, knee: 0.36, ankle: 0.26, bob: 0.020,
     neckBones: ['neck1'], tailBones: ['tail1', 'tail2', 'tail3'],
     neckRest: -0.06, graze: 0.58,
@@ -10548,6 +10906,7 @@ function makeSpino() {
   ], 3), 11, cfTail), wTail);
 
   var tune = {
+    skin: 'carn',
     rate: 1.0, step: 0.48, knee: 0.32, ankle: 0.24, bob: 0.016,
     neckBones: ['neck1'], tailBones: ['tail1', 'tail2', 'tail3'],
     neckRest: -0.05, graze: 0.60,
@@ -10766,6 +11125,7 @@ function makeDilo() {
   }
 
   var tune = {
+    skin: 'carn',
     rate: 1.15, step: 0.56, knee: 0.36, ankle: 0.24, bob: 0.010,
     neckBones: ['neck1', 'neck2'], tailBones: ['tail1', 'tail2', 'tail3'],
     neckRest: -0.05, graze: 0.52,
@@ -10942,6 +11302,7 @@ function makeCarno() {
   ], 3), 10, cfTail), wTail);
 
   var tune = {
+    skin: 'carn',
     rate: 1.08, step: 0.54, knee: 0.34, ankle: 0.24, bob: 0.012,
     neckBones: ['neck1'], tailBones: ['tail1', 'tail2', 'tail3'],
     neckRest: -0.05, graze: 0.55,
@@ -10951,168 +11312,297 @@ function makeCarno() {
 }
 
 /* =========================================================
-   9. 매머드 — 툰드라 사족보행 · 엄니 + 긴 코
+   9. 매머드 — 툰드라 사족보행 · 어깨 혹 + 장대한 엄니 + 긴 코
+   ---------------------------------------------------------
+   v3.2 리빌드: 구(球) 몸통·닭발·배 돌기를 버리고
+   · 어깨 혹에서 골반으로 흐르는 근육 곡선 몸통
+   · 코끼리처럼 굵은 기둥 다리 + 앞발톱 5개
+   · 위로 크게 휘어 오르는 두 엄니, 땅까지 늘어진 코
+   · 털 텍스처 + 실루엣을 흐트러뜨리는 털 다발
+   를 하나의 스킨 지오메트리로 굽는다.
    ========================================================= */
 var MAMMOTH_BONES = [
-  ['hip', null, 0, 2.55, -0.95],
-  ['spine', 'hip', 0, 0.05, 0.90],
-  ['chest', 'spine', 0, 0.05, 0.85],
-  ['neck1', 'chest', 0, -0.05, 0.42],
-  ['head', 'neck1', 0, -0.10, 0.30],
-  ['trunk1', 'head', 0, -0.40, 0.42],
-  ['trunk2', 'trunk1', 0, -0.52, 0.28],
-  ['tail1', 'hip', 0, -0.10, -0.30],
-  ['thighFL', 'chest', 0.62, -0.16, 0.42],
-  ['shinFL', 'thighFL', 0.03, -0.80, 0.10],
-  ['footFL', 'shinFL', 0.01, -0.70, 0.02],
-  ['thighFR', 'chest', -0.62, -0.16, 0.42],
-  ['shinFR', 'thighFR', -0.03, -0.80, 0.10],
-  ['footFR', 'shinFR', -0.01, -0.70, 0.02],
-  ['thighHL', 'hip', 0.66, -0.14, 0.08],
-  ['shinHL', 'thighHL', 0.03, -0.72, 0.06],
-  ['footHL', 'shinHL', 0.01, -0.62, 0.02],
-  ['thighHR', 'hip', -0.66, -0.14, 0.08],
-  ['shinHR', 'thighHR', -0.03, -0.72, 0.06],
-  ['footHR', 'shinHR', -0.01, -0.62, 0.02]
+  ['hip', null, 0, 3.10, -1.20],
+  ['spine', 'hip', 0, 0.10, 0.90],
+  ['chest', 'spine', 0, 0.10, 0.95],
+  ['neck1', 'chest', 0, -0.10, 0.55],
+  ['head', 'neck1', 0, 0.06, 0.40],
+  ['trunk1', 'head', 0, -0.11, 0.35],
+  ['trunk2', 'trunk1', 0, -0.51, 0.12],
+  ['trunk3', 'trunk2', 0, -0.36, -0.04],
+  ['tail1', 'hip', 0, -0.12, -0.42],
+  ['thighFL', 'chest', 0.74, -0.10, 0.30],
+  ['shinFL', 'thighFL', 0.02, -1.18, 0.04],
+  ['footFL', 'shinFL', 0.00, -1.15, 0.02],
+  ['thighFR', 'chest', -0.74, -0.10, 0.30],
+  ['shinFR', 'thighFR', -0.02, -1.18, 0.04],
+  ['footFR', 'shinFR', 0.00, -1.15, 0.02],
+  ['thighHL', 'hip', 0.78, -0.10, 0.06],
+  ['shinHL', 'thighHL', 0.02, -1.05, 0.04],
+  ['footHL', 'shinHL', 0.00, -1.05, 0.02],
+  ['thighHR', 'hip', -0.78, -0.10, 0.06],
+  ['shinHR', 'thighHR', -0.02, -1.05, 0.04],
+  ['footHR', 'shinHR', 0.00, -1.05, 0.02]
 ];
 
+/* 매머드 전용 로프트 헬퍼 — [z, y, w, h] 목록을 smooth 단면으로 */
+function commLoftMam(list, seg, cf) { return compLoft(dSecs(list, 2), seg, cf); }
+
 function makeMammoth() {
-  dinoJitter(0.020, 0.12, 0.08);
+  dinoJitter(0.014, 0.10, 0.07);
   var pal = {
-    belly: dinoCol(0xa8917a), flank: dinoCol(0x7d6750), back: dinoCol(0x584736),
-    stripe: dinoCol(0x3d3125), fur: dinoCol(0x9c8467), furL: dinoCol(0xbba385),
-    horn: dinoCol(0xf2ead2), claw: dinoCol(0x2b2216),
-    mouth: new THREE.Color(0x5a3630), eye: new THREE.Color(0x2a1d0d),
-    iris: new THREE.Color(0xc49a4e), pupil: new THREE.Color(0x080502),
-    glint: new THREE.Color(0xffffff), nostril: new THREE.Color(0x2a2016)
+    belly: dinoCol(0x6a4c33), flank: dinoCol(0x7b5738), back: dinoCol(0x543c27),
+    stripe: dinoCol(0x3a2a1b), fur: dinoCol(0x8a6440), furL: dinoCol(0xa9805a),
+    furD: dinoCol(0x4a3220),
+    horn: dinoCol(0xeae0c6), claw: dinoCol(0x2a2118),
+    mouth: new THREE.Color(0x4d2b26), eye: new THREE.Color(0x1d1208),
+    iris: new THREE.Color(0xc09246), pupil: new THREE.Color(0x080502),
+    glint: new THREE.Color(0xffffff), nostril: new THREE.Color(0x2a1e14)
   };
-  var cf = dinoHeightPaint(pal, 1.40, 3.10, { freq: 2.4, band: 0.35 });
-  var cfHead = dinoPaint(pal, { band: false });
-  var cfLeg = dinoLimbPaint(pal, 0.02, 2.55);
+  var cf = dinoHeightPaint(pal, 1.70, 4.60, { freq: 2.2, band: 0.30 });
+  var cfHead = dinoHeightPaint(pal, 3.00, 4.20, { freq: 0 });
+  var cfLeg = dinoLimbPaint(pal, 0.02, 3.20);
   var cfFur = function (x, y, z) {
-    var t = clamp((y - 2.0) / 1.2, 0, 1);
-    return _compC.copy(pal.belly).lerp(pal.fur, t * 0.9).lerp(pal.furL, Math.pow(t, 2) * 0.25);
+    var t = clamp((y - 1.60) / 2.60, 0, 1);
+    return _compC.copy(pal.furD).lerp(pal.fur, t * 0.85).lerp(pal.furL, Math.pow(t, 2.4) * 0.55);
   };
+  var cfTusk = function () { return pal.horn; };
 
   var rig = dinoRig(MAMMOTH_BONES);
   var parts = [];
   function add(geo, wf) { parts.push({ geo: geo, wf: wf }); }
 
-  var wBody = compChain('z', [[-1.80, 'hip'], [-0.90, 'hip'], [-0.40, 'spine'], [0.40, 'spine'], [0.80, 'chest'], [1.20, 'chest'], [1.35, 'neck1']]);
+  var wBody = compChain('z', [[-2.40, 'hip'], [-1.30, 'hip'], [-0.75, 'spine'], [0.10, 'spine'], [0.70, 'chest'], [1.30, 'chest'], [1.60, 'neck1']]);
   var wHead = compFix('head');
   var wTrunk1 = compFix('trunk1');
   var wTrunk2 = compFix('trunk2');
+  var wTrunk3 = compFix('trunk3');
 
-  // 몸통 — 거대한 타원
+  /* ── 몸통: 어깨 혹(앞) → 등 → 골반. 배는 납작하고 옆구리는 불룩하다 ── */
   add(compLoft(dSecs([
-    [-1.75, 2.42, 0.30, 0.36],
-    [-1.40, 2.52, 0.62, 0.70],
-    [-0.85, 2.58, 0.86, 0.94],
-    [-0.25, 2.60, 0.94, 1.00],
-    [0.35, 2.62, 0.90, 0.96],
-    [0.85, 2.66, 0.78, 0.84],
-    [1.20, 2.72, 0.62, 0.68],
-    [1.42, 2.78, 0.48, 0.52]
-  ], 3), 16, cf), wBody);
+    [-2.08, 3.54, 0.30, 0.34],
+    [-1.84, 3.56, 0.62, 0.70],
+    [-1.46, 3.58, 0.94, 1.02],
+    [-0.90, 3.62, 1.08, 1.14],
+    [-0.30, 3.68, 1.14, 1.20],
+    [ 0.25, 3.74, 1.17, 1.26],
+    [ 0.60, 3.78, 1.17, 1.32],
+    [ 1.02, 3.68, 1.07, 1.18],
+    [ 1.44, 3.54, 0.86, 0.96],
+    [ 1.72, 3.44, 0.62, 0.74],
+    [ 1.88, 3.38, 0.42, 0.52]
+  ], 3), 18, cf), wBody);
 
-  // 머리 — 둥근 두개골
+  /* ── 목: 어깨에서 머리로 낮게 흐른다 ── */
   add(compLoft(dSecs([
-    [1.36, 2.78, 0.44, 0.48],
-    [1.56, 2.84, 0.52, 0.54],
-    [1.76, 2.82, 0.46, 0.48],
-    [1.92, 2.70, 0.34, 0.36],
-    [2.02, 2.58, 0.22, 0.24]
-  ], 2), 12, cfHead), wHead);
+    [1.80, 3.42, 0.54, 0.62],
+    [1.96, 3.46, 0.47, 0.52],
+    [2.14, 3.48, 0.42, 0.45],
+    [2.34, 3.46, 0.40, 0.41]
+  ], 2), 12, cfHead), wBody);
 
-  // 코 — 앞으로 늘어지고 아래로 감기는 코
-  add(compLoft(dSecs([
-    [1.96, 2.56, 0.20, 0.22],
-    [2.14, 2.40, 0.175, 0.190],
-    [2.30, 2.16, 0.150, 0.165],
-    [2.38, 1.90, 0.130, 0.145],
-    [2.38, 1.62, 0.110, 0.125],
-    [2.30, 1.38, 0.090, 0.105],
-    [2.18, 1.20, 0.068, 0.082]
-  ], 2), 10, cfHead), wTrunk1);
-  add(compLoft(dSecs([
-    [2.20, 1.22, 0.075, 0.088],
-    [2.14, 1.02, 0.062, 0.074],
-    [2.22, 0.86, 0.052, 0.062],
-    [2.36, 0.80, 0.044, 0.052]
-  ], 2), 9, cfHead), wTrunk2);
+  var HEAD0 = parts.length;
+  /* ── 두개골: 정수리에 혹이 있고 앞으로 갈수록 좁아진다 ── */
+  add(commLoftMam([
+    [2.38, 3.32, 0.48, 0.52],
+    [2.56, 3.50, 0.62, 0.64],
+    [2.78, 3.56, 0.65, 0.62],
+    [3.00, 3.46, 0.56, 0.53],
+    [3.18, 3.28, 0.44, 0.44],
+    [3.34, 3.14, 0.34, 0.36]
+  ], 14, cfHead), wHead);
 
-  // 입·아래턱
-  add(compLoft(dSecs([
-    [1.70, 2.60, 0.24, 0.10],
-    [1.90, 2.55, 0.20, 0.085],
-    [2.04, 2.50, 0.13, 0.060]
-  ], 2), 8, cfHead), wHead);
+  /* ── 아래턱 ── */
+  add(commLoftMam([
+    [2.48, 3.08, 0.46, 0.11],
+    [2.74, 3.06, 0.50, 0.12],
+    [3.00, 3.02, 0.40, 0.10],
+    [3.22, 2.96, 0.26, 0.07]
+  ], 10, cfHead), wHead);
 
-  // 엄니 — 아래로 크게 휘는 코끼리 엄니
+  /* ── 코: 땅까지 늘어지며 끝이 살짝 말린다 ── */
+  add(commLoftMam([
+    [3.24, 3.10, 0.34, 0.34],
+    [3.34, 2.80, 0.315, 0.315],
+    [3.40, 2.42, 0.285, 0.285],
+    [3.40, 2.04, 0.255, 0.255],
+    [3.34, 1.66, 0.225, 0.225],
+    [3.24, 1.32, 0.198, 0.198],
+    [3.12, 1.04, 0.170, 0.170]
+  ], 12, cfHead), wTrunk1);
+  add(commLoftMam([
+    [3.13, 1.06, 0.170, 0.170],
+    [3.07, 0.80, 0.145, 0.145],
+    [3.10, 0.60, 0.118, 0.118]
+  ], 10, cfHead), wTrunk2);
+  add(compLoft([
+    { x: 0, y: 0.61, z: 3.12, w: 0.116, h: 0.116 },
+    { x: 0, y: 0.52, z: 3.28, w: 0.095, h: 0.095 },
+    { x: 0, y: 0.58, z: 3.40, w: 0.062, h: 0.062 }
+  ], 9, cfHead), wTrunk3);
+
+  /* ── 엄니: 아래로 감았다가 위로 웅장하게 휘어 오른다 ── */
   for (var s = -1; s <= 1; s += 2) {
-    add(compLoft(dSecs([
-      [1.96, 2.42, 0.055, 0.055, s * 0.14],
-      [2.20, 2.20, 0.048, 0.048, s * 0.20],
-      [2.42, 1.94, 0.038, 0.038, s * 0.25],
-      [2.56, 1.66, 0.028, 0.028, s * 0.28],
-      [2.58, 1.42, 0.018, 0.018, s * 0.28],
-      [2.48, 1.24, 0.008, 0.008, s * 0.26]
-    ], 2), 8, function () { return pal.horn; }), wHead);
-    // 귀 — 크게 펼쳐진 판
-    add(compLoft(dSecs([
-      [1.62, 2.92, 0.10, 0.30, s * 0.46],
-      [1.55, 2.86, 0.08, 0.42, s * 0.62],
-      [1.48, 2.74, 0.06, 0.36, s * 0.72],
-      [1.46, 2.60, 0.04, 0.22, s * 0.70]
-    ], 2), 7, function () { return pal.fur; }), wHead);
-    // 눈 + 콧구멍
-    ballAt(add, wHead, 0.062, s * 0.40, 2.90, 1.62, pal.iris, 1, 1, 1);
-    ballAt(add, wHead, 0.028, s * 0.425, 2.899, 1.635, pal.pupil, 1, 1, 0.7);
-    ballAt(add, wHead, 0.012, s * 0.437, 2.907, 1.642, pal.glint);
-    ballAt(add, wHead, 0.020, s * 0.075, 2.30, 2.02, pal.nostril);
+    var tusk = [
+      [0.38, 3.00, 3.02, 0.172],
+      [0.52, 2.70, 3.32, 0.162],
+      [0.65, 2.44, 3.66, 0.146],
+      [0.75, 2.30, 4.02, 0.128],
+      [0.81, 2.36, 4.34, 0.107],
+      [0.82, 2.60, 4.58, 0.084],
+      [0.77, 2.96, 4.70, 0.060],
+      [0.66, 3.32, 4.68, 0.038],
+      [0.55, 3.62, 4.52, 0.019]
+    ];
+    var ts = [];
+    for (var ti = 0; ti < tusk.length; ti++) {
+      ts.push({ x: tusk[ti][0] * s, y: tusk[ti][1], z: tusk[ti][2], w: tusk[ti][3], h: tusk[ti][3] * 1.05 });
+    }
+    add(compLoft(ts, 10, cfTusk), wHead);
+    ballAt(add, wHead, 0.17, s * 0.38, 3.04, 2.98, pal.belly, 1.0, 0.9, 0.9);
   }
 
-  // 네 다리 — 기둥처럼 두껍다
+  /* ── 귀: 작고 납작하게 머리에 붙는다 ── */
+  for (var e = -1; e <= 1; e += 2) {
+    add(compLoft([
+      { x: e * 0.40, y: 3.70, z: 2.62, w: 0.06, h: 0.16 },
+      { x: e * 0.58, y: 3.64, z: 2.54, w: 0.05, h: 0.26 },
+      { x: e * 0.72, y: 3.52, z: 2.44, w: 0.035, h: 0.30 },
+      { x: e * 0.78, y: 3.40, z: 2.34, w: 0.02, h: 0.22 }
+    ], 8, function (x, y, z) {
+      var t = clamp((Math.abs(x) - 0.40) / 0.38, 0, 1);
+      return _compC.copy(pal.fur).lerp(pal.furL, t * 0.55).lerp(pal.belly, clamp((3.70 - y) * 1.2, 0, 1) * 0.22);
+    }), wHead);
+  }
+
+  /* ── 눈: 눈두덩 + 홍채 + 동공 + 하이라이트 ── */
+  for (var ey = -1; ey <= 1; ey += 2) {
+    ballAt(add, wHead, 0.062, ey * 0.385, 3.56, 2.88, pal.eye, 1, 1, 1);
+    ballAt(add, wHead, 0.037, ey * 0.416, 3.56, 2.898, pal.iris, 1, 1, 0.8);
+    ballAt(add, wHead, 0.019, ey * 0.430, 3.562, 2.905, pal.pupil, 1, 1, 0.7);
+    ballAt(add, wHead, 0.008, ey * 0.437, 3.576, 2.912, pal.glint);
+    ballAt(add, wHead, 0.076, ey * 0.372, 3.63, 2.86, pal.flank, 1.1, 0.50, 1.0);
+    ballAt(add, wTrunk2, 0.020, ey * 0.052, 0.62, 3.19, pal.nostril);
+  }
+  /* 머리 덩어리를 통째로 조금 올려 어깨 혹 아래로 처지지 않게 */
+  for (var hp = HEAD0; hp < parts.length; hp++) parts[hp].geo.translate(0, 0.34, 0);
+
+  /* ── 네 다리: 코끼리처럼 굵은 기둥 ── */
   var legCfg = [
-    { sx: 1, hx: 0.61, hy: 2.48, hz: 0.72, kneeY: 1.72, ankleY: 0.92, w: 0.28, key: 'FL' },
-    { sx: -1, hx: -0.61, hy: 2.48, hz: 0.72, kneeY: 1.72, ankleY: 0.92, w: 0.28, key: 'FR' },
-    { sx: 1, hx: 0.65, hy: 2.44, hz: -1.02, kneeY: 1.66, ankleY: 0.88, w: 0.29, key: 'HL' },
-    { sx: -1, hx: -0.65, hy: 2.44, hz: -1.02, kneeY: 1.66, ankleY: 0.88, w: 0.29, key: 'HR' }
+    { sx: 1, hx: 0.78, hy: 3.30, hz: 1.08, kneeY: 2.06, ankleY: 0.88, w: 0.42, key: 'FL' },
+    { sx: -1, hx: -0.78, hy: 3.30, hz: 1.08, kneeY: 2.06, ankleY: 0.88, w: 0.42, key: 'FR' },
+    { sx: 1, hx: 0.82, hy: 3.20, hz: -0.70, kneeY: 2.02, ankleY: 0.86, w: 0.45, key: 'HL' },
+    { sx: -1, hx: -0.82, hy: 3.20, hz: -0.70, kneeY: 2.02, ankleY: 0.86, w: 0.45, key: 'HR' }
   ];
   for (var L = 0; L < legCfg.length; L++) {
     var lc = legCfg[L];
-    lc.cf = cfLeg;
-    lc.claw = pal.claw;
-    lc.wf = compChain('y', [
-      [0.015, 'foot' + lc.key], [lc.ankleY - 0.08, 'foot' + lc.key],
-      [lc.ankleY + 0.10, 'shin' + lc.key], [lc.kneeY - 0.10, 'shin' + lc.key],
-      [lc.kneeY + 0.10, 'thigh' + lc.key], [lc.hy + 0.3, 'thigh' + lc.key]
+    var wLeg = compChain('y', [
+      [0.015, 'foot' + lc.key], [lc.ankleY - 0.10, 'foot' + lc.key],
+      [lc.ankleY + 0.12, 'shin' + lc.key], [lc.kneeY - 0.12, 'shin' + lc.key],
+      [lc.kneeY + 0.12, 'thigh' + lc.key], [lc.hy + 0.30, 'thigh' + lc.key]
     ]);
-    dinoQuadLeg(add, lc);
+    var w = lc.w, hx = lc.hx;
+    /* 허벅지~정강이: 위는 두껍고 발목으로 갈수록 가늘어지는 기둥 */
+    add(compLoft(dSecs([
+      [lc.hz - 0.16, lc.hy + 0.16, w * 0.92, w * 0.98, hx],
+      [lc.hz - 0.06, lc.hy - (lc.hy - lc.kneeY) * 0.30, w * 1.02, w * 1.06, hx + lc.sx * 0.010],
+      [lc.hz + 0.02, lc.kneeY, w * 0.92, w * 0.94, hx + lc.sx * 0.016],
+      [lc.hz + 0.06, (lc.kneeY + lc.ankleY) * 0.5, w * 0.80, w * 0.82, hx + lc.sx * 0.020],
+      [lc.hz + 0.08, lc.ankleY, w * 0.72, w * 0.74, hx + lc.sx * 0.022]
+    ], 2), 12, cfLeg), wLeg);
+    /* 발: 넓고 납작한 발바닥 */
+    add(compLoft(dSecs([
+      [lc.hz + 0.08, lc.ankleY, w * 0.74, w * 0.76, hx + lc.sx * 0.022],
+      [lc.hz + 0.10, lc.ankleY * 0.45, w * 0.86, w * 0.52, hx + lc.sx * 0.022],
+      [lc.hz + 0.12, 0.03, w * 0.94, w * 0.30, hx + lc.sx * 0.022]
+    ], 2), 10, cfLeg), wLeg);
+    /* 앞발톱 — 앞쪽 호를 따라 다섯 개의 둥근 발톱 */
+    for (var n = 0; n < 5; n++) {
+      var na = -1.02 + (n / 4) * 2.04;
+      var nx = hx + lc.sx * 0.022 + Math.sin(na) * w * 0.78;
+      var nz = lc.hz + 0.16 + Math.cos(na) * w * 0.62;
+      ballAt(add, wLeg, w * 0.20, nx, 0.075, nz, pal.claw, 1.05, 0.55, 0.95);
+    }
   }
 
-  // 털 — 몸통 아래로 늘어진 긴 털 뭉치
-  for (var f = 0; f < 26; f++) {
-    var fa = (f / 26) * TAU;
-    var fy = 2.30 + Math.sin(f * 1.9) * 0.16;
-    var fg = new THREE.SphereGeometry(1, 5, 4);
-    fg.scale(0.11, 0.22, 0.09);
-    fg.translate(Math.cos(fa) * 0.86, fy, Math.sin(fa) * 0.86 - 0.1);
-    add(compColor(fg, pal.furL), wBody);
+  /* ── 털: 배·옆구리에서 늘어지는 다발 (실루엣을 흐트러뜨린다) ── */
+  var tufts = [
+    [-1.55, 2.42, 0.72, 0.62], [-1.15, 2.22, 0.98, 0.70], [-0.60, 2.14, 1.10, 0.72],
+    [-0.05, 2.10, 1.14, 0.70], [0.50, 2.14, 1.12, 0.66], [1.00, 2.26, 0.98, 0.60],
+    [1.40, 2.46, 0.78, 0.50],
+    [-1.40, 2.44, -0.74, 0.58], [-0.90, 2.20, -1.02, 0.68], [-0.30, 2.12, -1.12, 0.66],
+    [0.30, 2.14, -1.08, 0.62], [0.85, 2.28, -0.96, 0.56]
+  ];
+  for (var t2 = 0; t2 < tufts.length; t2++) {
+    var tf = tufts[t2], tz = tf[0], ty = tf[1], tw = tf[2], tl = tf[3];
+    var sgn = tw > 0 ? 1 : -1;
+    var ax = Math.abs(tw);
+    add(compLoft([
+      { x: sgn * ax * 0.62, y: ty + 0.16, z: tz, w: 0.16, h: 0.13 },
+      { x: sgn * ax * 0.88, y: ty - tl * 0.35, z: tz + 0.04 * (t2 % 2 ? 1 : -1), w: 0.15, h: 0.12 },
+      { x: sgn * ax * 0.96, y: ty - tl * 0.75, z: tz + 0.07 * (t2 % 2 ? 1 : -1), w: 0.11, h: 0.09 },
+      { x: sgn * ax * 0.92, y: ty - tl, z: tz + 0.10 * (t2 % 2 ? 1 : -1), w: 0.04, h: 0.035 }
+    ], 7, cfFur), wBody);
+  }
+  /* 어깨·등 위쪽 털 능선 */
+  for (var mk = 0; mk < 9; mk++) {
+    var mz = 1.55 - mk * 0.34;
+    var my = 4.72 - Math.pow((mz - 0.55) / 1.0, 2) * 0.34 - 0.06;
+    add(compLoft([
+      { x: -0.30, y: my - 0.04, z: mz, w: 0.06, h: 0.10 },
+      { x: -0.12, y: my + 0.07, z: mz + 0.06, w: 0.07, h: 0.11 },
+      { x: 0.12, y: my + 0.08, z: mz + 0.03, w: 0.07, h: 0.105 },
+      { x: 0.30, y: my - 0.03, z: mz, w: 0.06, h: 0.095 }
+    ], 6, cfFur), wBody);
+  }
+  /* 목덜미 갈기 */
+  for (var nk = 0; nk < 6; nk++) {
+    var nz2 = 2.44 - nk * 0.13, ny2 = 3.86 - nk * 0.045;
+    add(compLoft([
+      { x: -0.38, y: ny2, z: nz2, w: 0.05, h: 0.09 },
+      { x: 0.0, y: ny2 + 0.09, z: nz2 + 0.02, w: 0.06, h: 0.10 },
+      { x: 0.38, y: ny2, z: nz2, w: 0.05, h: 0.09 }
+    ], 6, cfFur), wHead);
+  }
+  /* 이마·볼의 거친 털 — 둥근 공 실루엣을 깬다 */
+  for (var fh = 0; fh < 5; fh++) {
+    var fz = 3.10 - fh * 0.13, fx = (fh % 2 ? 1 : -1) * (0.16 + fh * 0.03);
+    add(compLoft([
+      { x: fx * 0.6, y: 4.24 - fh * 0.02, z: fz, w: 0.05, h: 0.10 },
+      { x: fx, y: 4.36 - fh * 0.03, z: fz + 0.05, w: 0.05, h: 0.12 },
+      { x: fx * 1.3, y: 4.28 - fh * 0.03, z: fz + 0.12, w: 0.02, h: 0.05 }
+    ], 5, cfFur), wHead);
+  }
+  for (var ch = 0; ch < 4; ch++) {
+    var cx2 = (ch % 2 ? 1 : -1) * 0.44, cy2 = 3.74 - ch * 0.05, cz2 = 2.94 - ch * 0.10;
+    add(compLoft([
+      { x: cx2 * 0.8, y: cy2 + 0.10, z: cz2, w: 0.05, h: 0.10 },
+      { x: cx2 * 1.1, y: cy2 - 0.10, z: cz2 + 0.04, w: 0.05, h: 0.11 },
+      { x: cx2 * 1.15, y: cy2 - 0.26, z: cz2 + 0.06, w: 0.02, h: 0.04 }
+    ], 5, cfFur), wHead);
   }
 
-  // 꼬리 — 짧고 털이 많다
+  /* ── 꼬리: 짧고 털이 덥수룩하다 ── */
   add(compLoft(dSecs([
-    [-1.70, 2.45, 0.14, 0.17],
-    [-1.92, 2.36, 0.10, 0.13],
-    [-2.10, 2.24, 0.065, 0.085],
-    [-2.22, 2.12, 0.032, 0.045]
+    [-2.30, 3.30, 0.13, 0.16],
+    [-2.52, 3.22, 0.10, 0.13],
+    [-2.72, 3.10, 0.07, 0.09],
+    [-2.86, 2.96, 0.03, 0.04]
   ], 2), 8, cfFur), compFix('tail1'));
+  for (var tt = 0; tt < 5; tt++) {
+    var ta = (tt / 5) * TAU;
+    add(compLoft([
+      { x: Math.cos(ta) * 0.10, y: 3.24, z: -2.56, w: 0.05, h: 0.05 },
+      { x: Math.cos(ta) * 0.15, y: 3.02, z: -2.66, w: 0.05, h: 0.05 },
+      { x: Math.cos(ta) * 0.17, y: 2.80, z: -2.72, w: 0.02, h: 0.02 }
+    ], 5, cfFur), compFix('tail1'));
+  }
 
   var tune = {
-    rate: 0.62, step: 0.22, knee: 0.14, ankle: 0.10, bob: 0.014,
+    skin: 'fur',
+    rate: 0.58, step: 0.20, knee: 0.12, ankle: 0.08, bob: 0.016,
     neckBones: ['neck1'], tailBones: ['tail1'],
-    neckRest: -0.04, graze: 0.40,
+    neckRest: -0.06, graze: 0.36,
     legs: [
       ['thighFL', 'shinFL', 'footFL', 0],
       ['thighFR', 'shinFR', 'footFR', Math.PI],
@@ -11120,7 +11610,7 @@ function makeMammoth() {
       ['thighHR', 'shinHR', 'footHR', Math.PI * 1.6]
     ]
   };
-  return finishCreature(parts, rig, 1.5, { height: 3.55, backY: 3.00, backZ: -0.20, radius: 1.55, seatY: 2.62 }, tune);
+  return finishCreature(parts, rig, 1.5, { height: 4.78, backY: 4.40, backZ: 0.30, radius: 1.75, seatY: 3.42 }, tune);
 }
 
 /* =========================================================
@@ -11267,6 +11757,7 @@ function makeAnky() {
   }
 
   var tune = {
+    skin: 'herb',
     rate: 0.70, step: 0.28, knee: 0.18, ankle: 0.12, bob: 0.012,
     neckBones: ['neck1'], tailBones: ['tail1', 'tail2', 'tail3'],
     neckRest: -0.06, graze: 0.42,
@@ -11415,6 +11906,7 @@ function makePtero() {
   ], 2), 8, cf), compFix('tail1'));
 
   var tune = {
+    skin: 'wing',
     rate: 1.1, step: 0.4, knee: 0.24, ankle: 0.16, bob: 0.008,
     neckBones: ['neck1'], tailBones: ['tail1'],
     neckRest: -0.02, graze: 0.45,
@@ -11569,6 +12061,7 @@ function makeStego() {
   }
 
   var tune = {
+    skin: 'herb',
     rate: 0.72, step: 0.30, knee: 0.18, ankle: 0.12, bob: 0.012,
     neckBones: ['neck1'], tailBones: ['tail1', 'tail2', 'tail3'],
     neckRest: -0.04, graze: 0.48,
@@ -11737,6 +12230,7 @@ function makePachy() {
   ], 3), 10, cf), wTail);
 
   var tune = {
+    skin: 'herb',
     rate: 1.05, step: 0.52, knee: 0.34, ankle: 0.24, bob: 0.010,
     neckBones: ['neck1'], tailBones: ['tail1', 'tail2', 'tail3'],
     neckRest: -0.08, graze: 0.58,
@@ -11748,6 +12242,198 @@ function makePachy() {
 /* =========================================================
    공용 스킨 애니메이션 — 상태별 목표 자세를 부드럽게 추종
    ========================================================= */
+/* =========================================================
+   16. 파라사우롤로푸스 (v3.2 리빌드) — 길쭉한 몸통 + S자 목 + 볏
+   ---------------------------------------------------------
+   v3.1까지는 구(球) 몸통·원기둥 다리의 장난감 모델이었다.
+   이제 다른 종과 같은 단면 로프트 파이프라인으로 다시 짓는다:
+   · 어깨에서 골반으로 흐르는 근육 곡선, 잘록한 허리
+   · S자로 우아하게 뻗은 목과 뒤로 뻗은 볏
+   · 오리부리 주둥이 · 눈 · 콧구멍 · 아래턱
+   · 허벅지-무릎-발목이 접히는 사족 다리
+   ========================================================= */
+var PARA_BONES = [
+  ['hip', null, 0, 2.00, -1.00],
+  ['spine', 'hip', 0, 0.06, 0.80],
+  ['chest', 'spine', 0, 0.06, 0.78],
+  ['neck1', 'chest', 0, 0.26, 0.52],
+  ['neck2', 'neck1', 0, 0.38, 0.36],
+  ['head', 'neck2', 0, 0.24, 0.30],
+  ['jaw', 'head', 0, -0.11, 0.06],
+  ['tail1', 'hip', 0, -0.02, -0.42],
+  ['tail2', 'tail1', 0, -0.02, -0.60],
+  ['tail3', 'tail2', 0, -0.02, -0.52],
+  ['thighFL', 'chest', 0.44, -0.12, 0.26],
+  ['shinFL', 'thighFL', 0.02, -0.62, 0.04],
+  ['footFL', 'shinFL', 0.00, -0.52, 0.02],
+  ['thighFR', 'chest', -0.44, -0.12, 0.26],
+  ['shinFR', 'thighFR', -0.02, -0.62, 0.04],
+  ['footFR', 'shinFR', 0.00, -0.52, 0.02],
+  ['thighHL', 'hip', 0.50, -0.10, 0.06],
+  ['shinHL', 'thighHL', 0.02, -0.58, 0.02],
+  ['footHL', 'shinHL', 0.00, -0.50, 0.02],
+  ['thighHR', 'hip', -0.50, -0.10, 0.06],
+  ['shinHR', 'thighHR', -0.02, -0.58, 0.02],
+  ['footHR', 'shinHR', 0.00, -0.50, 0.02]
+];
+
+function makeParasaurPro() {
+  dinoJitter(0.016, 0.10, 0.08);
+  var pal = {
+    belly: dinoCol(0xe4e2bd), flank: dinoCol(0x9fae72), back: dinoCol(0x5d7043),
+    stripe: dinoCol(0x3d5029), horn: dinoCol(0xf0ead2), claw: dinoCol(0x33291b),
+    crest: dinoCol(0xd0823f), crestD: dinoCol(0x9a5626),
+    mouth: new THREE.Color(0x5a2f2c), eye: new THREE.Color(0x241608),
+    iris: new THREE.Color(0xc79a3c), pupil: new THREE.Color(0x070402),
+    glint: new THREE.Color(0xffffff), nostril: new THREE.Color(0x2b2317)
+  };
+  var cf = dinoHeightPaint(pal, 1.20, 3.20, { freq: 4.4, band: 0.40 });
+  var cfHead = dinoPaint(pal, { band: false });
+  var cfNeck = dinoHeightPaint(pal, 2.20, 3.45, { freq: 0 });
+  var cfLeg = function (x, y, z) {
+    var c = _compC.copy(pal.flank).lerp(pal.back, clamp((y - 0.30) / 1.60, 0, 1) * 0.55);
+    return c.lerp(pal.claw, clamp((0.34 - y) / 0.30, 0, 1) * 0.35);
+  };
+  var cfTail = dinoHeightPaint(pal, 1.40, 2.40, { freq: 5.6, band: 0.45 });
+
+  var rig = dinoRig(PARA_BONES);
+  var parts = [];
+  function add(geo, wf) { parts.push({ geo: geo, wf: wf }); }
+
+  var wBody = compChain('z', [[-2.10, 'hip'], [-1.20, 'hip'], [-0.70, 'spine'], [0.10, 'spine'], [0.70, 'chest'], [1.20, 'chest']]);
+  var wTail = compChain('z', [[-4.20, 'tail3'], [-3.40, 'tail3'], [-2.90, 'tail2'], [-2.30, 'tail2'], [-1.95, 'tail1'], [-1.60, 'tail1'], [-1.30, 'hip']]);
+  var wNeck = compChain('z', [[0.95, 'chest'], [1.15, 'neck1'], [1.55, 'neck1'], [1.80, 'neck2'], [2.02, 'neck2'], [2.14, 'head']]);
+  var wHead = compFix('head');
+  var wJaw = compFix('jaw');
+  var wCrest = compChain('z', [[1.10, 'neck2'], [1.30, 'neck2'], [1.55, 'head'], [2.10, 'head']]);
+
+  /* ── 몸통: 넓은 어깨 → 잘록한 허리 → 둥근 골반 ── */
+  add(compLoft(dSecs([
+    [-2.05, 2.02, 0.26, 0.32],
+    [-1.78, 2.08, 0.52, 0.60],
+    [-1.34, 2.14, 0.78, 0.86],
+    [-0.82, 2.18, 0.88, 0.94],
+    [-0.26, 2.20, 0.90, 0.96],
+    [ 0.24, 2.22, 0.84, 0.90],
+    [ 0.62, 2.26, 0.72, 0.78],
+    [ 0.92, 2.32, 0.56, 0.62],
+    [ 1.08, 2.38, 0.46, 0.52]
+  ], 3), 16, cf), wBody);
+
+  /* ── 목: S자로 우아하게 ── */
+  add(compLoft(dSecs([
+    [1.00, 2.36, 0.46, 0.52],
+    [1.24, 2.54, 0.40, 0.46],
+    [1.48, 2.78, 0.34, 0.40],
+    [1.70, 2.98, 0.29, 0.34],
+    [1.90, 3.12, 0.25, 0.29],
+    [2.06, 3.18, 0.22, 0.26]
+  ], 2), 12, cfNeck), wNeck);
+
+  /* ── 두개골 ── */
+  add(compLoft(dSecs([
+    [2.02, 3.18, 0.23, 0.25],
+    [2.18, 3.22, 0.27, 0.28],
+    [2.36, 3.20, 0.25, 0.26],
+    [2.54, 3.12, 0.19, 0.21],
+    [2.70, 3.04, 0.15, 0.17],
+    [2.84, 2.98, 0.13, 0.14]
+  ], 2), 12, cfHead), wHead);
+
+  /* ── 아래턱 ── */
+  add(compLoft(dSecs([
+    [2.08, 3.02, 0.20, 0.07],
+    [2.34, 3.00, 0.23, 0.08],
+    [2.58, 2.96, 0.18, 0.06],
+    [2.78, 2.92, 0.11, 0.04]
+  ], 2), 9, cfHead), wJaw);
+
+  /* ── 구강 ── */
+  add(compLoft(dSecs([
+    [2.14, 3.08, 0.16, 0.03],
+    [2.40, 3.06, 0.18, 0.03],
+    [2.62, 3.02, 0.12, 0.02]
+  ], 2), 6, function () { return pal.mouth; }), wHead);
+
+  /* ── 볏: 머리 위에서 뒤로 길게 뻗는다 ── */
+  add(compLoft([
+    { x: 0, y: 3.16, z: 2.30, w: 0.165, h: 0.185 },
+    { x: 0, y: 3.28, z: 1.96, w: 0.150, h: 0.165 },
+    { x: 0, y: 3.38, z: 1.74, w: 0.125, h: 0.140 },
+    { x: 0, y: 3.42, z: 1.62, w: 0.115, h: 0.128 },
+    { x: 0, y: 3.46, z: 1.38, w: 0.090, h: 0.100 },
+    { x: 0, y: 3.44, z: 1.18, w: 0.062, h: 0.070 },
+    { x: 0, y: 3.38, z: 1.04, w: 0.030, h: 0.034 }
+  ], 10, function (x, y, z) {
+    var t = clamp((1.0 - z) / -1.16, 0, 1);
+    return _compC.copy(pal.crest).lerp(pal.crestD, clamp((2.16 - z) / 1.1, 0, 1) * 0.85);
+  }), wCrest);
+
+  /* ── 눈 · 콧구멍 · 이마 뼈 ── */
+  for (var e = -1; e <= 1; e += 2) {
+    ballAt(add, wHead, 0.058, e * 0.235, 3.30, 2.26, pal.eye, 1, 1, 1);
+    ballAt(add, wHead, 0.034, e * 0.262, 3.302, 2.278, pal.iris, 1, 1, 0.8);
+    ballAt(add, wHead, 0.017, e * 0.274, 3.304, 2.284, pal.pupil, 1, 1, 0.7);
+    ballAt(add, wHead, 0.007, e * 0.281, 3.316, 2.290, pal.glint);
+    ballAt(add, wHead, 0.066, e * 0.225, 3.35, 2.24, pal.back, 1.15, 0.50, 1.05);
+    ballAt(add, wHead, 0.018, e * 0.062, 3.10, 2.72, pal.nostril);
+  }
+  /* 부리 테두리 */
+  ballAt(add, wHead, 0.055, 0, 2.96, 2.80, pal.belly, 1.6, 0.55, 0.9);
+
+  /* ── 네 다리 ── */
+  var legCfg = [
+    { sx: 1, hx: 0.46, hy: 2.12, hz: 0.86, kneeY: 1.44, ankleY: 0.84, w: 0.27, key: 'FL' },
+    { sx: -1, hx: -0.46, hy: 2.12, hz: 0.86, kneeY: 1.44, ankleY: 0.84, w: 0.27, key: 'FR' },
+    { sx: 1, hx: 0.54, hy: 2.04, hz: -0.94, kneeY: 1.38, ankleY: 0.82, w: 0.30, key: 'HL' },
+    { sx: -1, hx: -0.54, hy: 2.04, hz: -0.94, kneeY: 1.38, ankleY: 0.82, w: 0.30, key: 'HR' }
+  ];
+  for (var L = 0; L < legCfg.length; L++) {
+    var lc = legCfg[L];
+    lc.cf = cfLeg;
+    lc.claw = pal.claw;
+    lc.wf = compChain('y', [
+      [0.015, 'foot' + lc.key], [lc.ankleY - 0.06, 'foot' + lc.key],
+      [lc.ankleY + 0.08, 'shin' + lc.key], [lc.kneeY - 0.08, 'shin' + lc.key],
+      [lc.kneeY + 0.08, 'thigh' + lc.key], [lc.hy + 0.30, 'thigh' + lc.key]
+    ]);
+    dinoQuadLeg(add, lc);
+  }
+
+  /* ── 꼬리: 길고 두툼하다가 가늘게 ── */
+  add(compLoft(dSecs([
+    [-1.98, 2.04, 0.30, 0.38],
+    [-2.38, 2.02, 0.23, 0.29],
+    [-2.82, 1.96, 0.17, 0.22],
+    [-3.26, 1.88, 0.115, 0.155],
+    [-3.68, 1.78, 0.07, 0.10],
+    [-4.02, 1.68, 0.028, 0.045]
+  ], 3), 11, cfTail), wTail);
+
+  /* ── 등줄기 돌기 ── */
+  var ridge = [[-1.30, 3.04], [-0.85, 3.12], [-0.35, 3.14], [0.20, 3.12], [0.66, 3.06]];
+  for (var r2 = 0; r2 < ridge.length; r2++) {
+    var rg = new THREE.SphereGeometry(1, 6, 4);
+    rg.scale(0.045, 0.028, 0.085);
+    rg.translate(0, ridge[r2][1] - 0.005, ridge[r2][0]);
+    add(compColor(rg, pal.stripe), wBody);
+  }
+
+  var tune = {
+    skin: 'herb',
+    rate: 0.92, step: 0.30, knee: 0.22, ankle: 0.18, bob: 0.012,
+    neckBones: ['neck1', 'neck2'], tailBones: ['tail1', 'tail2', 'tail3'],
+    neckRest: 0.04, graze: 0.46, sway: 0.02,
+    legs: [
+      ['thighFL', 'shinFL', 'footFL', 0],
+      ['thighFR', 'shinFR', 'footFR', Math.PI],
+      ['thighHL', 'shinHL', 'footHL', Math.PI * 0.58],
+      ['thighHR', 'shinHR', 'footHR', Math.PI * 1.58]
+    ]
+  };
+  return finishCreature(parts, rig, 2.2, { height: 3.72, backY: 3.16, backZ: -0.20, radius: 1.25, seatY: 2.42 }, tune);
+}
+
 function animateCreature(d, dt, t) {
   var P = d.parts, B = P.bones, T = P.tune;
   if (!B || !T) return;
@@ -17194,6 +17880,7 @@ function attackDino(d) {
   }
   d.hp -= dmg;
   d.hurt = 0.35;
+  setTarget(d);
   d.atkT = 0.62; d.atkDur = 0.62;
   sfx(crit ? 'crit' : 'hit');
   var gy = terrainH(d.x, d.z);
@@ -17327,6 +18014,7 @@ function hitDinoByArrow(d, dmg, p, arrow) {
   var dist = arrow ? Math.hypot(p.x - arrow.ox, p.z - arrow.oz) : Math.hypot(d.x - player.pos.x, d.z - player.pos.z);
   var scale = bowRangeScale(dist);
   var real = Math.max(1, Math.round(dmg * scale));
+  setTarget(d);
   d.hp -= real;
   d.hurt = 0.32;
   // 짧은 경직 — 맞은 직후 굳어서 한 발 더 쏘며 거리를 벌 수 있다(카이팅)
@@ -20648,7 +21336,7 @@ function startGroggy(d) {
 /* ---------------- 🦖 종별 고유 패턴 테이블 ---------------- */
 var V28 = {
   raptor: { flank: 1, flankCd: 4.4 },
-  trike: { charge: 1, chgSpeed: 8.6, chgDur: 0.86, chgLane: 11.5, chgWid: 2.5, chgDmg: 10, exhaust: 1.5 },
+  trike: { charge: 1, chgSpeed: 8.6, chgDur: 0.86, chgLane: 11.5, chgWid: 2.5, chgDmg: 16, exhaust: 1.5 },
   trex: { tail: 1, roar: 1, tailCd: 7.5, roarCd: 15 },
   allo: { tail: 1, roar: 1, tailCd: 6.5, roarCd: 0 },
   carno: { tail: 1, roar: 0, tailCd: 6.5 },
@@ -21718,24 +22406,24 @@ function updateComp(d, dt, t, dp) {
    타격 순간 hitR 밖이면 그대로 빗나간다 → 활로 카이팅할 여지
    leash: 추격을 포기하는 플레이어 거리 */
 var DINO_AI = {
-  trike: { type: 'herb', aggroR: 7.5, leash: 16, atkR: 2.3, hitR: 2.7, atkDmg: 7, atkCd: 2.4, run: 3.0 },
-  brachio: { type: 'herb', aggroR: 10.0, leash: 14, atkR: 3.4, hitR: 3.9, atkDmg: 11, atkCd: 3.2, run: 1.9 },
-  raptor: { type: 'carn', aggroR: 9.5, leash: 16, atkR: 2.3, hitR: 2.55, atkDmg: 9, atkCd: 1.6, run: 4.3 },
-  allo: { type: 'carn', aggroR: 11.5, leash: 18, atkR: 2.8, hitR: 3.05, atkDmg: 15, atkCd: 2.2, run: 3.95 },
-  para: { type: 'herb', aggroR: 7.0, leash: 15, atkR: 2.2, hitR: 2.5, atkDmg: 5, atkCd: 2.6, run: 2.8 },
+  trike: { type: 'herb', aggroR: 9.0, leash: 18, atkR: 2.4, hitR: 2.8, atkDmg: 12, atkCd: 2.1, run: 3.0 },
+  brachio: { type: 'herb', aggroR: 11.0, leash: 15, atkR: 3.6, hitR: 4.1, atkDmg: 17, atkCd: 2.8, run: 1.9 },
+  raptor: { type: 'carn', aggroR: 11.5, leash: 20, atkR: 2.3, hitR: 2.55, atkDmg: 14, atkCd: 1.35, run: 4.3 },
+  allo: { type: 'carn', aggroR: 13.5, leash: 22, atkR: 2.9, hitR: 3.15, atkDmg: 24, atkCd: 1.9, run: 3.95 },
+  para: { type: 'herb', aggroR: 7.0, leash: 15, atkR: 2.2, hitR: 2.5, atkDmg: 6, atkCd: 2.4, run: 2.8 },
   compy: { type: 'swarm', aggroR: 5.0, leash: 13, atkR: 1.5, hitR: 1.65, atkDmg: 3, atkCd: 1.5 },
   /* ── 9단계 신규 종 ──
      tactic: rex(포효→고속 돌진 물기) · carno(직선 박치기) · dilo(독액 뱉고 뒤로 빠지기)
      spino(연속 할퀴기) · mammoth/anky(꼬리·코 반격) */
-  trex: { type: 'carn', aggroR: 13.0, leash: 26, atkR: 3.4, hitR: 4.0, atkDmg: 22, atkCd: 2.8, run: 4.8, tactic: 'rex' },
-  spino: { type: 'carn', aggroR: 11.0, leash: 22, atkR: 3.0, hitR: 3.4, atkDmg: 16, atkCd: 2.0, run: 4.5, tactic: 'spino' },
-  dilo: { type: 'carn', aggroR: 12.0, leash: 20, atkR: 2.6, hitR: 3.0, atkDmg: 7, atkCd: 2.2, run: 4.2, tactic: 'dilo' },
-  carno: { type: 'carn', aggroR: 11.0, leash: 20, atkR: 2.8, hitR: 3.3, atkDmg: 14, atkCd: 2.4, run: 4.6, tactic: 'carno' },
-  mammoth: { type: 'herb', aggroR: 8.0, leash: 18, atkR: 3.0, hitR: 3.7, atkDmg: 14, atkCd: 3.0, run: 3.2 },
-  anky: { type: 'herb', aggroR: 6.5, leash: 15, atkR: 2.8, hitR: 3.5, atkDmg: 12, atkCd: 2.6, run: 2.6 },
+  trex: { type: 'carn', aggroR: 15.0, leash: 30, atkR: 3.6, hitR: 4.2, atkDmg: 35, atkCd: 2.45, run: 4.8, tactic: 'rex' },
+  spino: { type: 'carn', aggroR: 13.0, leash: 26, atkR: 3.1, hitR: 3.5, atkDmg: 26, atkCd: 1.75, run: 4.5, tactic: 'spino' },
+  dilo: { type: 'carn', aggroR: 13.5, leash: 24, atkR: 2.6, hitR: 3.0, atkDmg: 11, atkCd: 1.9, run: 4.2, tactic: 'dilo' },
+  carno: { type: 'carn', aggroR: 13.0, leash: 24, atkR: 3.0, hitR: 3.5, atkDmg: 22, atkCd: 2.0, run: 4.6, tactic: 'carno' },
+  mammoth: { type: 'herb', aggroR: 9.5, leash: 20, atkR: 3.4, hitR: 4.1, atkDmg: 23, atkCd: 2.6, run: 3.2 },
+  anky: { type: 'herb', aggroR: 8.0, leash: 17, atkR: 3.0, hitR: 3.7, atkDmg: 20, atkCd: 2.25, run: 2.6 },
   ptero: { type: 'pet', aggroR: 0.05, leash: 12, atkR: 0, hitR: 0, atkDmg: 0, atkCd: 99, run: 2.6 },
-  stego: { type: 'herb', aggroR: 7.0, leash: 16, atkR: 2.8, hitR: 3.3, atkDmg: 12, atkCd: 2.8, run: 2.8 },
-  pachy: { type: 'herb', aggroR: 6.0, leash: 14, atkR: 2.2, hitR: 2.6, atkDmg: 8, atkCd: 2.1, run: 3.6 }
+  stego: { type: 'herb', aggroR: 8.5, leash: 18, atkR: 3.0, hitR: 3.5, atkDmg: 19, atkCd: 2.4, run: 2.8 },
+  pachy: { type: 'herb', aggroR: 6.5, leash: 14, atkR: 2.2, hitR: 2.6, atkDmg: 10, atkCd: 1.95, run: 3.6 }
 };
 
 /* ---- 9단계 전법 ----
@@ -22053,11 +22741,11 @@ function updateCreatureAI(d, dt, t, dp) {
           d.strike2Done = true;
           if (tdp <= A.hitR + 0.35) {
             if (pet) {
-              petHurt(pet, Math.round(8 * (d.pow || 1)), d);
+              petHurt(pet, Math.round(12 * (d.pow || 1)), d);
               spawnSplash(pet.x, terrainH(pet.x, pet.z) + 0.4, pet.z, 8);
               sfx('splash');
             } else {
-              hurtPlayer(8, d);
+              hurtPlayer(12, d);
               spawnSplash(player.pos.x, terrainH(player.pos.x, player.pos.z) + 0.4, player.pos.z, 8);
               sfx('splash');
             }
@@ -22532,6 +23220,7 @@ function hurtPlayer(n, src) {
     spawnFxRing(player.pos.x, _gy + 0.06, player.pos.z, 0xbfe8ff, 0.26, 2.2);
     return;
   }
+  if (src && typeof src.kind === 'string' && typeof setTarget === 'function') setTarget(src);
   var df = gearDef();
   var mit = df > 0 ? Math.min(0.62, df / (df + 26)) : 0;
   var dmg = Math.max(1, Math.round(n * (1 - mit)));
@@ -23149,6 +23838,74 @@ function updateBuffHUD() {
   if (html !== BUFF_HTML) { BUFF_HTML = html; buffRowEl.innerHTML = html; }
 }
 
+/* =========================================================
+   🎯 v3.2 — 교전 중인 공룡 타겟 바 (상단 중앙)
+   내가 때렸거나, 나를 노리고 달려드는 개체를 추적해
+   이름 · Lv · 붉은 체력바 · 현재/최대 HP 를 보여 준다.
+   ========================================================= */
+var TGT = { d: null, t: 0, dead: 0, el: null };
+function setTarget(d) {
+  if (!d || d.tamed || d.mounted) return;
+  TGT.d = d; TGT.t = 6.0;
+  if (d.dead) TGT.dead = 0;
+}
+function targetBarAuto() {
+  var best = null, bd = 17 * 17;
+  for (var i = 0; i < dinos.length; i++) {
+    var o = dinos[i];
+    if (o.dead || o.tamed) continue;
+    if (!o.aggro && o.cstate !== 'chase' && o.cstate !== 'attack' && o.cstate !== 'windup' && o.cstate !== 'pounce' && o.cstate !== 'charge') continue;
+    var dx = o.x - player.pos.x, dz = o.z - player.pos.z, d2 = dx * dx + dz * dz;
+    if (d2 < bd) { bd = d2; best = o; }
+  }
+  return best;
+}
+function updateTargetBar(dt) {
+  var el = TGT.el || (TGT.el = $id('targetBar'));
+  if (!el) return;
+  var d = TGT.d;
+  if (TGT.t > 0) TGT.t -= dt;
+  if ((!d || d.dead) && TGT.t <= 0) {
+    var auto = targetBarAuto();
+    if (auto) { d = TGT.d = auto; TGT.t = Math.max(TGT.t, 0.35); }
+  }
+  var show = false;
+  if (d) {
+    var dist = Math.hypot(d.x - player.pos.x, d.z - player.pos.z);
+    if (d.dead) {
+      TGT.dead += dt;
+      show = TGT.dead < 1.1 && dist < 34;
+    } else {
+      show = (TGT.t > 0 || dist < 14) && dist < 34;
+    }
+  }
+  if (!show) {
+    if (el.classList.contains('on')) {
+      el.classList.remove('on');
+      if (document.body) document.body.classList.remove('targeting');
+      el.setAttribute('aria-hidden', 'true');
+    }
+    return;
+  }
+  var meta = DINO_META[d.kind] || {};
+  var nm = d.petName || meta.name || meta.label || '공룡';
+  if (TGT.name !== nm) { TGT.name = nm; $id('tbName').textContent = nm; }
+  var lv = dinoLevelOf(d);
+  if (TGT.lv !== lv) { TGT.lv = lv; $id('tbLv').textContent = 'Lv.' + lv; }
+  var mx = Math.max(1, Math.round(d.max || 1));
+  var hp = Math.max(0, Math.round(d.hp));
+  var pct = clamp(hp / mx * 100, 0, 100);
+  var fill = $id('tbFill');
+  if (fill) fill.style.width = pct.toFixed(1) + '%';
+  var num = $id('tbNum');
+  if (num) num.textContent = hp + ' / ' + mx;
+  if (!el.classList.contains('on')) {
+    el.classList.add('on');
+    if (document.body) document.body.classList.add('targeting');
+    el.setAttribute('aria-hidden', 'false');
+  }
+}
+
 function updateHUD(dt) {
   hudT += dt;
   if (hudT < 0.1) return;
@@ -23636,6 +24393,7 @@ function loop(now) {
   }
 
   if (started) updateHUD(dt);
+  if (started) updateTargetBar(dt);
   if (HEX.on) positionHexMenu();
   updateCamera(dt);
   updateOcclusion(dt);
@@ -24353,15 +25111,15 @@ function spawnJungleDinos() {
     }
     return made;
   }
-  var big = { hpMul: 1.8, pow: 1.5, lvl: 16 };
-  var huge = { hpMul: 2.2, pow: 1.75, lvl: 20 };
+  var big = { hpMul: 1.55, pow: 1.55, lvl: 16 };
+  var huge = { hpMul: 1.85, pow: 1.85, lvl: 20 };
   // 온순 초식 — 밈림의 초입
   packAt('trike', 'jungle', 3, 6, 26);
   packAt('stego', 'jungle', 3, 6, 34);
   put('para', 'jungle', 24, big);
   put('pachy', 'jungle', 26, big);
   put('anky', 'jungle', 30, big);
-  put('brachio', 'jungle', 36, { scale: 1.0, hpMul: 1.6, pow: 1.3, lvl: 15 });
+  put('brachio', 'jungle', 36, { scale: 1.0, hpMul: 1.4, pow: 1.35, lvl: 15 });
   // 사나운 무리
   packAt('raptor', 'jungle', 4, 6, 30);
   packAt('raptor', 'jungle', 4, 6, 52);
@@ -24419,8 +25177,8 @@ function spawnSnowDinos() {
     if (made) myPacks.push({ x: sp.x, z: sp.z, label: (DINO_META[kind] ? (DINO_META[kind].label || DINO_META[kind].name) : kind) + ' 무리', kind: kind, n: made });
     return made;
   }
-  var big = { hpMul: 2.4, pow: 1.85, lvl: 25 };
-  var huge = { hpMul: 2.9, pow: 2.05, lvl: 30 };
+  var big = { hpMul: 2.0, pow: 1.95, lvl: 25 };
+  var huge = { hpMul: 2.4, pow: 2.2, lvl: 30 };
   /* 초식 거대종 — 무리로 덩치를 뽐낸다 */
   packAt('mammoth', 'snow', 4, 7, 30, big);
   packAt('stego', 'snow', 3, 6, 34, big);
@@ -26979,6 +27737,35 @@ window.__game = {
     return { ok: false };
   },
   closeDexSheet: function () { closeSheet(); return { on: sheet.classList.contains('on') }; },
+  /* 🎯 v3.2 검수용 — 가장 가까운 야생 공룡을 한 대 때리고 타겟 바 상태를 읽는다 */
+  hitFoe: function (kind) {
+    var best = null, bd = 1e9;
+    for (var i = 0; i < dinos.length; i++) {
+      var o = dinos[i];
+      if (o.dead || o.tamed) continue;
+      if (kind && o.kind !== kind) continue;
+      var dd = Math.hypot(o.x - player.pos.x, o.z - player.pos.z);
+      if (dd < bd) { bd = dd; best = o; }
+    }
+    if (!best) return null;
+    player.atkCd = 0;
+    attackDino(best);
+    return { kind: best.kind, hp: Math.round(best.hp), max: best.max, dist: +bd.toFixed(1) };
+  },
+  targetInfo: function () {
+    var el = $id('targetBar'), d = TGT.d;
+    var r = el ? el.getBoundingClientRect() : null;
+    return {
+      on: el ? el.classList.contains('on') : null,
+      name: d ? (d.petName || (DINO_META[d.kind] || {}).name || '') : '',
+      lv: d ? dinoLevelOf(d) : 0,
+      hp: d ? Math.round(d.hp) : 0, max: d ? d.max : 0,
+      fill: $id('tbFill') ? $id('tbFill').style.width : null,
+      txt: $id('tbNum') ? $id('tbNum').textContent : '',
+      rect: r ? { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height) } : null,
+      bodyCls: document.body.className
+    };
+  },
   spawnFoe: function (kind, dist) {
     var a = player.facing, rr = dist || 3.2;
     var d = spawnDino(kind || 'raptor', player.pos.x + Math.sin(a) * rr, player.pos.z + Math.cos(a) * rr, {});
