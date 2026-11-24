@@ -29577,12 +29577,13 @@ function heroFaceDraw(cfg) {
     var bc = '#' + ('000000' + heroHexStr(cfg.blushC)).slice(-6);
     for (var b2 = -1; b2 <= 1; b2 += 2) {
       var bx = CX + b2 * (eyeDX + 26), by = EY + 86;
-      var bg = c.createRadialGradient(bx, by, 4, bx, by, 108);
+      var bg = c.createRadialGradient(bx, by, 4, bx, by, 150);
       bg.addColorStop(0, bc);
+      bg.addColorStop(0.55, bc);
       bg.addColorStop(1, 'rgba(0,0,0,0)');
-      c.globalAlpha = 0.16 + cfg.blush * 0.40;
+      c.globalAlpha = 0.06 + cfg.blush * 0.30;
       c.fillStyle = bg;
-      c.beginPath(); c.arc(bx, by, 108, 0, TAU); c.fill();
+      c.beginPath(); c.arc(bx, by, 150, 0, TAU); c.fill();
       c.globalAlpha = 1;
     }
   }
@@ -29626,14 +29627,14 @@ function heroFaceDraw(cfg) {
     c.fillStyle = pc;
     for (var pi = -1; pi <= 1; pi += 2) {
       c.beginPath();
-      c.moveTo(CX + pi * (eyeDX + 8), EY + 52);
-      c.lineTo(CX + pi * (eyeDX + 96), EY + 70);
-      c.lineTo(CX + pi * (eyeDX + 88), EY + 108);
-      c.lineTo(CX + pi * (eyeDX + 4), EY + 90);
+      c.moveTo(CX + pi * (eyeDX - 26), EY + 60);
+      c.lineTo(CX + pi * (eyeDX + 84), EY + 74);
+      c.lineTo(CX + pi * (eyeDX + 78), EY + 116);
+      c.lineTo(CX + pi * (eyeDX - 30), EY + 102);
       c.closePath();
       c.fill();
     }
-    c.fillRect(CX - 150, EY - 150, 300, 16);
+    c.fillRect(CX - 120, EY + 8, 240, 12);
     c.restore();
   }
   /* ── 수염 (남성) ── */
@@ -29677,14 +29678,14 @@ function heroHairGroup(cfg, R) {
   var style = cfg.style || 'short';
   /* 두상 덮개 */
   var cover = new THREE.Mesh(new THREE.SphereGeometry(R * 1.025, 22, 16, 0, TAU, 0, Math.PI * (style === 'buzz' ? 0.34 : 0.44)), mat);
-  cover.position.set(0, R * 0.10, -R * 0.02);
+  cover.position.set(0, R * (style === 'buzz' ? 0.12 : 0.20), -R * 0.02);
   cover.scale.set(1, 1.04, 1.02);
   g.add(cover);
   /* 뒤통수 덮개 — 뒷면 절반만 (얼굴은 절대 가리지 않는다) */
   var back = new THREE.Mesh(new THREE.SphereGeometry(R * 1.02, 20, 14, Math.PI * 0.92, Math.PI * 1.10, 0, Math.PI * 0.86), style === 'buzz' ? matD : mat);
   back.position.set(0, R * 0.02, -R * 0.01);
   g.add(back);
-  if (style === 'short' || style === 'bob' || style === 'pony' || style === 'bun' || style === 'long') {
+  if (false) {
     /* 앞머리 — 이마를 덮는 곡선 띠 */
     var fringe = new THREE.Mesh(new THREE.SphereGeometry(R * 1.03, 20, 10, Math.PI * 0.30, Math.PI * 0.40, Math.PI * 0.10, Math.PI * 0.20), mat);
     fringe.position.set(0, R * 0.02, R * 0.01);
@@ -29844,8 +29845,9 @@ function heroBuildHead(ctx, root, cfg) {
 
 /* ---------- 4. 게임 캐릭터 조립 ---------- */
 function heroBodyScale(cfg) {
-  var hy = 0.94 + cfg.h * 0.14;      // 키 0.94~1.08
-  var sxz = 0.90 + cfg.bd * 0.16 + (cfg.sh - 0.5) * 0.10;
+  /* v3.5 — 슬라이더 차이가 눈에 보이도록 범위를 넓혔다(키 ±14% · 덩치 ±15% · 어깨 ±11%) */
+  var hy = 0.86 + cfg.h * 0.28;                       // 0.86 ~ 1.14배
+  var sxz = 0.84 + cfg.bd * 0.32 + (cfg.sh - 0.5) * 0.22;
   return { x: sxz, y: hy, z: sxz };
 }
 function heroAttach(cfg) {
@@ -29934,7 +29936,8 @@ function heroMountGear(root) {
       var hg = hats[k];
       if (!hg) continue;
       if (hg.parent) hg.parent.remove(hg);
-      hg.position.set(0, HERO.headR * 1.02, 0);
+      /* v3.5 — 밀짚모자를 살짝 올려 눈·이마가 가려지지 않게 */
+      hg.position.set(0, HERO.headR * 1.02 + 0.058, 0);
       hg.rotation.set(0, 0, 0);
       hg.scale.multiplyScalar(1.0);
       HERO.headG.add(hg);
