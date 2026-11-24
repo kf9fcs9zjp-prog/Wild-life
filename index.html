@@ -2642,6 +2642,10 @@ body.targeting .toasts{top:calc(env(safe-area-inset-top) + 172px) !important}
 
 
 
+
+
+
+
 /* @@V39CSS@@ */
 /* ==========================================================================
    WILD LIFE v3.9 — HUD 다이어트 · 점프 버튼 · 사운드 패널 · 개발자 메뉴
@@ -40908,6 +40912,10 @@ window.__game.v38 = {
 
 
 
+
+
+
+
 /* @@V39JS@@ */
 /* ==========================================================================
    WILD LIFE v3.9 — ① 사운드 시스템 (섹션 13)
@@ -40967,6 +40975,7 @@ function sndApply() {
   SND.buses.env.gain.value = m * SND.vol.env;
   if (MASTER) MASTER.gain.value = 1;
   muted = SND.muted;
+  try { if (typeof S !== 'undefined' && S) S.muted = SND.muted; } catch (e) { }
   var b = $id('btnSound');
   if (b) b.classList.toggle('off', !!SND.muted);
   sndYtVolume();
@@ -41221,7 +41230,6 @@ function sndPlay(name, o) {
   var bus = o.bus || 'sfx';
   if (name === 'step') { sndStep(o.surface || 'grass', g, pan, !!o.heavy); return; }
   if (name === 'jump') {
-    sNoNoiseGuard();
     sNoise({ dur: 0.16, type: 'bandpass', f0: 900, f1: 420, q: 0.8, vol: 0.10 * g, atk: 0.006, bus: bus });
     sNoise({ dur: 0.10, type: 'highpass', f0: 2400, vol: 0.04 * g, delay: 0.02, bus: bus });
     return;
@@ -41293,9 +41301,6 @@ function sndPlay(name, o) {
     return;
   }
 }
-/* (내부 실수 방지용 — 이름 오타로 예외가 나도 게임이 멈추지 않게) */
-function sNoNoiseGuard() { }
-
 /* 이름으로 재생 + 위치가 있으면 3D 감쇠 */
 SND.play = function (name, o) {
   o = o || {};
@@ -42288,7 +42293,7 @@ function v39TopBuild() {
     if (now - V39_TOP.tapT > 3000) V39_TOP.taps = 0;
     V39_TOP.tapT = now;
     V39_TOP.taps++;
-    if (V39_TOP.taps >= 5) { V39_TOP.taps = 0; devPanel(true); }
+    if (V39_TOP.taps >= 5) { V39_TOP.taps = 0; DEV39.on = true; devPanel(true); }
   });
   V39_TOP.el = el;
   return el;
@@ -42468,7 +42473,7 @@ function devPanel(on) {
   if (!btn) return;
   var tmr = null;
   btn.addEventListener('pointerdown', function () {
-    tmr = setTimeout(function () { devPanel(true); }, 750);
+    tmr = setTimeout(function () { DEV39.on = true; devPanel(true); }, 750);
   });
   ['pointerup', 'pointerleave', 'pointercancel'].forEach(function (ev) {
     btn.addEventListener(ev, function () { if (tmr) { clearTimeout(tmr); tmr = null; } });
