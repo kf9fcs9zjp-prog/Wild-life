@@ -9334,6 +9334,8 @@ function spawnDino(kind, x, z, opt) {
     d.scale = sc2;
     d.parts.height *= sc2;
     d.parts.radius *= sc2;
+    if (d.parts.seatY !== undefined) d.parts.seatY *= sc2;
+    if (d.parts.backY !== undefined) d.parts.backY *= sc2;
   }
   built.group.position.set(x, terrainH(x, z), z);
   scene.add(built.group);
