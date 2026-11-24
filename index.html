@@ -2381,6 +2381,8 @@ body.targeting .toasts{top:calc(env(safe-area-inset-top) + 172px) !important}
 
 
 
+
+
 /* @@V38CSS@@ */
 /* ==========================================================================
    WILD LIFE v3.8 — 심플 유연 제작창(3분할·2열 카드) · 물가 행동 바
@@ -39132,6 +39134,8 @@ if (window.__game && window.__game.v37) {
 
 
 
+
+
 /* @@V38JS@@ */
 /* ==========================================================================
    WILD LIFE v3.8 — 재료 조합 동적 제작 엔진 (듀랑고식 유연 제작)
@@ -39230,21 +39234,22 @@ function v38AddAttrs(acc, at) {
     acc[k] = (acc[k] || 0) + at[k];
   }
 }
-function v38AttrText(k, lv) {
+function v38AttrText(k, lv, isTool) {
   var a = V38_ATTR[k];
   if (!a) return '';
   var bits = [];
   if (a.atk) bits.push('공격 ' + (a.atk > 0 ? '+' : '−') + Math.abs(+(a.atk * lv).toFixed(1)));
   if (a.def) bits.push('방어 ' + (a.def > 0 ? '+' : '−') + Math.abs(+(a.def * lv).toFixed(1)));
   if (a.spd) bits.push('이동 ' + (a.spd > 0 ? '+' : '−') + Math.abs(Math.round(a.spd * lv * 100)) + '%');
-  if (a.gatherSpd) bits.push('채집 속도 +' + Math.round(a.gatherSpd * lv * 100) + '%');
-  if (a.gather) bits.push('채집 +' + a.gather * lv);
+  /* 채집 효과는 채집 도구에만 실제로 붙는다 (검·갑옷에는 표시하지 않는다) */
+  if (isTool && a.gatherSpd) bits.push('채집 속도 +' + Math.round(a.gatherSpd * lv * 100) + '%');
+  if (isTool && a.gather) bits.push('채집 +' + a.gather * lv);
   if (a.warm) bits.push('방한 +' + a.warm * lv);
   return a.name + ' Lv.' + lv + ' · ' + bits.join(' · ');
 }
-function v38AttrList(at) {
+function v38AttrList(at, isTool) {
   var out = [];
-  for (var k in at) if (at[k]) out.push({ k: k, lv: at[k], text: v38AttrText(k, at[k]) });
+  for (var k in at) if (at[k]) out.push({ k: k, lv: at[k], text: v38AttrText(k, at[k], isTool) });
   return out;
 }
 
@@ -39730,7 +39735,7 @@ itemStatChips = function (outId) {
   var chips = _v38ItemStatChips(outId);
   var d = S.v38.dyn[outId];
   if (d && d.at) {
-    var list = v38AttrList(d.at);
+    var list = v38AttrList(d.at, !!d.g);
     for (var i = 0; i < list.length && i < 3; i++) chips.push('✦ ' + V38_ATTR[list[i].k].name + ' ' + list[i].lv);
   }
   return chips;
@@ -40084,10 +40089,10 @@ function v38RenderCraft() {
       if (r.kind === 'bow') chips.push('🏹 화살 ' + built.out.def.ar);
       if (r.gearSlot) chips.push('🛡 방어 +' + stt.def);
       if (stt.spd && (r.kind || r.gearSlot)) chips.push('🏃 이동 ' + (stt.spd > 0 ? '+' : '') + Math.round(stt.spd * 100) + '%');
-      if (stt.gather) chips.push('⚡ 채집 +' + stt.gather);
-      if (stt.gspd) chips.push('💨 채집 속도 +' + Math.round(stt.gspd * 100) + '%');
+      if (stt.gather && r.gatherKind) chips.push('⚡ 채집 +' + stt.gather);
+      if (stt.gspd && r.gatherKind) chips.push('💨 채집 속도 +' + Math.round(stt.gspd * 100) + '%');
       if (chips.length) html += '<div class="c38chips">' + chips.map(function (x) { return '<span>' + x + '</span>'; }).join('') + '</div>';
-      var alist = v38AttrList(stt.at);
+      var alist = v38AttrList(stt.at, !!r.gatherKind);
       if (alist.length) {
         html += '<div class="c38attrs">';
         for (var ai = 0; ai < alist.length; ai++) html += '<div class="c38attr">✦ ' + alist[ai].text + '</div>';
