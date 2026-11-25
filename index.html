@@ -2841,6 +2841,8 @@ body.targeting .toasts{top:calc(env(safe-area-inset-top) + 172px) !important}
 
 
 
+
+
 /* @@V391CSS@@ */
 /* ==========================================================================
    WILD LIFE v3.9.1 — 핫픽스 CSS
@@ -3064,7 +3066,7 @@ body.targeting .toasts{top:calc(env(safe-area-inset-top) + 172px) !important}
       </div>
       <div class="startSaveLine" id="startSaveLine"><span>저장 없음 · 새로 시작해요</span></div>
     </div>
-    <div class="startFoot" id="startFoot">WILD LIFE · v3.9.1 &nbsp;|&nbsp; 왼쪽 조이스틱으로 걷고 오른쪽 버튼으로 채집·공격 · 빨간 예고선은 구르기로 피하기</div>
+    <div class="startFoot" id="startFoot">WILD LIFE · v3.9.1 &nbsp;|&nbsp; 조이스틱으로 걷고 <b>오른쪽 큰 버튼은 공격</b> · 작은 버튼은 채집·상호작용 · 빨간 예고선은 구르기로 피하기</div>
   </div>
 
   <div class="slotPanel" id="slotPanel">
@@ -42644,7 +42646,7 @@ try { sndLoad(); } catch (e) { }
 (function () {
   var f = $id('startFoot');
   if (!f) return;
-  f.innerHTML = 'WILD LIFE · v3.9.1 &nbsp;|&nbsp; 조이스틱으로 걷고 오른쪽 버튼으로 채집·공격 · <b>점프</b>는 초록 버튼/Space · 빨간 예고선은 구르기로 피하기';
+  f.innerHTML = 'WILD LIFE · v3.9.1 &nbsp;|&nbsp; 조이스틱으로 걷고 <b>오른쪽 큰 버튼은 공격</b> · 작은 버튼은 채집·상호작용 · <b>점프</b>는 초록 버튼/Space';
 })();
 
 /* ── 8) 검수 API ─────────────────────────────────────────────── */
@@ -42747,6 +42749,8 @@ window.__game.v39 = {
 };
 
 /* @@/V39JS@@ */
+
+
 
 
 
