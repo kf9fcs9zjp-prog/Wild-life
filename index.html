@@ -2939,6 +2939,12 @@ body.targeting .toasts{top:calc(env(safe-area-inset-top) + 172px) !important}
 /* 펼친 목록 — 오른쪽 기둥이 화면을 덮지 않도록 조금 작게 */
 .qslot.tray .qbtn{width:35px;height:35px;font-size:16px}
 .qslot.tray.many .qbtn{width:31px;height:31px;font-size:14px}
+/* 어두운 HUD 테마에서 '든 무기' 칸의 아이콘이 보이게 (색·필터 보정) */
+.qbtn.on{ color:#F6E9CC }
+.qbtn.on span{ filter:grayscale(.25) brightness(1.45) contrast(.95); opacity:1 }
+.qbtn.qhold span{ font-size:1.05em }
+/* 빈손 — 아이콘은 있지만 밋밋하지 않게 색을 살짝 준다 */
+.qbtn.qhold.empty{ border-color:rgba(224,177,90,.5) }
 @media (max-height:700px){
   .qslot.mini .qbtn{width:43px;height:43px;font-size:19px}
 }
