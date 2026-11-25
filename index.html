@@ -3100,7 +3100,7 @@ body.targeting .toasts{top:calc(env(safe-area-inset-top) + 172px) !important}
       </div>
       <div class="startSaveLine" id="startSaveLine"><span>저장 없음 · 새로 시작해요</span></div>
     </div>
-    <div class="startFoot" id="startFoot">WILD LIFE · v3.9.3 &nbsp;|&nbsp; 조이스틱으로 걷고 <b>오른쪽 큰 버튼은 공격</b> · 작은 버튼은 채집·상호작용 · 빨간 예고선은 구르기로 피하기</div>
+    <div class="startFoot" id="startFoot">WILD LIFE · v3.9.4 &nbsp;|&nbsp; 조이스틱으로 걷고 <b>오른쪽 큰 버튼은 공격</b> · 작은 버튼은 채집·상호작용 · 빨간 예고선은 구르기로 피하기</div>
   </div>
 
   <div class="slotPanel" id="slotPanel">
@@ -21424,7 +21424,9 @@ function gatherYield(n) {
   var wkNow = weaponKind();
   startSwing(wkNow === 'bow' ? 'axe' : wkNow, 0.35);
   if (n.kind !== 'nest') sfx('pick');
-  if (n.kind !== 'nest') toast(got.join(' · '), 'good');
+  /* 🪓 v3.9.4 — 획득은 화면 하단 미니 팝업("나뭇가지 +1")이 알린다.
+     위쪽 토스트는 빈 둥지·익룡 알 같은 특별한 소식에만 남긴다(중복 표시 방지). */
+  if (n.kind !== 'nest' && !(typeof V394 !== 'undefined' && V394.popOn)) toast(got.join(' · '), 'good');
   if (b > 1) {
     var tw = equippedWeapon();
     hint('🔨 ' + ITEMS[tw].icon + ' ' + ITEMS[tw].name + ' 보너스 — 채집 +1개 · 두 배로 빨라요', 1900);
@@ -42854,7 +42856,7 @@ try { sndLoad(); } catch (e) { }
 (function () {
   var f = $id('startFoot');
   if (!f) return;
-  f.innerHTML = 'WILD LIFE · v3.9.3 &nbsp;|&nbsp; 조이스틱으로 걷고 <b>오른쪽 큰 버튼은 공격</b> · 작은 버튼은 채집·상호작용 · <b>점프</b>는 초록 버튼/Space';
+  f.innerHTML = 'WILD LIFE · v3.9.4 &nbsp;|&nbsp; 조이스틱으로 걷고 <b>오른쪽 큰 버튼은 공격</b> · 작은 버튼은 채집·상호작용 · <b>점프</b>는 초록 버튼/Space';
 })();
 
 /* ── 8) 검수 API ─────────────────────────────────────────────── */
@@ -44870,6 +44872,618 @@ window.__game.v393 = {
 };
 
 /* @@/V392JS@@ */
+
+/* @@V394JS@@ */
+/* ==========================================================================
+   🪓 WILD LIFE v3.9.4 — 첫 3분 루프 + 채집 손맛 (Patch A + Patch B)
+   --------------------------------------------------------------------------
+   A. 첫 도구 루프 : 스폰 10m 안 돌 3·마른 가지 3 보장 / 돌도끼 강조 + 2초 제작
+                    상단 한 줄 목표 안내(1회·세이브) / 자동 장착·자동 도구 전환
+   B. 채집 손맛    : 약한 카메라 흔들림 · 대상 흔들림 · 먼지 파티클(0.3초)
+                    재질별 효과음(기존 hitwood/hitrock/pick) · 획득 미니 팝업
+                    재료 흡수 연출 · navigator.vibrate(15)
+   ========================================================================== */
+
+var V394 = {
+  goal: 0,            /* 0 돌·가지 줍기 · 1 돌도끼 · 2 나무 베기 · 3 모닥불 · 4 완료 */
+  woodCut: 0,         /* 2→3 단계 판정: 이번 판에서 나무를 벴는지 */
+  popOn: false,       /* gatherYield 안에서만 획득 팝업을 띄운다 */
+  popHost: null,
+  popRows: {},
+  dust: [],
+  absorb: [],
+  pulse: false,
+  goalEl: null,
+  core: null,
+  starterInfo: null
+};
+
+/* ── 0) 스타일 (HUD 안에만 얇게 — 새 버튼 없음) ───────────────────────── */
+(function v394Style() {
+  if (document.getElementById('v394css')) return;
+  var s = document.createElement('style');
+  s.id = 'v394css';
+  s.textContent = [
+    /* 상단 한 줄 목표 — 기존 HUD(체력·허기·수분 바) 바로 아래 왼쪽 */
+    '#goalLine{position:absolute;left:9px;top:calc(env(safe-area-inset-top) + 62px);',
+    'max-width:min(66vw,320px);font-size:11px;font-weight:900;letter-spacing:-.01em;line-height:1.3;',
+    'color:#fffaea;text-shadow:0 1px 2px rgba(0,0,0,.9),0 0 8px rgba(0,0,0,.62),0 0 16px rgba(0,0,0,.35);',
+    'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:0;transform:translateY(-3px);',
+    'transition:opacity .3s ease,transform .3s ease;pointer-events:none;z-index:3}',
+    '#goalLine.on{opacity:.96;transform:none}',
+    '#goalLine::before{content:"🎯 ";font-size:10px;opacity:.9}',
+    '#goalLine.bump{animation:v394Bump .55s ease}',
+    '@keyframes v394Bump{0%{transform:scale(1)}28%{transform:scale(1.05)}100%{transform:scale(1)}}',
+    /* 획득 미니 팝업 — 화면 하단 중앙 위쪽 */
+    '#pickPop{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom) + 268px);',
+    'transform:translateX(-50%);display:flex;flex-direction:column-reverse;align-items:center;gap:2px;',
+    'pointer-events:none;z-index:4}',
+    '.pickRow{display:flex;align-items:center;gap:4px;padding:2px 8px;border-radius:8px;',
+    'background:rgba(12,16,14,.5);border:1px solid rgba(255,242,206,.14);color:#fbf3df;',
+    'font-size:10.5px;font-weight:800;letter-spacing:-.01em;white-space:nowrap;',
+    'backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);animation:v394Pick .8s ease forwards}',
+    '.pickRow i{font-style:normal;font-size:10.5px;opacity:.95}',
+    '.pickRow b{font-weight:800;color:#f3e8d0}',
+    '.pickRow .n{font-weight:900;color:#ffd98d;font-variant-numeric:tabular-nums}',
+    '@keyframes v394Pick{0%{opacity:0;transform:translateY(5px)}14%{opacity:1;transform:none}',
+    '64%{opacity:1}100%{opacity:0;transform:translateY(-7px)}}',
+    /* 돌도끼를 만들 수 있을 때만 은은한 노란 테두리 깜빡임 */
+    '#btnCraft.v394pulse{animation:v394CraftGlow 1.5s ease-in-out infinite}',
+    '@keyframes v394CraftGlow{0%,100%{box-shadow:0 0 0 1px rgba(234,179,8,.32),0 0 6px rgba(234,179,8,.16)}',
+    '50%{box-shadow:0 0 0 1px rgba(234,179,8,.95),0 0 13px rgba(234,179,8,.5)}}',
+    '.rec.v394pulse{border-color:rgba(234,179,8,.7);animation:v394RecGlow 1.5s ease-in-out infinite}',
+    '.rec.v394pulse button{box-shadow:0 0 0 1px rgba(234,179,8,.7),0 0 10px rgba(234,179,8,.3)}',
+    /* v3.7 3분할 제작창 — 돌도끼 줄과 「제작」 버튼에만 은은하게 */
+    '.c37row.v394pulse{border-color:rgba(234,179,8,.72);animation:v394RecGlow 1.5s ease-in-out infinite}',
+    '.c37btn.v394pulse{box-shadow:0 0 0 1px rgba(234,179,8,.8),0 0 12px rgba(234,179,8,.45);animation:v394CraftGlow 1.5s ease-in-out infinite}',
+    /* v3.8 카드형 제작창 */
+    '.c38card.v394pulse{border-color:rgba(234,179,8,.72);animation:v394RecGlow 1.5s ease-in-out infinite}',
+    '.c38card.v394pulse .tx b{color:#fff3c9}',
+    '.c38btn.v394pulse{box-shadow:0 0 0 1px rgba(234,179,8,.8),0 0 12px rgba(234,179,8,.45);animation:v394CraftGlow 1.5s ease-in-out infinite}',
+    '@keyframes v394RecGlow{0%,100%{box-shadow:none}50%{box-shadow:0 0 0 1px rgba(234,179,8,.45),0 0 10px rgba(234,179,8,.22)}}',
+    '@media (max-height:700px){#goalLine{top:calc(env(safe-area-inset-top) + 66px)}',
+    '#pickPop{bottom:calc(env(safe-area-inset-bottom) + 226px)}}'
+  ].join('');
+  document.head.appendChild(s);
+})();
+
+/* ── 1) HUD 요소 준비 (텍스트 한 줄 + 팝업 자리만) ─────────────────────── */
+(function v394Mount() {
+  var hud = document.getElementById('hud');
+  if (!hud) return;
+  if (!V394.goalEl) {
+    var g = document.createElement('div');
+    g.id = 'goalLine';
+    g.setAttribute('aria-live', 'polite');
+    hud.appendChild(g);
+    V394.goalEl = g;
+  }
+  if (!V394.popHost) {
+    var p = document.createElement('div');
+    p.id = 'pickPop';
+    p.setAttribute('aria-live', 'polite');
+    hud.appendChild(p);
+    V394.popHost = p;
+  }
+  setTimeout(function () { try { v394LayoutGoal(); } catch (e) { } }, 60);
+})();
+
+/* ── 2) 목표 안내 ─────────────────────────────────────────────────────── */
+var V394_STEPS = ['돌 3개, 나뭇가지 3개 줍기', '돌도끼 만들기', '나무 베기', '모닥불 피우기'];
+
+function v394CampfireLit() {
+  for (var i = 0; i < structures.length; i++) {
+    var s = structures[i];
+    if (s && s.type === 'campfire' && s.lit !== false) return true;
+  }
+  return false;
+}
+function v394SaveGoal() {
+  S.g394 = { goal: V394.goal | 0 };
+  try { if (started) saveState(); } catch (e) { }
+}
+function v394PaintGoal(bump) {
+  var el = V394.goalEl;
+  if (!el) return;
+  if (V394.goal >= 4) {
+    el.classList.remove('on', 'bump');
+    el.textContent = '';
+    return;
+  }
+  var txt = V394_STEPS[V394.goal] || '';
+  if (el.textContent !== txt) el.textContent = txt;
+  if (started && ISLE.cur === 'home') el.classList.add('on');
+  else el.classList.remove('on');
+  if (bump) {
+    el.classList.remove('bump');
+    void el.offsetWidth;
+    el.classList.add('bump');
+  }
+}
+/* 상태 바(체력·허기·수분) 바로 밑에 붙인다 — 화면 크기가 바뀌어도 겹치지 않게 실측 */
+function v394LayoutGoal() {
+  var el = V394.goalEl;
+  var vt = document.querySelector('#hud .vitals');
+  if (!el || !vt) return;
+  var b = vt.getBoundingClientRect();
+  if (b.bottom > 4) el.style.top = Math.round(b.bottom + 5) + 'px';
+}
+window.addEventListener('resize', function () { v394LayoutGoal(); });
+window.addEventListener('orientationchange', function () { setTimeout(v394LayoutGoal, 250); });
+
+function v394GoalCheck() {
+  if (!started) return V394.goal;
+  var g = V394.goal | 0, moved = 0;
+  while (g < 4) {
+    var ok = false;
+    if (g === 0) ok = ((S.inv.stone | 0) >= 3 && (S.inv.stick | 0) >= 3);
+    else if (g === 1) ok = ((S.inv.axe | 0) > 0);
+    else if (g === 2) ok = !!V394.woodCut;
+    else if (g === 3) ok = v394CampfireLit();
+    if (!ok) break;
+    g++; moved++;
+  }
+  if (g !== V394.goal) {
+    V394.goal = g;
+    v394SaveGoal();
+  }
+  v394PaintGoal(moved > 0);
+  if (moved > 0 && V394.goal >= 4) v394ToastOnce('v394:done', '🎯 첫 도구 루프 완료 — 이제 마음껏 섬을 둘러봐요', 'good');
+  return V394.goal;
+}
+var V394_ONCE = {};
+function v394ToastOnce(key, msg, kind) {
+  if (V394_ONCE[key]) return;
+  V394_ONCE[key] = 1;
+  try { toast(msg, kind); } catch (e) { }
+}
+
+/* ── 3) 돌도끼: 2초 제작 + 제작 버튼 은은한 노란 테두리 ────────────────── */
+var _v394CraftTimeSec = craftTimeSec;
+craftTimeSec = function (r) {
+  if (r && r.id === 'axe') return 2;
+  return _v394CraftTimeSec(r);
+};
+function v394AxeRecipe() { return findRecipe('axe'); }
+function v394AxeCanCraft() {
+  var r = v394AxeRecipe();
+  if (!r) return false;
+  if ((S.inv.axe | 0) > 0) return false;
+  if (V394.goal >= 2) return false;
+  return canCraft(r) && stationOk(r) && lvOk(r);
+}
+var _v394RecipeRow = recipeRow;
+recipeRow = function (r) {
+  var el = _v394RecipeRow(r);
+  try {
+    if (r && r.id === 'axe' && v394AxeCanCraft()) el.classList.add('v394pulse');
+  } catch (e) { }
+  return el;
+};
+function v394PulseTick() {
+  var want = v394AxeCanCraft();
+  if (want === V394.pulse) return;
+  V394.pulse = want;
+  var b = document.getElementById('btnCraft');
+  if (b) b.classList.toggle('v394pulse', want);
+}
+
+/* ── 4) 스폰 주변 돌 3 · 마른 가지 3 보장 ─────────────────────────────── */
+function v394StarterInfo() {
+  var out = { isle: ISLE.cur, spawn: [SPAWN[0], SPAWN[1]], rock: 0, stickNodes: 0, minRock: null, minStick: null };
+  if (ISLE.cur !== 'home') return out;
+  for (var i = 0; i < nodes.length; i++) {
+    var n = nodes[i];
+    if (n.kind !== 'rock' && n.kind !== 'dryBush') continue;
+    var d = Math.hypot(n.x - SPAWN[0], n.z - SPAWN[1]);
+    if (n.kind === 'rock') {
+      out.rock++;
+      if (d <= 10.5 && (out.minRock === null || d < out.minRock)) out.minRock = +d.toFixed(1);
+    } else {
+      out.stickNodes++;
+      if (d <= 10.5 && (out.minStick === null || d < out.minStick)) out.minStick = +d.toFixed(1);
+    }
+  }
+  return out;
+}
+function v394PlaceStarter(kind, want, cx, cz) {
+  var added = [];
+  if (want <= 0) return added;
+  var radii = [7.6, 8.3, 9.0, 9.7];
+  for (var r = 0; r < radii.length && added.length < want; r++) {
+    for (var a = 0; a < 24 && added.length < want; a++) {
+      var ang = (a / 24) * Math.PI * 2 + (kind === 'rock' ? 0.13 : 0.61) + r * 0.07;
+      var x = cx + Math.cos(ang) * radii[r], z = cz + Math.sin(ang) * radii[r];
+      if (terrainH(x, z) < 0.6) continue;
+      if (typeof nearRiver === 'function' && nearRiver(x, z, 2.0)) continue;
+      if (typeof spotFree === 'function' && !spotFree(x, z, 2.0)) continue;
+      var g = (kind === 'rock') ? makeRock(0.9 + Math.random() * 0.3) : makeDryBush(1.0 + Math.random() * 0.2);
+      registerNode(kind, g, x, z, kind === 'rock' ? 3 : 2);
+      added.push({ kind: kind, x: +x.toFixed(1), z: +z.toFixed(1), d: +Math.hypot(x - cx, z - cz).toFixed(1) });
+    }
+  }
+  return added;
+}
+function v394EnsureStarters() {
+  if (ISLE.cur !== 'home' || !nodes.length) return null;
+  var cx = SPAWN[0], cz = SPAWN[1];
+  var have = { rock: 0, dryBush: 0 }, i;
+  for (i = 0; i < nodes.length; i++) {
+    var n = nodes[i];
+    if (n.kind !== 'rock' && n.kind !== 'dryBush') continue;
+    if (Math.hypot(n.x - cx, n.z - cz) <= 10.5) have[n.kind]++;
+  }
+  var added = v394PlaceStarter('rock', 3 - have.rock, cx, cz)
+    .concat(v394PlaceStarter('dryBush', 3 - have.dryBush, cx, cz));
+  V394.starterInfo = { had: have, added: added, at: Date.now() };
+  return V394.starterInfo;
+}
+
+/* ── 5) 채집 손맛 ─────────────────────────────────────────────────────── */
+/* 아주 약한 카메라 흔들림 — 0.10초, 큰 흔들림(포효·돌진)이 오면 양보한다 */
+function v394ShakeHit(k) {
+  if (!(k > 0)) return;
+  if (CAM_SHAKE.t > 0.06 && CAM_SHAKE.max > 0.15) return;
+  CAM_SHAKE.t = 0.105;
+  CAM_SHAKE.max = 0.105;
+  CAM_SHAKE.amp = Math.max(CAM_SHAKE.amp * 0.35, 0.028 * k);
+}
+/* 타격 지점 먼지 — 5~8개, 0.30초 안에 사라진다 (과장 없이 흙·부스러기만) */
+var V394_DUST_GEO = null;
+function v394DustGeo() {
+  if (!V394_DUST_GEO) V394_DUST_GEO = new THREE.BoxGeometry(0.10, 0.10, 0.10);
+  return V394_DUST_GEO;
+}
+function v394Dust(x, y, z, color, n, power) {
+  var geo = v394DustGeo(), mat = fxMat(color);
+  for (var i = 0; i < n; i++) {
+    var m = new THREE.Mesh(geo, mat);
+    var a = Math.random() * TAU, sp = rnd(0.5, 1.5) * (power || 1);
+    m.position.set(x + rnd(-0.22, 0.22), y + rnd(-0.16, 0.20), z + rnd(-0.22, 0.22));
+    m.rotation.set(rnd(0, TAU), rnd(0, TAU), rnd(0, TAU));
+    var s0 = rnd(0.7, 1.25);
+    m.scale.setScalar(s0);
+    scene.add(m);
+    V394.dust.push({
+      mesh: m, t: 0, max: rnd(0.22, 0.30), s0: s0,
+      vx: Math.cos(a) * sp, vy: rnd(0.5, 1.5) * (power || 1), vz: Math.sin(a) * sp,
+      spin: rnd(-6, 6)
+    });
+  }
+}
+/* 재료가 살짝 튀어나왔다가 플레이어 쪽으로 빨려 들어온다 (0.30초) */
+function v394Absorb(n, k) {
+  if (!n) return;
+  var wood = (n.kind === 'tree' || n.kind === 'pine' || n.kind === 'bamboo' || n.kind === 'dryBush');
+  var stone = (n.kind === 'rock' || n.kind === 'ore' || n.kind === 'ice' || n.kind === 'metalVein' || n.kind === 'frostVein');
+  var y = terrainH(n.x, n.z);
+  var hh = (wood && n.kind !== 'dryBush') ? 1.35 : 0.6;
+  var col = stone ? 0xb9bdb4 : (wood ? 0xb08a5c : 0xa7c184);
+  var cnt = k || 3;
+  for (var i = 0; i < cnt; i++) {
+    var m = new THREE.Mesh(FXGEO.box, fxMat(col));
+    m.position.set(n.x + rnd(-0.22, 0.22), y + hh * 0.85 + rnd(-0.12, 0.18), n.z + rnd(-0.22, 0.22));
+    m.scale.setScalar(0.62);
+    scene.add(m);
+    V394.absorb.push({
+      mesh: m, t: -i * 0.045, max: 0.30, s0: 0.62,
+      sx: m.position.x, sy: m.position.y, sz: m.position.z
+    });
+  }
+}
+function v394FxUpdate(dt) {
+  var i, f;
+  for (i = V394.dust.length - 1; i >= 0; i--) {
+    f = V394.dust[i];
+    f.t += dt;
+    var k = f.t / f.max;
+    if (k >= 1) { scene.remove(f.mesh); V394.dust.splice(i, 1); continue; }
+    f.mesh.position.x += f.vx * dt;
+    f.mesh.position.y += f.vy * dt;
+    f.mesh.position.z += f.vz * dt;
+    f.vy -= 5.5 * dt;
+    f.mesh.rotation.x += f.spin * dt;
+    f.mesh.rotation.z += f.spin * 0.6 * dt;
+    f.mesh.scale.setScalar(Math.max(0.02, f.s0 * (1 - k * 0.85)));
+  }
+  for (i = V394.absorb.length - 1; i >= 0; i--) {
+    f = V394.absorb[i];
+    f.t += dt;
+    var k2 = Math.max(0, f.t / f.max);
+    if (k2 >= 1) { scene.remove(f.mesh); V394.absorb.splice(i, 1); continue; }
+    var e = k2 * k2 * (3 - 2 * k2);
+    var tx = player.pos.x, ty = groundY(player.pos.x, player.pos.z) + 1.05, tz = player.pos.z;
+    f.mesh.position.set(
+      f.sx + (tx - f.sx) * e,
+      f.sy + (ty - f.sy) * e + Math.sin(k2 * Math.PI) * 0.32,
+      f.sz + (tz - f.sz) * e
+    );
+    f.mesh.scale.setScalar(Math.max(0.03, f.s0 * (1 - 0.5 * k2)));
+  }
+}
+var _v394UpdateFx = updateFx;
+updateFx = function (dt) {
+  v394FxUpdate(dt);
+  _v394UpdateFx(dt);
+};
+
+/* 획득 미니 팝업 — 같은 물건은 합산("나뭇가지 +2"), 0.8초 뒤 사라진다 */
+function v394PickPop(k, n) {
+  var host = V394.popHost;
+  if (!host || !(n > 0)) return;
+  var it = ITEMS[k] || null;
+  var nm = it ? it.name : k;
+  var ic = it ? (it.icon || '·') : '·';
+  var row = V394.popRows[k];
+  if (row) {
+    clearTimeout(row.timer);
+    row.n += n;
+    row.el.querySelector('.n').textContent = '+' + row.n;
+    row.el.style.animation = 'none';
+    void row.el.offsetWidth;
+    row.el.style.animation = '';
+    row.timer = setTimeout(function () { v394PickDrop(k); }, 840);
+    return;
+  }
+  var el = document.createElement('div');
+  el.className = 'pickRow';
+  el.innerHTML = '<i>' + ic + '</i><b>' + nm + '</b><span class="n">+' + n + '</span>';
+  host.appendChild(el);
+  var rec = V394.popRows[k] = { el: el, n: n, timer: 0 };
+  rec.timer = setTimeout(function () { v394PickDrop(k); }, 840);
+  while (host.children.length > 4) host.removeChild(host.firstChild);
+}
+function v394PickDrop(k) {
+  var rec = V394.popRows[k];
+  if (!rec) return;
+  if (V394.hold) { rec.timer = setTimeout(function () { v394PickDrop(k); }, 200); return; }
+  if (rec.el.parentNode) rec.el.parentNode.removeChild(rec.el);
+  delete V394.popRows[k];
+}
+
+/* ── 6) 기존 함수에 채집 손맛을 덧댄다 ────────────────────────────────── */
+var _v394AddItem = addItem;
+addItem = function (k, n) {
+  var got = _v394AddItem(k, n);
+  if (got > 0 && V394.popOn) v394PickPop(k, got);
+  return got;
+};
+
+/* 자동 도구 전환 — 채집 대상에 맞는 도구를 들고 있으면 바꿔 든다 */
+var V394_TOOL_IDS = { axe: ['axe'], pick: ['stonePick'], sickle: ['stoneSickle'] };
+function v394ToolIdFor(kind) {
+  var list = V394_TOOL_IDS[kind];
+  if (!list) return '';
+  for (var i = 0; i < list.length; i++) {
+    if ((S.inv[list[i]] | 0) > 0 && WEAPONS[list[i]]) return list[i];
+  }
+  return '';
+}
+var _v394StartGather = startGather;
+startGather = function (n) {
+  try {
+    if (n && !n.dead && started) {
+      var need = gatherToolFor(n.kind);
+      var want = need ? v394ToolIdFor(need) : '';
+      if (want && equippedWeapon() !== want) {
+        S.equip.weapon = want;
+        refreshTool();
+        chipsDirty = true;
+        v394ToastOnce('v394:auto:' + want, WEAPONS[want].icon + ' ' + WEAPONS[want].name + '로 바꿔 들었어요', undefined);
+      }
+    }
+  } catch (e) { }
+  return _v394StartGather(n);
+};
+
+var _v394GatherTap = gatherTap;
+gatherTap = function (n, last) {
+  var r = _v394GatherTap(n, last);
+  try {
+    if (n) {
+      var wood = (n.kind === 'tree' || n.kind === 'pine' || n.kind === 'bamboo' || n.kind === 'dryBush');
+      var stone = (n.kind === 'rock' || n.kind === 'ore' || n.kind === 'ice' || n.kind === 'metalVein' || n.kind === 'frostVein');
+      var y = terrainH(n.x, n.z);
+      var hh = (wood && n.kind !== 'dryBush') ? 1.35 : 0.6;
+      var col = stone ? 0xdfe2d9 : (wood ? 0xd8c8a8 : 0xcfdcb4);
+      /* 맞은 면(플레이어 쪽)에서 톡 터지게 — 나무 몸통 안에 묻히지 않도록 앞으로 당긴다 */
+      var ddx = player.pos.x - n.x, ddz = player.pos.z - n.z;
+      var dl = Math.hypot(ddx, ddz) || 1;
+      var out = (wood && n.kind !== 'dryBush') ? 0.55 : 0.38;
+      var px = n.x + ddx / dl * out, pz = n.z + ddz / dl * out;
+      v394Dust(px, y + hh * 0.82, pz, col, last ? 8 : 5, last ? 1 : 0.7);
+      v394ShakeHit(last ? 1 : 0.7);
+      if (navigator && typeof navigator.vibrate === 'function') navigator.vibrate(15);
+    }
+  } catch (e) { }
+  return r;
+};
+
+var _v394GatherYield = gatherYield;
+gatherYield = function (n) {
+  V394.popOn = true;
+  var r;
+  try { r = _v394GatherYield(n); }
+  finally { V394.popOn = false; }
+  try {
+    if (n) {
+      if (n.kind === 'tree' || n.kind === 'pine' || n.kind === 'bamboo') V394.woodCut = 1;
+      v394Absorb(n, 3);
+      v394GoalCheck();
+    }
+  } catch (e) { }
+  return r;
+};
+
+/* ── 6-b) v3.7 3분할 제작창에도 같은 강조 ────────────────────────────── */
+var _v394RenderCraft = v37RenderCraft;
+v37RenderCraft = function () {
+  _v394RenderCraft();
+  try {
+    if (!v394AxeCanCraft()) return;
+    var rows = document.querySelectorAll('#sheetBody .c37row');
+    for (var i = 0; i < rows.length; i++) {
+      var nm = rows[i].querySelector('.nm');
+      if (nm && nm.textContent === '돌도끼') { rows[i].classList.add('v394pulse'); break; }
+    }
+    var sel = (V37_UI && V37_UI.sel) ? findRecipe(V37_UI.sel) : null;
+    var btn = document.querySelector('#sheetBody .c37btn');
+    if (btn && sel && sel.id === 'axe' && !btn.classList.contains('off')) btn.classList.add('v394pulse');
+  } catch (e) { }
+};
+/* v3.8 카드형 제작창(지금 쓰는 화면)에도 같은 강조 */
+var _v394RenderCraft38 = v38RenderCraft;
+v38RenderCraft = function () {
+  _v394RenderCraft38.apply(this, arguments);
+  try {
+    if (!v394AxeCanCraft()) return;
+    var card = document.querySelector('.c38card[data-id="axe"]');
+    if (card) card.classList.add('v394pulse');
+    var btn = document.querySelector('#sheetBody .c38btn');
+    if (btn && typeof V38_UI !== 'undefined' && V38_UI.sel === 'axe' && !btn.classList.contains('off')) btn.classList.add('v394pulse');
+  } catch (e) { }
+};
+
+/* ── 7) 세이브 / 시작 · 섬 이동 훅 ────────────────────────────────────── */
+var _v394Pack = packState;
+packState = function () {
+  var o = _v394Pack();
+  o.g394 = { goal: V394.goal | 0 };
+  return o;
+};
+var _v394Apply = applyData;
+applyData = function (d) {
+  _v394Apply(d);
+  var g = (d && d.g394 && typeof d.g394.goal === 'number') ? d.g394.goal : 4;
+  V394.goal = Math.max(0, Math.min(4, g | 0));
+  V394.woodCut = 0;
+  try { v394PaintGoal(false); } catch (e) { }
+};
+var _v394Begin = beginSession;
+beginSession = function (slot, isNew, nick) {
+  if (isNew) { V394.goal = 0; V394.woodCut = 0; }
+  var r = _v394Begin(slot, isNew, nick);
+  try {
+    v394EnsureStarters();
+    v394LayoutGoal();
+    v394GoalCheck();
+    v394PulseTick();
+  } catch (e) { }
+  return r;
+};
+var _v394ApplyIsland = applyIsland;
+applyIsland = function (k) {
+  var r = _v394ApplyIsland(k);
+  try {
+    if (started && k === 'home') { v394EnsureStarters(); v394GoalCheck(); }
+  } catch (e) { }
+  return r;
+};
+/* 모닥불은 놓는 순간 바로 "피운" 것이므로 목표 판정도 그 자리에서 */
+var _v394PlaceStructure = placeStructure;
+placeStructure = function (type, x, z, rot, lv) {
+  var st = _v394PlaceStructure(type, x, z, rot, lv);
+  try { if (type === 'campfire') setTimeout(function () { try { v394GoalCheck(); } catch (e) { } }, 0); } catch (e) { }
+  return st;
+};
+var _v394Relight = relightFire;
+relightFire = function (st) {
+  var r = _v394Relight(st);
+  try { setTimeout(function () { try { v394GoalCheck(); } catch (e) { } }, 0); } catch (e) { }
+  return r;
+};
+setInterval(function () {
+  if (!started) return;
+  try { v394GoalCheck(); } catch (e) { }
+  try { v394PulseTick(); } catch (e) { }
+}, 300);
+
+/* ── 8) 검수용 API ───────────────────────────────────────────────────── */
+window.__game = window.__game || {};
+window.__game.v394 = {
+  goal: function () {
+    var el = V394.goalEl;
+    return {
+      step: V394.goal | 0, text: el ? el.textContent : '', on: el ? el.classList.contains('on') : false,
+      woodCut: !!V394.woodCut, savedGoal: (S.g394 && S.g394.goal) | 0
+    };
+  },
+  setGoal: function (v) { V394.goal = Math.max(0, Math.min(4, v | 0)); v394SaveGoal(); v394PaintGoal(false); return V394.goal; },
+  starters: function () { return V394.starterInfo || v394StarterInfo(); },
+  starterInfo: v394StarterInfo,
+  axe: function () {
+    var r = v394AxeRecipe();
+    var b = document.getElementById('btnCraft');
+    return {
+      can: r ? canCraft(r) : false, sec: r ? craftTimeSec(r) : 0, own: S.inv.axe | 0,
+      pulse: !!(b && b.classList.contains('v394pulse')), step: V394.goal | 0
+    };
+  },
+  craftAxe: function () { craft('axe'); return { hand: (S.hand || []).length, inv: S.inv.axe | 0 }; },
+  fx: function () {
+    return {
+      dust: V394.dust.length, absorb: V394.absorb.length,
+      camShakeT: +CAM_SHAKE.t.toFixed(3), camShakeAmp: +CAM_SHAKE.amp.toFixed(4)
+    };
+  },
+  tap: function (i, last) {
+    var n = nodes[i];
+    if (!n) return null;
+    gatherTap(n, !!last);
+    return { kind: n.kind, dust: V394.dust.length, shakeT: +CAM_SHAKE.t.toFixed(3), nodeShake: +(n.shake || 0).toFixed(3), rotZ: +(n.group.rotation.z || 0).toFixed(4) };
+  },
+  dustProbe: function () {
+    var out = [];
+    for (var i = 0; i < V394.dust.length; i++) {
+      var m = V394.dust[i].mesh;
+      var v = new THREE.Vector3();
+      m.getWorldPosition(v);
+      var p = v.clone().project(camera);
+      out.push({
+        wp: [+v.x.toFixed(2), +v.y.toFixed(2), +v.z.toFixed(2)],
+        sc: [Math.round((p.x * 0.5 + 0.5) * window.innerWidth), Math.round((-p.y * 0.5 + 0.5) * window.innerHeight)],
+        s: +m.scale.x.toFixed(2), vis: m.visible, par: m.parent ? m.parent.type : null, z: +p.z.toFixed(3)
+      });
+    }
+    return out;
+  },
+  pops: function () {
+    var host = V394.popHost;
+    return host ? Array.prototype.map.call(host.children, function (e) { return e.textContent; }) : [];
+  },
+  give: function (k, n) { addItem(k, n); return S.inv[k] | 0; },
+  weapon: function () { return { equip: S.equip.weapon, kind: weaponKind() }; },
+  /* 검수용 — 효과(먼지·팝업)를 멈춰 놓고 화면을 찍는다 */
+  freeze: function (v) { FREEZE_SIM = !!v; return FREEZE_SIM; },
+  hold: function (v) {
+    V394.hold = !!v;
+    if (v) for (var k in V394.popRows) { var r = V394.popRows[k]; r.el.style.animation = 'none'; }
+    return V394.hold;
+  },
+  /* 검수용 — 한 노드를 게임과 같은 경로(startGather→updateGather→gatherYield)로 끝까지 캔다.
+     소프트웨어 렌더에서는 프레임이 느려 실제 대기가 길어서 시뮬레이션 시간을 밀어 준다. */
+  fast: function (i) {
+    var n = nodes[i];
+    if (!n || n.dead) return null;
+    startGather(n);
+    for (var k = 0; k < 16 && GATHER.n; k++) updateGather(0.62);
+    return { kind: n.kind, hp: n.hp, dead: !!n.dead, inv: S.inv[n.kind === 'rock' ? 'stone' : 'stick'] | 0 };
+  },
+  gatherState: function () { return { active: !!GATHER.n, i: GATHER.i, need: GATHER.need, t: +GATHER.t.toFixed(2) }; },
+  sheet: function () {
+    var open = sheet ? sheet.classList.contains('on') : false;
+    var mode = sheetMode;
+    var rows = [];
+    var list = document.querySelectorAll('#sheetBody .rec');
+    for (var i = 0; i < list.length; i++) {
+      var b = list[i].querySelector('.nmrow b');
+      rows.push({ name: b ? b.textContent : '', pulse: list[i].classList.contains('v394pulse'), btn: (list[i].querySelector('button') || {}).textContent, ct: (list[i].querySelector('.ct') || {}).textContent });
+    }
+    return { open: open, mode: mode, rows: rows };
+  }
+};
+
+/* @@/V394JS@@ */
 })();
 
 </script>
