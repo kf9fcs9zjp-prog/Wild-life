@@ -44992,7 +44992,7 @@ function v394PaintGoal(bump) {
   }
   var txt = V394_STEPS[V394.goal] || '';
   if (el.textContent !== txt) el.textContent = txt;
-  if (started && ISLE.cur === 'home') el.classList.add('on');
+  if (started && ISLE.cur === 'home') { el.classList.add('on'); V394.wasShown = true; }
   else el.classList.remove('on');
   if (bump) {
     el.classList.remove('bump');
@@ -45018,7 +45018,7 @@ function v394GoalCheck() {
     var ok = false;
     if (g === 0) ok = ((S.inv.stone | 0) >= 3 && (S.inv.stick | 0) >= 3);
     else if (g === 1) ok = ((S.inv.axe | 0) > 0);
-    else if (g === 2) ok = !!V394.woodCut;
+    else if (g === 2) ok = !!V394.woodCut || ((S.inv.wood | 0) > 0);
     else if (g === 3) ok = v394CampfireLit();
     if (!ok) break;
     g++; moved++;
@@ -45028,7 +45028,7 @@ function v394GoalCheck() {
     v394SaveGoal();
   }
   v394PaintGoal(moved > 0);
-  if (moved > 0 && V394.goal >= 4) v394ToastOnce('v394:done', '🎯 첫 도구 루프 완료 — 이제 마음껏 섬을 둘러봐요', 'good');
+  if (moved > 0 && V394.goal >= 4 && V394.wasShown) v394ToastOnce('v394:done', '🎯 첫 도구 루프 완료 — 이제 마음껏 섬을 둘러봐요', 'good');
   return V394.goal;
 }
 var V394_ONCE = {};
@@ -45354,7 +45354,7 @@ packState = function () {
 var _v394Apply = applyData;
 applyData = function (d) {
   _v394Apply(d);
-  var g = (d && d.g394 && typeof d.g394.goal === 'number') ? d.g394.goal : 4;
+  var g = (d && d.g394 && typeof d.g394.goal === 'number') ? d.g394.goal : 0;
   V394.goal = Math.max(0, Math.min(4, g | 0));
   V394.woodCut = 0;
   try { v394PaintGoal(false); } catch (e) { }
