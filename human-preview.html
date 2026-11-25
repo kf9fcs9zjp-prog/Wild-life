@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#120f0c">
+<title>WILD LIFE · 인간 3D 미리보기 (남캐 6차)</title>
+<style>
+  :root{
+    --ink:#efe6d4; --dim:#a99c86; --gold:#c9a66b; --line:rgba(201,166,107,.26);
+    --panel:rgba(22,18,14,.86);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;overflow:hidden;background:#120f0c;color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif}
+  #c{position:fixed;inset:0;display:block;width:100%;height:100%;touch-action:none}
+  .vign{position:fixed;inset:0;pointer-events:none;
+    background:radial-gradient(120% 85% at 50% 32%,rgba(0,0,0,0) 40%,rgba(0,0,0,.55) 100%)}
+  header{position:fixed;left:0;right:0;top:0;padding:calc(10px + env(safe-area-inset-top)) 14px 10px;
+    display:flex;align-items:flex-start;justify-content:space-between;gap:10px;pointer-events:none}
+  .brand{font-size:12px;letter-spacing:.16em;color:var(--gold);font-weight:700}
+  .title{font-size:17px;font-weight:800;margin-top:3px;letter-spacing:-.2px}
+  .sub{font-size:11px;color:var(--dim);margin-top:4px;line-height:1.45}
+  .stat{font-size:10.5px;color:var(--dim);text-align:right;line-height:1.6;
+    background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px 9px;white-space:nowrap}
+  .stat b{color:var(--ink);font-weight:700}
+  footer{position:fixed;left:0;right:0;bottom:0;padding:8px 10px calc(10px + env(safe-area-inset-bottom));
+    background:linear-gradient(to top,rgba(10,8,6,.92),rgba(10,8,6,.55) 62%,rgba(10,8,6,0));}
+  .row{display:flex;gap:6px;overflow-x:auto;padding-bottom:7px;scrollbar-width:none}
+  .row::-webkit-scrollbar{display:none}
+  .cl{flex:0 0 auto;border:1px solid var(--line);background:rgba(30,25,19,.9);color:var(--dim);
+    border-radius:9px;padding:9px 11px;font-size:12px;font-weight:700;letter-spacing:-.1px;
+    font-family:inherit;transition:background .12s,color .12s,border-color .12s;cursor:pointer}
+  .cl.on{background:linear-gradient(180deg,#d8b47a,#b78d4e);color:#241a0d;border-color:#e2c290;
+    box-shadow:0 2px 10px rgba(201,166,107,.28)}
+  .cl:active{transform:translateY(1px)}
+  .tools{display:flex;gap:6px;align-items:center;justify-content:space-between}
+  .tg{flex:0 0 auto;border:1px solid var(--line);background:rgba(30,25,19,.72);color:var(--dim);
+    border-radius:8px;padding:7px 10px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer}
+  .tg.on{color:#f3d9a8;border-color:rgba(226,194,144,.7);background:rgba(70,54,33,.8)}
+  .hint{font-size:10px;color:var(--dim);text-align:right;flex:1}
+  #load{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;
+    gap:12px;background:#120f0c;z-index:9;transition:opacity .35s}
+  #load.gone{opacity:0;pointer-events:none}
+  .sp{width:30px;height:30px;border-radius:50%;border:2px solid rgba(201,166,107,.22);
+    border-top-color:var(--gold);animation:sp .8s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  #loadT{font-size:11.5px;color:var(--dim);letter-spacing:.04em}
+  #err{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);max-width:82%;
+    font-size:12px;color:#ffb3a3;text-align:center;line-height:1.5;display:none;z-index:10}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="vign"></div>
+<header>
+  <div>
+    <div class="brand">WILD LIFE · HUMAN 3D</div>
+    <div class="title">남캐 기본형 · 6차</div>
+    <div class="sub">hero_male_base.glb · 65본 · 8클립</div>
+  </div>
+  <div class="stat" id="stat"><b>—</b><br>loading</div>
+</header>
+<footer>
+  <div class="row" id="clips"></div>
+  <div class="tools">
+    <button class="tg" id="rot">자동 회전</button>
+    <button class="tg" id="slo">천천히</button>
+    <button class="tg" id="skel">뼈대</button>
+    <div class="hint">드래그 회전 · 두 손가락 확대</div>
+  </div>
+</footer>
+<div id="load"><div class="sp"></div><div id="loadT">모델 불러오는 중…</div></div>
+<div id="err"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script>
+(function(){
+  var CLIPS = ['Idle','Walk','Run','Jump','Land','Crouch','Sword_Attack','Death'];
+  var LABEL = { Idle:'대기', Walk:'걷기', Run:'달리기', Jump:'점프', Land:'착지',
+                Crouch:'웅크리기', Sword_Attack:'검 공격', Death:'쓰러짐' };
+  var URLQ = new URLSearchParams(location.search);
+  var GLB = 'assets/humans_v2/hero_male_base.glb';
+
+  var canvas = document.getElementById('c');
+  var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias:true, alpha:false });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+  var scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x14110d);
+  scene.fog = new THREE.Fog(0x14110d, 6, 16);
+
+  var camera = new THREE.PerspectiveCamera(32, 1, 0.05, 60);
+
+  /* ── 조명 ───────────────────────────────────────────── */
+  var hemi = new THREE.HemisphereLight(0xfff1d8, 0x2a2118, 0.82);
+  scene.add(hemi);
+
+  var key = new THREE.DirectionalLight(0xffe6c4, 1.35);
+  key.position.set(2.4, 4.2, 3.0);
+  key.castShadow = true;
+  key.shadow.mapSize.set(1024, 1024);
+  key.shadow.camera.near = 0.5; key.shadow.camera.far = 14;
+  key.shadow.camera.left = -2.2; key.shadow.camera.right = 2.2;
+  key.shadow.camera.top = 3.0; key.shadow.camera.bottom = -0.6;
+  key.shadow.bias = -0.0012;
+  scene.add(key);
+
+  var rim = new THREE.DirectionalLight(0x9db8c9, 0.55);
+  rim.position.set(-3.0, 2.6, -2.6);
+  scene.add(rim);
+
+  var fill = new THREE.DirectionalLight(0xffd9a0, 0.22);
+  fill.position.set(-1.6, 1.4, 3.2);
+  scene.add(fill);
+
+  /* ── 바닥 ───────────────────────────────────────────── */
+  var ground = new THREE.Mesh(
+    new THREE.CircleGeometry(3.4, 64),
+    new THREE.MeshStandardMaterial({ color:0x2b241b, roughness:0.98, metalness:0 })
+  );
+  ground.rotation.x = -Math.PI/2;
+  ground.receiveShadow = true;
+  scene.add(ground);
+
+  var ring = new THREE.Mesh(
+    new THREE.RingGeometry(0.62, 0.70, 64),
+    new THREE.MeshBasicMaterial({ color:0x6b5636, transparent:true, opacity:0.55, side:THREE.DoubleSide })
+  );
+  ring.rotation.x = -Math.PI/2; ring.position.y = 0.002;
+  scene.add(ring);
+
+  /* ── 상태 ───────────────────────────────────────────── */
+  var S = {
+    root:null, mixer:null, actions:{}, cur:null, curName:'',
+    skel:null, ready:false, err:null, tris:0, bones:0,
+    yaw: 0.22, pitch: 0.06, dist: 3.15, targetY: 0.93,
+    autoRot: URLQ.get('rot') === '1', slow: false,
+    dragging:false, lastX:0, lastY:0, pinch:0, lastMove:0
+  };
+  window.__preview = S;
+
+  function fail(msg){
+    S.err = msg; window.__err = msg;
+    document.getElementById('err').textContent = '불러오지 못했어요: ' + msg;
+    document.getElementById('err').style.display = 'block';
+    var l = document.getElementById('load'); l.classList.add('gone');
+  }
+
+  /* ── 로드 ───────────────────────────────────────────── */
+  if (typeof THREE.GLTFLoader !== 'function') { fail('GLTFLoader 없음'); return; }
+  new THREE.GLTFLoader().load(GLB, function(gltf){
+    var root = gltf.scene;
+    root.traverse(function(o){
+      if (!o.isMesh && !o.isSkinnedMesh) return;
+      o.castShadow = true;
+      o.receiveShadow = false;
+      o.frustumCulled = false;
+      var list = Array.isArray(o.material) ? o.material : [o.material];
+      for (var i=0;i<list.length;i++){
+        var m = list[i]; if (!m) continue;
+        m.metalness = 0.0;
+        if (m.roughness !== undefined) m.roughness = 0.95;
+        if (m.map) m.map.encoding = THREE.sRGBEncoding;
+        m.needsUpdate = true;
+      }
+      if (o.isSkinnedMesh && o.geometry && o.geometry.index)
+        S.tris += o.geometry.index.count / 3;
+    });
+    scene.add(root);
+    S.root = root;
+
+    var box = new THREE.Box3().setFromObject(root);
+    S.h = box.max.y - Math.min(0, box.min.y);
+    S.targetY = Math.min(1.0, S.h * 0.53);
+
+    S.mixer = new THREE.AnimationMixer(root);
+    var clips = gltf.animations || [];
+    for (var c=0;c<clips.length;c++){
+      var a = S.mixer.clipAction(clips[c]);
+      a.clampWhenFinished = true;
+      S.actions[clips[c].name] = a;
+    }
+    var sk = null;
+    root.traverse(function(o){ if (o.isSkinnedMesh && o.skeleton) sk = o.skeleton; });
+    S.bones = sk ? sk.bones.length : 0;
+    S.skel = new THREE.SkeletonHelper(root);
+    S.skel.visible = false;
+    scene.add(S.skel);
+
+    buildButtons();
+    S.ready = true; window.__ready = true;
+    play(URLQ.get('clip') || 'Idle', true);
+    if (URLQ.get('t')) {
+      var a0 = S.actions[S.curName];
+      if (a0) { a0.paused = true; a0.time = (+URLQ.get('t')) * a0.getClip().duration; }
+    }
+    document.getElementById('stat').innerHTML =
+      '<b>' + clips.length + ' 클립</b><br>' + S.bones + '본 · ' +
+      (Math.round(S.tris/100)/10).toFixed(1) + 'k tris';
+    document.getElementById('load').classList.add('gone');
+  }, function(p){
+    if (p && p.total) {
+      var pc = Math.round(p.loaded / p.total * 100);
+      document.getElementById('loadT').textContent = '모델 불러오는 중… ' + pc + '%';
+    }
+  }, function(e){ fail((e && (e.message || e.type)) || 'load error'); });
+
+  /* ── 클립 버튼 ──────────────────────────────────────── */
+  function buildButtons(){
+    var box = document.getElementById('clips');
+    var names = CLIPS.filter(function(n){ return !!S.actions[n]; });
+    Object.keys(S.actions).forEach(function(n){ if (names.indexOf(n) < 0) names.push(n); });
+    names.forEach(function(n){
+      var b = document.createElement('button');
+      b.className = 'cl'; b.dataset.clip = n;
+      b.innerHTML = (LABEL[n] || n) + '<span style="opacity:.55;font-weight:600;font-size:10px"> · ' + n + '</span>';
+      b.onclick = function(){ play(n, true); };
+      box.appendChild(b);
+    });
+  }
+  function play(name, restart){
+    var a = S.actions[name];
+    if (!a) return false;
+    if (S.curName === name && !restart) return true;
+    var prev = S.cur;
+    a.reset(); a.enabled = true; a.paused = false; a.setLoop(THREE.LoopRepeat, Infinity);
+    a.setEffectiveTimeScale(1); a.setEffectiveWeight(1); a.play();
+    if (prev && prev !== a) prev.crossFadeTo(a, 0.18, false);
+    S.cur = a; S.curName = name;
+    var btns = document.querySelectorAll('#clips .cl');
+    for (var i=0;i<btns.length;i++) btns[i].classList.toggle('on', btns[i].dataset.clip === name);
+    return true;
+  }
+  window.play = play;
+
+  /* ── 터치 / 마우스 회전 · 확대 ───────────────────────── */
+  function onDown(x,y){ S.dragging = true; S.lastX = x; S.lastY = y; S.lastMove = performance.now(); }
+  function onMove(x,y){
+    if (!S.dragging) return;
+    S.yaw   += (x - S.lastX) * 0.0075;
+    S.pitch += (y - S.lastY) * 0.0050;
+    S.pitch = Math.max(-0.55, Math.min(0.85, S.pitch));
+    S.lastX = x; S.lastY = y; S.lastMove = performance.now();
+  }
+  function onUp(){ S.dragging = false; }
+
+  canvas.addEventListener('touchstart', function(e){
+    if (e.touches.length === 1) onDown(e.touches[0].clientX, e.touches[0].clientY);
+    else if (e.touches.length === 2) {
+      S.dragging = false;
+      S.pinch = Math.hypot(e.touches[0].clientX - e.touches[1].clientX,
+                           e.touches[0].clientY - e.touches[1].clientY);
+    }
+  }, {passive:true});
+  canvas.addEventListener('touchmove', function(e){
+    if (e.touches.length === 1) onMove(e.touches[0].clientX, e.touches[0].clientY);
+    else if (e.touches.length === 2) {
+      var d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX,
+                         e.touches[0].clientY - e.touches[1].clientY);
+      if (S.pinch > 0) {
+        S.dist *= S.pinch / Math.max(d, 1);
+        S.dist = Math.max(0.9, Math.min(6.0, S.dist));
+      }
+      S.pinch = d;
+    }
+    e.preventDefault();
+  }, {passive:false});
+  canvas.addEventListener('touchend', function(){ onUp(); S.pinch = 0; }, {passive:true});
+
+  canvas.addEventListener('mousedown', function(e){ onDown(e.clientX, e.clientY); });
+  window.addEventListener('mousemove', function(e){ onMove(e.clientX, e.clientY); });
+  window.addEventListener('mouseup', onUp);
+  canvas.addEventListener('wheel', function(e){
+    S.dist *= (1 + Math.sign(e.deltaY) * 0.09);
+    S.dist = Math.max(0.9, Math.min(6.0, S.dist));
+    e.preventDefault();
+  }, {passive:false});
+
+  document.getElementById('rot').onclick = function(){
+    S.autoRot = !S.autoRot; this.classList.toggle('on', S.autoRot);
+    if (!S.autoRot) S.dragHold = performance.now() + 2600;
+  };
+  document.getElementById('slo').onclick = function(){
+    S.slow = !S.slow; this.classList.toggle('on', S.slow);
+  };
+  document.getElementById('skel').onclick = function(){
+    if (!S.skel) return;
+    S.skel.visible = !S.skel.visible; this.classList.toggle('on', S.skel.visible);
+  };
+  if (S.autoRot) document.getElementById('rot').classList.add('on');
+
+  /* ── 리사이즈 ───────────────────────────────────────── */
+  function resize(){
+    var w = window.innerWidth, h = window.innerHeight;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    /* 세로 화면에선 캐릭터가 잘리지 않게 화각을 조금 넓힌다 */
+    var narrow = w / h < 0.85;
+    camera.fov = narrow ? 38 : 32;
+    camera.updateProjectionMatrix();
+    S.dist = Math.max(S.dist, narrow ? 2.9 : 2.6);
+  }
+  window.addEventListener('resize', resize);
+  window.addEventListener('orientationchange', function(){ setTimeout(resize, 220); });
+  resize();
+
+  /* ── 렌더 루프 ──────────────────────────────────────── */
+  var clock = new THREE.Clock();
+  function tick(){
+    requestAnimationFrame(tick);
+    var dt = Math.min(0.05, clock.getDelta());
+    if (S.mixer) S.mixer.update(dt * (S.slow ? 0.32 : 1));
+
+    if (S.autoRot) {
+      if (performance.now() > (S.dragHold || 0)) S.yaw += dt * 0.45;
+    }
+
+    var cy = S.targetY + Math.sin(S.pitch) * 0;
+    var rr = S.dist;
+    var cx = Math.sin(S.yaw) * Math.cos(S.pitch) * rr;
+    var cz = Math.cos(S.yaw) * Math.cos(S.pitch) * rr;
+    var cyy = cy + Math.sin(S.pitch) * rr + 0.12;
+    camera.position.set(cx, cyy, cz);
+    camera.lookAt(0, cy, 0);
+    key.position.set(cx * 0.75 + 1.2, 4.2, cz * 0.75 + 1.4);
+
+    renderer.render(scene, camera);
+  }
+  tick();
+
+  window.__clipDur = function(n){ return S.actions[n] ? S.actions[n].getClip().duration : 0; };
+  window.__view = function(yaw, pitch, dist){
+    if (yaw !== undefined) S.yaw = yaw;
+    if (pitch !== undefined) S.pitch = pitch;
+    if (dist !== undefined) S.dist = dist;
+  };
+})();
+</script>
+</body>
+</html>
