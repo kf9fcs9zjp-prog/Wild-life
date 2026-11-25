@@ -3066,7 +3066,7 @@ body.targeting .toasts{top:calc(env(safe-area-inset-top) + 172px) !important}
       </div>
       <div class="startSaveLine" id="startSaveLine"><span>저장 없음 · 새로 시작해요</span></div>
     </div>
-    <div class="startFoot" id="startFoot">WILD LIFE · v3.9.1 &nbsp;|&nbsp; 조이스틱으로 걷고 <b>오른쪽 큰 버튼은 공격</b> · 작은 버튼은 채집·상호작용 · 빨간 예고선은 구르기로 피하기</div>
+    <div class="startFoot" id="startFoot">WILD LIFE · v3.9.2 &nbsp;|&nbsp; 조이스틱으로 걷고 <b>오른쪽 큰 버튼은 공격</b> · 작은 버튼은 채집·상호작용 · 빨간 예고선은 구르기로 피하기</div>
   </div>
 
   <div class="slotPanel" id="slotPanel">
@@ -22267,12 +22267,11 @@ function hitDinoByArrow(d, dmg, p, arrow) {
   d.hurt = 0.32;
   // 짧은 경직 — 맞은 직후 굳어서 한 발 더 쏘며 거리를 벌 수 있다(카이팅)
   d.stagger = Math.max(d.stagger || 0, d.kind === 'brachio' ? 0.28 : 0.45);
-  spawnBurst(p.x, p.y, p.z, 0xd8583c, 7, 0.9);
+  /* 🏹 v3.9.2 — 명중 연출은 v392 가 담백하게 맡는다 */
   sfx('hit');
   pokeDino(d, dist);
-  var rngTag = scale < 0.995 ? ' (원거리 ' + Math.round(scale * 100) + '%)' : ' (근거리) ';
   if (d.hp <= 0) { killDino(d); return; }
-  toast('화살 명중!' + rngTag + ' -' + real + ' · ' + Math.max(0, Math.round(d.hp)) + '/' + d.max, undefined);
+  /* 🏹 v3.9.2 — 발마다 뜨던 '화살 명중!' 토스트는 뺐다 (숫자·체력바로 충분) */
 }
 
 function updateArrows(dt) {
@@ -42646,7 +42645,7 @@ try { sndLoad(); } catch (e) { }
 (function () {
   var f = $id('startFoot');
   if (!f) return;
-  f.innerHTML = 'WILD LIFE · v3.9.1 &nbsp;|&nbsp; 조이스틱으로 걷고 <b>오른쪽 큰 버튼은 공격</b> · 작은 버튼은 채집·상호작용 · <b>점프</b>는 초록 버튼/Space';
+  f.innerHTML = 'WILD LIFE · v3.9.2 &nbsp;|&nbsp; 조이스틱으로 걷고 <b>오른쪽 큰 버튼은 공격</b> · 작은 버튼은 채집·상호작용 · <b>점프</b>는 초록 버튼/Space';
 })();
 
 /* ── 8) 검수 API ─────────────────────────────────────────────── */
@@ -43934,6 +43933,517 @@ window.__game.v391 = {
 };
 
 /* @@/V391JS@@ */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* @@V392JS@@ */
+/* ==========================================================================
+   WILD LIFE v3.9.2 — ① 활을 손에 '딱' 쥐어지게 (공중에 뜨는 문제)
+   --------------------------------------------------------------------------
+   · v3.9.1 은 몸통 관통을 피하려고 활을 손에서 카메라 오른쪽으로 0.52m 밀어
+     띄웠다 → 활이 공중에 떠 보였다.
+   · 이제 활의 그립 중심을 '손 본(소켓) 위치 + 손바닥만큼 아래'에 두고,
+     활의 면은 몸 바깥(캐릭터 오른쪽)으로 열어 몸을 뚫지 않게 한다.
+   ========================================================================== */
+
+var V392_HAND = new THREE.Vector3();
+
+function v392BowItem() {
+  if (!player) return null;
+  if (S.equip.weapon === 'bow') return player.bow;
+  if (S.equip.weapon === 'ironBow') return player.ironBow;
+  return null;
+}
+
+/* 손 소켓(HERO 손 본 그룹 또는 절차 팔)의 월드 위치 = 손목 */
+function v392HandWorld(sock) {
+  sock.updateWorldMatrix(true, false);
+  sock.getWorldPosition(V392_HAND);
+  return V392_HAND;
+}
+
+/* 활 각도: 활등(국소 +X)이 몸 바깥(오른손이 든 쪽)으로 열리고,
+   활 면은 몸과 나란히 서서 몸통·옆구리를 뚫지 않는다.
+   +Y(시위)는 세로 — 손에서 떨어져 보이지 않는다. */
+function v392BowQuat(w, f, aim) {
+  if (aim) {
+    v391SetWorldQuat(w, 0.02, f + Math.PI, 0.04, 'YXZ');            // 쏘는 순간 — 반듯하게 세운다
+  } else {
+    v391SetWorldQuat(w, 0.05, f + Math.PI - 0.12, 0.10 + Math.sin(worldT * 1.6) * 0.02, 'YXZ');
+  }
+}
+
+v391HoldPose = function () {
+  if (!player || !started) return;
+  var f = player.facing || 0;
+  var bowW = v392BowItem();
+  if (bowW && bowW.visible && bowW.parent) {
+    var hand = v392HandWorld(bowW.parent);
+    /* 손목에서 손바닥(주먹) 중심까지 — 팔이 늘어져 있으므로 아래로 4.5cm,
+       살짝 앞으로 1.5cm. 그립 중심을 여기에 두면 주먹이 그립을 감싼다. */
+    var px = hand.x + Math.sin(f) * 0.015;
+    var py = hand.y - 0.045;
+    var pz = hand.z + Math.cos(f) * 0.015;
+    v391SetWorldPos(bowW, px, py, pz);
+    v392BowQuat(bowW, f, player.bowT > 0);
+  }
+  /* 나머지 무기는 v3.9.1 자세 그대로 (활만 따로 잡았으므로 직접 처리) */
+  if (player.spear && player.spear.visible) v391SetWorldQuat(player.spear, -0.92, f, 0.20, 'YXZ');
+  if (player.boneSpear && player.boneSpear.visible) v391SetWorldQuat(player.boneSpear, -0.92, f, 0.20, 'YXZ');
+  if (player.axe && player.axe.visible) v391SetWorldQuat(player.axe, 0.10, f, Math.PI + 0.30, 'YXZ');
+  if (player.knife && player.knife.visible) v391SetWorldQuat(player.knife, -0.65, f, 0.16, 'YXZ');
+  if (player.boneKnife && player.boneKnife.visible) v391SetWorldQuat(player.boneKnife, -0.65, f, 0.16, 'YXZ');
+  if (player.sickle && player.sickle.visible) v391SetWorldQuat(player.sickle, -0.30, f, 0.30, 'YXZ');
+  if (player.pick && player.pick.visible) v391SetWorldQuat(player.pick, 0.10, f, Math.PI + 0.16, 'YXZ');
+};
+
+/* HERO 스켈레톤은 updatePlayer 다음에 움직인다(heroFrame).
+   손 본이 움직인 '뒤'에 한 번 더 잡아 줘야 활이 손에서 흘러내리거나 비틀리지 않는다. */
+if (typeof heroFrame === 'function') {
+  var _v392HeroFrame = heroFrame;
+  heroFrame = function (dt) {
+    _v392HeroFrame(dt);
+    try { v391HoldPose(); } catch (e) { }
+  };
+}
+
+/* 장착 직후 한 프레임도 공중에 뜨지 않도록 — 소켓 국소 위치도 손 쪽으로 당긴다 */
+var _v392WeaponPose = v391WeaponPose;
+v391WeaponPose = function (w) {
+  if (!w || !player) return;
+  if (w === player.bow || w === player.ironBow) {
+    w.scale.setScalar(0.90);
+    w.position.set(0.0, -0.045, 0.015);      // 소켓(=손목) 기준 손바닥 위치
+    try { w.traverse(function (o) { if (o.isMesh) o.frustumCulled = false; }); } catch (e) { }
+    return;
+  }
+  _v392WeaponPose(w);
+};
+
+/* ==========================================================================
+   WILD LIFE v3.9.2 — ② 담백한 활 연출 · 작고 깔끔한 데미지 숫자
+   --------------------------------------------------------------------------
+   · 활: 화살 뒤에 얇은 '줄기' 하나. 명중하면 작은 링 한 겹 + 먼지 몇 점.
+        (v3.9.1 의 잔상 발광 덩어리·2겹 충격파·스파크 12발·섬광은 끈다)
+   · 데미지: 얇은 외곽선 + 부드러운 그림자의 작은 산세리프 숫자.
+        일반 = 흰색, 치명(백어택·지침·기절)만 금색으로 살짝 크게. 문구 없음.
+   ========================================================================== */
+
+/* v3.9.1 의 요란한 연출은 끈다 (숫자·충격파·화살 잔상 전부 내 것으로 대체) */
+v391Impact = function () { };
+v391ArrowTrail = function () { };
+v391DmgNum = function () { };
+
+/* ── 1) 화살 줄기 — 화살 꼬리에 붙는 얇은 선 하나 ───────────────────── */
+var V392_STREAK_GEO = null, V392_STREAK_MAT = null;
+function v392Streak(a) {
+  if (!a || !a.mesh || a.mesh.__v392streak) return;
+  if (!V392_STREAK_GEO) {
+    V392_STREAK_GEO = new THREE.CylinderGeometry(0.0035, 0.010, 1, 4, 1, true);
+    V392_STREAK_GEO.rotateX(Math.PI / 2);       // 축을 Z로
+    V392_STREAK_GEO.translate(0, 0, -0.5);      // 한 끝을 원점에
+    V392_STREAK_MAT = new THREE.MeshBasicMaterial({
+      color: 0xfff4d8, transparent: true, opacity: 0.22,
+      depthWrite: false, side: THREE.DoubleSide
+    });
+  }
+  var m = new THREE.Mesh(V392_STREAK_GEO, V392_STREAK_MAT);
+  m.scale.set(1, 1, 0.5);
+  m.position.z = -0.36;
+  m.renderOrder = 3;
+  m.frustumCulled = false;
+  a.mesh.add(m);
+  a.mesh.__v392streak = m;
+}
+var _v392ShootArrow = shootArrow;
+shootArrow = function (target) {
+  var n0 = ARROWS.length;
+  _v392ShootArrow(target);
+  if (ARROWS.length > n0) v392Streak(ARROWS[ARROWS.length - 1]);
+};
+
+/* ── 2) 명중 연출 — 절제된 한 겹 ─────────────────────────────────────── */
+/* 부드러운 섬광 (가산합성 안 함 — 화면을 태우지 않는 담백한 빛) */
+var V392_SOFT_TEX = null;
+function v392SoftTex() {
+  if (V392_SOFT_TEX) return V392_SOFT_TEX;
+  var cv = document.createElement('canvas');
+  cv.width = cv.height = 64;
+  var c = cv.getContext('2d');
+  var g = c.createRadialGradient(32, 32, 0, 32, 32, 31);
+  g.addColorStop(0, 'rgba(255,255,255,.95)');
+  g.addColorStop(0.55, 'rgba(255,247,225,.45)');
+  g.addColorStop(1, 'rgba(255,240,210,0)');
+  c.fillStyle = g;
+  c.fillRect(0, 0, 64, 64);
+  V392_SOFT_TEX = new THREE.CanvasTexture(cv);
+  return V392_SOFT_TEX;
+}
+function v392SoftFlash(x, y, z, size, life, color) {
+  var mat = new THREE.SpriteMaterial({
+    map: v392SoftTex(), color: color === undefined ? 0xffffff : color, transparent: true,
+    opacity: 0.62, depthWrite: false
+  });
+  var sp = new THREE.Sprite(mat);
+  sp.position.set(x, y, z);
+  sp.scale.set(size, size, 1);
+  sp.renderOrder = 9;
+  return v391Fx(sp, mat, life, function (f, k) {
+    var s = size * (0.7 + k * 0.9);
+    f.mesh.scale.set(s, s, 1);
+    f.mat.opacity = (1 - k) * 0.62;
+  });
+}
+function v392Impact(x, y, z, kind) {
+  if (kind === 'arrow') {
+    /* 활 명중은 작은 빛 한 점 — 먼지·파편 없이 담백하게 */
+    v392SoftFlash(x, y, z, 0.46, 0.18, 0xfff4dc);
+  } else if (kind === 'crit') {
+    v392SoftFlash(x, y, z, 0.52, 0.20, 0xffdf9a);
+    spawnBurst(x, y, z, 0xe2c188, 7, 0.7);
+  } else if (kind === 'hurt') {
+    v392SoftFlash(x, y, z, 0.36, 0.18, 0xff9c7e);
+    spawnBurst(x, y, z, 0xc98a72, 3, 0.4);
+  } else {
+    v392SoftFlash(x, y, z, 0.42, 0.18, 0xfff2d0);
+    spawnBurst(x, y, z, 0xd0b48c, 5, 0.5);
+  }
+}
+
+/* ── 3) 데미지 숫자 — 작고 깔끔한 산세리프 ───────────────────────────── */
+var V392_N = { tex: {}, keys: [], list: [] };
+var V392_NSTYLE = {
+  hit: { fill: ['#ffffff', '#fff0c8'], stroke: 'rgba(28,18,8,.52)', h: 0.070 },
+  crit: { fill: ['#fff5b8', '#ffa91a'], stroke: 'rgba(64,30,2,.60)', h: 0.086 },
+  hurt: { fill: ['#ffd8c8', '#ff6f4a'], stroke: 'rgba(56,12,4,.58)', h: 0.070 },
+  heal: { fill: ['#ecffdc', '#96e070'], stroke: 'rgba(18,44,10,.52)', h: 0.062 }
+};
+
+function v392NumTex(text, kind) {
+  var st = V392_NSTYLE[kind] || V392_NSTYLE.hit;
+  var key = kind + '|' + text;
+  if (V392_N.tex[key]) return V392_N.tex[key];
+  var cv = document.createElement('canvas');
+  cv.width = 256; cv.height = 128;
+  var c = cv.getContext('2d');
+  c.font = '700 84px "Helvetica Neue", Helvetica, Arial, "Apple SD Gothic Neo", sans-serif';
+  c.textAlign = 'center';
+  c.textBaseline = 'middle';
+  c.lineJoin = 'round';
+  c.miterLimit = 2;
+  /* 얇은 외곽선 — 두꺼운 갈색 테두리 대신 */
+  c.lineWidth = 4.5;
+  c.strokeStyle = st.stroke;
+  c.strokeText(text, 128, 68);
+  /* 부드러운 그림자 */
+  c.shadowColor = 'rgba(0,0,0,.42)';
+  c.shadowBlur = 6;
+  c.shadowOffsetY = 2;
+  var g = c.createLinearGradient(0, 34, 0, 104);
+  g.addColorStop(0, st.fill[0]);
+  g.addColorStop(1, st.fill[1]);
+  c.fillStyle = g;
+  c.fillText(text, 128, 68);
+  var tex = new THREE.CanvasTexture(cv);
+  tex.minFilter = THREE.LinearFilter;
+  V392_N.tex[key] = tex;
+  V392_N.keys.push(key);
+  while (V392_N.keys.length > 28) {
+    var old = V392_N.keys.shift();
+    if (V392_N.tex[old]) { V392_N.tex[old].dispose(); delete V392_N.tex[old]; }
+  }
+  return tex;
+}
+
+function v392DmgNum(x, y, z, text, kind) {
+  kind = V392_NSTYLE[kind] ? kind : 'hit';
+  var st = V392_NSTYLE[kind];
+  var mat = new THREE.SpriteMaterial({
+    map: v392NumTex(text, kind), transparent: true,
+    depthTest: false, depthWrite: false, opacity: 1, sizeAttenuation: false
+  });
+  var sp = new THREE.Sprite(mat);
+  var h = st.h;
+  sp.scale.set(h * 2, h, 1);
+  sp.position.set(x, y, z);
+  sp.renderOrder = 12;
+  scene.add(sp);
+  V392_N.list.push({ sp: sp, mat: mat, life: 0, max: kind === 'crit' ? 0.86 : 0.76, h: h, y0: y, x0: x, dx: (Math.random() - 0.5) * 0.32, __kind: kind });
+}
+function v392UpdateNums(dt) {
+  for (var i = V392_N.list.length - 1; i >= 0; i--) {
+    var f = V392_N.list[i];
+    f.life += dt;
+    var k = f.life / f.max;
+    if (k >= 1) {
+      scene.remove(f.sp);
+      f.mat.dispose();
+      V392_N.list.splice(i, 1);
+      continue;
+    }
+    f.sp.position.y = f.y0 + 1.05 * f.life * (1 - k * 0.35);
+    f.sp.position.x = f.x0 + f.dx * k;
+    f.mat.opacity = k < 0.66 ? 1 : Math.max(0, 1 - (k - 0.66) / 0.34);
+    var pop = k < 0.10 ? 0.86 + (k / 0.10) * 0.18 : 1.04 - Math.min(0.04, (k - 0.10) * 0.12);
+    f.sp.scale.set(f.h * 2 * pop, f.h * pop, 1);
+  }
+}
+
+/* 기존 플로팅 텍스트로 오던 '데미지 숫자'는 전부 새 숫자로 넘긴다.
+   (제작·획득 같은 안내 문구는 그대로, 크기만 살짝 줄여 담백하게) */
+var _v392FloatText = spawnFloatText;
+spawnFloatText = function (x, y, z, text, color, scale) {
+  if (typeof text === 'string') {
+    var m = /^([+-])\s*(\d+)/.exec(text);
+    if (m) {
+      var crit = /백어택|지침|기절|관통|강타|드릴|치명/.test(text);
+      var kind = m[1] === '+' ? 'heal' : (crit ? 'crit' : 'hit');
+      var num = (m[1] === '+' ? '+' : '-') + m[2];
+      v392DmgNum(x, y, z, num, kind);
+      return null;
+    }
+  }
+  return _v392FloatText(x, y, z, text, color, (scale === undefined ? 1 : scale) * 0.82);
+};
+
+/* ── 4) 명중 훅 — 근접(일반)·활·피격 ─────────────────────────────────── */
+var _v392AttackDinoBase = _v391AttackDino;      // v3.9.1 이전 원본
+attackDino = function (d) {
+  if (!d || d.dead) return _v392AttackDinoBase(d);
+  var before = d.hp;
+  var toP = Math.atan2(player.pos.x - d.x, player.pos.z - d.z);
+  var relA = Math.abs(v28AngDiff(toP, d.rot || 0));
+  var crit = relA > 2.18 || (d.groggyT || 0) > 0 || (d.exhaustT || 0) > 0;
+  _v392AttackDinoBase(d);
+  if (d.hp >= before) return;
+  var real = Math.max(1, Math.round(before - d.hp));
+  var gy = terrainH(d.x, d.z);
+  var hy = gy + (d.parts.height || 1.5) * 0.62;
+  var hx = d.x - Math.sin(player.facing) * 0.2, hz = d.z - Math.cos(player.facing) * 0.2;
+  v392Impact(hx, hy, hz, crit ? 'crit' : 'melee');
+  /* 치명타는 원본 연출(금색 링 + 문구)이 새 숫자로 넘어오므로 숫자를 또 찍지 않는다 */
+  if (!crit) v392DmgNum(hx, hy + 0.45, hz, '-' + real, 'hit');
+};
+
+var _v392HitArrowBase = _v391HitArrow;
+hitDinoByArrow = function (d, dmg, p, arrow) {
+  var before = d ? d.hp : 0;
+  _v392HitArrowBase(d, dmg, p, arrow);
+  if (!d || d.dead || d.hp === before) return;
+  var real = Math.max(1, Math.round(before - d.hp));
+  var hx = p ? p.x : d.x, hz = p ? p.z : d.z;
+  var hy = p ? p.y : terrainH(d.x, d.z) + (d.parts.height || 1.6) * 0.6;
+  v392Impact(hx, hy, hz, 'arrow');
+  v392DmgNum(hx, hy + 0.45, hz, '-' + real, 'hit');
+};
+
+var _v392HurtBase = _v391HurtPlayer;
+hurtPlayer = function (n, src) {
+  var before = S.hp;
+  _v392HurtBase(n, src);
+  if (S.hp >= before) return;
+  var real = Math.max(1, Math.round(before - S.hp));
+  var gy = groundY(player.pos.x, player.pos.z);
+  v392DmgNum(player.pos.x, gy + 2.05, player.pos.z, '-' + real, 'hurt');
+  v392Impact(player.pos.x, gy + 1.0, player.pos.z, 'hurt');
+};
+
+/* ── 5) 매 프레임 숫자 갱신 ──────────────────────────────────────────── */
+var V392_LOCK = false;                       /* 검수용 — 연출을 멈춰 놓고 촬영 */
+var _v392UpdateFx = updateFx;
+updateFx = function (dt) {
+  if (V392_LOCK) return;
+  _v392UpdateFx(dt);
+  v392UpdateNums(dt);
+};
+
+/* ==========================================================================
+   WILD LIFE v3.9.2 — ③ 검수 API (window.__game.v392)
+   ========================================================================== */
+window.__game = window.__game || {};
+/* v3.9.1 검수 API 의 숫자/이펙트 개수는 이제 v392 것들을 센다 (같은 자리·같은 의미) */
+if (window.__game.v391) {
+  window.__game.v391.dmgNums = function () { return V392_N.list.length; };
+  window.__game.v391.fxOwn = function () { return V391_FX.length; };
+}
+window.__game.v392 = {
+  /* 활 그립이 손에 붙었는지 — 손목 소켓과 그립의 거리 */
+  hold: function () {
+    var w = v392BowItem();
+    if (!w || !w.parent) return { equip: S.equip.weapon, bow: false };
+    var hand = new THREE.Vector3();
+    w.parent.updateWorldMatrix(true, false);
+    w.parent.getWorldPosition(hand);
+    var grip = new THREE.Vector3();
+    w.getWorldPosition(grip);
+    var bb = new THREE.Box3().setFromObject(w);
+    var sz = new THREE.Vector3();
+    bb.getSize(sz);
+    return {
+      equip: S.equip.weapon, bow: true, scale: +w.scale.x.toFixed(3),
+      hand: [+hand.x.toFixed(3), +hand.y.toFixed(3), +hand.z.toFixed(3)],
+      grip: [+grip.x.toFixed(3), +grip.y.toFixed(3), +grip.z.toFixed(3)],
+      gap: +hand.distanceTo(grip).toFixed(3),
+      size: [+sz.x.toFixed(2), +sz.y.toFixed(2), +sz.z.toFixed(2)],
+      bbX: [+bb.min.x.toFixed(2), +bb.max.x.toFixed(2)],
+      bbZ: [+bb.min.z.toFixed(2), +bb.max.z.toFixed(2)],
+      facing: +(player.facing || 0).toFixed(2)
+    };
+  },
+  /* 몸통(래그돌 제외)과 활이 겹치는지 — 캐릭터 중심에서 활 상자까지의 거리 */
+  bodyClear: function () {
+    var w = v392BowItem();
+    if (!w || !w.parent) return null;
+    var bb = new THREE.Box3().setFromObject(w);
+    var c = new THREE.Vector3(player.pos.x, player.pos.y, player.pos.z);
+    var f = player.facing || 0;
+    /* 몸통 원기둥(반지름 0.22m, 높이 0.5~1.7m) 안에 활 상자의 점이 들어가는지 */
+    var inside = 0, tested = 0;
+    for (var ix = 0; ix <= 4; ix++) {
+      for (var iy = 0; iy <= 6; iy++) {
+        for (var iz = 0; iz <= 4; iz++) {
+          var x = bb.min.x + (bb.max.x - bb.min.x) * ix / 4;
+          var y = bb.min.y + (bb.max.y - bb.min.y) * iy / 6;
+          var z = bb.min.z + (bb.max.z - bb.min.z) * iz / 4;
+          var dy = y - (player.pos.y + 0.55);
+          if (dy < 0 || dy > 1.15) continue;
+          tested++;
+          var dx = x - c.x, dz = z - c.z;
+          if (dx * dx + dz * dz < 0.055) inside++;
+        }
+      }
+    }
+    return { tested: tested, inside: inside };
+  },
+  /* 화살 한 발 강제 발사 + 명중 연출 확인 */
+  shoot: function () {
+    var t = (typeof bowTarget === 'function' ? (bowTarget() || bowAutoAim()) : null);
+    shootArrow(t);
+    return { arrows: ARROWS.length, streak: !!(ARROWS.length && ARROWS[ARROWS.length - 1].mesh.__v392streak) };
+  },
+  /* 데미지 숫자 확인용 — 화면에 숫자를 하나 띄운다 */
+  num: function (kind, text) {
+    var gy = groundY(player.pos.x, player.pos.z);
+    v392DmgNum(player.pos.x, gy + 2.2, player.pos.z, text || ('-' + (kind === 'crit' ? 27 : 9)), kind || 'hit');
+    return V392_N.list.length;
+  },
+  /* 숫자 스프라이트의 화면 크기(px) — 폰에서 얼마나 큰지 실측 */
+  numPx: function () {
+    var out = [];
+    for (var i = 0; i < V392_N.list.length; i++) {
+      var f = V392_N.list[i];
+      out.push({ h: Math.round(f.h * f.sp.scale.y * window.innerHeight), w: Math.round(f.h * 2 * f.sp.scale.x * window.innerWidth / 1) });
+    }
+    return out;
+  },
+  nums: function () { return V392_N.list.length; },
+  /* 지금 떠 있는 숫자들 — 종류·내용·화면 대비 높이 */
+  numList: function () {
+    var out = [];
+    for (var i = 0; i < V392_N.list.length; i++) {
+      var f = V392_N.list[i];
+      out.push({ kind: f.__kind || '?', h: +(f.h).toFixed(3) });
+    }
+    return out;
+  },
+  hurt: function (n) { hurtPlayer(n || 9, null); return V392_N.list.length; },
+  clearNums: function () {
+    for (var i = 0; i < V392_N.list.length; i++) {
+      scene.remove(V392_N.list[i].sp);
+      V392_N.list[i].mat.dispose();
+    }
+    V392_N.list.length = 0;
+    return 0;
+  },
+  arrows: function () { return ARROWS.length; },
+  /* 검수용 — 날아가는 화살 한 자루를 그 자리에 멈춰 세운다 (줄기 확인) */
+  arrowDemo: function (dist) {
+    var d = dist || 3.0;
+    var f = player.facing || 0;
+    var x = player.pos.x + Math.sin(f) * d, z = player.pos.z + Math.cos(f) * d;
+    var y = terrainH(x, z) + 1.25;
+    var mesh = new THREE.Mesh(arrowGeo(false), ARROW_MAT);
+    mesh.rotation.order = 'YXZ';
+    mesh.position.set(x, y, z);
+    mesh.rotation.y = f;
+    scene.add(mesh);
+    v392Streak({ mesh: mesh });
+    return { x: +x.toFixed(1), y: +y.toFixed(2), z: +z.toFixed(1) };
+  },
+  /* 검수용 — 연출을 멈춰 놓고 촬영 */
+  freeze: function (on) { V392_LOCK = (on === undefined) ? true : !!on; return V392_LOCK; },
+  /* 검수용 — 플레이어 앞 dist 미터에 명중 연출 + 숫자 */
+  showAhead: function (dist, kind, text) {
+    var d = dist || 3.0;
+    var f = player.facing || 0;
+    var x = player.pos.x + Math.sin(f) * d, z = player.pos.z + Math.cos(f) * d;
+    var y = terrainH(x, z) + 1.15;
+    v392Impact(x, y, z, kind || 'arrow');
+    v392DmgNum(x, y + 0.40, z, text || '-9', kind === 'crit' ? 'crit' : 'hit');
+    return { x: +x.toFixed(2), y: +y.toFixed(2), z: +z.toFixed(2) };
+  },
+  /* 검수용 — 가장 가까운 트리케라톱스 가슴에 명중 연출을 띄운다 */
+  showOnTrike: function (text, kind) {
+    var d = null, bd = 1e9;
+    for (var i = 0; i < dinos.length; i++) {
+      var q = dinos[i];
+      if (q.dead || q.kind !== 'trike') continue;
+      var dd = Math.hypot(q.x - player.pos.x, q.z - player.pos.z);
+      if (dd < bd) { bd = dd; d = q; }
+    }
+    if (!d) return null;
+    var hy = terrainH(d.x, d.z) + (d.parts.height || 1.6) * 0.55;
+    v392Impact(d.x, hy, d.z, kind || 'arrow');
+    v392DmgNum(d.x, hy + 0.45, d.z, text || '-9', 'hit');
+    return { x: +d.x.toFixed(1), z: +d.z.toFixed(1), y: +hy.toFixed(2), d: +bd.toFixed(1) };
+  },
+  fx: function () {
+    var n = 0;
+    for (var i = 0; i < V391_FX.length; i++) n++;
+    return { own: n };
+  },
+  /* 활 든 채로 서 있기 — 자세·각도 확인용 */
+  pose: function (facing, aim) {
+    if (facing !== undefined) player.facing = facing;
+    if (aim !== undefined) player.bowT = aim ? 0.18 : 0;
+    v391HoldPose();
+    return window.__game.v392.hold();
+  },
+  /* 손목 소켓 정보 (HERO 손 본인지 확인) */
+  sock: function () {
+    var w = v392BowItem();
+    if (!w || !w.parent) return null;
+    var p = w.parent;
+    return { type: p.type, name: p.name || '', kids: p.children.length, hero: !!(HERO && HERO.handG === p),
+      heroReady: !!(HERO && HERO.ready) };
+  }
+};
+
+/* @@/V392JS@@ */
 })();
 
 </script>
