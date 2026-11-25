@@ -2914,6 +2914,34 @@ body.targeting .toasts{top:calc(env(safe-area-inset-top) + 172px) !important}
 }
 
 /* @@/V391CSS@@ */
+
+/* ==========================================================================
+   🛠 v3.9.3 — 무기 퀵슬롯 컴팩트 (한 칸 + 펼치기)
+   기본은 '지금 든 무기' 한 칸만 오른쪽 가장자리에 띄워 화면을 비운다.
+   ========================================================================== */
+.qslot.mini{ gap:0 }
+.qslot.mini .qbtn{
+  width:47px;height:47px;font-size:21px;
+  box-shadow:0 5px 14px rgba(0,0,0,.5), inset 0 -2px 5px rgba(0,0,0,.35);
+}
+.qbtn.qhold .qcaret{
+  position:absolute;top:-2px;right:-2px;width:15px;height:15px;border-radius:50%;
+  background:rgba(18,22,27,.94);border:1px solid rgba(240,204,132,.55);
+  color:#F0CC84;font-size:8px;font-style:normal;line-height:1;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 1px 3px rgba(0,0,0,.5);
+}
+.qbtn.qswap{
+  width:27px;height:19px;border-radius:10px;font-size:9px;
+  border-width:1px;opacity:.92;
+}
+.qbtn.qswap.open{border-color:rgba(240,204,132,.85);color:#F0CC84}
+/* 펼친 목록 — 오른쪽 기둥이 화면을 덮지 않도록 조금 작게 */
+.qslot.tray .qbtn{width:35px;height:35px;font-size:16px}
+.qslot.tray.many .qbtn{width:31px;height:31px;font-size:14px}
+@media (max-height:700px){
+  .qslot.mini .qbtn{width:43px;height:43px;font-size:19px}
+}
 </style>
 </head>
 <body>
@@ -3066,7 +3094,7 @@ body.targeting .toasts{top:calc(env(safe-area-inset-top) + 172px) !important}
       </div>
       <div class="startSaveLine" id="startSaveLine"><span>저장 없음 · 새로 시작해요</span></div>
     </div>
-    <div class="startFoot" id="startFoot">WILD LIFE · v3.9.2 &nbsp;|&nbsp; 조이스틱으로 걷고 <b>오른쪽 큰 버튼은 공격</b> · 작은 버튼은 채집·상호작용 · 빨간 예고선은 구르기로 피하기</div>
+    <div class="startFoot" id="startFoot">WILD LIFE · v3.9.3 &nbsp;|&nbsp; 조이스틱으로 걷고 <b>오른쪽 큰 버튼은 공격</b> · 작은 버튼은 채집·상호작용 · 빨간 예고선은 구르기로 피하기</div>
   </div>
 
   <div class="slotPanel" id="slotPanel">
@@ -9156,6 +9184,17 @@ var player = {
   dodgeT: 0, dodgeCd: 0, dodgeP: 0, invuln: 0, slowT: 0, dodgeDX: 0, dodgeDZ: 1
 };
 
+/* 🏹 v3.9.3 — 활을 손에 세워 쥐기 위한 모양 회전
+   원래 활 부품은 '활등이 국소 y(팔 방향), 배가 +x(옆)' 으로 만들어져 있다.
+   이 회전을 한 번 먹이면 활등이 국소 ±z(위아래), 배가 -y(앞) 으로 서서
+   손 그립만 잡아도 사람이 든 활처럼 보인다. */
+var BOW_SHAPE_Q = new THREE.Quaternion().setFromRotationMatrix(
+  new THREE.Matrix4().set(
+    0, 0, -1, 0,
+    -1, 0, 0, 0,
+    0, 1, 0, 0,
+    0, 0, 0, 1));
+
 /* =========================================================
    🧍 v2.4 — 주인공 재설계 (듀랑고풍 자연스러운 인체)
    ---------------------------------------------------------
@@ -9501,19 +9540,28 @@ function makePlayer() {
   spearG.visible = false;
 
   // bow in the left hand — appears once the bow is crafted
+  /* 🏹 v3.9.3 — 활을 다시 깎았다.
+     예전에는 활등이 옆으로 누운 채 몸통을 크게 감싸 '커다란 고리'처럼 보였고,
+     크기도 캐릭터 키의 60~70%에 달해 어색했다.
+     이제 활 한 벌을 shape 그룹에 담아 통째로 돌리고 0.62배로 줄인다.
+     → 그립(손이 쥐는 곳)이 원점, 활등은 국소 ±z(위아래), 배는 국소 -y(앞쪽)로 부푼다.
+     화면에서의 각도는 매 프레임 v392BowQuat 이 손 위치에 맞춰 잡는다. */
   var bowG = new THREE.Group();
-  var bowArc = new THREE.Mesh(new THREE.TorusGeometry(0.46, 0.026, 4, 16, Math.PI), MAT.woodTool);
+  var bowShape = new THREE.Group();
+  bowShape.quaternion.copy(BOW_SHAPE_Q);
+  bowShape.scale.setScalar(0.62);
+  bowG.add(bowShape);
+  var bowArc = new THREE.Mesh(new THREE.TorusGeometry(0.46, 0.030, 4, 18, Math.PI), MAT.woodTool);
   bowArc.rotation.z = -Math.PI / 2;
-  bowG.add(bowArc);
-  var bowString = new THREE.Mesh(new THREE.CylinderGeometry(0.007, 0.007, 0.92, 3), MAT.white);
-  bowG.add(bowString);
-  var bowGrip = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.16, 6), MAT.boot);
-  bowG.add(bowGrip);
-  var bowWrap = new THREE.Mesh(new THREE.CylinderGeometry(0.040, 0.040, 0.045, 6), MAT.furD);
+  bowShape.add(bowArc);
+  var bowString = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.905, 3), MAT.white);
+  bowShape.add(bowString);
+  var bowGrip = new THREE.Mesh(new THREE.CylinderGeometry(0.042, 0.042, 0.20, 7), MAT.boot);
+  bowShape.add(bowGrip);
+  var bowWrap = new THREE.Mesh(new THREE.CylinderGeometry(0.048, 0.048, 0.052, 7), MAT.furD);
   bowWrap.position.y = 0.10;
-  bowG.add(bowWrap);
+  bowShape.add(bowWrap);
   bowG.position.set(0, -0.5, 0.04);
-  bowG.rotation.x = 0.12;
   armL.add(bowG);
   bowG.visible = false;
 
@@ -9622,22 +9670,25 @@ function makePlayer() {
   armR.add(boneKnifeG);
   boneKnifeG.visible = false;
 
-  // 철제 활 — 어두운 금속 활촉
+  // 철제 활 — 어두운 금속 활촉 (나무 활과 같은 방식으로 세워 0.60배)
   var ironBowG = new THREE.Group();
-  var ibArc = new THREE.Mesh(new THREE.TorusGeometry(0.50, 0.032, 4, 18, Math.PI), GEAR_MAT.iron);
+  var ibShape = new THREE.Group();
+  ibShape.quaternion.copy(BOW_SHAPE_Q);
+  ibShape.scale.setScalar(0.60);
+  ironBowG.add(ibShape);
+  var ibArc = new THREE.Mesh(new THREE.TorusGeometry(0.50, 0.036, 4, 18, Math.PI), GEAR_MAT.iron);
   ibArc.rotation.z = -Math.PI / 2;
-  ironBowG.add(ibArc);
-  var ibString = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.98, 3), MAT.white);
-  ironBowG.add(ibString);
-  var ibGrip = new THREE.Mesh(new THREE.CylinderGeometry(0.042, 0.042, 0.20, 6), MAT.furD);
-  ironBowG.add(ibGrip);
+  ibShape.add(ibArc);
+  var ibString = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.009, 0.985, 3), MAT.white);
+  ibShape.add(ibString);
+  var ibGrip = new THREE.Mesh(new THREE.CylinderGeometry(0.048, 0.048, 0.22, 7), MAT.furD);
+  ibShape.add(ibGrip);
   for (var ib = -1; ib <= 1; ib += 2) {
-    var capp = new THREE.Mesh(new THREE.ConeGeometry(0.030, 0.14, 4), GEAR_MAT.iron);
+    var capp = new THREE.Mesh(new THREE.ConeGeometry(0.034, 0.15, 4), GEAR_MAT.iron);
     capp.position.set(0, ib * 0.50, 0);
-    ironBowG.add(capp);
+    ibShape.add(capp);
   }
   ironBowG.position.set(0, -0.5, 0.04);
-  ironBowG.rotation.x = 0.12;
   armL.add(ironBowG);
   ironBowG.visible = false;
 
@@ -9897,6 +9948,7 @@ function makePlayer() {
   player.kneeL = LA.knee; player.kneeR = LB.knee;
   player.ankleL = LA.ankle; player.ankleR = LB.ankle;
   player.elbowL = AL.elbow; player.elbowR = AR.elbow;
+  player.wristL = AL.wrist; player.wristR = AR.wrist;   // 🏹 v3.9.3 — 활을 '손바닥'에 쥐기 위한 손목 소켓
   player.bodyBaseY = BASE;
   player.body = torso; player.head = head;
   player.axe = axeG; player.spear = spearG; player.hat = hatG; player.bow = bowG;
@@ -9948,18 +10000,38 @@ function makePlayer() {
   scene.add(root);
 }
 
+/* 🗡 v3.9.3 — 무기 id → 손에 들 메시 매핑표
+   예전에는 if 문을 하나씩 늘려 쓰다 보니 tyrantSpear(폭군 뼈창)·bambooSpear(대나무 창)
+   처럼 나중에 추가된 무기가 빠져서, 퀵슬롯 2번(🦴)을 골라도 손에 아무것도 안 보였다.
+   이제 모든 무기를 표에 적고, 표에 없는 무기는 종류(kind)로 대신 잡는다(GENERIC). */
+var WEP_MESH = {
+  axe: 'axe', pick: 'pick', stonePick: 'pick',
+  spear: 'spear', bambooSpear: 'spear', trikeSpear: 'spear',
+  boneSpear: 'boneSpear', tyrantSpear: 'boneSpear',
+  stoneKnife: 'knife', boneKnife: 'boneKnife', trikeKnife: 'boneKnife',
+  bow: 'bow', ironBow: 'ironBow', stoneSickle: 'sickle'
+};
+var WEP_BY_KIND = { axe: 'axe', pick: 'pick', spear: 'spear', knife: 'knife', bow: 'bow', sickle: 'sickle' };
+function weaponMeshKey(id) {
+  if (!id) return '';
+  var k = WEP_MESH[id];
+  if (k) return k;
+  var def = WEAPONS[id];
+  return def ? (WEP_BY_KIND[def.kind] || '') : '';
+}
 function refreshTool() {
   if (!player.axe) return;
   var w = equippedWeapon();          // 가방에서 장착한 무기 하나만 손에 든다
-  player.axe.visible = w === 'axe';
-  player.spear.visible = w === 'spear' || w === 'trikeSpear';
-  if (player.boneSpear) player.boneSpear.visible = w === 'boneSpear';
-  if (player.knife) player.knife.visible = w === 'stoneKnife';
-  if (player.boneKnife) player.boneKnife.visible = w === 'boneKnife' || w === 'trikeKnife';
-  if (player.bow) player.bow.visible = w === 'bow';
-  if (player.ironBow) player.ironBow.visible = w === 'ironBow';
-  if (player.sickle) player.sickle.visible = w === 'stoneSickle';
-  if (player.pick) player.pick.visible = w === 'stonePick';
+  var on = weaponMeshKey(w);
+  player.axe.visible = on === 'axe';
+  player.spear.visible = on === 'spear';
+  if (player.boneSpear) player.boneSpear.visible = on === 'boneSpear';
+  if (player.knife) player.knife.visible = on === 'knife';
+  if (player.boneKnife) player.boneKnife.visible = on === 'boneKnife';
+  if (player.bow) player.bow.visible = on === 'bow';
+  if (player.ironBow) player.ironBow.visible = on === 'ironBow';
+  if (player.sickle) player.sickle.visible = on === 'sickle';
+  if (player.pick) player.pick.visible = on === 'pick';
   if (typeof renderQuickSlots === 'function') renderQuickSlots();
   updateOutfit();
 }
@@ -16743,34 +16815,54 @@ function updateRiverWater(t) {
 }
 
 /* 무기별 궤적 FX — 칼은 가로 호, 창은 앞으로 뻗는 잔상 */
+/* 🎯 v3.9.3 — 바닥에 깔리던 노란 반원 '장판'을 없앴다.
+   예전엔 반지름 1.2m 짜리 가로 고리를 허리 높이에 눕혀 놓아서, 사선 카메라로 보면
+   발 앞 바닥에 커다란 노란 판때기처럼 깔렸다(시선을 가리고 촌스러움).
+   이제는 카메라를 향하는 '얇은 초승달 검기' 한 줄을 허리 높이에 잠깐 보여 준다. */
 var SLASH_GEO = {
-  knife: new THREE.RingGeometry(0.86, 1.22, 20, 1, 0, 1.45),
-  spear: new THREE.ConeGeometry(0.06, 1.35, 5)
+  spear: new THREE.ConeGeometry(0.05, 1.15, 5)
 };
-function spawnSlashArc(x, y, z, facing, kind, tint) {
-  var col = tint || (kind === 'knife' ? 0xfff3c8 : (kind === 'spear' ? 0xd9f2ff : 0xffe0b0));
-  var mat = new THREE.MeshBasicMaterial({
-    color: col, transparent: true, opacity: tint ? 0.88 : 0.5, depthWrite: false,
-    side: THREE.DoubleSide, blending: THREE.AdditiveBlending
-  });
-  var mesh;
-  if (kind === 'spear') {
-    mesh = new THREE.Mesh(SLASH_GEO.spear, mat);
-    mesh.rotation.x = Math.PI / 2;
-    mesh.rotation.z = -facing;
-    mesh.position.set(x + Math.sin(facing) * 0.95, y, z + Math.cos(facing) * 0.95);
-  } else {
-    mesh = new THREE.Mesh(SLASH_GEO.knife, mat);
-    mesh.rotation.x = -Math.PI / 2;
-    // 호의 중심이 바라보는 방향(+Z 기준)에 오도록 90도 돌려 잡는다
-    mesh.rotation.z = facing + Math.PI / 2 - 0.72;
-    mesh.position.set(x + Math.sin(facing) * 0.40, y + 0.06, z + Math.cos(facing) * 0.40);
+var SLASH_TEX = null;
+function slashCrescentTex() {
+  if (SLASH_TEX) return SLASH_TEX;
+  var cv = document.createElement('canvas');
+  cv.width = cv.height = 256;
+  var c = cv.getContext('2d');
+  c.translate(128, 128);
+  /* 위로 볼록한 얇은 호 — 가운데는 진하고 양 끝은 사라진다 */
+  var N = 22;
+  for (var i = 0; i < N; i++) {
+    var t0 = i / N, t1 = (i + 1) / N;
+    var a0 = -1.15 + t0 * 2.30, a1 = -1.15 + t1 * 2.30;
+    var mid = (t0 + t1) * 0.5;
+    var alpha = Math.pow(Math.sin(mid * Math.PI), 0.7);
+    c.beginPath();
+    c.lineWidth = 5 + 9 * Math.sin(mid * Math.PI);
+    c.lineCap = 'round';
+    c.strokeStyle = 'rgba(255,255,255,' + (alpha * 0.95).toFixed(3) + ')';
+    c.arc(0, 26, 104, a0 - Math.PI / 2, a1 - Math.PI / 2);
+    c.stroke();
   }
-  mesh.renderOrder = 4;
-  scene.add(mesh);
+  SLASH_TEX = new THREE.CanvasTexture(cv);
+  return SLASH_TEX;
+}
+function spawnSlashArc(x, y, z, facing, kind, tint) {
+  var col = tint || (kind === 'knife' ? 0xfff6dc : 0xdff4ff);
+  var mat = new THREE.SpriteMaterial({
+    map: slashCrescentTex(), color: col, transparent: true, opacity: tint ? 0.85 : 0.60,
+    depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending
+  });
+  var sp = new THREE.Sprite(mat);
+  var s = kind === 'spear' ? 1.05 : 1.30;
+  sp.scale.set(s, s, 1);
+  sp.position.set(x + Math.sin(facing) * 0.42, y + 0.05, z + Math.cos(facing) * 0.42);
+  /* 화면에서 보이는 기울기 — 사선 카메라(CAM_YAW) 기준으로 몸이 향한 쪽을 정면으로 */
+  mat.rotation = (CAM_YAW + Math.PI) - facing + (kind === 'spear' ? Math.PI / 2 : 0);
+  sp.renderOrder = 6;
+  scene.add(sp);
   fx.push({
-    mesh: mesh, life: 0, max: kind === 'spear' ? 0.18 : 0.26,
-    vx: 0, vy: 0, vz: 0, spin: 0, grav: 0, slash: true, fxMat: mat
+    mesh: sp, life: 0, max: 0.20, vx: 0, vy: 0.55, vz: 0, spin: 0, grav: 0,
+    slash: true, slashSpr: true, baseScale: s, opa0: tint ? 0.85 : 0.60, fxMat: mat
   });
 }
 
@@ -19098,6 +19190,29 @@ function spawnBurst(x, y, z, color, n, power) {
     });
   }
 }
+/* 🪵 v3.9.3 — 나무 조각·돌 조각 파편
+   도끼·곡갱이질이 밋밋하다는 피드백으로, 맞은 자리에서 얇은 조각이
+   사수 쪽으로 팩 튀어 오른다(중력·회전 있음). */
+var CHIP_GEO = { wood: new THREE.BoxGeometry(0.16, 0.035, 0.075), rock: new THREE.BoxGeometry(0.10, 0.08, 0.09) };
+function spawnChips(x, y, z, n, color, dir, kind) {
+  n = n || 6;
+  var geo = CHIP_GEO[kind === 'rock' ? 'rock' : 'wood'];
+  var mat = fxMat(color);
+  var bx = -Math.sin(dir || 0), bz = -Math.cos(dir || 0);   /* 맞은 자리에서 사수 쪽으로 튄다 */
+  for (var i = 0; i < n; i++) {
+    var m = new THREE.Mesh(geo, mat);
+    m.position.set(x + rnd(-0.18, 0.18), y + rnd(-0.12, 0.18), z + rnd(-0.18, 0.18));
+    m.rotation.set(rnd(0, TAU), rnd(0, TAU), rnd(0, TAU));
+    m.scale.set(rnd(0.6, 1.15), rnd(0.7, 1.2), rnd(0.6, 1.15));
+    scene.add(m);
+    var sp = rnd(1.4, 3.2);
+    fx.push({
+      mesh: m, life: 0, max: rnd(0.55, 0.95),
+      vx: bx * sp + rnd(-1.5, 1.5), vy: rnd(1.8, 4.2), vz: bz * sp + rnd(-1.5, 1.5),
+      spin: rnd(-11, 11), grav: 15
+    });
+  }
+}
 function spawnHearts(x, y, z, n) {
   var geo = FXGEO.heart;
   var mat = FXGEO.heartMat;
@@ -19128,11 +19243,13 @@ function updateFx(dt) {
       continue;
     }
     if (f.slash) {
+      /* 🎯 v3.9.3 — 얇은 초승달 검기(sprite)는 크기 비율을 지키며 흐려진다 */
       var kk = k;
-      f.mesh.material.opacity = (1 - kk) * 0.55;
-      var gs = 1 + kk * 0.28;
-      f.mesh.scale.set(gs, gs, gs);
-      if (f.mesh.rotation.order) f.mesh.rotation.z = f.mesh.rotation.z;
+      f.mesh.material.opacity = (1 - kk) * (1 - kk) * (f.opa0 || 0.6);
+      var gs = 1 + kk * 0.30;
+      var bs = f.baseScale || 1;
+      f.mesh.scale.set(bs * gs, bs * gs, 1);
+      f.mesh.position.y += (f.vy || 0) * 0.016;
       continue;
     }
     if (f.anger) {
@@ -20393,6 +20510,12 @@ function equipQuick(id) {
   toast(w.icon + ' ' + w.name + ' 장착 · ' + tag);
 }
 
+/* 🛠 v3.9.3 — 퀵슬롯을 '한 칸 + 펼치기'로 정리
+   예전엔 보유한 무기가 오른쪽에 세로로 6개까지 줄줄이 떠서 화면을 가렸다.
+   이제 기본은 '지금 든 무기' 한 칸만 띄우고, 그 버튼을 누르면
+   보유한 무기 목록이 잠깐 펼쳐진다(고르면 바로 자동으로 접힌다).
+   맨손으로 내리는 칸도 목록 안에 있다. */
+var QS_OPEN = false;
 function renderQuickSlots() {
   if (!qslotEl) return;
   var items = quickSlotItems();
@@ -20408,25 +20531,61 @@ function renderQuickSlots() {
     b.innerHTML = '<span>' + icon + '</span>' + (id && QS_KIND_TAG[w.kind] ? '<i class="qk">' + QS_KIND_TAG[w.kind] + '</i>' : '');
     b.setAttribute('aria-label', name + (id ? ' 장착' : ' 내려놓기'));
     b.title = name;
-    b.addEventListener('click', function (e) { e.preventDefault(); equipQuick(id); });
+    b.addEventListener('click', function (e) {
+      e.preventDefault();
+      equipQuick(id);
+      QS_OPEN = false;                 // 고르면 바로 접어 화면을 비운다
+      renderQuickSlots();
+    });
     return b;
   }
-  frag.appendChild(mk(''));                       // 맨손 — 맨 아래(메인 버튼과 가장 가까움)
-  var shown = items.length > 9 ? items.slice(0, 9) : items;
-  for (var i = 0; i < shown.length; i++) frag.appendChild(mk(shown[i]));
+  function toggleBtn() {
+    var b = document.createElement('button');
+    b.className = 'qbtn qswap' + (QS_OPEN ? ' open' : '');
+    b.type = 'button';
+    b.innerHTML = '<span>' + (QS_OPEN ? '▾' : '▴') + '</span>';
+    b.setAttribute('aria-label', QS_OPEN ? '무기 목록 접기' : '무기 바꾸기');
+    b.title = QS_OPEN ? '무기 목록 접기' : '무기 바꾸기';
+    b.addEventListener('click', function (e) {
+      e.preventDefault();
+      QS_OPEN = !QS_OPEN;
+      sfx(QS_OPEN ? 'pick' : 'pop');
+      renderQuickSlots();
+    });
+    return b;
+  }
+  function holdBtn() {
+    /* 접힌 상태의 '지금 든 무기' 한 칸 — 누르면 목록이 펼쳐진다 (내려놓지 않는다) */
+    var b = document.createElement('button');
+    b.className = 'qbtn on qhold';
+    b.type = 'button';
+    b.innerHTML = '<span>' + (cur ? (ITEMS[cur] ? ITEMS[cur].icon : '🔪') : '✊') + '</span><i class="qcaret">▴</i>';
+    b.setAttribute('aria-label', (cur ? WEAPONS[cur].name : '맨손') + ' · 눌러서 무기 바꾸기');
+    b.title = '무기 바꾸기';
+    b.addEventListener('click', function (e) {
+      e.preventDefault();
+      QS_OPEN = true;
+      sfx('pick');
+      renderQuickSlots();
+    });
+    return b;
+  }
+
+  qslotEl.classList.toggle('mini', !QS_OPEN);
+  qslotEl.classList.toggle('tray', QS_OPEN);
+  qslotEl.classList.toggle('many', QS_OPEN && items.length > 8);
+
+  if (!QS_OPEN) {
+    /* 접힘 — 아래(엄지 가까운 쪽)에 지금 든 무기 한 칸만 */
+    frag.appendChild(holdBtn());
+  } else {
+    /* 펼침 — 맨 아래 접기 버튼, 바로 위에 맨손, 그 위로 보유 무기 */
+    frag.appendChild(toggleBtn());
+    frag.appendChild(mk(''));                       // 맨손
+    for (var i = 0; i < items.length; i++) frag.appendChild(mk(items[i]));
+  }
   qslotEl.innerHTML = '';
   qslotEl.appendChild(frag);
-  if (items.length > shown.length) {              // 넘치는 도구는 가방에서
-    var more = document.createElement('button');
-    more.className = 'qbtn more';
-    more.type = 'button';
-    more.innerHTML = '<span>＋' + (items.length - shown.length) + '</span>';
-    more.setAttribute('aria-label', '나머지 도구 — 가방 열기');
-    more.title = '나머지 도구는 가방에서';
-    more.addEventListener('click', function (e) { e.preventDefault(); openSheet('bag'); });
-    qslotEl.appendChild(more);
-  }
-  qslotEl.classList.toggle('many', items.length > 9);
 }
 
 var chipsDirty = true;
@@ -21062,14 +21221,25 @@ function startGather(n) {
 }
 function gatherTap(n, last) {
   var wk = gatherAnimKind();
-  var cb = startSwing(wk, last ? 0.36 : 0.30);
+  var wood = (n.kind === 'tree' || n.kind === 'pine' || n.kind === 'bamboo' || n.kind === 'dryBush');
+  var stone = (n.kind === 'rock' || n.kind === 'ore' || n.kind === 'ice' || n.kind === 'metalVein' || n.kind === 'frostVein');
+  /* 🪓 v3.9.3 — 나무·바위는 한 박자 더 느리게 크게 휘두른다 (도끼·곡갱이가 '찍는' 맛이 나게) */
+  var dur = (wood || stone) ? (last ? 0.46 : 0.42) : (last ? 0.36 : 0.30);
+  var cb = startSwing(wk, dur);
   swingFx(wk, cb);
   var y = terrainH(n.x, n.z);
-  var hh = (n.kind === 'tree' || n.kind === 'pine' || n.kind === 'bamboo') ? 1.9 : 0.6;
+  var hh = (wood && n.kind !== 'dryBush') ? 1.35 : 0.6;
   sfx(gatherHitSound(n.kind));
-  spawnBurst(n.x, y + hh, n.z, n.kind === 'rock' || n.kind === 'ore' || n.kind === 'ice' ? 0x9aa19a : 0x8a5d3a,
-    last ? 9 : 4, last ? 1 : 0.55);
-  n.shake = last ? 0.42 : 0.22;
+  /* 맞은 자리에 작은 먼지·불똥 + 나무조각·돌조각 파편 */
+  spawnBurst(n.x, y + hh, n.z, stone ? 0x9aa19a : 0x8a5d3a, last ? 7 : 3, last ? 0.9 : 0.5);
+  if (wood) {
+    spawnChips(n.x, y + hh * 0.80, n.z, last ? 9 : 5, 0x8a5d3a, player.facing, 'wood');
+    spawnChips(n.x, y + hh * 0.62, n.z, last ? 4 : 2, 0x5d7a3a, player.facing + 0.6, 'wood');   /* 잎·수피 */
+  } else if (stone) {
+    spawnChips(n.x, y + hh * 0.70, n.z, last ? 7 : 4, 0x8e938c, player.facing, 'rock');
+  }
+  /* 나무가 톡톡 흔들린다 — 마지막 한 방은 더 크게 */
+  n.shake = last ? 0.62 : (wood ? 0.36 : 0.22);
   if (player.pos && n) {
     var fx2 = Math.sin(player.facing), fz2 = Math.cos(player.facing);
     spawnBurst(player.pos.x + fx2 * 0.6, groundY(player.pos.x, player.pos.z) + 0.9, player.pos.z + fz2 * 0.6,
@@ -25611,19 +25781,19 @@ function poseSkill(k, isBow) {
   var hit = Math.max(0, Math.min(1, (k - 0.42) / 0.26));
   var rest = Math.max(0, (k - 0.68) / 0.32);
   if (isBow) {
-    player.armL.rotation.x = -1.52;
-    player.armL.rotation.z = -0.08 - 0.10 * hit;
-    player.armR.rotation.x = -0.30 - 0.85 * wind + 1.55 * hit;
-    player.armR.rotation.z = 0.42 * wind - 0.30 * hit;
+    player.armL.rotation.x = -1.38;
+    player.armL.rotation.z = -0.10 - 0.08 * hit;
+    player.armR.rotation.x = -0.30 - 0.70 * wind + 1.15 * hit;
+    player.armR.rotation.z = 0.36 * wind - 0.24 * hit;
     player.body.rotation.y = 0.34 - 0.30 * hit;
     player.body.rotation.x = -0.06 + 0.16 * hit;
     player.head.rotation.y = -0.20 + 0.16 * hit;
     return;
   }
-  player.armR.rotation.x = -2.75 * wind + 3.10 * hit - 0.30 * rest;
-  player.armR.rotation.z = 0.20 - 0.34 * hit;
-  player.armL.rotation.x = -2.10 * wind + 2.30 * hit - 0.20 * rest;
-  player.armL.rotation.z = -0.26 + 0.30 * hit;
+  player.armR.rotation.x = -1.85 * wind + 2.42 * hit - 0.28 * rest;
+  player.armR.rotation.z = 0.20 - 0.30 * hit;
+  player.armL.rotation.x = -1.42 * wind + 1.90 * hit - 0.20 * rest;
+  player.armL.rotation.z = -0.26 + 0.24 * hit;
   player.body.rotation.x = -0.24 * wind + 0.50 * hit - 0.18 * rest;
   player.body.rotation.y = -0.20 + 0.30 * hit;
   player.body.rotation.z = 0.10 * wind - 0.16 * hit;
@@ -26093,6 +26263,29 @@ function v28TrikeStep(d, A, dt, dp) {
   return false;
 }
 
+/* 🦾 v3.9.3 — 어깨·팔꿈치 관절 제한
+   "팔도 졸라 허우적대네" — 어깨가 머리 뒤로 170° 넘게 젖혀지거나 팔꿈치가
+   반대로 꺾이는 포즈가 섞여 있었다. 도끼·칼·창·활·스킬 어떤 동작이 와도
+   마지막에 이 범위로 다잡아, 사람이 낼 수 있는 자세 밖으로 나가지 않게 한다. */
+var ARM_LIM = {
+  shoulderX: [-1.95, 0.85],   // 위로 112° ~ 뒤로 49°
+  shoulderY: [-0.90, 0.90],
+  shoulderZ: [-0.85, 0.85],   // 옆으로 49°
+  elbowX: [-1.45, 0.06]       // 팔꿈치는 앞으로만 접힌다 (반대로 꺾이지 않음)
+};
+function v393ClampArm(a, el) {
+  if (a) {
+    a.rotation.x = clamp(a.rotation.x, ARM_LIM.shoulderX[0], ARM_LIM.shoulderX[1]);
+    a.rotation.y = clamp(a.rotation.y, ARM_LIM.shoulderY[0], ARM_LIM.shoulderY[1]);
+    a.rotation.z = clamp(a.rotation.z, ARM_LIM.shoulderZ[0], ARM_LIM.shoulderZ[1]);
+  }
+  if (el) el.rotation.x = clamp(el.rotation.x, ARM_LIM.elbowX[0], ARM_LIM.elbowX[1]);
+}
+function v393ClampArms() {
+  v393ClampArm(player.armL, player.elbowL);
+  v393ClampArm(player.armR, player.elbowR);
+}
+
 function updatePlayer(dt) {
   var ix = joy.x + ((keys.KeyD || keys.ArrowRight) ? 1 : 0) - ((keys.KeyA || keys.ArrowLeft) ? 1 : 0);
   var iy = joy.y + ((keys.KeyS || keys.ArrowDown) ? 1 : 0) - ((keys.KeyW || keys.ArrowUp) ? 1 : 0);
@@ -26436,7 +26629,7 @@ function updatePlayer(dt) {
         armLx = -0.52 * arc; armLz = -0.28 * arc;
       } else if (cb === 2) {
         // 3타 · 한 발 내딛고 머리 위에서 무겁게 내려찍기
-        player.armR.rotation.x = -2.55 + 1.95 * sp;
+        player.armR.rotation.x = -2.18 + 1.60 * sp;
         player.armR.rotation.z = 0.22 - 0.34 * sp;
         bodyY = -0.36 + 0.62 * sp;
         bodyX = -0.16 + 0.42 * sp;
@@ -26444,12 +26637,19 @@ function updatePlayer(dt) {
         step = 0.10 * hit;
         armLx = -0.60 * wind + 0.20 * hit; armLz = 0.16;
       } else {
-        // 1타 · 머리 위로 들어 정면 아래로 내려찍기
-        player.armR.rotation.x = -2.30 + 1.72 * sp;
-        player.armR.rotation.z = 0.16 - 0.26 * sp;
-        bodyY = -0.28 + 0.48 * sp;
-        bodyX = -0.08 + 0.20 * sp;
-        armLx = -0.42 * arc; armLz = 0.12 * arc;
+        /* 1타 · 도끼를 머리 위로 크게 들어(예비 동작) 정면 아래로 찍는다
+           v3.9.3 — 예전엔 이미 들린 자세에서 시작해 '툭' 내려놓는 느낌이었다.
+           0~34% 들어올리기 → 34~66% 내려찍기 → 남은 구간 여운으로 나눴다. */
+        var uR = Math.min(1, sp / 0.34);
+        var dR = Math.max(0, Math.min(1, (sp - 0.34) / 0.32));
+        var sR = Math.max(0, (sp - 0.66) / 0.34);
+        player.armR.rotation.x = -0.34 - 1.92 * uR + 1.74 * dR + 0.40 * sR;
+        player.armR.rotation.z = 0.10 + 0.06 * uR - 0.20 * dR;
+        bodyY = -0.30 * uR + 0.46 * dR;
+        bodyX = -0.12 * uR + 0.30 * dR;
+        step = 0.10 * dR;
+        headY = 0.12 * uR - 0.20 * dR;
+        armLx = -0.46 * uR + 0.26 * dR; armLz = 0.14;
       }
     }
     player.body.rotation.y = bodyY;
@@ -26516,6 +26716,8 @@ function updatePlayer(dt) {
   if (player.craftT > 0) poseCraft();
   // ❄️ 툰드라 덜덜 떨림 — 좌표·자세를 다 잡은 뒤 마지막에 미세 진동만 더한다
   updateShiver(dt, t);
+  /* 🦾 v3.9.3 — 마지막 잠금: 어깨·팔꿈치가 사람 가동 범위를 넘지 않게 */
+  v393ClampArms();
 }
 
 /* =========================================================
@@ -29452,7 +29654,8 @@ function loop(now) {
     }
     if (nd.shake > 0) {
       nd.shake -= dt;
-      nd.group.rotation.z = Math.sin(worldT * 55) * 0.07 * nd.shake;
+      /* 🪓 v3.9.3 — 톡톡 흔들림을 더 크게 (0.07 → 0.13) */
+      nd.group.rotation.z = Math.sin(worldT * 52) * 0.13 * nd.shake;
       if (nd.shake <= 0) nd.group.rotation.z = 0;
     }
   }
@@ -42645,7 +42848,7 @@ try { sndLoad(); } catch (e) { }
 (function () {
   var f = $id('startFoot');
   if (!f) return;
-  f.innerHTML = 'WILD LIFE · v3.9.2 &nbsp;|&nbsp; 조이스틱으로 걷고 <b>오른쪽 큰 버튼은 공격</b> · 작은 버튼은 채집·상호작용 · <b>점프</b>는 초록 버튼/Space';
+  f.innerHTML = 'WILD LIFE · v3.9.3 &nbsp;|&nbsp; 조이스틱으로 걷고 <b>오른쪽 큰 버튼은 공격</b> · 작은 버튼은 채집·상호작용 · <b>점프</b>는 초록 버튼/Space';
 })();
 
 /* ── 8) 검수 API ─────────────────────────────────────────────── */
@@ -43744,10 +43947,14 @@ refreshTool = function () {
   v391HoldPose();
 };
 
-/* ── 2) 카메라 — 기본 거리 25% 당기기 (캐릭터·무기·이펙트가 크게) ─────── */
-var _v391BaseDist = baseDist;
+/* ── 2) 카메라 — 폰 세로 화면에서 캐릭터를 크게 ───────────────────────
+   v3.9.3: "캐릭터가 여전히 작다" 피드백 → 세로 화면 기본 거리 21.4 → 13.4로 당졌다
+   (화면비별로 나눠, 가로·데스크톱은 주변을 볼 수 있는 거리를 남긴다). */
 baseDist = function (a) {
-  return _v391BaseDist(a) * 0.75;
+  if (a < 0.62) return 13.4;   // 폰 세로 (390×844 ≈ 0.46)
+  if (a < 0.9) return 14.5;    // 조금 넓은 폰
+  if (a < 1.25) return 16.0;   // 태블릿 세로 · 작은 창
+  return 17.5;                 // 가로 · 데스크톱
 };
 
 /* ── 3) 상단 HUD — 온도/시간 알약을 '내 집' 줄에 붙여 겹침 제거 ───────── */
@@ -43986,15 +44193,28 @@ function v392HandWorld(sock) {
   return V392_HAND;
 }
 
-/* 활 각도: 활등(국소 +X)이 몸 바깥(오른손이 든 쪽)으로 열리고,
-   활 면은 몸과 나란히 서서 몸통·옆구리를 뚫지 않는다.
-   +Y(시위)는 세로 — 손에서 떨어져 보이지 않는다. */
+/* 🏹 v3.9.3 — 활 각도
+   v3.9.2 까지는 활 면을 정면(카메라 쪽)으로 활짝 열어 두었다.
+   그래서 화면에서 '커다란 고리' 하나로 보였다.
+   이제 활등은 세로(월드 +Y)로 세우고, 활 면은 몸 옆으로 45도쯤 비스듬히 돌려
+   '손에 쥔 활' 실루엣이 읽히게 한다. 쏘는 순간에만 반듯하게 세운다.
+   (활 부품은 BOW_SHAPE_Q 로 이미 '활등 = 국소 ±z · 배 = 국소 -y' 로 돌려 두었다) */
 function v392BowQuat(w, f, aim) {
-  if (aim) {
-    v391SetWorldQuat(w, 0.02, f + Math.PI, 0.04, 'YXZ');            // 쏘는 순간 — 반듯하게 세운다
-  } else {
-    v391SetWorldQuat(w, 0.05, f + Math.PI - 0.12, 0.10 + Math.sin(worldT * 1.6) * 0.02, 'YXZ');
-  }
+  /* v3.9.3 — 활 면을 카메라 쪽으로 조금 열고(40도) 못 다음 어깨 높이로
+     활등은 세로. 사선 카메라(CAM_YAW) 기준이라 어디를 보든 같은 실루엣이 된다. */
+  var yawFace = CAM_YAW - Math.PI / 2;              // 활 면이 카메라를 정면으로 볼 때
+  var cant = aim ? 0.32 : 0.60;
+  v391SetWorldQuat(w, -Math.PI / 2 + 0.05, yawFace + cant, 0.13, 'YXZ');
+}
+
+/* 손바닥 중심 월드 좌표 — 손목 소켓의 국소 (0, -0.05, 0.015) */
+function v393PalmWorld() {
+  var sock = player.wristL || player.armL;
+  if (!sock) return null;
+  sock.updateWorldMatrix(true, false);
+  V392_HAND.set(0, -0.05, 0.015);
+  sock.localToWorld(V392_HAND);
+  return V392_HAND;
 }
 
 v391HoldPose = function () {
@@ -44002,23 +44222,13 @@ v391HoldPose = function () {
   var f = player.facing || 0;
   var bowW = v392BowItem();
   if (bowW && bowW.visible && bowW.parent) {
-    var hand = v392HandWorld(bowW.parent);
-    /* 손목에서 손바닥(주먹) 중심까지 — 팔이 늘어져 있으므로 아래로 4.5cm,
-       살짝 앞으로 1.5cm. 그립 중심을 여기에 두면 주먹이 그립을 감싼다. */
-    var px = hand.x + Math.sin(f) * 0.015;
-    var py = hand.y - 0.045;
-    var pz = hand.z + Math.cos(f) * 0.015;
-    v391SetWorldPos(bowW, px, py, pz);
+    var hand = v393PalmWorld();
+    if (hand) v391SetWorldPos(bowW, hand.x, hand.y, hand.z);
     v392BowQuat(bowW, f, player.bowT > 0);
   }
-  /* 나머지 무기는 v3.9.1 자세 그대로 (활만 따로 잡았으므로 직접 처리) */
-  if (player.spear && player.spear.visible) v391SetWorldQuat(player.spear, -0.92, f, 0.20, 'YXZ');
-  if (player.boneSpear && player.boneSpear.visible) v391SetWorldQuat(player.boneSpear, -0.92, f, 0.20, 'YXZ');
-  if (player.axe && player.axe.visible) v391SetWorldQuat(player.axe, 0.10, f, Math.PI + 0.30, 'YXZ');
-  if (player.knife && player.knife.visible) v391SetWorldQuat(player.knife, -0.65, f, 0.16, 'YXZ');
-  if (player.boneKnife && player.boneKnife.visible) v391SetWorldQuat(player.boneKnife, -0.65, f, 0.16, 'YXZ');
-  if (player.sickle && player.sickle.visible) v391SetWorldQuat(player.sickle, -0.30, f, 0.30, 'YXZ');
-  if (player.pick && player.pick.visible) v391SetWorldQuat(player.pick, 0.10, f, Math.PI + 0.16, 'YXZ');
+  /* ✋ v3.9.3 — 나머지 무기는 손에서 팔을 따라 함께 휘두른다.
+     (v3.9.1 은 무기 각도를 월드에 고정해 두어서, 팔을 휘둘러도 무기만 제자리에
+      떠 있는 것처럼 보였다 → 그 고정을 풀고 원래의 손 소켓 자세로 되돌린다) */
 };
 
 /* HERO 스켈레톤은 updatePlayer 다음에 움직인다(heroFrame).
@@ -44036,8 +44246,10 @@ var _v392WeaponPose = v391WeaponPose;
 v391WeaponPose = function (w) {
   if (!w || !player) return;
   if (w === player.bow || w === player.ironBow) {
-    w.scale.setScalar(0.90);
-    w.position.set(0.0, -0.045, 0.015);      // 소켓(=손목) 기준 손바닥 위치
+    /* 🏹 v3.9.3 — 크기는 활 부품(bowShape) 안에서 이미 0.62배로 줄였으므로
+       그룹 배율은 1로 두고, 위치만 손바닥에 맞춘다. */
+    w.scale.setScalar(1);
+    w.position.set(0.0, -0.05, 0.015);      // 손목 소켓 기준 손바닥 위치
     try { w.traverse(function (o) { if (o.isMesh) o.frustumCulled = false; }); } catch (e) { }
     return;
   }
@@ -44440,6 +44652,214 @@ window.__game.v392 = {
     var p = w.parent;
     return { type: p.type, name: p.name || '', kids: p.children.length, hero: !!(HERO && HERO.handG === p),
       heroReady: !!(HERO && HERO.ready) };
+  }
+};
+
+/* ==========================================================================
+   WILD LIFE v3.9.3 — ① 무기를 '진짜 손'에 · 바닥 장판 제거 · 팔 관절 다잡기
+   --------------------------------------------------------------------------
+   v3.9.2 는 무기를 숨은 절차 팔에 매달아 두어서, 실제로 보이는 히어로(GLB)의
+   손과 어긋났다(활이 몸에서 떠 떠 있고, 칼이 손을 떠났다). 이제 매 프레임
+   · 히어로 손 본(HandL / HandR)의 월드 위치·방향을 읽어
+   · 활은 왼손에 세로로, 근접 무기는 오른손에 쥐여 준다.
+   그리고 v3.9.1 이 덧대던 '바닥 노란 반원 장판'을 걷어낸다.
+   ========================================================================== */
+
+/* ── 0) 숨은 절차 팔의 무기 메시가 1초 감시(guard)에 꺼지지 않게 ─────────── */
+(function v393KeepWeapons() {
+  var list = [player.bow, player.ironBow, player.axe, player.spear, player.boneSpear,
+    player.knife, player.boneKnife, player.sickle, player.pick, player.hammer, player.spoon];
+  for (var i = 0; i < list.length; i++) {
+    var w = list[i];
+    if (!w) continue;
+    w.__v37keep = true;
+    w.traverse(function (o) { if (o.isMesh) { o.__v37keep = true; } });
+  }
+})();
+
+/* ── 1) 바닥 반원 장판 제거 — swingFx 를 기본(초승달 검기)만 남긴다 ──────── */
+var _v393SwingFxBase = (typeof _v391SwingFx === 'function') ? _v391SwingFx : swingFx;
+swingFx = function (kind, combo) {
+  _v393SwingFxBase(kind, combo);
+  /* 콤보 마무리에만 얇은 검기를 한 줄 더 — 바닥에는 아무것도 깔지 않는다 */
+  if ((combo || 0) === 2) {
+    var gy = groundY(player.pos.x, player.pos.z);
+    spawnSlashArc(player.pos.x, gy + 1.00, player.pos.z, player.facing + 0.26,
+      (kind === 'spear' || kind === 'boneSpear' || kind === 'bambooSpear') ? 'spear' : 'knife', 0xfff4d0);
+  }
+};
+
+/* ── 2) 손 소켓 — 히어로 손 본(없으면 절차 손목)의 월드 위치와 '손가락 방향' ── */
+var V393_Q = new THREE.Quaternion(), V393_QL = new THREE.Quaternion();
+var V393_V1 = new THREE.Vector3(), V393_V2 = new THREE.Vector3(), V393_V3 = new THREE.Vector3();
+var V393_SIDE = new THREE.Vector3(1, 0, 0);
+var V393_DOWN = new THREE.Vector3(0, -1, 0);
+var V393_UPV = new THREE.Vector3(0, 1, 0);
+var V393_YUP = new THREE.Vector3(0, 1, 0);
+var V393_HAND = {
+  L: { ok: false, p: new THREE.Vector3(), d: new THREE.Vector3() },
+  R: { ok: false, p: new THREE.Vector3(), d: new THREE.Vector3() }
+};
+function v393Hand(side) {
+  var o = V393_HAND[side];
+  o.ok = false;
+  var bone = null;
+  if (typeof HERO !== 'undefined' && HERO && HERO.ready && HERO.bones) {
+    bone = (side === 'L') ? HERO.bones.handL : HERO.bones.handR;
+  }
+  if (bone) {
+    bone.updateWorldMatrix(true, false);
+    bone.getWorldPosition(o.p);
+    var tip = null, ch = bone.children;
+    for (var i = 0; i < ch.length; i++) { if (ch[i].isBone) { tip = ch[i]; break; } }
+    if (tip) {
+      tip.getWorldPosition(V393_V1);
+      o.d.copy(V393_V1).sub(o.p);
+    } else {
+      bone.getWorldQuaternion(V393_Q);
+      o.d.copy(V393_DOWN).applyQuaternion(V393_Q);
+    }
+    if (o.d.lengthSq() < 1e-8) o.d.copy(V393_DOWN);
+    o.d.normalize();
+    o.ok = true;
+    return o;
+  }
+  var w = (side === 'L') ? player.wristL : player.wristR;
+  if (!w) return o;
+  w.updateWorldMatrix(true, false);
+  w.getWorldPosition(o.p);
+  w.getWorldQuaternion(V393_Q);
+  o.d.copy(V393_DOWN).applyQuaternion(V393_Q).normalize();
+  o.ok = true;
+  return o;
+}
+/* 무기 그룹의 월드 회전·위치를 직접 지정 (부모 국소값으로 되돌려 넣는다) */
+function v393SetWorldQ(w, q) {
+  if (!w || !w.parent) return;
+  w.parent.updateWorldMatrix(true, false);
+  w.parent.getWorldQuaternion(V393_QL);
+  w.quaternion.copy(V393_QL.invert().multiply(q));
+}
+function v393SetWorldP(w, x, y, z) {
+  if (!w || !w.parent) return;
+  w.parent.updateWorldMatrix(true, false);
+  V393_V3.set(x, y, z);
+  w.parent.worldToLocal(V393_V3);
+  w.position.copy(V393_V3);
+}
+/* 무기를 손에 쥐기 — up: 모델의 +Y 를 손가락 방향으로(+1) / 반대로(-1) */
+function v393GripWeapon(w, hand, up, roll, mixUp) {
+  if (!w || !w.parent || !hand.ok) return;
+  V393_V2.copy(hand.d);
+  if (up < 0) V393_V2.negate();
+  /* mixUp — 창처럼 긴 무기는 손가락 방향 그대로 두면 45° 기울어 버린다.
+     중력 위쪽과 섮어 세로로 세워 들게 한다. */
+  if (mixUp) V393_V2.multiplyScalar(1 - mixUp).addScaledVector(V393_UPV, mixUp).normalize();
+  V393_Q.setFromUnitVectors(V393_YUP, V393_V2);
+  if (roll) V393_Q.multiply(new THREE.Quaternion().setFromAxisAngle(V393_YUP, roll));
+  v393SetWorldP(w, hand.p.x, hand.p.y, hand.p.z);
+  v393SetWorldQ(w, V393_Q);
+}
+
+/* ── 3) 팔 관절 제한 (히어로 GLB 클립이 사지를 크게 뻗는 순간을 다잡는다) ── */
+var V393_ARM_LIMIT = 1.83;      // 어깨에서 손까지 수직 아래 기준 105°
+var V393_LAT_LIMIT = 0.72;      // 몸 옆(좌우)으로 벌어짐 sin44° 까지만
+var V393_ARM_MAX = { L: 0, R: 0 };   // 검수용 — 관측된 최대 각도(rad)
+function v393HeroArms() {
+  if (typeof HERO === 'undefined' || !HERO.ready || !HERO.bones) return;
+  var b = HERO.bones;
+  var f = player.facing || 0;
+  /* 몸의 옆 방향(좌우) — 팔이 옆으로 활개치는 것을 막는 기준 */
+  V393_SIDE.set(Math.cos(f), 0, -Math.sin(f));
+  for (var s = 0; s < 2; s++) {
+    var side = s ? 'R' : 'L';
+    var up = s ? b.armR : b.armL;
+    var hd = s ? b.handR : b.handL;
+    if (!up || !hd) continue;
+    up.updateWorldMatrix(true, false);
+    hd.updateWorldMatrix(true, false);
+    up.getWorldPosition(V393_V1);
+    hd.getWorldPosition(V393_V2);
+    V393_V2.sub(V393_V1);
+    if (V393_V2.lengthSq() < 1e-8) continue;
+    V393_V2.normalize();
+    var dir = V393_V2.clone();
+    var target = null;
+    /* ① 옆으로 벌어짐 제한 — 정면/뒤로는 자유롭게, 옆으로만 44°까지 */
+    var lat = dir.dot(V393_SIDE);
+    if (Math.abs(lat) > V393_LAT_LIMIT) {
+      var sg = lat > 0 ? 1 : -1;
+      V393_V3.copy(dir).addScaledVector(V393_SIDE, -lat);       // 옆 성분 제거
+      if (V393_V3.lengthSq() < 1e-6) V393_V3.copy(V393_DOWN);
+      V393_V3.normalize().multiplyScalar(Math.sqrt(1 - V393_LAT_LIMIT * V393_LAT_LIMIT));
+      target = V393_V3.clone().addScaledVector(V393_SIDE, V393_LAT_LIMIT * sg).normalize();
+    }
+    /* ② 수직 아래 기준 105° 를 넘는(머리 위로 젖혀지는) 팔 제한 */
+    var d0 = target || dir;
+    var ang = d0.angleTo(V393_DOWN);
+    if (ang > V393_ARM_MAX[side]) V393_ARM_MAX[side] = ang;
+    if (ang > V393_ARM_LIMIT) {
+      var ax = V393_V3.crossVectors(d0, V393_DOWN);
+      if (ax.lengthSq() > 1e-6) {
+        ax.normalize();
+        var qq = new THREE.Quaternion().setFromAxisAngle(ax, ang - V393_ARM_LIMIT);
+        target = (target || dir).clone().applyQuaternion(qq).normalize();
+      }
+    }
+    if (!target) continue;
+    var q2 = new THREE.Quaternion().setFromUnitVectors(dir, target);
+    up.getWorldQuaternion(V393_Q);
+    var nw = q2.multiply(V393_Q);
+    if (up.parent) {
+      up.parent.updateWorldMatrix(true, false);
+      up.parent.getWorldQuaternion(V393_QL);
+      up.quaternion.copy(V393_QL.invert().multiply(nw));
+    }
+    up.updateWorldMatrix(true, false);
+  }
+}
+
+/* ── 4) 매 프레임 자세 잡기 — 활은 왼손, 나머지는 오른손 ─────────────────── */
+v391HoldPose = function () {
+  if (!player || !started) return;
+  var f = player.facing || 0;
+  v393HeroArms();
+  var hL = v393Hand('L'), hR = v393Hand('R');
+  var bowW = v392BowItem();
+  if (bowW && bowW.visible) {
+    /* 활 — 그립을 왼손에, 몸통·다리에 박히지 않도록 바깥·앞으로 조금 더 */
+    var lx = Math.cos(f), lz = -Math.sin(f);        // 캐릭터의 왼쪽 방향
+    v393SetWorldP(bowW,
+      hL.p.x + lx * 0.15 + Math.sin(f) * 0.08,
+      hL.p.y + 0.02,
+      hL.p.z + lz * 0.15 + Math.cos(f) * 0.08);
+    v392BowQuat(bowW, f, player.bowT > 0);
+  }
+  if (hR.ok) {
+    if (player.axe && player.axe.visible) v393GripWeapon(player.axe, hR, -1, 0);
+    if (player.pick && player.pick.visible) v393GripWeapon(player.pick, hR, -1, 0);
+    if (player.sickle && player.sickle.visible) v393GripWeapon(player.sickle, hR, 1, 0);
+    if (player.knife && player.knife.visible) v393GripWeapon(player.knife, hR, 1, 0);
+    if (player.boneKnife && player.boneKnife.visible) v393GripWeapon(player.boneKnife, hR, 1, 0);
+    if (player.spear && player.spear.visible) v393GripWeapon(player.spear, hR, -1, 0, 0.62);
+    if (player.boneSpear && player.boneSpear.visible) v393GripWeapon(player.boneSpear, hR, -1, 0, 0.62);
+  }
+};
+
+/* 검수용 — 무기·손 상태 */
+window.__game = window.__game || {};
+window.__game.v393 = {
+  hands: function () {
+    var L = v393Hand('L'), R = v393Hand('R');
+    return { hero: !!(HERO && HERO.ready), L: { ok: L.ok, p: [+L.p.x.toFixed(2), +L.p.y.toFixed(2), +L.p.z.toFixed(2)], d: [+L.d.x.toFixed(2), +L.d.y.toFixed(2), +L.d.z.toFixed(2)] },
+      R: { ok: R.ok, p: [+R.p.x.toFixed(2), +R.p.y.toFixed(2), +R.p.z.toFixed(2)], d: [+R.d.x.toFixed(2), +R.d.y.toFixed(2), +R.d.z.toFixed(2)] } };
+  },
+  armMax: function (reset) { var o = { L: +(V393_ARM_MAX.L * 57.3).toFixed(0), R: +(V393_ARM_MAX.R * 57.3).toFixed(0) }; if (reset) { V393_ARM_MAX.L = 0; V393_ARM_MAX.R = 0; } return o; },
+  weaponPos: function (id) {
+    var w = player[id];
+    if (!w) return null;
+    var v = new THREE.Vector3(); w.getWorldPosition(v);
+    return { vis: w.visible, p: [+v.x.toFixed(2), +v.y.toFixed(2), +v.z.toFixed(2)] };
   }
 };
 
