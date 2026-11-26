@@ -750,8 +750,8 @@ function frame(now){
   var spanY = Math.max(300, 592 - topY);
   var sT = Math.min(1, 500/spanY);
   CAM.s += (sT - CAM.s)*0.78;
-  var xT = clamp(-466*Math.sin(o.rot*Math.PI/180)*0.5, -70, 70);
-  CAM.x += (xT - CAM.x)*0.55;
+  var xT = clamp(-470*Math.sin(o.rot*Math.PI/180)*0.95, -90, 90);
+  CAM.x += (xT - CAM.x)*0.8;
   R.camera.setAttribute('transform','translate('+(200+CAM.x).toFixed(2)+' 592) scale('+CAM.s.toFixed(4)+') translate(-200 -592)');
   R.shadowWrap.setAttribute('transform','translate(200 568) scale('+(1+air*0.55)+' '+(1-air*0.15)+') translate(-200 -568)');
   R.shadow.setAttribute('opacity', (0.9 - air*0.38).toFixed(3));
