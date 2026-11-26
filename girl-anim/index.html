@@ -244,7 +244,7 @@ scene.add(rig);
 
 let mixer = null, actions = {}, current = 'Idle', slow = false, model = null;
 
-const MODEL_VERSION = '20261126f';
+const MODEL_VERSION = '20261126g';
 const loader = new GLTFLoader();
 loader.load('./girl.glb?v=' + MODEL_VERSION, (gltf) => {
   model = gltf.scene;
@@ -259,7 +259,6 @@ loader.load('./girl.glb?v=' + MODEL_VERSION, (gltf) => {
     }
   });
   rig.add(model);
-  window.__girl = { THREE, scene, camera, renderer, rig, model, mixer };
 
   // frame the character
   const box = new THREE.Box3().setFromObject(model);
@@ -267,7 +266,6 @@ loader.load('./girl.glb?v=' + MODEL_VERSION, (gltf) => {
   const k = 2.0 / h;
   model.scale.setScalar(k);
   model.position.y = -box.min.y * k - 1.0;
-  window.__girl.frame = { h, k, min: box.min.toArray(), max: box.max.toArray(), pos: model.position.toArray() };
 
   mixer = new THREE.AnimationMixer(model);
   for (const clip of gltf.animations) {
