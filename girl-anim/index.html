@@ -2,951 +2,350 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
-<meta name="theme-color" content="#FFF1E6">
-<title>모모 · 디즈니 12원칙으로 움직이는 소녀</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#f7ecec">
+<title>모모 3D — 움직이는 소녀</title>
 <style>
-  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{height:100%;margin:0;overflow:hidden;background:#FFF3EA;color:#5A3A2E;
-    font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif;
-    -webkit-font-smoothing:antialiased;user-select:none;-webkit-user-select:none;touch-action:manipulation}
-  #app{position:fixed;inset:0;height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+  :root{
+    --ink:#3b2b31;
+    --rose:#c98a9c;
+    --rose-deep:#a8637a;
+    --paper:#fdf7f4;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{
+    margin:0;padding:0;height:100%;overflow:hidden;
+    background:
+      radial-gradient(120% 80% at 50% 0%, #fff9f4 0%, #fbeef0 38%, #ecd9e2 72%, #dcc6d4 100%);
+    font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","맑은 고딕",system-ui,sans-serif;
+    color:var(--ink);
+    -webkit-user-select:none;user-select:none;
+    touch-action:none;
+  }
+  #app{position:fixed;inset:0;}
+  canvas{display:block;width:100%;height:100%;touch-action:none;}
 
-  #stage{position:relative;flex:1 1 auto;min-height:0;
-    background:radial-gradient(125% 78% at 50% 04%,#FFFAF4 0%,#FFF0E3 40%,#FFE0CB 70%,#F8C9B1 100%)}
-  #stage::after{content:'';position:absolute;inset:0;pointer-events:none;
-    background:radial-gradient(58% 34% at 50% 92%,rgba(255,205,175,.55),transparent 72%)}
-  .bokeh{position:absolute;border-radius:50%;filter:blur(16px);pointer-events:none;opacity:.55}
-  .b1{width:150px;height:150px;left:-40px;top:8%;background:#FFD9C4}
-  .b2{width:110px;height:110px;right:-30px;top:22%;background:#DFF3EC}
-  .b3{width:180px;height:180px;right:6%;bottom:-40px;background:#FFCFB6;opacity:.45}
-  .b4{width:90px;height:90px;left:12%;bottom:12%;background:#FFE6D2;opacity:.7}
+  header{
+    position:fixed;left:0;right:0;top:0;
+    padding:calc(env(safe-area-inset-top,0px) + 16px) 20px 0;
+    pointer-events:none;text-align:center;
+  }
+  header .kicker{
+    font-size:11px;letter-spacing:.24em;text-transform:uppercase;
+    color:var(--rose-deep);opacity:.75;font-weight:700;
+  }
+  header h1{
+    margin:6px 0 0;font-size:20px;font-weight:800;letter-spacing:-.02em;
+  }
+  header h1 span{color:var(--rose-deep);}
+  header p{
+    margin:5px 0 0;font-size:12px;color:#7b6470;opacity:.9;
+  }
 
-  #scene{position:absolute;top:0;bottom:0;left:0;right:0;margin:0 auto;width:100%;height:100%;max-width:600px;display:block}
+  #caption{
+    position:fixed;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 118px);
+    text-align:center;font-size:12.5px;line-height:1.5;color:#6d5561;
+    padding:0 26px;pointer-events:none;
+    transition:opacity .3s ease;
+  }
+  #caption b{color:var(--rose-deep);font-weight:700;}
 
-  .head{position:absolute;left:0;right:0;top:calc(10px + env(safe-area-inset-top));display:flex;flex-direction:column;
-    align-items:center;gap:2px;pointer-events:none;z-index:3}
-  .head h1{margin:0;font-size:15px;letter-spacing:.14em;font-weight:800;color:#8A5643;opacity:.9}
-  .head p{margin:0;font-size:10.5px;letter-spacing:.06em;color:#B0836E}
+  #bar{
+    position:fixed;left:0;right:0;bottom:0;
+    padding:10px 12px calc(env(safe-area-inset-bottom,0px) + 12px);
+    display:flex;flex-direction:column;gap:9px;align-items:center;
+    background:linear-gradient(to top, rgba(253,247,244,.94) 30%, rgba(253,247,244,0));
+  }
+  .row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;width:100%;max-width:520px;}
+  button{
+    font:inherit;font-size:14px;font-weight:700;letter-spacing:-.01em;
+    border:1px solid rgba(168,99,122,.28);
+    background:rgba(255,255,255,.72);
+    color:#5c424d;
+    padding:11px 16px;border-radius:999px;
+    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+    box-shadow:0 2px 8px rgba(140,90,110,.10);
+    transition:transform .12s ease, background .2s ease, color .2s ease, box-shadow .2s ease;
+  }
+  button:active{transform:scale(.95);}
+  button.on{
+    background:linear-gradient(180deg,#d79fb0,#b7718a);
+    color:#fff;border-color:transparent;
+    box-shadow:0 6px 16px rgba(167,99,122,.32);
+  }
+  button.small{font-size:12.5px;padding:9px 14px;}
+  button.small.on{background:linear-gradient(180deg,#b9a3d0,#8e77ad);box-shadow:0 6px 16px rgba(120,90,160,.3);}
 
-  .narr{position:absolute;left:50%;top:calc(62px + env(safe-area-inset-top));transform:translate(-50%,-6px);
-    padding:6px 13px;border-radius:999px;font-size:11.5px;font-weight:700;letter-spacing:.01em;white-space:nowrap;
-    color:#8A4B33;background:rgba(255,255,255,.8);border:1px solid rgba(255,255,255,.9);
-    box-shadow:0 6px 18px rgba(190,120,90,.16);opacity:0;transition:opacity .18s,transform .18s;z-index:4;pointer-events:none}
-  .narr.on{opacity:1;transform:translate(-50%,0)}
-
-  #panel{position:relative;z-index:5;padding:9px 12px calc(10px + env(safe-area-inset-bottom));
-    background:rgba(255,252,249,.82);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
-    border-top:1px solid rgba(255,255,255,.95);box-shadow:0 -10px 28px rgba(186,124,96,.12)}
-  .chips{max-width:520px;margin:0 auto;display:flex;gap:5px;overflow-x:auto;padding:1px 1px 7px;scrollbar-width:none;-ms-overflow-style:none}
-  .chips::-webkit-scrollbar{display:none}
-  .chip{flex:0 0 auto;padding:4px 9px;border-radius:999px;font-size:10.5px;font-weight:700;letter-spacing:.01em;
-    color:#B48A76;background:rgba(255,255,255,.72);border:1px solid rgba(230,196,178,.6);
-    transition:color .16s,background .16s,border-color .16s,transform .16s}
-  .chip.on{color:#fff;background:linear-gradient(180deg,#FF9C7C,#F97B62);border-color:#F98C6F;
-    transform:translateY(-1px);box-shadow:0 5px 12px rgba(249,123,98,.35)}
-  .row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;max-width:440px;margin:0 auto}
-  .btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:9px 4px 8px;
-    border:none;border-radius:17px;background:linear-gradient(180deg,#FFFFFF,#FFF4EC);
-    box-shadow:0 3px 0 rgba(226,183,163,.55),0 8px 16px rgba(196,132,104,.14);
-    color:#8A5643;font-family:inherit;font-weight:800;font-size:11.5px;letter-spacing:.02em;cursor:pointer;
-    transition:transform .09s,box-shadow .09s}
-  .btn .e{font-size:17px;line-height:1}
-  .btn:active{transform:translateY(2px) scale(.985);box-shadow:0 1px 0 rgba(226,183,163,.55),0 3px 8px rgba(196,132,104,.12)}
-  .btn.busy{animation:pulseBtn .45s ease}
-  @keyframes pulseBtn{0%{transform:scale(1)}45%{transform:scale(.95)}100%{transform:scale(1)}}
-  .opts{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px}
-  .opt{padding:4px 11px;border-radius:999px;border:1px solid rgba(230,196,178,.8);background:rgba(255,255,255,.7);
-    color:#A87F6C;font-family:inherit;font-size:10.5px;font-weight:700;letter-spacing:.02em;cursor:pointer}
-  .opt.on{color:#fff;background:linear-gradient(180deg,#8FD9C8,#5FC2AC);border-color:#74CDB9}
-
-  #sheet{position:fixed;inset:0;z-index:20;display:none;align-items:flex-end;background:rgba(122,80,60,.28)}
-  #sheet.on{display:flex}
-  .sheetIn{width:100%;max-height:78%;overflow-y:auto;background:#FFFBF7;border-radius:22px 22px 0 0;
-    padding:16px 18px calc(20px + env(safe-area-inset-bottom));box-shadow:0 -12px 40px rgba(120,70,50,.24);
-    animation:up .22s ease}
-  @keyframes up{from{transform:translateY(18px);opacity:.6}to{transform:none;opacity:1}}
-  .sheetIn h2{margin:0 0 4px;font-size:14px;color:#7C4B36;letter-spacing:.02em}
-  .sheetIn .sub{margin:0 0 12px;font-size:10.5px;color:#B08B78}
-  .plist{display:flex;flex-direction:column;gap:7px}
-  .pitem{display:flex;gap:9px;align-items:flex-start;font-size:11.5px;line-height:1.42;color:#6F4A39}
-  .pitem b{flex:0 0 22px;color:#F0855F;font-variant-numeric:tabular-nums}
-  .pitem span{opacity:.92}
-  .pitem.dim span{opacity:.5}
-  .close{width:100%;margin-top:14px;padding:11px;border:none;border-radius:14px;background:#F98C6F;color:#fff;
-    font-family:inherit;font-weight:800;font-size:12.5px;letter-spacing:.04em}
+  #loading{
+    position:fixed;inset:0;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:14px;
+    background:linear-gradient(180deg,#fff9f5,#efdde6);
+    z-index:20;transition:opacity .5s ease;
+  }
+  #loading .ring{
+    width:44px;height:44px;border-radius:50%;
+    border:3px solid rgba(201,138,156,.25);border-top-color:#b7718a;
+    animation:spin 1s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+  #loading p{font-size:13px;color:#8d6b78;margin:0;}
+  #loading.hide{opacity:0;pointer-events:none;}
+  #dl{
+    position:fixed;right:14px;top:calc(env(safe-area-inset-top,0px) + 12px);
+    font-size:11px;color:#8a6b78;text-decoration:none;
+    border-bottom:1px dotted rgba(138,107,120,.5);padding-bottom:1px;opacity:.85;
+  }
+  @media (max-height:640px){
+    header h1{font-size:17px;}
+    #caption{bottom:calc(env(safe-area-inset-bottom,0px) + 108px);font-size:11.5px;}
+    button{font-size:13px;padding:9px 13px;}
+  }
 </style>
 </head>
 <body>
-<div id="app">
-  <div id="stage">
-    <div class="bokeh b1"></div><div class="bokeh b2"></div><div class="bokeh b3"></div><div class="bokeh b4"></div>
-    <div class="head">
-      <h1>모 모</h1>
-      <p>디즈니 12원칙으로 움직이는 소녀</p>
-    </div>
-    <div class="narr" id="narr"></div>
+<div id="app"></div>
 
-    <svg id="scene" viewBox="36 74 328 524" preserveAspectRatio="xMidYMid meet" role="img" aria-label="디즈니 애니메이션 원칙으로 움직이는 소녀 캐릭터">
-      <defs>
-        <linearGradient id="gHair" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#96603F"/><stop offset=".42" stop-color="#7C4830"/><stop offset="1" stop-color="#5A3220"/>
-        </linearGradient>
-        <linearGradient id="gHairFront" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#A46B46"/><stop offset=".55" stop-color="#84502F"/><stop offset="1" stop-color="#6B3D25"/>
-        </linearGradient>
-        <linearGradient id="gSkin" x1=".2" y1="0" x2=".8" y2="1">
-          <stop offset="0" stop-color="#FFEBDB"/><stop offset=".55" stop-color="#FFE0CC"/><stop offset="1" stop-color="#F7C7AE"/>
-        </linearGradient>
-        <linearGradient id="gDress" x1=".1" y1="0" x2=".9" y2="1">
-          <stop offset="0" stop-color="#FF9E8B"/><stop offset=".5" stop-color="#FA7F6B"/><stop offset="1" stop-color="#EA6A59"/>
-        </linearGradient>
-        <linearGradient id="gBlouse" x1=".2" y1="0" x2=".8" y2="1">
-          <stop offset="0" stop-color="#FFFDF8"/><stop offset="1" stop-color="#FBEBDD"/>
-        </linearGradient>
-        <linearGradient id="gRibbon" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stop-color="#9BE6D6"/><stop offset="1" stop-color="#55BFA9"/>
-        </linearGradient>
-        <linearGradient id="gIris" x1=".2" y1="0" x2=".8" y2="1">
-          <stop offset="0" stop-color="#B87A46"/><stop offset=".45" stop-color="#8A5228"/><stop offset="1" stop-color="#4E2A14"/>
-        </linearGradient>
-        <linearGradient id="gSock" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#F3E7DF"/>
-        </linearGradient>
-        <linearGradient id="gShoe" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#A9714D"/><stop offset="1" stop-color="#7C4A2E"/>
-        </linearGradient>
-        <radialGradient id="gBlush"><stop offset="0" stop-color="#FF9C93" stop-opacity=".85"/><stop offset="1" stop-color="#FF9C93" stop-opacity="0"/></radialGradient>
-        <radialGradient id="gShadow"><stop offset="0" stop-color="#C08C72" stop-opacity=".40"/><stop offset=".6" stop-color="#C08C72" stop-opacity=".13"/><stop offset="1" stop-color="#B47E64" stop-opacity="0"/></radialGradient>
-        <radialGradient id="gStar"><stop offset="0" stop-color="#FFF9C9"/><stop offset="1" stop-color="#FFC978"/></radialGradient>
-        <clipPath id="clipEyeL"><ellipse cx="168" cy="234" rx="16" ry="19.5"/></clipPath>
-        <clipPath id="clipEyeR"><ellipse cx="232" cy="234" rx="16" ry="19.5"/></clipPath>
-        <clipPath id="clipHead"><path d="M200,120 C246,120 270,158 270,204 C270,240 262,268 240,284 C226,293 213,298 200,298 C187,298 174,293 160,284 C138,268 130,240 130,204 C130,158 154,120 200,120Z"/></clipPath>
-      </defs>
+<header>
+  <div class="kicker">Rigged · Animated in 3D</div>
+  <h1>모모 <span>3D</span></h1>
+  <p>드래그해서 돌려보고, 두 손가락으로 확대해봐</p>
+</header>
+<a id="dl" href="./girl.glb" download>리깅된 glb 내려받기</a>
 
-      <g id="camera">
-      <!-- ground shadow -->
-      <g id="shadowWrap"><ellipse id="shadow" cx="200" cy="568" rx="70" ry="12" fill="url(#gShadow)"/></g>
+<div id="caption"></div>
 
-      <g id="mb">
-        <!-- long back hair -->
-        <g id="hairBackG">
-          <path d="M200,106 C254,106 288,146 292,196 C296,240 302,286 306,330 C312,378 310,430 300,466
-                   Q294,448 288,468 Q278,448 270,472 Q260,450 252,474 Q242,452 234,476 Q222,458 212,478
-                   Q204,462 200,480 Q196,462 188,478 Q178,458 166,476 Q156,452 148,474 Q138,450 130,472
-                   Q122,448 112,468 Q106,448 100,466
-                   C90,430 88,378 94,330 C98,286 104,240 108,196 C112,146 146,106 200,106 Z"
-                fill="url(#gHair)"/>
-          <path d="M128,204 C120,266 118,344 126,418" stroke="#C08E68" stroke-opacity=".18" stroke-width="9" fill="none" stroke-linecap="round"/>
-          <path d="M272,204 C280,266 282,344 274,418" stroke="#C89A76" stroke-opacity=".14" stroke-width="9" fill="none" stroke-linecap="round"/>
-          <path d="M158,120 C148,150 146,180 148,204" stroke="#B9825C" stroke-opacity=".16" stroke-width="7" fill="none" stroke-linecap="round"/>
-        </g>
-
-        <!-- legs -->
-        <g id="legL">
-          <path d="M185,462 L185,534" stroke="#FFE1CE" stroke-width="21" stroke-linecap="round" fill="none"/>
-          <path d="M176,482 C175,500 175,514 177,524" stroke="#F2C0A6" stroke-opacity=".4" stroke-width="4" fill="none" stroke-linecap="round"/>
-          <path d="M185,492 L185,534" stroke="url(#gSock)" stroke-width="23" stroke-linecap="round" fill="none"/>
-          <path d="M174,496 C181,492 189,492 196,496" stroke="#E6D5C9" stroke-width="2.6" fill="none" stroke-linecap="round"/>
-          <path d="M168,538 C168,528 176,523 185,523 C194,523 202,528 202,538 C202,552 195,560 185,560 C175,560 168,552 168,538 Z" fill="url(#gShoe)"/>
-          <path d="M171,540 C178,536 192,536 199,540" stroke="#5E3820" stroke-width="2.2" fill="none" stroke-linecap="round" opacity=".6"/>
-          <path d="M180,532 c-3,-2 -6,-1 -6,2 c0,3 4,3 6,1 m10,-3 c3,-2 6,-1 6,2 c0,3 -4,3 -6,1" fill="#FFD9C8" opacity=".9"/>
-        </g>
-        <g id="legR">
-          <path d="M215,462 L215,534" stroke="#FFE1CE" stroke-width="21" stroke-linecap="round" fill="none"/>
-          <path d="M206,482 C205,500 205,514 207,524" stroke="#F2C0A6" stroke-opacity=".4" stroke-width="4" fill="none" stroke-linecap="round"/>
-          <path d="M215,492 L215,534" stroke="url(#gSock)" stroke-width="23" stroke-linecap="round" fill="none"/>
-          <path d="M204,496 C211,492 219,492 226,496" stroke="#E6D5C9" stroke-width="2.6" fill="none" stroke-linecap="round"/>
-          <path d="M198,538 C198,528 206,523 215,523 C224,523 232,528 232,538 C232,552 225,560 215,560 C205,560 198,552 198,538 Z" fill="url(#gShoe)"/>
-          <path d="M201,540 C208,536 222,536 229,540" stroke="#5E3820" stroke-width="2.2" fill="none" stroke-linecap="round" opacity=".6"/>
-          <path d="M210,532 c-3,-2 -6,-1 -6,2 c0,3 4,3 6,1 m10,-3 c3,-2 6,-1 6,2 c0,3 -4,3 -6,1" fill="#FFD9C8" opacity=".9"/>
-        </g>
-
-        <!-- skirt -->
-        <g id="skirtG">
-          <path d="M160,408 C156,428 146,452 124,474
-                   Q138,488 150,476 Q162,492 174,480 Q186,494 198,482 Q210,492 222,480
-                   Q234,492 246,476 Q258,490 272,474
-                   C252,452 246,428 240,408 Z" fill="url(#gDress)"/>
-          <path d="M160,408 C160,428 154,448 144,468 C136,456 132,432 134,410 Z" fill="#FFB6A5" opacity=".45"/>
-          <g stroke="#DE5E4C" stroke-opacity=".36" stroke-width="1.7" fill="none" stroke-linecap="round">
-            <path d="M172,410 C166,434 160,456 148,476"/>
-            <path d="M186,410 C184,436 182,458 180,482"/>
-            <path d="M200,410 C202,436 204,458 206,484"/>
-            <path d="M214,410 C218,436 222,458 228,480"/>
-            <path d="M228,410 C236,434 242,456 254,474"/>
-          </g>
-          <path d="M158,404 C174,400 226,400 242,404" stroke="#FFF6EC" stroke-width="3.4" fill="none" stroke-linecap="round" opacity=".9"/>
-          <path d="M232,434 c3,-4 8,-4 10,0 c2,4 -3,6 -5,8 c-2,-2 -7,-4 -5,-8 Z" fill="#FFF3E6" opacity=".5"/>
-        </g>
-
-        <!-- torso -->
-        <g id="torsoWrap">
-          <path d="M184,278 L184,312 Q200,320 216,312 L216,278 Z" fill="#F3B89E"/>
-          <path d="M200,306 C183,306 168,316 159,330 C151,346 148,368 149,390 C150,402 155,412 161,414 L239,414
-                   C245,412 250,402 251,390 C252,368 249,346 241,330 C232,316 217,306 200,306Z" fill="url(#gDress)"/>
-          <path d="M200,306 C186,308 176,318 170,332 C164,348 162,372 162,392 C162,402 164,408 166,412
-                   L186,414 L186,341 C178,337 176,331 176,323 C180,314 188,308 200,306 Z" fill="#FFB6A5" opacity=".34"/>
-          <ellipse cx="200" cy="303" rx="17" ry="6" fill="#E8A88E" opacity=".2"/>
-          <path d="M181,330 C188,339 194,343 200,343 C206,343 212,339 219,330" stroke="#E4665A" stroke-width="2.6" fill="none" stroke-linecap="round"/>
-          <path d="M184,333 C190,340 195,344 200,344 C205,344 210,340 216,333" stroke="#FFB3A4" stroke-width="1.4" fill="none" stroke-linecap="round" opacity=".7"/>
-          <path d="M164,408 C186,414 214,414 236,408" stroke="#FFF6EC" stroke-width="2.8" fill="none" opacity=".6"/>
-          <g transform="translate(200 358)">
-            <path d="M0,0 C-4,-7 -14,-9 -16,-3 C-18,3 -8,7 0,3 Z" fill="url(#gRibbon)"/>
-            <path d="M0,0 C4,-7 14,-9 16,-3 C18,3 8,7 0,3 Z" fill="url(#gRibbon)"/>
-            <rect x="-3.4" y="-4.2" width="6.8" height="8.4" rx="3.2" fill="#4FB49F"/>
-          </g>
-        </g>
-
-        <!-- arms -->
-        <g id="armL">
-          <path d="M156,334 L142,380" stroke="#FFE1CE" stroke-width="17" stroke-linecap="round" fill="none"/>
-          <g id="armLf">
-            <circle cx="142" cy="380" r="8.2" fill="#FFE1CE"/>
-            <path d="M142,380 L135,426" stroke="#FFE1CE" stroke-width="14.5" stroke-linecap="round" fill="none"/>
-            <path d="M148,360 C146,370 145,378 144,384" stroke="#F2C0A6" stroke-opacity=".4" stroke-width="3" fill="none" stroke-linecap="round"/>
-            <g id="armLh">
-              <circle cx="133" cy="440" r="11.4" fill="#FFE1CE"/>
-              <path d="M127,434 c-4,3 -5,7 -2,10" stroke="#F0B69B" stroke-width="2" fill="none" stroke-linecap="round"/>
-              <circle id="trkHandL" cx="133" cy="440" r=".1" fill="none"/>
-            </g>
-          </g>
-          <path d="M142,340 c5,5 10,8 15,8 c5,0 11,-3 15,-8" stroke="#EED8C6" stroke-width="1.6" fill="none"/>
-        </g>
-        <g id="armR">
-          <path d="M244,334 L258,380" stroke="#FFE1CE" stroke-width="17" stroke-linecap="round" fill="none"/>
-          <g id="armRf">
-            <circle cx="258" cy="380" r="8.2" fill="#FFE1CE"/>
-            <path d="M258,380 L265,426" stroke="#FFE1CE" stroke-width="14.5" stroke-linecap="round" fill="none"/>
-            <path d="M252,360 C254,370 255,378 256,384" stroke="#F2C0A6" stroke-opacity=".4" stroke-width="3" fill="none" stroke-linecap="round"/>
-            <g id="armRh">
-              <circle cx="267" cy="440" r="11.4" fill="#FFE1CE"/>
-              <path d="M273,434 c4,3 5,7 2,10" stroke="#F0B69B" stroke-width="2" fill="none" stroke-linecap="round"/>
-              <circle id="trkHandR" cx="267" cy="440" r=".1" fill="none"/>
-            </g>
-          </g>
-          <path d="M230,340 c4,5 9,8 14,8 c5,0 11,-3 15,-8" stroke="#EED8C6" stroke-width="1.6" fill="none"/>
-        </g>
-
-        <!-- head -->
-        <ellipse cx="200" cy="300" rx="19" ry="7" fill="#E29B7F" opacity=".28"/>
-        <g id="headWrap">
-          <path d="M200,120 C246,120 270,158 270,204 C270,236 262,262 244,279 C230,290 214,297 200,297
-                   C186,297 170,290 156,279 C138,262 130,236 130,204 C130,158 154,120 200,120Z" fill="url(#gSkin)"/>
-          <path d="M200,120 C246,120 270,158 270,204 C270,226 266,246 257,262 C252,232 240,214 200,214
-                   C160,214 148,232 143,262 C134,246 130,226 130,204 C130,158 154,120 200,120Z" fill="#F2BCA2" opacity=".18"/>
-
-          <ellipse id="blushL" cx="156" cy="260" rx="14.5" ry="9" fill="url(#gBlush)"/>
-          <ellipse id="blushR" cx="244" cy="260" rx="14.5" ry="9" fill="url(#gBlush)"/>
-
-          <!-- eyes -->
-          <g id="eyeL">
-            <ellipse cx="168" cy="234" rx="16" ry="19.5" fill="#FFFCF8"/>
-            <g clip-path="url(#clipEyeL)">
-              <ellipse id="irisL" cx="169.5" cy="240" rx="13.6" ry="16.6" fill="url(#gIris)"/>
-              <ellipse cx="169.5" cy="240" rx="13.6" ry="16.6" fill="none" stroke="#4A2A1E" stroke-width="2.2"/>
-              <ellipse id="pupilL" cx="169.5" cy="242" rx="6.6" ry="9" fill="#2A1710"/>
-              <circle cx="164" cy="232" r="5" fill="#FFFFFF" opacity=".96"/>
-              <circle cx="176" cy="248" r="2.3" fill="#FFFFFF" opacity=".7"/>
-              <ellipse cx="169" cy="226" rx="12" ry="5" fill="#3A2016" opacity=".16"/>
-            </g>
-            <path d="M151,227 Q168,208 187,226" stroke="#3E2419" stroke-width="4.6" stroke-linecap="round" fill="none"/>
-            <path d="M152,228 C148,224 147,221 148,218 C150,221 152,223 155,224 Z" fill="#3E2419"/>
-            <path d="M155,250 Q168,255 181,251" stroke="#D6A18A" stroke-width="1.1" fill="none" opacity=".35" stroke-linecap="round"/>
-          </g>
-          <g id="eyeR">
-            <ellipse cx="232" cy="234" rx="16" ry="19.5" fill="#FFFCF8"/>
-            <g clip-path="url(#clipEyeR)">
-              <ellipse id="irisR" cx="230.5" cy="240" rx="13.6" ry="16.6" fill="url(#gIris)"/>
-              <ellipse cx="230.5" cy="240" rx="13.6" ry="16.6" fill="none" stroke="#4A2A1E" stroke-width="2.2"/>
-              <ellipse id="pupilR" cx="230.5" cy="242" rx="6.6" ry="9" fill="#2A1710"/>
-              <circle cx="225" cy="232" r="5" fill="#FFFFFF" opacity=".96"/>
-              <circle cx="237" cy="248" r="2.3" fill="#FFFFFF" opacity=".7"/>
-              <ellipse cx="231" cy="226" rx="12" ry="5" fill="#3A2016" opacity=".16"/>
-            </g>
-            <path d="M249,227 Q232,208 213,226" stroke="#3E2419" stroke-width="4.6" stroke-linecap="round" fill="none"/>
-            <path d="M248,228 C252,224 253,221 252,218 C250,221 248,223 245,224 Z" fill="#3E2419"/>
-            <path d="M245,251 Q232,255 219,250" stroke="#D6A18A" stroke-width="1.1" fill="none" opacity=".35" stroke-linecap="round"/>
-          </g>
-          <g id="happy" opacity="0">
-            <path d="M153,238 Q168,220 183,238" stroke="#3E2419" stroke-width="4.4" fill="none" stroke-linecap="round"/>
-            <path d="M217,238 Q232,220 247,238" stroke="#3E2419" stroke-width="4.4" fill="none" stroke-linecap="round"/>
-          </g>
-
-          <g id="browG">
-            <path id="browL" d="M156,210 Q168,203 182,208" stroke="#8C5B41" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-opacity=".92"/>
-            <path id="browR" d="M244,208 Q232,203 218,210" stroke="#8C5B41" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-opacity=".92"/>
-          </g>
-
-          <path d="M198,250 Q202,254 199,257" stroke="#E7A488" stroke-width="1.9" fill="none" stroke-linecap="round"/>
-          <ellipse id="lipTint" cx="200" cy="270" rx="7.4" ry="3" fill="#F7A08E" opacity=".28"/>
-          <path id="mouthFill" d="" fill="#C4553F" opacity="0"/>
-          <path id="mouth" d="M191,266 Q200,274 209,266" stroke="#C0503C" stroke-width="2.8" fill="none" stroke-linecap="round"/>
-
-          <!-- bangs -->
-          <g id="bangsG">
-            <path d="M127,224 C124,158 154,116 200,116 C246,116 276,158 273,224
-                     C269,202 256,190 244,188 C228,188 212,196 197,195 C183,194 166,189 153,190 C140,193 130,206 127,224Z" fill="url(#gHairFront)"/>
-            <path d="M150,148 C143,176 144,192 154,208 C150,188 154,166 163,152 Z" fill="#8A5433" opacity=".28"/>
-            <path d="M226,136 C240,162 246,182 243,206 C236,184 228,162 218,146 Z" fill="#8A5433" opacity=".26"/>
-            <path d="M200,126 C206,152 209,172 203,190 C196,172 194,148 197,128 Z" fill="#8A5433" opacity=".22"/>
-            <path d="M158,166 C176,152 196,148 214,152" stroke="#C79A6E" stroke-opacity=".28" stroke-width="4" fill="none" stroke-linecap="round"/>
-            <path d="M176,132 C168,150 164,168 163,184" stroke="#C08F62" stroke-opacity=".16" stroke-width="2.2" fill="none" stroke-linecap="round"/>
-            <path d="M212,128 C222,148 230,166 232,180" stroke="#C08F62" stroke-opacity=".14" stroke-width="2.2" fill="none" stroke-linecap="round"/>
-            <path d="M240,156 l3.2,7 7.6,1 -5.7,5.3 1.5,7.6 -6.6,-3.8 -6.6,3.8 1.5,-7.6 -5.7,-5.3 7.6,-1 Z" fill="#FFE08A" opacity=".95"/>
-          </g>
-
-          <!-- side locks -->
-          <g id="sideL">
-            <path d="M134,206 C127,244 125,300 129,354 C132,388 137,410 141,424
-                     C146,410 148,386 146,354 C144,300 140,246 142,212 Z" fill="url(#gHairFront)"/>
-            <path d="M137,226 C133,268 133,318 138,362" stroke="#C09267" stroke-opacity=".22" stroke-width="3" fill="none" stroke-linecap="round"/>
-          </g>
-          <g id="sideR">
-            <path d="M266,206 C273,244 275,300 271,354 C268,388 263,410 259,424
-                     C254,410 252,386 254,354 C256,300 260,246 258,212 Z" fill="url(#gHairFront)"/>
-            <path d="M263,226 C267,268 267,318 262,362" stroke="#C09267" stroke-opacity=".22" stroke-width="3" fill="none" stroke-linecap="round"/>
-          </g>
-
-          <!-- ribbon -->
-          <g id="ribbonG" transform="translate(141 153) scale(.92) translate(-141 -153)">
-            <path d="M140,148 C120,130 104,136 106,154 C108,170 126,174 140,162 Z" fill="url(#gRibbon)"/>
-            <path d="M136,148 C132,138 140,132 144,138" stroke="#BFF2E7" stroke-width="2.4" fill="none" stroke-linecap="round" opacity=".75"/>
-            <path d="M141,148 C152,126 168,122 170,138 C172,156 156,164 141,162 Z" fill="url(#gRibbon)"/>
-            <ellipse cx="141" cy="155" rx="7.4" ry="8.4" fill="#4EB29D"/>
-            <g id="ribbonTailA">
-              <path d="M141,162 C138,184 130,204 114,220 C122,223 131,215 138,202 C144,190 146,175 143,162 Z" fill="url(#gRibbon)"/>
-              <path d="M138,174 C134,190 128,204 118,215" stroke="#BFF2E7" stroke-width="1.8" fill="none" opacity=".55"/>
-            </g>
-            <g id="ribbonTailB">
-              <path d="M145,164 C147,188 152,208 165,222 C157,226 148,219 143,205 C140,191 142,175 145,164 Z" fill="#6FCDB9"/>
-            </g>
-          </g>
-          <circle id="trkHead" cx="200" cy="240" r=".1" fill="none"/>
-        </g>
-      </g>
-
-      <g id="fx"></g>
-      <path id="trail" fill="none" stroke="#FFD98A" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="0.1 11" opacity="0"/>
-      </g>
-    </svg>
-  </div>
-
-  <div id="panel">
-    <div class="chips" id="chips">
-      <div class="chip" data-k="anticipation">예비동작</div>
-      <div class="chip" data-k="squash">찌그러짐·늘어남</div>
-      <div class="chip" data-k="arc">호 궤적</div>
-      <div class="chip" data-k="follow">따라오기</div>
-      <div class="chip" data-k="slow">완급</div>
-      <div class="chip" data-k="secondary">부수동작</div>
-      <div class="chip" data-k="timing">타이밍</div>
-      <div class="chip" data-k="exagg">과장</div>
-    </div>
-    <div class="row">
-      <button class="btn" data-act="jump"><span class="e">⤴️</span>점프</button>
-      <button class="btn" data-act="wave"><span class="e">👋</span>인사</button>
-      <button class="btn" data-act="spin"><span class="e">🌀</span>빙글</button>
-      <button class="btn" data-act="sparkle"><span class="e">✨</span>반짝</button>
-    </div>
-    <div class="opts">
-      <button class="opt" id="slowBtn">0.35× 느리게</button>
-      <button class="opt" id="listBtn">12원칙 보기</button>
-    </div>
+<div id="bar">
+  <div class="row" id="motions"></div>
+  <div class="row">
+    <button class="small" id="speed">0.35× 느리게</button>
   </div>
 </div>
 
-<div id="sheet">
-  <div class="sheetIn">
-    <h2>디즈니 12가지 애니메이션 원칙</h2>
-    <p class="sub">모모는 이 중 여섯 가지를 눈에 보이게 쓰고 있어요 · 밝게 표시된 항목</p>
-    <div class="plist" id="plist"></div>
-    <button class="close" id="closeBtn">닫기</button>
-  </div>
-</div>
+<div id="loading"><div class="ring"></div><p id="loadtxt">모델 불러오는 중…</p></div>
 
-<script>
-(function(){
-'use strict';
-var $ = function(id){ return document.getElementById(id); };
-var R = {
-  camera:$('camera'), mb:$('mb'), shadow:$('shadow'), shadowWrap:$('shadowWrap'),
-  hairBack:$('hairBackG'), sideL:$('sideL'), sideR:$('sideR'),
-  tailA:$('ribbonTailA'), tailB:$('ribbonTailB'),
-  armL:$('armL'), armLf:$('armLf'), armLh:$('armLh'),
-  armR:$('armR'), armRf:$('armRf'), armRh:$('armRh'),
-  skirt:$('skirtG'), torso:$('torsoWrap'), head:$('headWrap'),
-  eyeL:$('eyeL'), eyeR:$('eyeR'), happy:$('happy'), browG:$('browG'),
-  pupilL:$('pupilL'), pupilR:$('pupilR'), irisL:$('irisL'), irisR:$('irisR'),
-  mouth:$('mouth'), mouthFill:$('mouthFill'),
-  blushL:$('blushL'), blushR:$('blushR'),
-  legL:$('legL'), legR:$('legR'), fx:$('fx'), trail:$('trail'),
-  trkHead:$('trkHead'), trkHandL:$('trkHandL'), trkHandR:$('trkHandR'),
-  narr:$('narr'), chips:$('chips')
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+const CLIP_INFO = {
+  Idle: ['대기', '가슴으로 숨 쉬고, 무게중심이 좌우로 천천히 옮겨가'],
+  Walk: ['걷기', '골반이 먼저 돌고 팔이 반대로 따라와 — 무게가 발에 실려'],
+  Run:  ['달리기', '상체를 앞으로 기울이고 무릎을 크게 접어 차올려'],
+  Jump: ['점프', '웅크려 예비동작 → 도약 → 공중에서 다리 접기 → 착지'],
+  Wave: ['인사', '팔을 어깨 높이로 올리고 손목으로 흔들어'],
+  Spin: ['빙글', '제자리에서 한 바퀴, 팔은 원심력처럼 벌려'],
 };
 
-/* ---------- easing / tracks ---------- */
-var EASE = {
-  lin:function(u){return u;},
-  in:function(u){return u*u;},
-  out:function(u){return 1-(1-u)*(1-u);},
-  io:function(u){return u*u*(3-2*u);},
-  out3:function(u){return 1-Math.pow(1-u,3);},
-  in3:function(u){return u*u*u;},
-  back:function(u){var c=1.9;return 1+(c+1)*Math.pow(u-1,3)+c*Math.pow(u-1,2);},
-  backIn:function(u){var c=1.7;return (c+1)*u*u*u-c*u*u;},
-  elastic:function(u){ if(u<=0)return 0; if(u>=1)return 1; var p=0.42;
-    return Math.pow(2,-9*u)*Math.sin((u-p/4)*(2*Math.PI)/p)+1; }
-};
-function tw(p, keys){
-  if(p<=keys[0][0]) return keys[0][1];
-  for(var i=1;i<keys.length;i++){
-    if(p<=keys[i][0]){
-      var a=keys[i-1], b=keys[i];
-      var span=Math.max(1e-5,b[0]-a[0]);
-      var u=(p-a[0])/span;
-      var fn=EASE[b[2]||'io']||EASE.io;
-      return a[1]+(b[1]-a[1])*fn(u);
-    }
-  }
-  return keys[keys.length-1][1];
-}
-function clamp(v,a,b){ return v<a?a:(v>b?b:v); }
-function osc(p,a,b,cycles){
-  if(p<=a||p>=b) return 0;
-  var u=(p-a)/(b-a);
-  var env=Math.sin(Math.PI*u);
-  return Math.sin(u*Math.PI*2*cycles)*env;
-}
-function deg(d){ return d*Math.PI/180; }
+const loadingEl = document.getElementById('loading');
+const loadTxt = document.getElementById('loadtxt');
+const captionEl = document.getElementById('caption');
 
-/* ---------- pose ---------- */
-function base(){
-  return {
-    dx:0,dy:0,rot:0,sx:1,sy:1,
-    tRot:0,tSX:1,tSY:1,
-    hRot:0,hTilt:0,hDX:0,hDY:0,hSX:1,hSY:1,
-    armL:7,armLel:-9,armLwr:0,armR:-7,armRel:9,armRwr:0,
-    skirtRot:0,skirtSX:1,skirtSY:1,skirtLift:0,
-    legL:0,legR:0,
-    eye:1,pupilX:0,pupilY:0,happy:0,
-    brow:0,smile:0.55,open:0,blush:0.4,
-    hairRot:0,hairLift:0,side:0,ribbon:0,hairSpread:0,
-    trail:0
-  };
+function fail(msg){
+  loadTxt.textContent = msg;
+  document.querySelector('#loading .ring').style.display = 'none';
 }
 
-/* ---------- actions ---------- */
-var ACT = {};
-
-ACT.jump = {
-  dur:1400, name:'점프',
-  phases:[
-    {a:0.00,b:0.21,t:'예비동작 · 움츠러들기',c:['anticipation','timing']},
-    {a:0.21,b:0.34,t:'쭉 늘어나 도약 · 찌그러짐 & 늘어남',c:['squash','exagg']},
-    {a:0.34,b:0.55,t:'포물선 궤적 · 호',c:['arc','slow']},
-    {a:0.55,b:0.70,t:'착지 눌림 · 찌그러짐',c:['squash','timing']},
-    {a:0.70,b:1.00,t:'머리·치마가 늦게 정착 · 따라오기',c:['follow','secondary']}
-  ],
-  f:function(p,o){
-    o.dy = tw(p,[[0,0],[0.17,26,'out'],[0.22,25],[0.28,2,'in3'],[0.34,-88,'out'],[0.41,-144,'out'],[0.47,-132,'in'],[0.55,-10,'in3'],[0.60,12,'in3'],[0.66,-11,'out'],[0.73,3,'out'],[0.82,0,'io']]);
-    o.sy = tw(p,[[0,1],[0.17,0.79,'out'],[0.22,0.81],[0.28,1.26,'out3'],[0.36,1.08,'io'],[0.45,0.99],[0.55,0.74,'in3'],[0.62,1.11,'out'],[0.70,0.93,'io'],[0.80,1.01,'io'],[1,1]]);
-    o.sx = 1+(1-o.sy)*0.86;
-    o.rot = tw(p,[[0,0],[0.22,0],[0.34,-2],[0.46,5],[0.58,0],[0.70,-1.5],[0.85,0]]);
-    o.hRot = tw(p,[[0,0],[0.17,7],[0.28,-10],[0.42,-6],[0.55,5],[0.66,10],[0.80,0]]);
-    o.hDY = tw(p,[[0,0],[0.17,3],[0.28,-3],[0.55,3],[0.66,4],[0.80,0]]);
-    o.tRot = tw(p,[[0,0],[0.17,4],[0.30,-3],[0.5,2],[0.6,-4],[0.72,1],[0.85,0]]);
-    var a = tw(p,[[0,7],[0.17,-26,'out'],[0.22,-24],[0.30,118,'out3'],[0.42,146,'io'],[0.55,96,'out'],[0.66,112,'out'],[0.80,40,'io'],[1,7]]);
-    o.armL = a; o.armR = -a;
-    var e = tw(p,[[0,-9],[0.17,-26],[0.30,6],[0.55,26],[0.72,18],[0.86,0],[1,-9]]);
-    o.armLel = e; o.armRel = -e;
-    o.legL = tw(p,[[0,0],[0.17,6],[0.34,-12],[0.5,-14],[0.58,2],[0.7,0]]);
-    o.legR = -o.legL*0.6;
-    o.skirtSX = tw(p,[[0,1],[0.17,1.04],[0.30,0.9],[0.42,1.06],[0.55,1.12],[0.62,0.94],[0.72,1.03],[1,1]]);
-    o.smile = tw(p,[[0,0.5],[0.22,0.4],[0.34,0.9],[0.55,0.75],[0.62,0.95],[0.8,0.6]]);
-    o.eye = tw(p,[[0,1],[0.2,0.85],[0.3,0.55],[0.42,1],[0.58,1],[0.62,0.25],[0.7,1]]);
-    o.blush = tw(p,[[0,0.4],[0.3,0.7],[0.7,0.55]]);
-    o.trail = 1;
-  }
-};
-
-ACT.wave = {
-  dur:1900, name:'인사',
-  phases:[
-    {a:0.00,b:0.18,t:'예비 — 팔을 살짝 내리기',c:['anticipation']},
-    {a:0.18,b:0.38,t:'호를 그리며 들기 · 호 궤적',c:['arc','slow']},
-    {a:0.38,b:0.86,t:'손목 흔들기 · 부수동작',c:['secondary','timing']},
-    {a:0.86,b:1.00,t:'머리카락이 늦게 정착 · 따라오기',c:['follow']}
-  ],
-  f:function(p,o){
-    o.armR = tw(p,[[0,-7],[0.14,-20,'out'],[0.22,-16],[0.38,-152,'out3'],[0.46,-146,'io'],[0.84,-142,'io'],[1,-7,'io']]);
-    o.armRel = tw(p,[[0,9],[0.14,22],[0.38,16,'out'],[0.46,10],[0.84,9],[1,9]]);
-    o.armRwr = 0;
-    if(p>0.38 && p<0.88){ o.armRwr = 17*Math.sin((p-0.38)/0.5*Math.PI*2*3)*Math.sin(Math.PI*clamp((p-0.38)/0.5,0,1)); }
-    o.armL = tw(p,[[0,7],[0.2,4],[0.45,-4],[0.85,-3],[1,7]]);
-    o.armLel = tw(p,[[0,-9],[0.45,-16],[0.85,-14],[1,-9]]);
-    o.hTilt = tw(p,[[0,0],[0.14,0],[0.36,-6.5,'out'],[0.86,-6],[1,0,'io']]);
-    o.hRot = tw(p,[[0,0],[0.14,1],[0.36,-3],[0.86,-2],[1,0]]);
-    o.tRot = tw(p,[[0,0],[0.3,-2],[0.7,-1.5],[1,0]]);
-    o.dx = tw(p,[[0,0],[0.36,-3],[0.8,-2],[1,0]]);
-    o.smile = tw(p,[[0,0.5],[0.3,0.85],[0.55,1],[0.85,0.8],[1,0.55]]);
-    o.happy = tw(p,[[0,0],[0.34,0],[0.45,1],[0.86,1],[0.95,0]]);
-    o.eye = tw(p,[[0,1],[0.34,1],[0.42,0.45],[0.86,0.45],[0.94,1]]);
-    o.blush = tw(p,[[0,0.4],[0.4,0.75],[0.9,0.5]]);
-    o.pupilX = tw(p,[[0,0],[0.3,0],[0.45,-2],[0.9,-2],[1,0]]);
-    o.skirtRot = tw(p,[[0,0],[0.3,-1.4],[0.7,-1],[1,0]]);
-    o.trail = 1;
-  }
-};
-
-ACT.spin = {
-  dur:2200, name:'빙글',
-  phases:[
-    {a:0.00,b:0.22,t:'반대로 틀어두기 · 예비동작',c:['anticipation']},
-    {a:0.22,b:0.40,t:'한 바퀴 — 접혔다 펴지며 회전 · 호 궤적',c:['arc','timing','slow']},
-    {a:0.40,b:0.66,t:'치마·머리 원심 · 따라오기',c:['follow','squash']},
-    {a:0.66,b:1.00,t:'어질어질 감쇠 · 겹치는 동작',c:['follow','secondary']}
-  ],
-  f:function(p,o){
-    var u = clamp((p-0.24)/0.14,0,1);
-    var ang = 360*EASE.io(u);
-    if(p>0.40) ang = tw(p,[[0.40,360],[0.52,376,'out'],[0.64,355,'io'],[0.76,361,'io'],[0.88,359,'io'],[1,360,'io']]);
-    var rad = ang*Math.PI/180;
-    var cs = Math.cos(rad);
-    if(Math.abs(cs) < 0.07) cs = 0.07;
-    o.rot = tw(p,[[0,0],[0.12,-6,'out'],[0.20,-8],[0.26,0,'in3'],[0.5,0],[0.6,1.6],[0.72,-1.2],[0.86,0],[1,0]]);
-    o.dy = tw(p,[[0,0],[0.16,10],[0.26,-18,'out3'],[0.42,-14],[0.56,4],[0.68,-3],[0.8,0]]);
-    o.sy = tw(p,[[0,1],[0.16,0.92],[0.24,1.09],[0.42,1.05],[0.56,0.93],[0.68,1.03],[0.80,0.99],[1,1]]);
-    o.sx = (1+(1-o.sy)*0.8) * cs;
-    var flare = Math.abs(Math.sin(rad));
-    o.skirtSX = (1 + flare*0.26) * tw(p,[[0,1],[0.16,0.94],[0.4,1.02],[0.7,1.0],[1,1]]);
-    o.skirtSY = tw(p,[[0,1],[0.16,1.02],[0.4,0.98],[0.9,1],[1,1]]);
-    o.skirtLift = tw(p,[[0,0],[0.16,-2],[0.30,-7],[0.6,-4],[0.8,0]]);
-    o.hairSpread = flare;
-    o.armL = tw(p,[[0,7],[0.16,-10],[0.26,38,'out'],[0.62,42],[0.8,22],[1,7]]);
-    o.armR = -o.armL;
-    o.armLel = tw(p,[[0,-9],[0.2,-18],[0.34,-10],[0.7,-12],[0.86,0],[1,-9]]);
-    o.armRel = -o.armLel;
-    o.hRot = tw(p,[[0,0],[0.16,3],[0.26,-4],[0.66,-2],[0.76,9],[0.84,-5],[0.92,2],[1,0]]);
-    o.hTilt = tw(p,[[0,0],[0.16,1],[0.26,-4],[0.66,-2],[0.78,6],[0.86,-3],[0.94,1],[1,0]]);
-    o.smile = 0.75;
-    o.eye = 1;
-    var dizzy = p>0.6 ? (1-(p-0.6)/0.4) : 0;
-    o.pupilX = Math.cos((p-0.6)*Math.PI*2*3)*3.2*dizzy;
-    o.pupilY = Math.sin((p-0.6)*Math.PI*2*3)*3.2*dizzy;
-    o.blush = tw(p,[[0,0.45],[0.4,0.8],[0.85,0.85],[1,0.5]]);
-    o.trail = 0;
-  }
-};
-
-ACT.sparkle = {
-  dur:1800, name:'반짝',
-  phases:[
-    {a:0.00,b:0.24,t:'두 손 모으기 · 예비동작',c:['anticipation']},
-    {a:0.24,b:0.38,t:'펑! · 과장',c:['exagg','squash']},
-    {a:0.38,b:0.80,t:'별이 흩어지는 호 · 따라오기',c:['arc','follow']},
-    {a:0.80,b:1.00,t:'잔불 흩어짐 · 부수동작',c:['secondary','slow']}
-  ],
-  f:function(p,o){
-    o.dy = tw(p,[[0,0],[0.20,14,'out'],[0.26,13],[0.32,-14,'out3'],[0.5,-9],[0.64,2],[0.78,0]]);
-    o.sy = tw(p,[[0,1],[0.20,0.9],[0.28,1.1,'out3'],[0.4,1.02],[0.66,1.04],[0.78,1]]);
-    o.sx = 1+(1-o.sy)*0.85;
-    o.armL = tw(p,[[0,7],[0.10,-18],[0.22,42,'io'],[0.30,38],[0.40,128,'out3'],[0.85,112],[1,7,'io']]);
-    o.armR = tw(p,[[0,-7],[0.10,18],[0.22,-42,'io'],[0.30,-38],[0.40,-128,'out3'],[0.85,-112],[1,-7,'io']]);
-    o.armLel = tw(p,[[0,-9],[0.22,-54],[0.30,-50],[0.40,-4,'out'],[0.85,-14],[1,-9]]);
-    o.armRel = -o.armLel;
-    var sp = p>0.40&&p<0.80 ? Math.sin((p-0.40)/0.4*Math.PI*6)*Math.sin(Math.PI*clamp((p-0.40)/0.4,0,1)) : 0;
-    o.armLwr = sp*10; o.armRwr = -sp*10;
-    o.hRot = tw(p,[[0,0],[0.22,4],[0.34,-9,'out'],[0.6,-7],[0.85,0]]);
-    o.tRot = tw(p,[[0,0],[0.22,5],[0.36,-3],[0.7,-1],[1,0]]);
-    o.eye = tw(p,[[0,1],[0.14,1],[0.24,0.12],[0.36,0.12],[0.44,1]]);
-    o.happy = tw(p,[[0,0],[0.36,0],[0.44,1],[0.82,1],[0.92,0]]);
-    o.smile = tw(p,[[0,0.5],[0.22,0.2],[0.34,0.95],[0.8,1],[1,0.55]]);
-    o.open = tw(p,[[0,0],[0.2,0.1],[0.34,0],[0.36,0.35],[0.6,0.2],[0.8,0]]);
-    o.blush = tw(p,[[0,0.4],[0.3,0.9],[0.85,0.7],[1,0.45]]);
-    o.skirtSX = tw(p,[[0,1],[0.22,0.98],[0.36,1.1],[0.6,1.04],[1,1]]);
-    o.trail = 0.6;
-  }
-};
-
-/* ---------- springs ---------- */
-function mkSpring(x,k,d){ return {x:x,v:0,k:k,d:d}; }
-function stepSpring(s,target,dt){
-  var a=(target-s.x)*s.k - s.v*s.d;
-  s.v += a*dt;
-  s.x += s.v*dt;
-  return s.x;
-}
-var SP = {
-  hair: mkSpring(0,220,15),
-  side: mkSpring(0,260,17),
-  tailA: mkSpring(0,150,11),
-  tailB: mkSpring(0,110,8.5),
-  skirt: mkSpring(0,240,18),
-  lift: mkSpring(0,180,16),
-  headDrag: mkSpring(0,200,20)
-};
-
-/* ---------- particles ---------- */
-var parts = [];
-var POOL = [];
-function starPath(s){
-  var d='M0,-1 L'+ (0.28*s) +',-'+ (0.28*s) +' L'+s+',0 L'+(0.28*s)+','+(0.28*s)+' L0,'+s+' L-'+ (0.28*s) +','+(0.28*s) +' L-'+s+',0 L-'+ (0.28*s) +',-'+ (0.28*s) +' Z';
-  return d;
-}
-function spawnStar(x,y,vx,vy,size,color,rot,life){
-  var el = POOL.pop();
-  if(!el){
-    el = document.createElementNS('http://www.w3.org/2000/svg','path');
-    R.fx.appendChild(el);
-  }
-  el.setAttribute('d', starPath(size));
-  el.setAttribute('fill', color);
-  el.style.display='';
-  parts.push({el:el,x:x,y:y,vx:vx,vy:vy,rot:rot||0,vr:(Math.random()-0.5)*10,t:0,life:life||1.2,size:size});
-}
-function burst(n, ox, oy, spread){
-  var cols=['#FFD86E','#FFEFAF','#9BE6D6','#FFB0A0','#FFFFFF','#FFC978'];
-  for(var i=0;i<n;i++){
-    var a=(-Math.PI/2)+(Math.random()-0.5)*spread;
-    var sp=90+Math.random()*180;
-    spawnStar(ox+(Math.random()-0.5)*note(), oy+(Math.random()-0.5)*10,
-      Math.cos(a)*sp, Math.sin(a)*sp,
-      5+Math.random()*6, cols[(Math.random()*cols.length)|0],
-      Math.random()*Math.PI, 0.9+Math.random()*0.7);
-  }
-}
-function note(){ return 26; }
-
-/* ---------- transform helper ---------- */
-function setT(el, ox, oy, rot, sx, sy, dx, dy){
-  rot=rot||0; sx=(sx===undefined)?1:sx; sy=(sy===undefined)?1:sy; dx=dx||0; dy=dy||0;
-  el.setAttribute('transform','translate('+dx.toFixed(2)+' '+dy.toFixed(2)+') rotate('+rot.toFixed(2)+' '+ox+' '+oy+
-    ') translate('+ox+' '+oy+') scale('+sx.toFixed(4)+' '+sy.toFixed(4)+') translate('+(-ox)+' '+(-oy)+')');
-}
-function num(v){ return (Math.round(v*100)/100); }
-
-/* ---------- state ---------- */
-var S = { t:0, last:0, speed:1, act:null, actT:0, actP:0, name:null,
-  nextBlink:2.2, blinkT:0, blink:0, idleSeed:Math.random()*10,
-  look:0, lookT:0, nextLook:4, glow:0 };
-
-var pose = base();
-var prev = base();
-var vyRoot = 0, vxRoot = 0;
-var CAM = { s:1, x:0 };
-
-function applyIdle(t){
-  var p = base();
-  var b = Math.sin(t*1.55 + S.idleSeed);
-  var b2 = Math.sin(t*0.72 + S.idleSeed*0.7);
-  p.tSY = 1 + b*0.016;
-  p.tSX = 1 - b*0.010;
-  p.sy = 1 + b*0.008;
-  p.sx = 1 - b*0.006;
-  p.hDY = b*1.4;
-  p.hRot = b2*1.6;
-  p.hTilt = b2*1.2;
-  p.armL = 7 + Math.sin(t*1.0)*1.6;
-  p.armR = -7 - Math.sin(t*1.0+0.4)*1.6;
-  p.armLel = -9 - Math.sin(t*0.9)*2;
-  p.armRel = 9 + Math.sin(t*0.9+0.3)*2;
-  p.dy = Math.sin(t*1.55+S.idleSeed)*1.2;
-  p.rot = Math.sin(t*0.5+S.idleSeed)*0.7;
-  p.skirtRot = Math.sin(t*0.5+0.6)*0.8;
-  p.smile = 0.55 + Math.sin(t*0.6)*0.06;
-  p.hairRot = 0;
-  p.pupilX = S.look;
-  p.pupilY = 0;
-  p.blush = 0.4 + Math.sin(t*0.4)*0.06;
-  return p;
+let THREE, GLTFLoader, OrbitControls;
+try {
+  THREE = await import('three');
+  ({ GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js'));
+  ({ OrbitControls } = await import('three/addons/controls/OrbitControls.js'));
+} catch (err) {
+  fail('라이브러리를 불러오지 못했어. 새로고침해줄래?');
+  throw err;
 }
 
-function applyAct(p, name){
-  var o = base();
-  ACT[name].f(p,o);
-  return o;
+// ---------------------------------------------------------------- scene
+const app = document.getElementById('app');
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.06;
+app.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+
+const camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 0.1, 100);
+camera.position.set(0.55, 0.72, 4.15);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 0.02, 0);
+controls.enableDamping = true;
+controls.dampingFactor = 0.075;
+controls.enablePan = false;
+controls.minDistance = 1.9;
+controls.maxDistance = 7.0;
+controls.minPolarAngle = 0.35;
+controls.maxPolarAngle = Math.PI * 0.52;
+controls.rotateSpeed = 0.85;
+controls.zoomSpeed = 0.8;
+controls.update();
+
+// ---------------------------------------------------------------- light
+scene.add(new THREE.HemisphereLight(0xfff3ee, 0xcbb2c4, 1.35));
+const key = new THREE.DirectionalLight(0xfff1e2, 2.35);
+key.position.set(2.4, 3.4, 2.6);
+scene.add(key);
+const rim = new THREE.DirectionalLight(0xdfd0ff, 1.05);
+rim.position.set(-2.6, 2.0, -2.4);
+scene.add(rim);
+const fill = new THREE.DirectionalLight(0xffe9f0, 0.55);
+fill.position.set(-1.4, 0.9, 2.8);
+scene.add(fill);
+
+// ---------------------------------------------------------------- soft contact shadow
+function shadowTexture(){
+  const s = 256;
+  const c = document.createElement('canvas');
+  c.width = c.height = s;
+  const g = c.getContext('2d');
+  const grad = g.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2);
+  grad.addColorStop(0, 'rgba(126,88,106,0.42)');
+  grad.addColorStop(0.45, 'rgba(126,88,106,0.20)');
+  grad.addColorStop(1, 'rgba(126,88,106,0)');
+  g.fillStyle = grad;
+  g.fillRect(0, 0, s, s);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
 }
+const shadow = new THREE.Mesh(
+  new THREE.PlaneGeometry(1.55, 1.55),
+  new THREE.MeshBasicMaterial({ map: shadowTexture(), transparent: true, depthWrite: false })
+);
+shadow.rotation.x = -Math.PI / 2;
+shadow.position.y = -0.995;
+scene.add(shadow);
 
-/* ---------- trail ---------- */
-var trailPts = [];
-function pushTrail(el, t){
-  try{
-    var m = el.getCTM(), c = R.camera.getCTM();
-    if(!m || !c) return;
-    var mm = c.inverse().multiply(m);
-    var p = document.getElementById('scene').createSVGPoint();
-    p.x = parseFloat(el.getAttribute('cx')) || 0;
-    p.y = parseFloat(el.getAttribute('cy')) || 0;
-    var q = p.matrixTransform(mm);
-    trailPts.push({x:q.x,y:q.y,t:t});
-  }catch(e){}
-}
+// ---------------------------------------------------------------- model
+const rig = new THREE.Group();
+scene.add(rig);
 
-/* ---------- main loop ---------- */
-function frame(now){
-  if(!S.last) S.last = now;
-  var dt = Math.min((now - S.last)/1000, 0.05);
-  S.last = now;
-  var sdt = dt * S.speed;
-  S.t += sdt;
+let mixer = null, actions = {}, current = 'Idle', slow = false, model = null;
 
-  /* blink */
-  if(S.actT<=0){
-    S.nextBlink -= sdt;
-    if(S.nextBlink<=0){ S.blinkT = 0.13; S.nextBlink = 2.4 + Math.random()*3; }
-  }
-  if(S.blinkT>0){ S.blinkT -= sdt; S.blink = 1 - Math.abs(S.blinkT/0.13 - 0.5)*2; }
-  else S.blink = 0;
-
-  /* idle look */
-  if(S.actT<=0){
-    S.nextLook -= sdt;
-    if(S.nextLook<=0){ S.lookT = 0; S.nextLook = 3.5+Math.random()*3.5; }
-    S.lookT += sdt;
-    S.look = Math.sin(S.lookT*1.4)*2.6*Math.max(0, Math.sin(Math.min(S.lookT,1.6)/1.6*Math.PI));
-  }
-
-  /* action progress */
-  var o;
-  if(S.act){
-    S.actT += sdt*1000;
-    var p = clamp(S.actT/S.act.dur, 0, 1);
-    o = applyAct(p, S.act.name);
-    S.actP = p;
-    if(p>=1){ S.act=null; S.actT=0; S.actP=0; hideNarr(); }
-    else updateNarr(p, S.act);
-    if(S.act && S.act.name==='sparkle' && S.sparked===false && p>0.37){ S.sparked=true; burst(30, 200, 322, 2.7); burst(12, 200, 300, 1.3); }
-  }else{
-    o = applyIdle(S.t);
-  }
-  if(o.eye!==undefined) o.eye = Math.min(o.eye, 1-S.blink*0.94);
-
-  /* root velocity for drag */
-  var dyNow = o.dy, dxNow = o.dx;
-  vyRoot = (dyNow - prev.dy)/Math.max(dt,0.001);
-  vxRoot = (dxNow - prev.dx)/Math.max(dt,0.001);
-  prev = o;
-
-  /* secondary springs */
-  var headLead = -(o.rot*1.05 + o.hRot*1.4 + o.hTilt*1.1);
-  var hairT = headLead + Math.sin(S.t*1.3)*1.2;
-  var sideT = headLead*1.3 + o.skirtRot*(-0.5) + Math.sin(S.t*1.1+1)*1.6;
-  var skirtT = -(o.rot*0.5) + Math.sin(S.t*0.9)*0.7;
-  var liftT = clamp(vyRoot*0.075, -26, 26);
-  var hairX = stepSpring(SP.hair, hairT, sdt);
-  var sideX = stepSpring(SP.side, sideT, sdt);
-  var skirtX = stepSpring(SP.skirt, skirtT, sdt);
-  var liftX = stepSpring(SP.lift, liftT, sdt);
-  var tailAX = stepSpring(SP.tailA, sideX*1.5 + o.rot*0.4 + Math.sin(S.t*1.9)*2.2, sdt);
-  var tailBX = stepSpring(SP.tailB, sideX*1.7 + o.rot*0.5 + Math.sin(S.t*1.6+1.2)*2.6, sdt);
-
-  /* ---- apply to DOM ---- */
-  setT(R.mb, 200, 562, o.rot, o.sx, o.sy, o.dx, o.dy);
-
-  var air = clamp(-o.dy/150, 0, 1);
-  /* auto-framing camera: keeps her whole body in frame while she stretches & leaps */
-  var topY = 562 + (96 - 562)*o.sy + o.dy;
-  var spanY = Math.max(300, 592 - topY);
-  var sT = Math.min(1, 500/spanY);
-  CAM.s += (sT - CAM.s)*0.78;
-  var xT = clamp(-470*Math.sin(o.rot*Math.PI/180)*0.95, -90, 90);
-  CAM.x += (xT - CAM.x)*0.8;
-  R.camera.setAttribute('transform','translate('+(200+CAM.x).toFixed(2)+' 592) scale('+CAM.s.toFixed(4)+') translate(-200 -592)');
-  R.shadowWrap.setAttribute('transform','translate(200 568) scale('+(1+air*0.55)+' '+(1-air*0.15)+') translate(-200 -568)');
-  R.shadow.setAttribute('opacity', (0.9 - air*0.38).toFixed(3));
-
-  setT(R.torso, 200, 414, o.tRot, o.tSX, o.tSY);
-  setT(R.skirt, 200, 404, o.skirtRot + skirtX*0.35, o.skirtSX, o.skirtSY, 0, o.skirtLift);
-
-  /* hair back: pivot at top of head, rotates with head + drag */
-  setT(R.hairBack, 200, 130, hairX + o.rot*0.35, (1 - Math.min(0,vyRoot)*0.00035) * (1 + (o.hairSpread||0)*0.22), 1 + Math.abs(liftX)*0.006, 0, liftX*0.5);
-  setT(R.sideL, 136, 210, sideX*0.9 + o.hTilt*0.6, 1, 1);
-  setT(R.sideR, 264, 210, sideX*0.9 + o.hTilt*0.6, 1, 1);
-  setT(R.tailA, 141, 162, tailAX, 1, 1);
-  setT(R.tailB, 142, 166, tailBX, 1, 1);
-
-  setT(R.head, 200, 316, o.hRot + o.hTilt, o.hSX, o.hSY, o.hDX, o.hDY);
-
-  setT(R.armL, 156, 330, o.armL, 1, 1);
-  setT(R.armLf, 142, 380, o.armLel, 1, 1);
-  setT(R.armLh, 135, 426, o.armLwr, 1, 1);
-  setT(R.armR, 244, 330, o.armR, 1, 1);
-  setT(R.armRf, 258, 380, o.armRel, 1, 1);
-  setT(R.armRh, 265, 426, o.armRwr, 1, 1);
-
-  setT(R.legL, 185, 462, o.legL, 1, 1);
-  setT(R.legR, 215, 462, o.legR, 1, 1);
-
-  var eo = clamp(o.eye,0.03,1);
-  setT(R.eyeL, 168, 234, 0, 1, eo);
-  setT(R.eyeR, 232, 234, 0, 1, eo);
-  var hp = clamp(o.happy,0,1);
-  R.happy.setAttribute('opacity', hp.toFixed(3));
-  R.eyeL.style.opacity = (1 - hp).toFixed(3);
-  R.eyeR.style.opacity = (1 - hp).toFixed(3);
-  setT(R.pupilL, 169.5, 242, 0, 1, 1, o.pupilX, o.pupilY);
-  setT(R.pupilR, 230.5, 242, 0, 1, 1, o.pupilX, o.pupilY);
-  setT(R.irisL, 169.5, 240, 0, 1, 1, o.pupilX*0.45, o.pupilY*0.45);
-  setT(R.irisR, 230.5, 240, 0, 1, 1, o.pupilX*0.45, o.pupilY*0.45);
-  R.browG.setAttribute('transform','translate(0 '+num(-o.brow*3)+')');
-  R.blushL.setAttribute('opacity', clamp(o.blush,0,1).toFixed(3));
-  R.blushR.setAttribute('opacity', clamp(o.blush,0,1).toFixed(3));
-
-  var mw = 10.5 + o.smile*2.2;
-  var my = 270 - o.smile*1.4;
-  if(o.open>0.04){
-    var h = 2 + o.open*9;
-    R.mouth.setAttribute('d','M'+num(200-mw)+','+num(my)+' Q200,'+num(my-h*0.1)+' '+num(200+mw)+','+num(my));
-    R.mouthFill.setAttribute('d','M'+num(200-mw)+','+num(my)+' Q200,'+num(my-h*0.4)+' '+num(200+mw)+','+num(my)+
-      ' Q'+num(200+mw*0.6)+','+num(my+h*1.5)+' 200,'+num(my+h*1.2)+' Q'+num(200-mw*0.6)+','+num(my+h*1.5)+' '+num(200-mw)+','+num(my)+' Z');
-    R.mouthFill.setAttribute('opacity','1');
-  }else{
-    R.mouth.setAttribute('d','M'+num(200-mw)+','+num(my)+' Q200,'+num(my+o.smile*7)+' '+num(200+mw)+','+num(my));
-    R.mouthFill.setAttribute('opacity','0');
-  }
-
-  /* particles */
-  updateParts(sdt);
-
-  /* trail */
-  var trailSrc = null;
-  if(S.act){
-    if(S.act.name==='wave') trailSrc = R.trkHandR;
-    else if(S.act.name==='jump') trailSrc = R.trkHandL;
-    else if(S.act.name==='sparkle') trailSrc = R.trkHandL;
-  }
-  if(trailSrc && o.trail>0.05) pushTrail(trailSrc, S.t);
-  drawTrail();
-
-  requestAnimationFrame(frame);
-}
-
-function updateParts(dt){
-  for(var i=parts.length-1;i>=0;i--){
-    var q = parts[i];
-    q.t += dt;
-    if(q.t>=q.life){
-      q.el.style.display='none';
-      POOL.push(q.el);
-      parts.splice(i,1);
-      continue;
-    }
-    q.vy += 150*dt;
-    q.vx *= (1-1.1*dt);
-    q.vy *= (1-0.7*dt);
-    q.x += q.vx*dt;
-    q.y += q.vy*dt;
-    q.rot += q.vr*dt;
-    var k = 1 - q.t/q.life;
-    q.el.setAttribute('transform','translate('+q.x.toFixed(1)+' '+q.y.toFixed(1)+') rotate('+(q.rot*57.3).toFixed(1)+') scale('+(0.4+k*0.75).toFixed(2)+')');
-    q.el.setAttribute('opacity', (k*k).toFixed(3));
-  }
-}
-
-function drawTrail(){
-  var now = S.t;
-  while(trailPts.length && now - trailPts[0].t > 0.42) trailPts.shift();
-  if(trailPts.length<2){ R.trail.setAttribute('opacity','0'); return; }
-  var d='';
-  for(var i=0;i<trailPts.length;i++){
-    d += (i?' L':'M') + trailPts[i].x.toFixed(1) + ' ' + trailPts[i].y.toFixed(1);
-  }
-  R.trail.setAttribute('d', d);
-  R.trail.setAttribute('opacity','0.5');
-}
-
-/* ---------- narration ---------- */
-var lastPhaseText = '';
-function updateNarr(p, act){
-  var ph = null;
-  for(var i=0;i<act.phases.length;i++){ if(p>=act.phases[i].a && p<act.phases[i].b){ ph=act.phases[i]; break; } }
-  if(!ph){ hideNarr(); return; }
-  if(ph.t!==lastPhaseText){
-    R.narr.textContent = ph.t;
-    R.narr.classList.add('on');
-    lastPhaseText = ph.t;
-    setChips(ph.c);
-  }
-}
-function hideNarr(){ R.narr.classList.remove('on'); lastPhaseText=''; setChips([]); }
-function setChips(list){
-  var els = R.chips.children;
-  for(var i=0;i<els.length;i++){
-    var on = list.indexOf(els[i].getAttribute('data-k'))>=0;
-    els[i].classList.toggle('on', on);
-    if(on){
-      var c = R.chips, r = els[i];
-      var off = r.offsetLeft - c.scrollLeft;
-      if(off < 4 || off + r.offsetWidth > c.clientWidth - 4){
-        c.scrollLeft = r.offsetLeft - (c.clientWidth - r.offsetWidth)/2;
+const loader = new GLTFLoader();
+loader.load('./girl.glb', (gltf) => {
+  model = gltf.scene;
+  model.traverse((o) => {
+    if (o.isMesh || o.isSkinnedMesh) {
+      o.frustumCulled = false;
+      if (o.material) {
+        o.material.envMapIntensity = 0.8;
+        if (o.material.map) o.material.map.anisotropy = renderer.capabilities.getMaxAnisotropy();
+        o.material.needsUpdate = true;
       }
     }
-  }
-}
-
-/* ---------- controls ---------- */
-function play(name){
-  if(S.act) return;
-  S.act = ACT[name];
-  S.act.name = name;
-  S.actT = 0; S.actP = 0;
-  S.sparked = false;
-  trailPts.length = 0;
-  if(name==='sparkle'){}
-}
-document.querySelectorAll('.btn').forEach(function(b){
-  b.addEventListener('click', function(){
-    var n = b.getAttribute('data-act');
-    if(S.act) return;
-    play(n);
-    b.classList.remove('busy'); void b.offsetWidth; b.classList.add('busy');
   });
-});
-$('slowBtn').addEventListener('click', function(){
-  var on = S.speed>0.9;
-  S.speed = on ? 0.35 : 1;
-  this.classList.toggle('on', on);
-  this.textContent = on ? '0.35× 느리게 (켜짐)' : '0.35× 느리게';
-});
-$('stage').addEventListener('click', function(e){
-  if(e.target.closest('.btn')) return;
-  var names=['wave','sparkle','jump','spin'];
-  if(!S.act) play(names[(Math.random()*names.length)|0]);
+  rig.add(model);
+
+  // frame the character
+  const box = new THREE.Box3().setFromObject(model);
+  const h = box.max.y - box.min.y;
+  const k = 2.0 / h;
+  model.scale.setScalar(k);
+  model.position.y = -box.min.y * k - 1.0;
+
+  mixer = new THREE.AnimationMixer(model);
+  for (const clip of gltf.animations) {
+    const a = mixer.clipAction(clip);
+    a.enabled = true;
+    actions[clip.name] = a;
+  }
+  mixer.addEventListener('finished', (e) => {
+    if (e.action === actions.Jump) { play('Idle', 0.35); }
+  });
+  play('Idle', 0);
+  loadingEl.classList.add('hide');
+  setTimeout(() => loadingEl.remove(), 600);
+}, (ev) => {
+  if (ev.total) loadTxt.textContent = '모델 불러오는 중… ' + Math.round(ev.loaded / ev.total * 100) + '%';
+}, (err) => {
+  console.error(err);
+  fail('모델을 불러오지 못했어. 잠시 뒤 새로고침해줄래?');
 });
 
-/* 12 principles sheet */
-var PRINCIPLES = [
-  ['정지 자세의 원리와 견고한 드로잉','무게중심이 서 있고 실루엣이 읽히는 형태'],
-  ['예비동작 (Anticipation)','점프 전 움츠리기, 팔을 들기 전 살짝 내리기'],
-  ['무대 설정 (Staging)','캐릭터를 화면 한가운데, 배경은 조용하게'],
-  ['스트레이트 어헤드 & 포즈 투 포즈','포즈를 정해 두고 그 사이를 자연스럽게 이어 붙이기'],
-  ['따라오기와 겹치는 동작 (Follow Through)','머리카락·리본·치마가 한 박자 늦게 정착'],
-  ['슬로우 인 & 슬로우 아웃','움직임의 시작과 끝은 천천히, 가운데는 빠르게'],
-  ['호 궤적 (Arcs)','팔·고개가 직선이 아닌 곡선을 그리며 움직임'],
-  ['부수동작 (Secondary Action)','손목 흔들기, 눈 깜빡임, 리본 흔들림'],
-  ['타이밍 (Timing)','같은 동작도 빠르고 느림으로 의미가 달라짐'],
-  ['과장 (Exaggeration)','눌림과 늘어남을 실제보다 크게'],
-  ['찌그러짐과 늘어남 (Squash & Stretch)','부피는 유지하며 형태만 눌리고 늘어남'],
-  ['매력 (Appeal)','눈에 들어오는 캐릭터의 매력']
-];
-var plist = $('plist');
-PRINCIPLES.forEach(function(p,i){
-  var d = document.createElement('div');
-  d.className = 'pitem' + ([1,4,5,6,7,8,10].indexOf(i)>=0 ? '' : ' dim');
-  d.innerHTML = '<b>'+(i+1)+'</b><span>'+p[0]+' — '+p[1]+'</span>';
-  plist.appendChild(d);
+// ---------------------------------------------------------------- controls UI
+const motionsEl = document.getElementById('motions');
+const BUTTONS = ['Idle', 'Walk', 'Run', 'Jump', 'Wave', 'Spin'];
+const btns = {};
+for (const name of BUTTONS) {
+  const b = document.createElement('button');
+  b.textContent = CLIP_INFO[name][0];
+  b.dataset.clip = name;
+  b.addEventListener('click', () => play(name, 0.28));
+  motionsEl.appendChild(b);
+  btns[name] = b;
+}
+
+function play(name, fade = 0.25) {
+  if (!mixer || !actions[name]) return;
+  const next = actions[name];
+  if (current === name && next.isRunning() && name !== 'Jump') return;
+
+  const prev = actions[current];
+  next.reset();
+  next.setEffectiveTimeScale(1);
+  next.setEffectiveWeight(1);
+  if (name === 'Jump') {
+    next.setLoop(THREE.LoopOnce, 1);
+    next.clampWhenFinished = true;
+  } else {
+    next.setLoop(THREE.LoopRepeat, Infinity);
+  }
+  if (prev && prev !== next && fade > 0) {
+    next.crossFadeFrom(prev, fade, false);
+  }
+  next.play();
+  current = name;
+  for (const k in btns) btns[k].classList.toggle('on', k === name);
+  const [label, desc] = CLIP_INFO[name];
+  captionEl.innerHTML = '<b>' + label + '</b> — ' + desc;
+}
+
+const speedBtn = document.getElementById('speed');
+speedBtn.addEventListener('click', () => {
+  slow = !slow;
+  speedBtn.classList.toggle('on', slow);
+  speedBtn.textContent = slow ? '1× 빠르게' : '0.35× 느리게';
+  if (mixer) mixer.timeScale = slow ? 0.35 : 1;
 });
-$('listBtn').addEventListener('click', function(){ $('sheet').classList.add('on'); });
-$('closeBtn').addEventListener('click', function(){ $('sheet').classList.remove('on'); });
-$('sheet').addEventListener('click', function(e){ if(e.target===$('sheet')) $('sheet').classList.remove('on'); });
 
-/* start */
-requestAnimationFrame(function(t){ S.last=t; frame(t); });
+// ---------------------------------------------------------------- loop
+const clock = new THREE.Clock();
+function tick() {
+  const dt = Math.min(clock.getDelta(), 0.05);
+  if (mixer) mixer.update(dt);
+  if (model) {
+    // gentle breathing of the contact shadow with vertical motion
+    const hips = model.getObjectByName('hips');
+    if (hips) {
+      const world = new THREE.Vector3();
+      hips.getWorldPosition(world);
+      const s = 1 - Math.max(0, world.y - 0.05) * 0.35;
+      shadow.scale.setScalar(Math.max(0.55, Math.min(1.15, s)));
+      shadow.material.opacity = Math.max(0.25, Math.min(1, s));
+    }
+  }
+  controls.update();
+  renderer.render(scene, camera);
+  requestAnimationFrame(tick);
+}
+tick();
 
-/* expose for debugging */
-window.__momo = { S:S, play:play, R:R };
-})();
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+});
+document.addEventListener('gesturestart', (e) => e.preventDefault());
 </script>
 </body>
 </html>
