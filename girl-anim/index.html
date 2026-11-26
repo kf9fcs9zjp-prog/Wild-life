@@ -449,7 +449,7 @@ ACT.jump = {
     {a:0.70,b:1.00,t:'머리·치마가 늦게 정착 · 따라오기',c:['follow','secondary']}
   ],
   f:function(p,o){
-    o.dy = tw(p,[[0,0],[0.17,26,'out'],[0.22,25],[0.28,2,'in3'],[0.34,-92,'out'],[0.41,-156,'out'],[0.47,-142,'in'],[0.55,-10,'in3'],[0.60,12,'in3'],[0.66,-11,'out'],[0.73,3,'out'],[0.82,0,'io']]);
+    o.dy = tw(p,[[0,0],[0.17,26,'out'],[0.22,25],[0.28,2,'in3'],[0.34,-88,'out'],[0.41,-144,'out'],[0.47,-132,'in'],[0.55,-10,'in3'],[0.60,12,'in3'],[0.66,-11,'out'],[0.73,3,'out'],[0.82,0,'io']]);
     o.sy = tw(p,[[0,1],[0.17,0.79,'out'],[0.22,0.81],[0.28,1.26,'out3'],[0.36,1.08,'io'],[0.45,0.99],[0.55,0.74,'in3'],[0.62,1.11,'out'],[0.70,0.93,'io'],[0.80,1.01,'io'],[1,1]]);
     o.sx = 1+(1-o.sy)*0.86;
     o.rot = tw(p,[[0,0],[0.22,0],[0.34,-2],[0.46,5],[0.58,0],[0.70,-1.5],[0.85,0]]);
@@ -514,7 +514,7 @@ ACT.spin = {
     var rad = ang*Math.PI/180;
     var cs = Math.cos(rad);
     if(Math.abs(cs) < 0.07) cs = 0.07;
-    o.rot = tw(p,[[0,0],[0.12,-9,'out'],[0.20,-12],[0.26,0,'in3'],[0.5,0],[0.6,2],[0.72,-1.4],[0.86,0],[1,0]]);
+    o.rot = tw(p,[[0,0],[0.12,-6,'out'],[0.20,-8],[0.26,0,'in3'],[0.5,0],[0.6,1.6],[0.72,-1.2],[0.86,0],[1,0]]);
     o.dy = tw(p,[[0,0],[0.16,10],[0.26,-18,'out3'],[0.42,-14],[0.56,4],[0.68,-3],[0.8,0]]);
     o.sy = tw(p,[[0,1],[0.16,0.92],[0.24,1.09],[0.42,1.05],[0.56,0.93],[0.68,1.03],[0.80,0.99],[1,1]]);
     o.sx = (1+(1-o.sy)*0.8) * cs;
@@ -634,7 +634,7 @@ var S = { t:0, last:0, speed:1, act:null, actT:0, actP:0, name:null,
 var pose = base();
 var prev = base();
 var vyRoot = 0, vxRoot = 0;
-var CAM = { s:1, mid:344 };
+var CAM = { s:1, x:0 };
 
 function applyIdle(t){
   var p = base();
@@ -750,9 +750,11 @@ function frame(now){
   var spanY = Math.max(300, 592 - topY);
   var sT = Math.min(1, 500/spanY);
   CAM.s += (sT - CAM.s)*0.78;
-  R.camera.setAttribute('transform','translate(200 592) scale('+CAM.s.toFixed(4)+') translate(-200 -592)');
+  var xT = clamp(-466*Math.sin(o.rot*Math.PI/180)*0.5, -70, 70);
+  CAM.x += (xT - CAM.x)*0.55;
+  R.camera.setAttribute('transform','translate('+(200+CAM.x).toFixed(2)+' 592) scale('+CAM.s.toFixed(4)+') translate(-200 -592)');
   R.shadowWrap.setAttribute('transform','translate(200 568) scale('+(1+air*0.55)+' '+(1-air*0.15)+') translate(-200 -568)');
-  R.shadow.setAttribute('opacity', (0.9 - air*0.55).toFixed(3));
+  R.shadow.setAttribute('opacity', (0.9 - air*0.38).toFixed(3));
 
   setT(R.torso, 200, 414, o.tRot, o.tSX, o.tSY);
   setT(R.skirt, 200, 404, o.skirtRot + skirtX*0.35, o.skirtSX, o.skirtSY, 0, o.skirtLift);
