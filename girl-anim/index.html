@@ -781,7 +781,10 @@ function frame(now){
   var eo = clamp(o.eye,0.03,1);
   setT(R.eyeL, 168, 234, 0, 1, eo);
   setT(R.eyeR, 232, 234, 0, 1, eo);
-  R.happy.setAttribute('opacity', clamp(o.happy,0,1).toFixed(3));
+  var hp = clamp(o.happy,0,1);
+  R.happy.setAttribute('opacity', hp.toFixed(3));
+  R.eyeL.style.opacity = (1 - hp).toFixed(3);
+  R.eyeR.style.opacity = (1 - hp).toFixed(3);
   setT(R.pupilL, 169.5, 242, 0, 1, 1, o.pupilX, o.pupilY);
   setT(R.pupilR, 230.5, 242, 0, 1, 1, o.pupilX, o.pupilY);
   setT(R.irisL, 169.5, 240, 0, 1, 1, o.pupilX*0.45, o.pupilY*0.45);
@@ -872,6 +875,13 @@ function setChips(list){
   for(var i=0;i<els.length;i++){
     var on = list.indexOf(els[i].getAttribute('data-k'))>=0;
     els[i].classList.toggle('on', on);
+    if(on){
+      var c = R.chips, r = els[i];
+      var off = r.offsetLeft - c.scrollLeft;
+      if(off < 4 || off + r.offsetWidth > c.clientWidth - 4){
+        c.scrollLeft = r.offsetLeft - (c.clientWidth - r.offsetWidth)/2;
+      }
+    }
   }
 }
 
