@@ -131,6 +131,20 @@
   }
 }
 </script>
+<script>
+window.addEventListener('error', (e) => {
+  const d = document.createElement('pre');
+  d.style.cssText = 'position:fixed;left:0;bottom:0;right:0;z-index:99;margin:0;padding:8px;background:#fff0f0;color:#a00;font-size:11px;white-space:pre-wrap;border-top:1px solid #e0b4b4';
+  d.textContent = '⚠ ' + (e.message || e.type) + ' @' + (e.filename||'').split('/').pop() + ':' + e.lineno;
+  document.body.appendChild(d);
+});
+window.addEventListener('unhandledrejection', (e) => {
+  const d = document.createElement('pre');
+  d.style.cssText = 'position:fixed;left:0;bottom:0;right:0;z-index:99;margin:0;padding:8px;background:#fff0f0;color:#a00;font-size:11px;white-space:pre-wrap;border-top:1px solid #e0b4b4';
+  d.textContent = '⚠ ' + (e.reason && (e.reason.stack || e.reason.message) || e.reason);
+  document.body.appendChild(d);
+});
+</script>
 <script type="module">
 const CLIP_INFO = {
   Idle: ['대기', '가슴으로 숨 쉬고, 무게중심이 좌우로 천천히 옮겨가'],
@@ -244,6 +258,7 @@ loader.load('./girl.glb', (gltf) => {
     }
   });
   rig.add(model);
+  window.__girl = { THREE, scene, camera, renderer, rig, model, mixer };
 
   // frame the character
   const box = new THREE.Box3().setFromObject(model);
@@ -251,6 +266,7 @@ loader.load('./girl.glb', (gltf) => {
   const k = 2.0 / h;
   model.scale.setScalar(k);
   model.position.y = -box.min.y * k - 1.0;
+  window.__girl.frame = { h, k, min: box.min.toArray(), max: box.max.toArray(), pos: model.position.toArray() };
 
   mixer = new THREE.AnimationMixer(model);
   for (const clip of gltf.animations) {
