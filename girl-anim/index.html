@@ -244,8 +244,9 @@ scene.add(rig);
 
 let mixer = null, actions = {}, current = 'Idle', slow = false, model = null;
 
+const MODEL_VERSION = '20261126b';
 const loader = new GLTFLoader();
-loader.load('./girl.glb', (gltf) => {
+loader.load('./girl.glb?v=' + MODEL_VERSION, (gltf) => {
   model = gltf.scene;
   model.traverse((o) => {
     if (o.isMesh || o.isSkinnedMesh) {
