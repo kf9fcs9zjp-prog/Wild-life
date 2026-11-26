@@ -747,13 +747,10 @@ function frame(now){
   var air = clamp(-o.dy/150, 0, 1);
   /* auto-framing camera: keeps her whole body in frame while she stretches & leaps */
   var topY = 562 + (96 - 562)*o.sy + o.dy;
-  var botY = 592;
-  var spanY = Math.max(260, botY - topY);
-  var sT = Math.min(1, 470/spanY);
-  var midT = (topY + botY)*0.5;
-  CAM.s += (sT - CAM.s)*0.72;
-  CAM.mid += (midT - CAM.mid)*0.72;
-  R.camera.setAttribute('transform','translate(200 337) scale('+CAM.s.toFixed(4)+') translate(-200 '+(-CAM.mid).toFixed(2)+')');
+  var spanY = Math.max(300, 592 - topY);
+  var sT = Math.min(1, 500/spanY);
+  CAM.s += (sT - CAM.s)*0.78;
+  R.camera.setAttribute('transform','translate(200 592) scale('+CAM.s.toFixed(4)+') translate(-200 -592)');
   R.shadowWrap.setAttribute('transform','translate(200 568) scale('+(1+air*0.55)+' '+(1-air*0.15)+') translate(-200 -568)');
   R.shadow.setAttribute('opacity', (0.9 - air*0.55).toFixed(3));
 
